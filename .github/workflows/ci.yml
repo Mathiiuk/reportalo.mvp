@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Adaptar al stack real del proyecto.
+      - name: Setup runtime
+        run: echo "TODO: configure runtime"
+
+      - name: Install dependencies
+        run: echo "TODO: replace with project install command"
+
+      - name: Lint
+        run: echo "TODO: replace with project lint command"
+
+      - name: Typecheck
+        run: echo "TODO: replace with project typecheck command"
+
+      - name: Unit tests
+        run: echo "TODO: replace with project unit test command"
+
+      - name: Integration tests
+        run: echo "TODO: replace with project integration test command"
+
+      - name: Build
+        run: echo "TODO: replace with project build command"

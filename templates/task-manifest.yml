@@ -1,0 +1,62 @@
+# Copiar a docs/workflow/tasks/<TASK-ID>.yml
+id: TASK-ID
+external_ref: ""
+title: ""
+type: feature # feature|fix|hotfix|refactor|security|test|docs|chore
+status: BACKLOG # BACKLOG|ANALYSIS|PLANNED|WAITING_APPROVAL|READY|IN_PROGRESS|VERIFYING|FIXING|READY_FOR_PR|PR_OPEN|APPROVED|MERGED|DEPLOYING|MONITORING|DONE|ROLLBACK|INCIDENT
+priority: medium # low|medium|high|highest
+owner: ""
+base_branch: main
+
+scope:
+  project: ""
+  modules: []
+  environments: [local, staging, production]
+
+requirements: []
+acceptance_criteria: []
+constraints: []
+risks: []
+dependencies: []
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/TASK-ID.md"
+  implementation_plan: "docs/workflow/plans/TASK-ID.md"
+  test_plan: "docs/workflow/tests/TASK-ID.md"
+  execution_report: "docs/workflow/executions/TASK-ID-run-001.md"
+
+quality_gates:
+  lint: true
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: ""
+
+branch:
+  type: feat
+  name: "feat/TASK-ID-slug"
+
+commands:
+  install: ""
+  lint: ""
+  typecheck: ""
+  unit_tests: ""
+  integration_tests: ""
+  e2e: ""
+  build: ""
+  security: ""
+  smoke_tests: ""
+  deploy_staging: ""
+  deploy_production: ""
+  rollback: ""

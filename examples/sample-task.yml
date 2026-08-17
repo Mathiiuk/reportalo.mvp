@@ -1,0 +1,45 @@
+# Ejemplo de adaptación
+id: REP-0001
+external_ref: "JIRA-123"
+title: "Implementar ejemplo"
+type: feature
+status: PLANNED
+priority: high
+owner: team-backend
+base_branch: main
+
+scope:
+  project: my-project
+  modules: [api, database]
+  environments: [local, staging, production]
+
+requirements:
+  - "Agregar endpoint X"
+  - "Persistir resultado Y"
+
+acceptance_criteria:
+  - "Endpoint responde 2xx con entrada válida"
+  - "Entrada inválida responde 4xx"
+  - "Persistencia es transaccional"
+
+requires_approval: false
+
+quality_gates:
+  lint: true
+  typecheck: true
+  unit_tests: true
+  integration_tests: true
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+commands:
+  install: "<PROJECT_INSTALL>"
+  lint: "<PROJECT_LINT>"
+  typecheck: "<PROJECT_TYPECHECK>"
+  unit_tests: "<PROJECT_TEST>"
+  integration_tests: "<PROJECT_INTEGRATION_TEST>"
+  build: "<PROJECT_BUILD>"
+  security: "<PROJECT_SECURITY_SCAN>"
+  smoke_tests: "<PROJECT_SMOKE_TESTS>"

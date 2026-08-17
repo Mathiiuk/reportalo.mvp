@@ -1,0 +1,17 @@
+name: Deploy Template
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy staging
+        run: echo "TODO: replace with project deployment command"
+      - name: Smoke tests
+        run: echo "TODO: replace with project smoke tests"
+      - name: Health check
+        run: echo "TODO: replace with project health check"
