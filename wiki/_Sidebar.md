@@ -1,10 +1,11 @@
 # 📖 Navegación
 
 * **[🏠 Inicio](Home)**
-* **[⚙️ Flujo de Trabajo](01-flujo-de-trabajo)**
-* **[🧪 Guía de QA & Testing](02-guia-qa-testing)**
-* **[🚀 CI/CD e Infraestructura](03-ci-cd-infraestructura)**
-* **[👥 Roles y Gobernanza](04-roles-y-gobernanza)**
+* **[📜 01. Acta de Inicio v3.0](01-acta-de-inicio)**
+* **[⚙️ 02. Flujo de Trabajo](02-flujo-de-trabajo)**
+* **[🧪 03. Guía de QA & Testing](03-guia-qa-testing)**
+* **[👥 04. Roles y Gobernanza](04-roles-y-gobernanza)**
+* **[🚀 05. CI/CD e Infraestructura](05-ci-cd-infraestructura)**
 
 ---
 

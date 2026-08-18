@@ -1,66 +1,77 @@
 ---
-title: "Roles y Gobernanza — Matriz RACI y Políticas"
-description: "Definición de roles del equipo (PL, QA, Desarrolladores), matriz RACI de responsabilidades y políticas de Pull Requests y calidad."
+title: "Roles y Gobernanza — Equipo y Matriz RACI"
+description: "Estructura organizativa oficial del proyecto Reportalo (RAR-2026), roles del equipo (Carlos, Leonel, Matías, Hernán, Ivan) y matriz RACI de responsabilidades."
 ---
 
 # 👥 Roles y Gobernanza del Proyecto
 
-Este documento establece la estructura organizativa, responsabilidades del equipo y normas de gobernanza técnica para el desarrollo del proyecto **Reportalo MVP** ([`skills/software-delivery-workflow.md:23-35`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/skills/software-delivery-workflow.md#L23-L35)).
+Este documento establece la conformación oficial del equipo, responsabilidades y normas de gobernanza técnica para el desarrollo de **Reportalo (RAR-2026)** ([`docs/project/acta-de-inicio-v3.md:14-25`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L14-L25)).
 
 ---
 
-## 1. Estructura de Roles y Equipo
+## 1. Estructura Oficial del Equipo
 
 ```mermaid
 graph TD
-    PL["Matias Krepchuk<br><b>Project Leader (PL) & Lead Dev</b>"]
-    QA["Ivo<br><b>Quality Assurance (QA)</b>"]
-    DEV["Desarrolladores / Agentes IA<br><b>Engineering Team</b>"]
+    CR["<b>Carlos Ruiz</b><br>Sponsor y Auditor"]
+    LN["<b>Leonel Nuñez</b><br>Project Manager (PM)"]
+    HG["<b>Hernán Gregorini</b><br>Product Owner / Autor (PO)"]
+    MK["<b>Matías Krepchuk</b><br>Líder Técnico"]
+    IJ["<b>Ivan Juarez</b><br>QA y UX/UI"]
 
-    PL --> DEV
-    PL <--> QA
-    DEV --> QA
+    CR --- LN
+    CR --- HG
+    LN --- MK
+    HG --- MK
+    MK --- IJ
 ```
-<!-- Sources: docs/workflow/tasks/REP-3304.yml:8, docs/workflow/specs/REP-3304.md:1-15 -->
+<!-- Sources: docs/project/acta-de-inicio-v3.md:14-25, docs/project/acta-de-inicio-v3.md:88-96 -->
 
 ---
 
-## 2. Matriz RACI de Responsabilidades
+## 2. Descripción de Roles y Atribuciones
 
-| Etapa del Ciclo de Vida | Matias (PL) | Ivo (QA) | Desarrolladores / Agentes | Fuente |
-| :--- | :---: | :---: | :---: | :--- |
-| **Definición de Requerimientos (Jira)** | **A / R** | **C** | **I** | [`specs/REP-3304.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/workflow/specs/REP-3304.md#L1) |
-| **Implementación de Código y Ramas** | **A** | **I** | **R** | [`plans/REP-3304.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/workflow/plans/REP-3304.md#L1) |
-| **Validación en Vercel Previews** | **I** | **R / A** | **C** | [`tests/REP-3304.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/workflow/tests/REP-3304.md#L1) |
-| **Aprobación de Pull Requests** | **A** | **R** | **C** | [`software-delivery-workflow.md:210`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/skills/software-delivery-workflow.md#L210) |
-| **Despliegue a Producción (Merge)** | **R / A** | **I** | **I** | [`software-delivery-workflow.md:248`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/skills/software-delivery-workflow.md#L248) |
+| Integrante | Rol Oficial | Responsabilidades Clave | Fuente |
+| :--- | :--- | :--- | :--- |
+| **Carlos Ruiz** | **Sponsor y Auditor** | Define criterios de aceptación estratégicos; interlocutor final para decisiones de alto nivel. | [`docs/project/acta-de-inicio-v3.md:90`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L90) |
+| **Leonel Nuñez** | **Project Manager (PM)** | Planificación, gestión de tiempos, remoción de bloqueos y coordinación de ceremonias ágiles. | [`docs/project/acta-de-inicio-v3.md:91`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L91) |
+| **Hernán Gregorini** | **Product Owner (PO) / Autor** | Definición de backlog, redacción y priorización de historias de usuario, valor para ciudadano y organismo. | [`docs/project/acta-de-inicio-v3.md:93`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L93) |
+| **Matías Krepchuk** | **Líder Técnico** | Arquitectura del sistema, desarrollo de componentes críticos, code review, CI/CD y despliegues. | [`docs/project/acta-de-inicio-v3.md:92`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L92) |
+| **Ivan Juarez** | **QA y UX/UI** | Aseguramiento de calidad, pruebas en dispositivos reales, validación de integración y diseño de interfaz/experiencia. | [`docs/project/acta-de-inicio-v3.md:94`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L94) |
+
+---
+
+## 3. Matriz RACI del Ciclo de Desarrollo
+
+```mermaid
+flowchart LR
+    A["Jira Requerimiento<br>(Hernán / Leonel)"] --> B["Arquitectura & Código<br>(Matías)"]
+    B --> C["Testing en Previews<br>(Ivan)"]
+    C --> D["Aprobación de Release<br>(Carlos / Leonel)"]
+    D --> E["Despliegue Producción<br>(Matías)"]
+```
+<!-- Sources: docs/project/acta-de-inicio-v3.md:88-96, skills/software-delivery-workflow.md:38-64 -->
+
+| Actividad / Hito | Carlos (Sponsor) | Leonel (PM) | Hernán (PO) | Matías (Tech Lead) | Ivan (QA/UX) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Definición de Alcance e Historias** | **I** | **C** | **A / R** | **C** | **C** |
+| **Sprint Planning & Estimaciones** | **I** | **A / R** | **C** | **R** | **R** |
+| **Arquitectura y Core Development** | **I** | **I** | **I** | **A / R** | **I** |
+| **Diseño UX/UI y Accesibilidad** | **C** | **I** | **A** | **C** | **R** |
+| **Validación en Vercel Previews** | **I** | **I** | **C** | **I** | **A / R** |
+| **Aprobación de Pull Requests** | **I** | **I** | **I** | **A** | **R** |
+| **Despliegue a Producción (Merge)** | **A** | **C** | **C** | **R** | **I** |
 
 > **Leyenda RACI**: **R** = Responsable de ejecución, **A** = Aprobador final (Accountable), **C** = Consultado, **I** = Informado.
 
 ---
 
-## 3. Políticas de Pull Requests y Merge
+## 4. Políticas de Gobernanza y Convenciones
 
-```mermaid
-flowchart TD
-    PR["Pull Request Creado"] --> C1{"¿Pasan CI & Security Actions?"}
-    C1 -- No --> Block["Bloqueado para Merge"]
-    C1 -- Sí --> C2{"¿Aprobación Formal de QA (Ivo)?"}
-    C2 -- No --> Block
-    C2 -- Sí --> C3{"¿Revisión de Arquitectura / PL?"}
-    C3 -- Sí --> Merge["Merge Permitido a main"]
-    C3 -- No --> Block
-```
-<!-- Sources: skills/software-delivery-workflow.md:224-247, templates/pull-request.md:1-15 -->
-
----
-
-## 4. Reglas No Negociables del Repositorio
-
-1. **No direct-push a `main`**: Todo cambio ingresa por rama y Pull Request.
-2. **Sin secretos en el código**: Credenciales y tokens se configuran en GitHub Secrets y Vercel Environment Variables.
-3. **Commits en Español**: Siguiendo formato conventional commits.
-4. **Trazabilidad Obligatoria**: Toda tarea debe tener su manifest en `docs/workflow/tasks/` y registro en `resume.md`.
+1. **Gestión de Tareas**: Toda tarea nace con un identificador de Jira (`REP-XXXX`) y un archivo manifest en `docs/workflow/tasks/`.
+2. **Convención de Ramas**: `feat/<ID>-slug`, `fix/<ID>-slug`, `hotfix/<ID>-slug`.
+3. **Commits en Español**: Siguiendo el estándar *Conventional Commits* con descripción clara.
+4. **Validación Obligatoria de QA**: Ninguna rama se mergea a `main` sin la aprobación de Ivan Juarez en el Pull Request.
 
 ---
 
@@ -68,7 +79,7 @@ flowchart TD
 
 | Página | Relación |
 | :--- | :--- |
-| [Inicio (Home)](Home) | Portal principal |
-| [Flujo de Trabajo](01-flujo-de-trabajo) | Metodología de entrega |
-| [Guía QA & Testing](02-guia-qa-testing) | Criterios de evaluación de QA |
-| [CI/CD e Infraestructura](03-ci-cd-infraestructura) | Pipelines y automatización |
+| [Inicio (Home)](Home) | Portal general de la Wiki |
+| [Acta de Inicio](01-acta-de-inicio) | Visión y compromisos estratégicos del proyecto |
+| [Flujo de Trabajo](02-flujo-de-trabajo) | Metodología de entrega y máquina de estados |
+| [Guía QA & Testing](03-guia-qa-testing) | Procedimientos de prueba para Ivan Juarez |
