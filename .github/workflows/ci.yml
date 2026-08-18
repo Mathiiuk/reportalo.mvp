@@ -13,22 +13,22 @@ jobs:
 
       # Adaptar al stack real del proyecto.
       - name: Setup runtime
-        run: echo "TODO: configure runtime"
+        run: 'echo "TODO: configure runtime"'
 
       - name: Install dependencies
-        run: echo "TODO: replace with project install command"
+        run: 'echo "TODO: replace with project install command"'
 
       - name: Lint
-        run: echo "TODO: replace with project lint command"
+        run: 'echo "TODO: replace with project lint command"'
 
       - name: Typecheck
-        run: echo "TODO: replace with project typecheck command"
+        run: 'echo "TODO: replace with project typecheck command"'
 
       - name: Unit tests
-        run: echo "TODO: replace with project unit test command"
+        run: 'echo "TODO: replace with project unit test command"'
 
       - name: Integration tests
-        run: echo "TODO: replace with project integration test command"
+        run: 'echo "TODO: replace with project integration test command"'
 
       - name: Build
-        run: echo "TODO: replace with project build command"
+        run: 'echo "TODO: replace with project build command"'

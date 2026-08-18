@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy staging
-        run: echo "TODO: replace with project deployment command"
+        run: 'echo "TODO: replace with project deployment command"'
       - name: Smoke tests
-        run: echo "TODO: replace with project smoke tests"
+        run: 'echo "TODO: replace with project smoke tests"'
       - name: Health check
-        run: echo "TODO: replace with project health check"
+        run: 'echo "TODO: replace with project health check"'

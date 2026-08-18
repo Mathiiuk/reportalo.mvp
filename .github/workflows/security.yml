@@ -14,4 +14,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependency / security scan
-        run: echo "TODO: configure stack-specific security scanners"
+        run: 'echo "TODO: configure stack-specific security scanners"'
