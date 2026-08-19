@@ -29,15 +29,19 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Formalización del equipo oficial (Carlos Ruiz, Leonel Nuñez, Matías Krepchuk, Hernán Gregorini, Ivan Juarez), alcance MVP CABA/Avellaneda, IA Jurídica y métricas de éxito.
   - Creación del pipeline de sincronización continua `.github/workflows/wiki-sync.yml` para publicación automática en la GitHub Wiki al hacer push a `main`.
 
-### [2026-08-19] — REP-3307: Configurar Ambiente Staging
-- **Tipo**: DevOps / Infraestructura / Staging
+### [2026-08-19] — REP-3307: Configurar Ambiente Staging y Gobernanza de Flujo Git
+- **Tipo**: DevOps / Infraestructura / Gobernanza
 - **Responsable**: Matías Krepchuk (Tech Lead)
-- **Destinatarios**: Carlos Ruiz (Sponsor) & Leonel Nuñez (PM)
-- **Estado**: En progreso (`IN_PROGRESS`)
+- **Destinatarios**: Carlos Ruiz (Sponsor), Leonel Nuñez (PM), Ivan Juarez (QA)
+- **Estado**: Implementado (`DONE`)
 - **Rama**: `feat/REP-3307-configurar-staging` / `staging`
 - **Resumen**:
   - Creación de la arquitectura de 3 entornos: Previews (QA Ivan), Staging (Sponsor Carlos / PM Leonel) y Producción (Ciudadanos / Organismos).
   - Creación de rama permanente `staging` en Git.
   - Creación de la estructura formal de workflow en `docs/workflow/` para `REP-3307` (manifest, spec, plan, tests y guía operativa).
   - Actualización de los workflows de GitHub Actions `ci.yml` y `security.yml` para ejecutar quality gates automáticos en push a `staging`.
-  - Elaboración de guía paso a paso para asignar subdominio fijo en Vercel Settings (`reportalo-staging.vercel.app`) vinculado a la rama `staging`.
+  - Configuración de subdominio fijo en Vercel Settings (`reportalo-staging.vercel.app`) vinculado a la rama `staging`.
+  - Creación de plantilla oficial de Pull Request `.github/PULL_REQUEST_TEMPLATE.md` con checklist de QA.
+  - Creación de formularios estructurados de Issues `.github/ISSUE_TEMPLATE/` (`bug_report.yml`, `feature_request.yml`, `config.yml`).
+  - Creación de la guía de contribución `CONTRIBUTING.md`, asignación de revisores en `.github/CODEOWNERS` y manual `git-branching-strategy.md`.
+  - Actualización de la Wiki en `wiki/04-roles-y-gobernanza.md` con la matriz RACI y políticas de Release.

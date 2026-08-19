@@ -1,0 +1,73 @@
+name: "🐛 Reporte de Bug / Incidencia"
+description: "Reportar un fallo o comportamiento inesperado identificado por QA o el equipo."
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por documentar este fallo. Por favor completa los campos para facilitar la reproducción y corrección.
+  - type: input
+    id: jira_ticket
+    attributes:
+      label: "Ticket de Jira Relacionado"
+      description: "Identificador del ticket de Jira (ej. REP-3309)."
+      placeholder: "REP-XXXX"
+    validations:
+      required: false
+  - type: dropdown
+    id: environment
+    attributes:
+      label: "Entorno donde ocurrió el error"
+      description: "Selecciona el entorno afectado."
+      options:
+        - "Vercel Preview (Rama / PR)"
+        - "Staging (reportalo-staging.vercel.app)"
+        - "Producción (reportalo-mvp.vercel.app)"
+        - "Entorno Local"
+    validations:
+      required: true
+  - type: input
+    id: preview_url
+    attributes:
+      label: "URL del Despliegue"
+      description: "Enlace exacto donde se detectó el error."
+      placeholder: "https://..."
+    validations:
+      required: false
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: "Pasos para Reproducir"
+      description: "Describe el paso a paso exacto para reproducir el fallo."
+      placeholder: |
+        1. Ingresar a '...'
+        2. Hacer clic en '...'
+        3. Observar el error '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Comportamiento Esperado"
+      description: "Qué debería haber sucedido según la especificación."
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: "Comportamiento Actual / Evidencia"
+      description: "Qué sucedió realmente. Adjunta capturas de pantalla, logs o errores de consola si están disponibles."
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Severidad"
+      options:
+        - "Crítica / Bloqueante (Impide continuar o rompe funcionalidad core)"
+        - "Alta (Funcionalidad importante rota con workaround)"
+        - "Media (Error visual o comportamiento menor)"
+        - "Baja (Detalle cosmético o sugerencia)"
+    validations:
+      required: true

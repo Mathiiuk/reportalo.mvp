@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Jira Board — Reportalo (RAR-2026)"
+    url: "https://jira.reportalo.com"
+    about: "Para el seguimiento formal de tareas y sprints del equipo."
+  - name: "Documentación y Wiki Oficial"
+    url: "https://github.com/Mathiiuk/reportalo.mvp/wiki"
+    about: "Consulta la arquitectura, guías de QA y flujos de trabajo."

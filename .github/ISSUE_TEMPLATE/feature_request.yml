@@ -1,0 +1,40 @@
+name: "✨ Requerimiento de Funcionalidad"
+description: "Proponer una nueva funcionalidad o mejora técnica vinculada a Jira."
+title: "[FEAT]: "
+labels: ["enhancement", "feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentación de requerimientos para el equipo de desarrollo de Reportalo MVP.
+  - type: input
+    id: jira_ticket
+    attributes:
+      label: "Ticket de Jira"
+      description: "Identificador del requerimiento en Jira."
+      placeholder: "REP-XXXX"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problema o Necesidad del Usuario"
+      description: "Qué problema del ciudadano, organismo o equipo se resuelve."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: "Solución Propuesta y Alcance"
+      description: "Descripción detallada del comportamiento esperado."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Criterios de Aceptación"
+      placeholder: |
+        - [ ] Criterio 1
+        - [ ] Criterio 2
+    validations:
+      required: true

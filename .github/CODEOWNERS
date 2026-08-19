@@ -1,0 +1,11 @@
+# Dueños globales del código y flujos
+* @Mathiiuk
+
+# Workflows y configuración de CI/CD
+/.github/ @Mathiiuk
+/vercel.json @Mathiiuk
+
+# Documentación y Wiki
+/wiki/ @Mathiiuk
+/docs/ @Mathiiuk
+/resume.md @Mathiiuk
