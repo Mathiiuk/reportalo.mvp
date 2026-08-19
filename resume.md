@@ -24,5 +24,7 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
 - **Estado**: Implementado (`DONE`)
 - **Resumen**:
   - Adopción de la skill de Microsoft `wiki-page-writer` para documentación basada en evidencias y citación directa de código.
-  - Creación de estructura de Wiki en `wiki/` (`Home.md`, `_Sidebar.md`, `_Footer.md`, `01-flujo-de-trabajo.md`, `02-guia-qa-testing.md`, `03-ci-cd-infraestructura.md`, `04-roles-y-gobernanza.md`).
+  - Creación de estructura de Wiki en `wiki/` (`Home.md`, `_Sidebar.md`, `_Footer.md`, `01-acta-de-inicio.md`, `02-flujo-de-trabajo.md`, `03-guia-qa-testing.md`, `04-roles-y-gobernanza.md`, `05-ci-cd-infraestructura.md`).
+  - Integración completa del **Acta de Inicio v3.0** (`RAR-2026`) en `docs/project/acta-de-inicio-v3.md` y `wiki/01-acta-de-inicio.md`.
+  - Formalización del equipo oficial (Carlos Ruiz, Leonel Nuñez, Matías Krepchuk, Hernán Gregorini, Ivan Juarez), alcance MVP CABA/Avellaneda, IA Jurídica y métricas de éxito.
   - Creación del pipeline de sincronización continua `.github/workflows/wiki-sync.yml` para publicación automática en la GitHub Wiki al hacer push a `main`.
