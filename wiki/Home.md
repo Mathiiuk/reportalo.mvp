@@ -1,11 +1,11 @@
 ---
 title: "Reportalo MVP — Wiki Principal"
-description: "Portal de documentación técnica, arquitectura, CI/CD y gobernanza del proyecto Reportalo MVP."
+description: "Portal de documentación técnica, arquitectura, CI/CD y gobernanza del proyecto Reportalo (RAR-2026)."
 ---
 
-# 🚀 Reportalo MVP — Portal de Documentación
+# 🚀 Reportalo — Plataforma de Auditoría Ciudadana con IA Jurídica
 
-Bienvenido a la documentación oficial y técnica del proyecto **Reportalo MVP**. Este portal centraliza las normas de desarrollo, arquitectura de despliegue, procedimientos de prueba para QA y estándares de ingeniería.
+Bienvenido a la documentación oficial y técnica del proyecto **Reportalo** (Código: `RAR-2026`). Este portal centraliza las normas de desarrollo, arquitectura de despliegue, procedimientos de prueba para QA y estándares de ingeniería ([`docs/project/acta-de-inicio-v3.md:1-12`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L1-L12)).
 
 ---
 
@@ -13,7 +13,8 @@ Bienvenido a la documentación oficial y técnica del proyecto **Reportalo MVP**
 
 | Componente | Descripción | Estado | Fuente |
 | :--- | :--- | :--- | :--- |
-| **Repositorio** | `Mathiiuk/reportalo.mvp` | Activo | [`README.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/README.md#L1) |
+| **Proyecto** | Reportalo (Auditoría Ciudadana con IA Jurídica) | En Desarrollo (MVP Dic 2026) | [`docs/project/acta-de-inicio-v3.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L1) |
+| **Código Interno** | `RAR-2026` &bull; Alcance: CABA y Avellaneda | Activo | [`docs/project/acta-de-inicio-v3.md:7-8`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/project/acta-de-inicio-v3.md#L7-L8) |
 | **Delivery Skill** | Flujo de entrega autónomo estandarizado | v2.0.0 | [`skills/software-delivery-workflow.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/skills/software-delivery-workflow.md#L1) |
 | **Infraestructura** | Vercel (Plan Hobby/Free) + GitHub Actions | Operativo | [`vercel.json:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/vercel.json#L1) |
 | **Bitácora** | Historial de entregas y decisiones técnicas | Actualizado | [`resume.md:1`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/resume.md#L1) |
@@ -32,7 +33,7 @@ flowchart LR
     D --> E["GitHub Pull Request"]
     E --> F["CI & Security Actions<br>(.github/workflows/)"]
     E --> G["Vercel Preview Deployment<br>(URL para QA)"]
-    G --> H["Validación QA (Ivo)"]
+    G --> H["Validación QA (Ivan Juarez)"]
     F --> I{"Checks & QA OK?"}
     H --> I
     I -- Sí --> J["Merge a main"]
@@ -46,15 +47,15 @@ flowchart LR
 
 ## 3. Secuencia de Integración y Despliegue
 
-La interacción entre el Project Leader (**Matias**), la infraestructura de **Vercel** y el equipo de QA (**Ivo**) garantiza que ningún cambio llegue a producción sin validación visual y funcional previa ([`docs/workflow/guides/vercel-setup-guide.md:20-40`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/workflow/guides/vercel-setup-guide.md#L20-L40)).
+La interacción entre el Líder Técnico (**Matías**), la infraestructura de **Vercel** y el responsable de QA (**Ivan**) garantiza que ningún cambio llegue a producción sin validación visual y funcional previa ([`docs/workflow/guides/vercel-setup-guide.md:20-40`](https://github.com/Mathiiuk/reportalo.mvp/blob/main/docs/workflow/guides/vercel-setup-guide.md#L20-L40)).
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Mati as Matias (PL / Dev)
+    actor Mati as Matías (Tech Lead)
     participant GH as GitHub (PR & Actions)
     participant Vercel as Vercel (Edge Engine)
-    actor Ivo as Ivo (QA)
+    actor Ivan as Ivan Juarez (QA)
 
     Mati->>GH: Push de rama feat/ y apertura de PR
     par Ejecución de CI
@@ -65,9 +66,9 @@ sequenceDiagram
         Vercel->>Vercel: Generar Preview Deployment
         Vercel->>GH: Comentar PR con enlace público de preview
     end
-    Ivo->>GH: Accede al PR y hace clic en la URL de preview
-    Ivo->>Vercel: Realiza pruebas visuales y funcionales (sin login)
-    Ivo->>GH: Aprueba el PR
+    Ivan->>GH: Accede al PR y hace clic en la URL de preview
+    Ivan->>Vercel: Realiza pruebas visuales y funcionales (sin login)
+    Ivan->>GH: Aprueba el PR
     Mati->>GH: Merge a main
     GH->>Vercel: Despliegue automático a Producción
 ```
@@ -75,43 +76,15 @@ sequenceDiagram
 
 ---
 
-## 4. Estado de los Componentes y Workflows
-
-```mermaid
-graph TD
-    subgraph Repo["Repositorio Mathiiuk/reportalo.mvp"]
-        W1[".github/workflows/ci.yml"]
-        W2[".github/workflows/security.yml"]
-        W3[".github/workflows/deploy-template.yml"]
-        W4[".github/workflows/wiki-sync.yml"]
-        VJ["vercel.json"]
-        DOCS["docs/workflow/ (Tasks / Specs / Plans)"]
-    end
-
-    subgraph Plataformas["Plataformas Conectadas"]
-        P_GH["GitHub Actions"]
-        P_VERCEL["Vercel Cloud (Hobby Plan)"]
-        P_WIKI["GitHub Wiki"]
-    end
-
-    W1 --> P_GH
-    W2 --> P_GH
-    W3 --> P_GH
-    W4 --> P_WIKI
-    VJ --> P_VERCEL
-```
-<!-- Sources: .github/workflows/ci.yml:1-35, .github/workflows/security.yml:1-18, vercel.json:1-6 -->
-
----
-
-## 5. Índice de Documentación de la Wiki
+## 4. Índice de Documentación de la Wiki
 
 | Sección | Descripción | Destinatario Principal | Enlace |
 | :--- | :--- | :--- | :--- |
-| **01. Flujo de Trabajo** | Metodología de desarrollo, máquina de estados y quality gates | Todo el equipo | [Ver Página](01-flujo-de-trabajo) |
-| **02. Guía QA & Testing** | Manual de validación de Previews en Vercel y checklist de testing | QA (Ivo) / PL | [Ver Página](02-guia-qa-testing) |
-| **03. CI/CD e Infra** | Detalle de GitHub Actions, sintaxis de pipelines y Vercel | DevOps / PL | [Ver Página](03-ci-cd-infraestructura) |
-| **04. Roles y Gobernanza** | Matriz RACI, políticas de PRs, issues y commits | Todo el equipo | [Ver Página](04-roles-y-gobernanza) |
+| **01. Acta de Inicio v3.0** | Visión del producto, alcance MVP, exclusiones, matriz de organismos y métricas | Todo el equipo / Sponsor | [Ver Página](01-acta-de-inicio) |
+| **02. Flujo de Trabajo** | Metodología de desarrollo, máquina de estados y quality gates | Engineering Team | [Ver Página](02-flujo-de-trabajo) |
+| **03. Guía QA & Testing** | Manual de validación de Previews en Vercel y checklist de testing | QA (Ivan) / Devs | [Ver Página](03-guia-qa-testing) |
+| **04. Roles y Gobernanza** | Equipo oficial, matriz RACI y políticas de PRs | Todo el equipo | [Ver Página](04-roles-y-gobernanza) |
+| **05. CI/CD e Infraestructura** | Detalle de GitHub Actions, sintaxis de pipelines y Vercel | DevOps / Tech Lead | [Ver Página](05-ci-cd-infraestructura) |
 
 ---
 
@@ -119,7 +92,8 @@ graph TD
 
 | Página | Relación |
 | :--- | :--- |
-| [Flujo de Trabajo](01-flujo-de-trabajo) | Detalla la máquina de estados completa y ciclo de vida de tareas |
-| [Guía QA & Testing](02-guia-qa-testing) | Procedimiento de validación paso a paso para Ivo |
-| [CI/CD e Infraestructura](03-ci-cd-infraestructura) | Configuración de GitHub Actions y despliegues en Vercel |
-| [Roles y Gobernanza](04-roles-y-gobernanza) | Responsabilidades del equipo y políticas de contribución |
+| [Acta de Inicio v3.0](01-acta-de-inicio) | Marco estratégico y requerimientos funcionales del MVP |
+| [Flujo de Trabajo](02-flujo-de-trabajo) | Máquina de estados completa y ciclo de vida de tareas |
+| [Guía QA & Testing](03-guia-qa-testing) | Procedimiento de validación paso a paso para Ivan Juarez |
+| [Roles y Gobernanza](04-roles-y-gobernanza) | Matriz RACI y responsabilidades del equipo |
+| [CI/CD e Infraestructura](05-ci-cd-infraestructura) | Configuración de GitHub Actions y despliegues en Vercel |

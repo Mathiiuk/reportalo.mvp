@@ -112,6 +112,7 @@ Todos los mensajes de commit deben formularse en **español** siguiendo el está
 | Página | Relación |
 | :--- | :--- |
 | [Inicio (Home)](Home) | Portal general y visión de arquitectura |
-| [Guía QA & Testing](02-guia-qa-testing) | Criterios para la aprobación de tareas por QA |
-| [CI/CD e Infraestructura](03-ci-cd-infraestructura) | Ejecución técnica de los pipelines en GitHub Actions |
+| [Acta de Inicio](01-acta-de-inicio) | Requerimientos estratégicos y alcance del MVP |
+| [Guía QA & Testing](03-guia-qa-testing) | Criterios para la aprobación de tareas por Ivan Juarez |
 | [Roles y Gobernanza](04-roles-y-gobernanza) | Matriz RACI y responsabilidades por etapa |
+| [CI/CD e Infraestructura](05-ci-cd-infraestructura) | Ejecución técnica de los pipelines en GitHub Actions |

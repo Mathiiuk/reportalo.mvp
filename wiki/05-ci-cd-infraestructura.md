@@ -85,6 +85,7 @@ Sincroniza en tiempo real los cambios del directorio `wiki/` con el repositorio 
 | Página | Relación |
 | :--- | :--- |
 | [Inicio (Home)](Home) | Portal general |
-| [Flujo de Trabajo](01-flujo-de-trabajo) | Máquina de estados de desarrollo |
-| [Guía QA & Testing](02-guia-qa-testing) | Validación de despliegues por QA |
+| [Acta de Inicio](01-acta-de-inicio) | Requerimientos estratégicos del MVP |
+| [Flujo de Trabajo](02-flujo-de-trabajo) | Máquina de estados de desarrollo |
+| [Guía QA & Testing](03-guia-qa-testing) | Validación de despliegues por Ivan Juarez |
 | [Roles y Gobernanza](04-roles-y-gobernanza) | Control de cambios y accesos |
