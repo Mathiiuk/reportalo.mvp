@@ -1,0 +1,78 @@
+id: REP-3307
+external_ref: "https://jira.reportalo.com/browse/REP-3307"
+title: "Configurar ambiente staging"
+type: chore
+status: IN_PROGRESS
+priority: highest
+owner: "Matías Krepchuk"
+base_branch: staging
+
+scope:
+  project: "reportalo.mvp"
+  modules: ["infra", "ci-cd", "vercel", "staging"]
+  environments: [staging, production]
+
+requirements:
+  - "Configurar un entorno de Staging permanente y estable con URL fija en Vercel."
+  - "Permitir que el Sponsor (Carlos Ruiz) y el PM (Leonel Nuñez) revisen entregas consolidadas y demos sin que la URL cambie."
+  - "Asegurar que los pipelines de CI y Seguridad validen automáticamente la rama staging."
+
+acceptance_criteria:
+  - "AC-01: Existe una rama permanente staging en el repositorio GitHub."
+  - "AC-02: La rama staging está vinculada a un dominio/alias fijo en Vercel (ej. reportalo-staging.vercel.app)."
+  - "AC-03: Cada merge a staging despliega automáticamente la versión consolidada y estable."
+  - "AC-04: Los workflows ci.yml y security.yml se ejecutan automáticamente en push a staging."
+  - "AC-05: El Sponsor (Carlos Ruiz) puede acceder a la URL fija de Staging públicamente y sin credenciales de Vercel."
+
+constraints:
+  - "Plan Vercel Hobby / Free (dominio asignado a rama de Git sin costo adicional)."
+  - "El entorno de Staging no debe verse afectado por commits experimentales en ramas de feature."
+
+risks:
+  - "Desincronización entre staging y main si no se respeta el flujo de Sprint Review. Mitigado con políticas de merge."
+
+dependencies:
+  - "REP-1013 (DevOps / Infraestructura)"
+  - "REP-3304 (Vercel Previews)"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3307.md"
+  implementation_plan: "docs/workflow/plans/REP-3307.md"
+  test_plan: "docs/workflow/tests/REP-3307.md"
+  execution_report: "docs/workflow/executions/REP-3307-run-001.md"
+
+quality_gates:
+  lint: true
+  typecheck: false
+  unit_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "Vercel Instant Rollback desde dashboard o redeploy del commit previo en staging"
+
+branch:
+  type: feat
+  name: "feat/REP-3307-configurar-staging"
+
+commands:
+  install: ""
+  lint: ""
+  typecheck: ""
+  unit_tests: ""
+  integration_tests: ""
+  e2e: ""
+  build: ""
+  security: ""
+  smoke_tests: ""
+  deploy_staging: ""
+  deploy_production: ""
+  rollback: ""
