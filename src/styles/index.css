@@ -1,3 +1,6 @@
+/* Estilos del motor de mapas MapLibre GL JS (controles, popup, atribución) */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 /* Directivas base de Tailwind CSS */
 @tailwind base;
 @tailwind components;
