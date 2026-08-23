@@ -1,13 +1,19 @@
 // ==============================================================================
-// Formulario de Registro Ciudadano (RegisterForm.jsx)
+// Formulario de Registro Ciudadano Pulido y Accesible (RegisterForm.jsx)
 // ==============================================================================
 
+// Importación de React y hooks de estado
 import React, { useState } from 'react';
+// Hook de gestión de formularios
 import { useForm } from 'react-hook-form';
+// Hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
+// Notificaciones Toast de Sonner
 import { toast } from 'sonner';
+// Hooks de autenticación y estado de onboarding
 import { useAuth } from '../../hooks/useAuth';
 import { useOnboarding } from '../../hooks/useOnboarding';
+// Componentes UI comunes
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { Modal } from '../ui/Modal';
@@ -79,10 +85,11 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5 text-left">
-        <div className="mb-1">
-          <h3 className="text-xl font-bold text-content-primary">Crear cuenta</h3>
-          <p className="text-xs text-content-secondary mt-0.5">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 text-left">
+        {/* Cabecera del formulario */}
+        <div className="mb-0.5">
+          <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Crear cuenta</h3>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
             Sumate para reportar y transformar el espacio público de tu ciudad.
           </p>
         </div>
@@ -125,7 +132,7 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           })}
         />
 
-        {/* Campo Contraseña reforzada (mínimo 8 caracteres según security-guardian) */}
+        {/* Campo Contraseña reforzada */}
         <Input
           label="Contraseña"
           type="password"
@@ -158,15 +165,15 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
         />
 
         {/* Checkbox Obligatorio de Términos y Condiciones */}
-        <div className="flex items-start gap-2.5 mt-1">
+        <div className="flex items-start gap-2.5 mt-0.5 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-200/60">
           <input
             id="terms-checkbox"
             type="checkbox"
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="w-4.5 h-4.5 mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/40 cursor-pointer"
+            className="w-4.5 h-4.5 mt-0.5 rounded-md border-slate-300 text-primary focus:ring-primary/30 cursor-pointer accent-primary"
           />
-          <label htmlFor="terms-checkbox" className="text-xs text-content-secondary leading-snug cursor-pointer">
+          <label htmlFor="terms-checkbox" className="text-xs text-slate-600 leading-snug cursor-pointer font-medium select-none">
             Acepto los{' '}
             <button
               type="button"
@@ -180,7 +187,7 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
         </div>
 
         {/* Botón de Registro (Color Accent #F88F37) */}
-        <div className="mt-2">
+        <div className="mt-1">
           <Button
             type="submit"
             variant="accent"
@@ -192,11 +199,14 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           </Button>
         </div>
 
-        {/* Separador */}
-        <div className="flex items-center gap-3 my-0.5">
-          <div className="flex-1 h-px bg-slate-200"></div>
-          <span className="text-[11px] font-semibold text-content-tertiary uppercase">o</span>
-          <div className="flex-1 h-px bg-slate-200"></div>
+        {/* Separador elegante */}
+        <div className="relative flex items-center justify-center my-1">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200"></div>
+          </div>
+          <span className="relative bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            o registrarse con
+          </span>
         </div>
 
         {/* Botón Registrarse con Google (Deshabilitado sin T&C) */}
@@ -207,7 +217,7 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           onClick={handleGoogleRegister}
           disabled={!acceptedTerms}
           icon={
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -232,12 +242,12 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
 
         {/* Conmutador a Login */}
         {onSwitchToLogin && (
-          <div className="text-center mt-2 text-xs text-content-secondary">
+          <div className="text-center mt-1 text-xs text-slate-600 font-medium">
             ¿Ya tenés una cuenta?{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="font-bold text-primary hover:text-primary-dark cursor-pointer"
+              className="font-bold text-primary hover:text-primary-dark cursor-pointer underline-offset-2 hover:underline"
             >
               Iniciá sesión acá
             </button>

@@ -1,16 +1,24 @@
 // ==============================================================================
-// Página de Permisos y Privacidad Ciudadana (PermisosPage.jsx)
+// Página de Permisos y Privacidad Ciudadana Pulida (PermisosPage.jsx)
 // ==============================================================================
 
+// Importación de React y hooks de estado
 import React, { useState, useEffect } from 'react';
+// Hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
+// Iconografía temática
 import { Camera, MapPin, ArrowRight } from 'lucide-react';
+// Notificaciones emergentes
 import { toast } from 'sonner';
+// Hook de contexto de onboarding
 import { useOnboarding } from '../hooks/useOnboarding';
+// Handlers nativos de permisos del navegador
 import {
   requestCameraPermission,
   requestLocationPermission,
 } from '../utils/permissions';
+// Componentes visuales
+import { Logo } from '../components/common/Logo';
 import { PermisoCard } from '../components/permisos/PermisoCard';
 import { PrivacyBlock } from '../components/permisos/PrivacyBlock';
 import { Button } from '../components/common/Button';
@@ -46,7 +54,7 @@ export const PermisosPage = () => {
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
 
-  // Solicitar cámara secuencialmente
+  // Solicitar cámara
   const handleRequestCamera = async () => {
     setIsRequestingCamera(true);
     const result = await requestCameraPermission();
@@ -89,27 +97,36 @@ export const PermisosPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-surface-muted flex flex-col justify-between items-center px-5 pt-8 pb-6 safe-top safe-bottom">
-      <div className="w-full max-w-md mx-auto flex flex-col gap-5">
-        {/* Encabezado */}
-        <div className="text-left">
-          <h1 className="text-2xl font-bold tracking-tight text-content-primary">
+    <div className="min-h-[100dvh] w-full bg-surface-muted flex flex-col justify-between items-center px-4.5 sm:px-6 pt-6 pb-6 safe-top safe-bottom overflow-x-hidden">
+      {/* Contenido Principal */}
+      <div className="w-full max-w-md mx-auto flex flex-col gap-4.5">
+        {/* Cabecera con Logo */}
+        <div className="flex items-center justify-between">
+          <Logo size="sm" showText={true} />
+          <span className="text-[11px] font-bold text-primary bg-primary-light px-2.5 py-1 rounded-full">
+            Paso 2 de 2
+          </span>
+        </div>
+
+        {/* Título de la pantalla */}
+        <div className="text-left mt-1">
+          <h1 className="text-2xl font-extrabold tracking-tight text-content-primary">
             Activá los permisos
           </h1>
-          <p className="text-xs text-content-secondary mt-1 leading-relaxed">
-            Reportalo solo usa tus permisos cuando son necesarios para capturar y georreferenciar un reporte.
+          <p className="text-xs text-content-secondary mt-1 leading-relaxed font-medium">
+            Reportalo solo utiliza tus permisos cuando son necesarios para capturar y georreferenciar tu reporte.
           </p>
         </div>
 
         {/* Bloque Destacado de Privacidad */}
         <PrivacyBlock />
 
-        {/* Tarjetas de Permisos */}
-        <div className="flex flex-col gap-3.5">
+        {/* Tarjetas de Permisos con diseño horizontal y botones compactos */}
+        <div className="flex flex-col gap-3">
           <PermisoCard
             icon={Camera}
             title="Cámara"
-            description="Capturá la evidencia directamente desde Reportalo."
+            description="Capturá la evidencia fotográfica directamente en la app."
             status={cameraStatus}
             onRequest={handleRequestCamera}
             isLoading={isRequestingCamera}
@@ -118,7 +135,7 @@ export const PermisosPage = () => {
           <PermisoCard
             icon={MapPin}
             title="Ubicación"
-            description="Usamos tu ubicación para georreferenciar el reporte en el mapa."
+            description="Georreferenciá automáticamente el lugar del incidente."
             status={locationStatus}
             onRequest={handleRequestLocation}
             isLoading={isRequestingLocation}
@@ -127,7 +144,7 @@ export const PermisosPage = () => {
       </div>
 
       {/* Botones de Acción Inferiores */}
-      <div className="w-full max-w-md mx-auto flex flex-col gap-2.5 mt-8">
+      <div className="w-full max-w-md mx-auto flex flex-col gap-2 mt-6">
         <Button
           variant="primary"
           size="lg"
@@ -139,11 +156,11 @@ export const PermisosPage = () => {
 
         <Button
           variant="ghost"
-          size="md"
+          size="sm"
           onClick={handleSkip}
-          className="text-content-secondary font-normal"
+          className="text-content-secondary font-semibold text-xs py-2 h-auto"
         >
-          Ahora no
+          Ahora no, configurar luego
         </Button>
       </div>
     </div>

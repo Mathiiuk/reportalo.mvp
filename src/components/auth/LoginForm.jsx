@@ -1,13 +1,19 @@
 // ==============================================================================
-// Formulario de Inicio de Sesión (LoginForm.jsx)
+// Formulario de Inicio de Sesión Pulido y Ergonómico (LoginForm.jsx)
 // ==============================================================================
 
+// Importación de React y hooks de estado
 import React, { useState } from 'react';
+// Hook de gestión de formularios
 import { useForm } from 'react-hook-form';
+// Hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
+// Notificaciones Toast de Sonner
 import { toast } from 'sonner';
+// Hooks de autenticación y estado de onboarding
 import { useAuth } from '../../hooks/useAuth';
 import { useOnboarding } from '../../hooks/useOnboarding';
+// Componentes UI comunes
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 
@@ -60,10 +66,11 @@ export const LoginForm = ({ onSwitchToRegister }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 text-left">
-      <div className="mb-1">
-        <h3 className="text-xl font-bold text-content-primary">Iniciar sesión</h3>
-        <p className="text-xs text-content-secondary mt-0.5">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5 text-left">
+      {/* Cabecera del formulario */}
+      <div className="mb-0.5">
+        <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Iniciar sesión</h3>
+        <p className="text-xs text-slate-500 mt-0.5 font-medium">
           Ingresá con tu cuenta para continuar reportando.
         </p>
       </div>
@@ -105,29 +112,32 @@ export const LoginForm = ({ onSwitchToRegister }) => {
         })}
       />
 
-      {/* Enlace de recuperación */}
+      {/* Enlace de recuperación de contraseña */}
       <div className="flex justify-end -mt-1">
         <button
           type="button"
           onClick={() => toast.info('Se envió un correo para recuperar tu contraseña.')}
-          className="text-xs font-semibold text-primary hover:text-primary-dark cursor-pointer transition-colors"
+          className="text-xs font-bold text-primary hover:text-primary-dark cursor-pointer transition-colors py-1"
         >
           ¿Olvidaste tu contraseña?
         </button>
       </div>
 
       {/* Botón Principal de Login */}
-      <div className="mt-2">
+      <div className="mt-1">
         <Button type="submit" variant="primary" size="lg" isLoading={isLoading}>
           Ingresar
         </Button>
       </div>
 
-      {/* Separador */}
-      <div className="flex items-center gap-3 my-1">
-        <div className="flex-1 h-px bg-slate-200"></div>
-        <span className="text-[11px] font-semibold text-content-tertiary uppercase">o</span>
-        <div className="flex-1 h-px bg-slate-200"></div>
+      {/* Separador elegante */}
+      <div className="relative flex items-center justify-center my-1.5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200"></div>
+        </div>
+        <span className="relative bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          o continuar con
+        </span>
       </div>
 
       {/* Botón Iniciar con Google */}
@@ -137,7 +147,7 @@ export const LoginForm = ({ onSwitchToRegister }) => {
         size="md"
         onClick={handleGoogleLogin}
         icon={
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -162,12 +172,12 @@ export const LoginForm = ({ onSwitchToRegister }) => {
 
       {/* Conmutador a Registro */}
       {onSwitchToRegister && (
-        <div className="text-center mt-2 text-xs text-content-secondary">
+        <div className="text-center mt-1 text-xs text-slate-600 font-medium">
           ¿No tenés una cuenta?{' '}
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="font-bold text-accent hover:text-accent-hover cursor-pointer"
+            className="font-bold text-accent hover:text-accent-hover cursor-pointer underline-offset-2 hover:underline"
           >
             Registrate acá
           </button>

@@ -1,14 +1,21 @@
 // ==============================================================================
-// Página Principal de la App: Mapa con MapLibre GL JS (MapaPage.jsx)
+// Página Principal de la App: Mapa con MapLibre GL JS Pulido (MapaPage.jsx)
 // ==============================================================================
 
+// Importación de React y referencias del DOM
 import React, { useEffect, useRef } from 'react';
+// Hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
+// Motor de mapas MapLibre GL JS
 import maplibregl from 'maplibre-gl';
+// Iconografía temática
 import { LogOut, MapPin, Layers } from 'lucide-react';
+// Notificaciones Toast de Sonner
 import { toast } from 'sonner';
+// Hooks de autenticación y onboarding
 import { useAuth } from '../hooks/useAuth';
 import { useOnboarding } from '../hooks/useOnboarding';
+// Componente de Marca
 import { Logo } from '../components/common/Logo';
 
 export const MapaPage = () => {
@@ -26,12 +33,12 @@ export const MapaPage = () => {
       mapInstanceRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
         style: 'https://demotiles.maplibre.org/style.json', // Estilo demo gratuito
-        center: [-58.3648, -34.6625], // Coordenadas aproximadas de Avellaneda / CABA
+        center: [-58.3648, -34.6625], // Coordenadas de Avellaneda / CABA
         zoom: 12,
         attributionControl: false,
       });
 
-      // Controles de navegación del mapa
+      // Controles de navegación y brújula
       mapInstanceRef.current.addControl(
         new maplibregl.NavigationControl({ showCompass: true, showZoom: true }),
         'top-right'
@@ -63,16 +70,16 @@ export const MapaPage = () => {
   };
 
   return (
-    <div className="relative h-screen w-full bg-slate-900 overflow-hidden flex flex-col">
-      {/* 1. Barra Superior Flotante */}
-      <header className="absolute top-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-md px-4 py-3 border-b border-slate-200/80 flex items-center justify-between shadow-sm safe-top">
-        <div className="flex items-center gap-2">
+    <div className="relative h-[100dvh] w-full bg-slate-900 overflow-hidden flex flex-col">
+      {/* 1. Barra Superior Flotante con Glassmorphism */}
+      <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-md px-4 py-2.5 border-b border-slate-200/80 flex items-center justify-between shadow-xs safe-top">
+        <div className="flex items-center gap-2.5">
           <Logo size="sm" showText={false} />
           <div className="flex flex-col text-left">
-            <span className="text-sm font-bold text-content-primary leading-tight">
-              Reportalo V2
+            <span className="text-sm font-extrabold text-slate-900 leading-tight">
+              Reportalo
             </span>
-            <span className="text-[11px] font-medium text-content-secondary truncate max-w-[180px]">
+            <span className="text-[11px] font-medium text-slate-500 truncate max-w-[160px] sm:max-w-xs">
               {user?.email || 'Ciudadano'}
             </span>
           </div>
@@ -80,7 +87,7 @@ export const MapaPage = () => {
 
         {/* Indicador de Jurisdicción y Botón de Salida */}
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1 text-xs font-semibold bg-primary-light text-primary-dark px-2.5 py-1 rounded-full">
+          <div className="hidden xs:flex items-center gap-1 text-xs font-bold bg-primary-light text-primary-dark px-3 py-1 rounded-full border border-primary/20">
             <MapPin className="w-3.5 h-3.5" />
             <span>Avellaneda / CABA</span>
           </div>
@@ -88,11 +95,11 @@ export const MapaPage = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className="p-2 text-content-secondary hover:text-red-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
+            className="px-3 py-1.5 text-slate-600 hover:text-red-600 hover:bg-red-50/70 border border-slate-200/70 hover:border-red-200 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-95 shadow-2xs"
             title="Cerrar sesión"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden xs:inline">Salir</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Salir</span>
           </button>
         </div>
       </header>
@@ -104,10 +111,10 @@ export const MapaPage = () => {
         className="w-full h-full flex-1 bg-slate-100 z-10"
       />
 
-      {/* 3. Badge Informativo Inferior */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-card border border-slate-200 text-xs font-semibold text-content-secondary flex items-center gap-2 safe-bottom">
+      {/* 3. Badge Informativo Inferior Flotante */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-md border border-slate-200/80 text-xs font-bold text-slate-700 flex items-center gap-2 safe-bottom">
         <Layers className="w-4 h-4 text-primary" />
-        <span>Mapa de Reportes Ciudadanos · Sprint V2</span>
+        <span>Mapa de Reportes · Sprint V2</span>
       </div>
     </div>
   );

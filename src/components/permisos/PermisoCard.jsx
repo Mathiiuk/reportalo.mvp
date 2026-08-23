@@ -1,9 +1,12 @@
 // ==============================================================================
-// Tarjeta de Permiso Individual (PermisoCard.jsx)
+// Tarjeta de Permiso Individual Pulida y Ergonómica (PermisoCard.jsx)
 // ==============================================================================
 
+// Importación de React
 import React from 'react';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+// Iconos de estado y feedback
+import { Check, AlertCircle, RefreshCw } from 'lucide-react';
+// Importación del botón común
 import { Button } from '../common/Button';
 
 export const PermisoCard = ({
@@ -15,61 +18,76 @@ export const PermisoCard = ({
   isLoading = false,
 }) => {
   return (
-    <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-card flex flex-col gap-3 transition-all">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {/* Icono del Permiso */}
-          <div className="w-11 h-11 rounded-2xl bg-primary-light text-primary flex items-center justify-center flex-shrink-0">
-            {Icon && <Icon className="w-6 h-6" />}
-          </div>
-
-          <div className="text-left">
-            <h3 className="text-sm font-bold text-content-primary leading-tight">
-              {title}
-            </h3>
-            <p className="text-xs text-content-secondary mt-0.5 leading-snug">
-              {description}
-            </p>
-          </div>
+    <div
+      className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 shadow-xs ${
+        status === 'granted'
+          ? 'bg-emerald-50/40 border-emerald-200/80'
+          : status === 'denied'
+          ? 'bg-red-50/40 border-red-200/80'
+          : 'bg-white border-slate-200/80 hover:border-slate-300'
+      }`}
+    >
+      {/* Contenedor izquierdo: Icono y Textos */}
+      <div className="flex items-center gap-3.5 min-w-0 text-left">
+        {/* Icono temático del permiso */}
+        <div
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors ${
+            status === 'granted'
+              ? 'bg-emerald-100 text-emerald-700'
+              : status === 'denied'
+              ? 'bg-red-100 text-red-700'
+              : 'bg-primary-light text-primary'
+          }`}
+        >
+          {Icon && <Icon className="w-5 h-5" />}
         </div>
 
-        {/* Indicador de Estado */}
-        <div className="flex-shrink-0 ml-2">
-          {status === 'granted' && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Activado
-            </span>
-          )}
-
-          {status === 'denied' && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
-              <XCircle className="w-3.5 h-3.5" />
-              Rechazado
-            </span>
-          )}
-
-          {status === 'prompt' && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-content-tertiary bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Pendiente
-            </span>
-          )}
+        {/* Textos descriptivos */}
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm font-bold text-content-primary leading-snug truncate">
+            {title}
+          </span>
+          <span className="text-xs text-content-secondary leading-snug mt-0.5 line-clamp-2">
+            {description}
+          </span>
         </div>
       </div>
 
-      {/* Botón de activación si el permiso aún no está concedido */}
-      {status !== 'granted' && (
-        <Button
-          variant={status === 'denied' ? 'outline' : 'primary'}
-          size="sm"
-          onClick={onRequest}
-          isLoading={isLoading}
-          className="mt-0.5"
-        >
-          {status === 'denied' ? `Reintentar ${title.toLowerCase()}` : `Permitir ${title.toLowerCase()}`}
-        </Button>
-      )}
+      {/* Contenedor derecho: Acción o Badge de Estado */}
+      <div className="flex-shrink-0">
+        {status === 'granted' ? (
+          // Estado Concedido (Insignia verde con check)
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-100/90 text-emerald-800 text-xs font-bold shadow-2xs">
+            <Check className="w-4 h-4 stroke-[2.5]" />
+            <span>Listo</span>
+          </div>
+        ) : status === 'denied' ? (
+          // Estado Denegado (Botón de reintento)
+          <Button
+            variant="outline"
+            size="sm"
+            fullWidth={false}
+            onClick={onRequest}
+            isLoading={isLoading}
+            className="border-red-200 text-red-700 hover:bg-red-50 text-xs h-9 px-3 rounded-xl"
+          >
+            <RefreshCw className="w-3.5 h-3.5 mr-1" />
+            Reintentar
+          </Button>
+        ) : (
+          // Estado Pendiente (Botón de activación suave)
+          <Button
+            variant="secondary-light"
+            size="sm"
+            fullWidth={false}
+            onClick={onRequest}
+            isLoading={isLoading}
+            className="text-xs h-9 px-3.5 rounded-xl shadow-2xs"
+          >
+            Permitir
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
