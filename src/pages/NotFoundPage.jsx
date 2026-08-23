@@ -8,9 +8,10 @@ export const NotFoundPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center safe-top safe-bottom">
-      <div className="w-full max-w-md mx-auto min-h-[100dvh] flex flex-col px-6 pt-6 pb-6">
-        <header className="w-full flex items-center justify-between mb-4">
+    <div className="relative h-[100dvh] w-full bg-white flex flex-col">
+      {/* Header fijo */}
+      <header className="flex-shrink-0 w-full px-6 pt-4 pb-2 safe-top">
+        <div className="w-full max-w-md mx-auto flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -27,37 +28,45 @@ export const NotFoundPage = () => {
           />
 
           <div className="w-10" />
-        </header>
+        </div>
+      </header>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex-1 flex flex-col items-center justify-center text-center"
-        >
-          <div className="relative mb-6">
-            <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center">
-              <MapPinOff className="w-12 h-12 text-slate-300" strokeWidth={1.5} />
+      {/* Contenido centrado */}
+      <main className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="flex flex-col items-center text-center"
+          >
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center">
+                <MapPinOff className="w-12 h-12 text-slate-300" strokeWidth={1.5} aria-hidden="true" />
+              </div>
+              <span className="absolute -top-1 -right-1 text-5xl font-black text-slate-200 select-none" aria-hidden="true">
+                404
+              </span>
             </div>
-            <span className="absolute -top-1 -right-1 text-5xl font-black text-slate-200 select-none">
-              404
-            </span>
-          </div>
 
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            Página no encontrada
-          </h1>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              Página no encontrada
+            </h1>
 
-          <p className="text-sm text-slate-500 mt-2 max-w-xs leading-relaxed">
-            Parece que esta dirección no existe o fue movida a otro lugar.
-          </p>
+            <p className="text-sm text-slate-500 mt-2 max-w-xs leading-relaxed">
+              Parece que esta dirección no existe o fue movida a otro lugar.
+            </p>
 
-          <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-            <span>La ruta no coincide con ningún reporte conocido</span>
-          </div>
-        </motion.div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+              <span>La ruta no coincide con ningún reporte conocido</span>
+            </div>
+          </motion.div>
+        </div>
+      </main>
 
-        <div className="w-full pb-4 flex flex-col gap-3">
+      {/* Botones fijos abajo */}
+      <div className="flex-shrink-0 w-full px-6 pb-4 safe-bottom" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+        <div className="w-full max-w-md mx-auto flex flex-col gap-3">
           <Button onClick={() => navigate('/map')}>
             Volver al mapa
           </Button>

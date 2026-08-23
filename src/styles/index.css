@@ -16,14 +16,37 @@
 }
 
 /* Reset y optimización de interacción táctil */
-html, body {
+html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* Área scrollable para secciones que lo requieran (reports, alerts, profile) */
+.scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar sutil en áreas scrollables */
+.scroll-area::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 99px;
 }
 
 /* Clases de utilidad para respetar áreas seguras */

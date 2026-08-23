@@ -10,9 +10,10 @@ export const UnderConstruction = ({ title, description, icon: Icon = Constructio
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-white flex flex-col items-center safe-top safe-bottom">
-      <div className="w-full max-w-md mx-auto min-h-[100dvh] flex flex-col px-6 pt-6 pb-6">
-        <header className="w-full flex items-center justify-between mb-4">
+    <div className="relative h-[100dvh] w-full bg-white flex flex-col">
+      {/* Header fijo */}
+      <header className="flex-shrink-0 w-full px-6 pt-4 pb-2 safe-top">
+        <div className="w-full max-w-md mx-auto flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -29,33 +30,41 @@ export const UnderConstruction = ({ title, description, icon: Icon = Constructio
           />
 
           <div className="w-10" />
-        </header>
+        </div>
+      </header>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex-1 flex flex-col items-center justify-center text-center pb-24"
-        >
-          <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center mb-6">
-            <Icon className="w-10 h-10 text-amber-500" strokeWidth={1.8} />
-          </div>
+      {/* Contenido scrollable */}
+      <main className="flex-1 overflow-y-auto scroll-area">
+        <div className="w-full max-w-md mx-auto px-6 py-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="flex flex-col items-center text-center"
+          >
+            <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center mb-6">
+              <Icon className="w-10 h-10 text-amber-500" strokeWidth={1.8} aria-hidden="true" />
+            </div>
 
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            {title}
-          </h1>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              {title}
+            </h1>
 
-          <p className="text-sm text-slate-500 mt-2 max-w-xs leading-relaxed">
-            {description}
-          </p>
+            <p className="text-sm text-slate-500 mt-2 max-w-xs leading-relaxed">
+              {description}
+            </p>
 
-          <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-amber-600 bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Próximamente</span>
-          </div>
-        </motion.div>
+            <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-amber-600 bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
+              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Próximamente</span>
+            </div>
+          </motion.div>
+        </div>
+      </main>
 
-        <div className="w-full pb-4">
+      {/* Botón fijo abajo */}
+      <div className="flex-shrink-0 w-full px-6 pb-3 safe-bottom" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <div className="w-full max-w-md mx-auto">
           <Button variant="outline" onClick={() => navigate('/map')}>
             Volver al mapa
           </Button>

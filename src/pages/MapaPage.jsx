@@ -292,7 +292,7 @@ export const MapaPage = () => {
         type="button"
         onClick={() => handleGeolocate(false)}
         disabled={isLocating}
-        className={`absolute bottom-20 right-4 z-20 w-12 h-12 rounded-full shadow-lg border flex items-center justify-center transition-all active:scale-90 cursor-pointer safe-bottom ${
+        className={`absolute bottom-[132px] right-4 z-20 w-12 h-12 rounded-full shadow-lg border flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
           userLocated
             ? 'bg-primary text-white border-primary/30 shadow-primary/20'
             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
