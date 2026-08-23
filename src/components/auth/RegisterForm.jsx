@@ -63,8 +63,12 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
     }
   };
 
-  // Registro con Google OAuth
+  // Registro con Google OAuth (requiere aceptar Términos y Condiciones)
   const handleGoogleRegister = async () => {
+    if (!acceptedTerms) {
+      toast.warning('Debés aceptar los Términos y Condiciones para registrarte con Google.');
+      return;
+    }
     try {
       await signInWithGoogle();
     } catch (error) {
@@ -187,12 +191,13 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
-        {/* Botón Registrarse con Google */}
+        {/* Botón Registrarse con Google (Deshabilitado sin T&C) */}
         <Button
           type="button"
           variant="google"
           size="md"
           onClick={handleGoogleRegister}
+          disabled={!acceptedTerms}
           icon={
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
