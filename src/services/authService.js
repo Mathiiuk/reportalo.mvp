@@ -42,11 +42,11 @@ export const signIn = async (email, password) => {
 
 // Iniciar sesión o registrarse mediante Google OAuth
 export const signInWithGoogle = async () => {
-  // Redirección OAuth con proveedor Google
+  // Redirección OAuth con proveedor Google hacia el origen de la app
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/permisos',
+      redirectTo: window.location.origin,
     },
   });
 
