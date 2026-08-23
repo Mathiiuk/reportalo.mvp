@@ -13,6 +13,8 @@ import { Button } from '../components/common/Button';
 import { LoginForm } from '../components/auth/LoginForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
 
+import { toast } from 'sonner';
+
 export const HomePage = () => {
   const { isAuthenticated, loading } = useAuth();
   const { onboardingStatus, setRegistered } = useOnboarding();
@@ -20,6 +22,23 @@ export const HomePage = () => {
 
   // Estado para controlar qué formulario está activo ('login' | 'register' | null)
   const [activeForm, setActiveForm] = useState(null);
+
+  // Detectar y notificar errores provenientes de OAuth (ej. signups_disabled)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorMsg = params.get('error_description') || params.get('error');
+    const errorCode = params.get('error_code');
+
+    if (errorMsg || errorCode) {
+      if (errorCode === 'signup_disabled') {
+        toast.error('Los registros están deshabilitados en el panel de Supabase (Activar "Allow new users to sign up").');
+      } else {
+        toast.error(`Error de autenticación: ${errorMsg || errorCode}`);
+      }
+      // Limpiar los parámetros de la URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Redirigir automáticamente si el usuario ya inició sesión (ej. tras redirección de Google OAuth)
   useEffect(() => {

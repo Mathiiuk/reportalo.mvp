@@ -19,12 +19,26 @@ export const PermisosPage = () => {
   const { setCompleted, setRegistered, onboardingStatus } = useOnboarding();
   const navigate = useNavigate();
 
-  // Asegurar que el estado del usuario sea al menos 'registered'
+  // Detectar si hubo error en el callback de OAuth y redirigir a Home con notificación
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorMsg = params.get('error_description') || params.get('error');
+    const errorCode = params.get('error_code');
+
+    if (errorMsg || errorCode) {
+      if (errorCode === 'signup_disabled') {
+        toast.error('Los registros están deshabilitados en el panel de Supabase (Activar "Allow new users to sign up").');
+      } else {
+        toast.error(`Error de autenticación: ${errorMsg || errorCode}`);
+      }
+      navigate('/', { replace: true });
+      return;
+    }
+
     if (onboardingStatus === 'new') {
       setRegistered();
     }
-  }, [onboardingStatus, setRegistered]);
+  }, [onboardingStatus, setRegistered, navigate]);
 
   // Estados de los permisos ('prompt' | 'granted' | 'denied')
   const [cameraStatus, setCameraStatus] = useState('prompt');
