@@ -38,28 +38,8 @@ const MAX_ZOOM = 16; // Nivel de detalle máximo calle por calle
 const DEFAULT_ZOOM = 12; // Zoom inicial que muestra CABA + Avellaneda completo
 const GEOLOCATE_ZOOM = 14; // Zoom al centrar en la ubicación del usuario
 
-// Estilo de mapa con tiles raster de OpenStreetMap (gratuitos, sin API key)
-const OSM_STYLE = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxzoom: 19,
-    },
-  },
-  layers: [
-    {
-      id: 'osm-tiles',
-      type: 'raster',
-      source: 'osm',
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
+// Estilo Liberty de CARTO (vector tiles, gratuito, sin API key)
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/liberty-gl-style/style.json';
 
 // ==============================================================================
 // Componente principal del mapa
@@ -90,7 +70,7 @@ export const MapaPage = () => {
       // Crear instancia del mapa con configuración optimizada para móviles
       mapInstanceRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: OSM_STYLE, // Tiles raster de OpenStreetMap
+        style: MAP_STYLE, // CARTO Liberty vector tiles
         center: DEFAULT_CENTER, // Centro de CABA
         zoom: DEFAULT_ZOOM, // Zoom inicial panorámico
         maxBounds: [BOUNDS.sw, BOUNDS.ne], // Restricción geográfica
