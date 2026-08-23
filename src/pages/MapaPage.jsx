@@ -15,8 +15,6 @@ import { toast } from 'sonner';
 // Hooks de autenticación y onboarding
 import { useAuth } from '../hooks/useAuth';
 import { useOnboarding } from '../hooks/useOnboarding';
-// Componente de Marca
-import { Logo } from '../components/common/Logo';
 
 export const MapaPage = () => {
   const mapContainerRef = useRef(null);
@@ -74,7 +72,11 @@ export const MapaPage = () => {
       {/* 1. Barra Superior Flotante con Glassmorphism */}
       <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-md px-4 py-2.5 border-b border-slate-200/80 flex items-center justify-between shadow-xs safe-top">
         <div className="flex items-center gap-2.5">
-          <Logo size="sm" showText={false} />
+          <img
+            src="/logo-icon.png"
+            alt="Reportalo"
+            className="w-7 h-8 object-contain select-none"
+          />
           <div className="flex flex-col text-left">
             <span className="text-sm font-extrabold text-slate-900 leading-tight">
               Reportalo

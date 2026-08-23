@@ -100,9 +100,13 @@ export const PermisosPage = () => {
       <div className="w-full max-w-md mx-auto min-h-[100dvh] flex flex-col justify-between px-6 pt-6 pb-6">
         {/* Contenido Superior */}
         <div className="flex flex-col gap-5">
-          {/* Barra Superior con Logo */}
+          {/* Barra Superior con Logo PNG Transparente */}
           <header className="flex items-center justify-between">
-            <img src="/logo.png" alt="Reportalo" className="w-8 h-8 object-contain rounded-xl" />
+            <img
+              src="/logo-icon.png"
+              alt="Logo Reportalo"
+              className="w-7 h-8 object-contain select-none"
+            />
             <span className="text-xs font-bold text-primary bg-sky-50 px-2.5 py-1 rounded-full">
               Paso 2 de 2
             </span>

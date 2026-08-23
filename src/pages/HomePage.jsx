@@ -63,7 +63,7 @@ export const HomePage = () => {
     <div className="min-h-[100dvh] w-full bg-white text-slate-900 flex flex-col items-center safe-top safe-bottom overflow-x-hidden">
       <div className="w-full max-w-md mx-auto min-h-[100dvh] flex flex-col justify-between px-6 pt-6 pb-6">
         <AnimatePresence mode="wait">
-          {/* VISTA 1: LANDING PRINCIPAL CON LOGO GRANDE Y SIN CONTENEDORES PESADOS */}
+          {/* VISTA 1: LANDING PRINCIPAL CON LOGO PNG TRANSPARENTE EN GRANDE */}
           {activeForm === null ? (
             <motion.div
               key="landing-view"
@@ -73,26 +73,26 @@ export const HomePage = () => {
               transition={{ duration: 0.2 }}
               className="w-full flex flex-col justify-between flex-1 text-center"
             >
-              {/* Sección Superior: Logo Grande y Propuesta */}
-              <div className="flex flex-col items-center pt-4">
-                {/* Logo Grande Oficial */}
-                <div className="relative mb-3">
+              {/* Sección Superior: Logo Grande sin fondo y Propuesta */}
+              <div className="flex flex-col items-center pt-2">
+                {/* Logo Oficial PNG Transparente y Recortado en Gran Escala */}
+                <div className="my-2 flex items-center justify-center">
                   <img
-                    src="/logo.png"
+                    src="/logo-icon.png"
                     alt="Logo Reportalo"
-                    className="w-28 h-28 object-contain rounded-3xl shadow-sm drop-shadow-sm"
+                    className="w-32 h-36 object-contain select-none transition-transform hover:scale-105 duration-200"
                   />
                 </div>
 
                 {/* Slogan Principal */}
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-1">
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-2">
                   Tu ciudad. Tu voz.
                 </h1>
                 <p className="text-sm text-slate-500 mt-1 max-w-xs font-normal">
                   Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
                 </p>
 
-                {/* 3 Beneficios Directos (Sin contenedores pesados) */}
+                {/* 3 Beneficios Directos sin Cajas Pesadas */}
                 <div className="w-full flex flex-col gap-4 mt-8 text-left">
                   {/* Beneficio 1: Privacidad */}
                   <div className="flex items-start gap-3.5">
@@ -167,7 +167,7 @@ export const HomePage = () => {
               </div>
             </motion.div>
           ) : (
-            /* VISTA 2: FORMULARIO DIRECTO EN PANTALLA (Sin contenedores encajonados) */
+            /* VISTA 2: FORMULARIO DIRECTO EN PANTALLA */
             <motion.div
               key="form-view"
               initial={{ opacity: 0, y: 12 }}
@@ -189,9 +189,9 @@ export const HomePage = () => {
                   </button>
 
                   <img
-                    src="/logo.png"
-                    alt="Reportalo"
-                    className="w-8 h-8 object-contain rounded-xl"
+                    src="/logo-icon.png"
+                    alt="Logo Reportalo"
+                    className="w-7 h-8 object-contain select-none"
                   />
                 </header>
 
