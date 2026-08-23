@@ -68,11 +68,15 @@ export const LoginForm = ({ onSwitchToRegister }) => {
         </p>
       </div>
 
-      {/* Campo Email */}
+      {/* Campo Email optimizado para teclado móvil */}
       <Input
         label="Email"
         type="email"
         placeholder="tu@email.com"
+        autoComplete="email"
+        inputMode="email"
+        autoCapitalize="none"
+        spellCheck="false"
         disabled={isLoading}
         error={errors.email?.message}
         {...register('email', {
@@ -84,11 +88,12 @@ export const LoginForm = ({ onSwitchToRegister }) => {
         })}
       />
 
-      {/* Campo Contraseña */}
+      {/* Campo Contraseña con soporte para gestores de contraseñas */}
       <Input
         label="Contraseña"
         type="password"
         placeholder="••••••••"
+        autoComplete="current-password"
         disabled={isLoading}
         error={errors.password?.message}
         {...register('password', {

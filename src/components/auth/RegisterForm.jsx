@@ -92,6 +92,8 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           label="Nombre completo"
           type="text"
           placeholder="Ej. Martín Gómez"
+          autoComplete="name"
+          autoCapitalize="words"
           disabled={isLoading}
           error={errors.fullName?.message}
           {...register('fullName', {
@@ -103,11 +105,15 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           })}
         />
 
-        {/* Campo Email */}
+        {/* Campo Email optimizado para móvil */}
         <Input
           label="Email"
           type="email"
           placeholder="tu@email.com"
+          autoComplete="email"
+          inputMode="email"
+          autoCapitalize="none"
+          spellCheck="false"
           disabled={isLoading}
           error={errors.email?.message}
           {...register('email', {
@@ -119,18 +125,19 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           })}
         />
 
-        {/* Campo Contraseña */}
+        {/* Campo Contraseña reforzada (mínimo 8 caracteres según security-guardian) */}
         <Input
           label="Contraseña"
           type="password"
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Mínimo 8 caracteres"
+          autoComplete="new-password"
           disabled={isLoading}
           error={errors.password?.message}
           {...register('password', {
             required: 'La contraseña es obligatoria.',
             minLength: {
-              value: 6,
-              message: 'La contraseña debe tener al menos 6 caracteres.',
+              value: 8,
+              message: 'La contraseña debe tener al menos 8 caracteres.',
             },
           })}
         />
@@ -140,6 +147,7 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
           label="Confirmar contraseña"
           type="password"
           placeholder="Repetí tu contraseña"
+          autoComplete="new-password"
           disabled={isLoading}
           error={errors.confirmPassword?.message}
           {...register('confirmPassword', {
