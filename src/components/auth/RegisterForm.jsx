@@ -165,7 +165,7 @@ export const RegisterForm = ({ onSwitchToLogin }) => {
         />
 
         {/* Checkbox Obligatorio de Términos y Condiciones */}
-        <div className="flex items-start gap-2.5 mt-0.5 bg-slate-50/70 p-2.5 rounded-2xl border border-slate-200/60">
+        <div className="flex items-start gap-2.5 mt-1">
           <input
             id="terms-checkbox"
             type="checkbox"

@@ -1,5 +1,5 @@
 // ==============================================================================
-// Página de Permisos y Privacidad Ciudadana Pulida (PermisosPage.jsx)
+// Página de Permisos y Privacidad Ciudadana Minimalista (PermisosPage.jsx)
 // ==============================================================================
 
 // Importación de React y hooks de estado
@@ -8,17 +8,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Iconografía temática
 import { Camera, MapPin, ArrowRight } from 'lucide-react';
-// Notificaciones emergentes
+// Notificaciones Toast
 import { toast } from 'sonner';
 // Hook de contexto de onboarding
 import { useOnboarding } from '../hooks/useOnboarding';
-// Handlers nativos de permisos del navegador
+// Handlers nativos de permisos
 import {
   requestCameraPermission,
   requestLocationPermission,
 } from '../utils/permissions';
-// Componentes visuales
-import { Logo } from '../components/common/Logo';
+// Componentes de la interfaz
 import { PermisoCard } from '../components/permisos/PermisoCard';
 import { PrivacyBlock } from '../components/permisos/PrivacyBlock';
 import { Button } from '../components/common/Button';
@@ -97,71 +96,73 @@ export const PermisosPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-surface-muted flex flex-col justify-between items-center px-4.5 sm:px-6 pt-6 pb-6 safe-top safe-bottom overflow-x-hidden">
-      {/* Contenido Principal */}
-      <div className="w-full max-w-md mx-auto flex flex-col gap-4.5">
-        {/* Cabecera con Logo */}
-        <div className="flex items-center justify-between">
-          <Logo size="sm" showText={true} />
-          <span className="text-[11px] font-bold text-primary bg-primary-light px-2.5 py-1 rounded-full">
-            Paso 2 de 2
-          </span>
+    <div className="min-h-[100dvh] w-full bg-white text-slate-900 flex flex-col items-center safe-top safe-bottom overflow-x-hidden">
+      <div className="w-full max-w-md mx-auto min-h-[100dvh] flex flex-col justify-between px-6 pt-6 pb-6">
+        {/* Contenido Superior */}
+        <div className="flex flex-col gap-5">
+          {/* Barra Superior con Logo */}
+          <header className="flex items-center justify-between">
+            <img src="/logo.png" alt="Reportalo" className="w-8 h-8 object-contain rounded-xl" />
+            <span className="text-xs font-bold text-primary bg-sky-50 px-2.5 py-1 rounded-full">
+              Paso 2 de 2
+            </span>
+          </header>
+
+          {/* Título y Subtítulo */}
+          <div className="text-left mt-1">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              Activá los permisos
+            </h1>
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+              Reportalo solo utiliza tus permisos cuando son necesarios para capturar y georreferenciar tu reporte.
+            </p>
+          </div>
+
+          {/* Bloque de Privacidad */}
+          <PrivacyBlock />
+
+          {/* Lista de Permisos Directa */}
+          <div className="flex flex-col gap-2.5 mt-1">
+            <PermisoCard
+              icon={Camera}
+              title="Cámara"
+              description="Capturá la foto del reporte en la app."
+              status={cameraStatus}
+              onRequest={handleRequestCamera}
+              isLoading={isRequestingCamera}
+            />
+
+            <PermisoCard
+              icon={MapPin}
+              title="Ubicación"
+              description="Georreferenciá el lugar automáticamente."
+              status={locationStatus}
+              onRequest={handleRequestLocation}
+              isLoading={isRequestingLocation}
+            />
+          </div>
         </div>
 
-        {/* Título de la pantalla */}
-        <div className="text-left mt-1">
-          <h1 className="text-2xl font-extrabold tracking-tight text-content-primary">
-            Activá los permisos
-          </h1>
-          <p className="text-xs text-content-secondary mt-1 leading-relaxed font-medium">
-            Reportalo solo utiliza tus permisos cuando son necesarios para capturar y georreferenciar tu reporte.
-          </p>
+        {/* Botones de Acción Inferiores */}
+        <div className="w-full flex flex-col gap-2.5 mt-8">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleContinue}
+            icon={<ArrowRight className="w-5 h-5" />}
+          >
+            Continuar al mapa
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSkip}
+            className="text-slate-500 hover:text-slate-900 font-semibold text-xs py-2"
+          >
+            Ahora no, configurar luego
+          </Button>
         </div>
-
-        {/* Bloque Destacado de Privacidad */}
-        <PrivacyBlock />
-
-        {/* Tarjetas de Permisos con diseño horizontal y botones compactos */}
-        <div className="flex flex-col gap-3">
-          <PermisoCard
-            icon={Camera}
-            title="Cámara"
-            description="Capturá la evidencia fotográfica directamente en la app."
-            status={cameraStatus}
-            onRequest={handleRequestCamera}
-            isLoading={isRequestingCamera}
-          />
-
-          <PermisoCard
-            icon={MapPin}
-            title="Ubicación"
-            description="Georreferenciá automáticamente el lugar del incidente."
-            status={locationStatus}
-            onRequest={handleRequestLocation}
-            isLoading={isRequestingLocation}
-          />
-        </div>
-      </div>
-
-      {/* Botones de Acción Inferiores */}
-      <div className="w-full max-w-md mx-auto flex flex-col gap-2 mt-6">
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleContinue}
-          icon={<ArrowRight className="w-5 h-5" />}
-        >
-          Continuar al mapa
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSkip}
-          className="text-content-secondary font-semibold text-xs py-2 h-auto"
-        >
-          Ahora no, configurar luego
-        </Button>
       </div>
     </div>
   );

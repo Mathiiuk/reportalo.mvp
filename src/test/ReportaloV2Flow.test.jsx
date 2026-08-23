@@ -1,9 +1,9 @@
 // ==============================================================================
-// Suite de Pruebas Automatizadas: Flujo Completo Reportalo V2
+// Suite de Pruebas Automatizadas: Flujo Completo Reportalo V2 Minimalista
 // ==============================================================================
 
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
@@ -27,17 +27,17 @@ describe('Flujo Reportalo V2 — Onboarding y Autenticación', () => {
     localStorage.clear();
   });
 
-  it('1. HomePage — Renderiza Hero, Lema, 3 Beneficios y Botones de Login y Registro', () => {
+  it('1. HomePage — Renderiza Logo Grande, Lema, 3 Beneficios y Botones de Login y Registro', () => {
     renderWithProviders(<HomePage />);
 
-    // Verificar Título y lema
-    expect(screen.getByText('Reportalo')).toBeInTheDocument();
+    // Verificar Logo grande y lema
+    expect(screen.getByAltText(/logo reportalo/i)).toBeInTheDocument();
     expect(screen.getByText('Tu ciudad. Tu voz.')).toBeInTheDocument();
 
     // Verificar los 3 beneficios
     expect(screen.getByText('Tu identidad protegida')).toBeInTheDocument();
     expect(screen.getByText('La IA encuentra a quién corresponde')).toBeInTheDocument();
-    expect(screen.getByText('Seguimiento hasta resolverse')).toBeInTheDocument();
+    expect(screen.getByText('Seguimiento en tiempo real')).toBeInTheDocument();
 
     // Verificar botones
     expect(screen.getByRole('button', { name: /registrarse/i })).toBeInTheDocument();
