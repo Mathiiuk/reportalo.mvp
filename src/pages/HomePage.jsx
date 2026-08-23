@@ -2,17 +2,38 @@
 // Página Principal: Landing Mobile-First con Transición Deslizable (HomePage.jsx)
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Sparkles, Clock, Lock, ArrowLeft, MapPin } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { Logo } from '../components/common/Logo';
 import { Button } from '../components/common/Button';
 import { LoginForm } from '../components/auth/LoginForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
 
 export const HomePage = () => {
+  const { isAuthenticated, loading } = useAuth();
+  const { onboardingStatus, setRegistered } = useOnboarding();
+  const navigate = useNavigate();
+
   // Estado para controlar qué formulario está activo ('login' | 'register' | null)
   const [activeForm, setActiveForm] = useState(null);
+
+  // Redirigir automáticamente si el usuario ya inició sesión (ej. tras redirección de Google OAuth)
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      if (onboardingStatus === 'completed') {
+        navigate('/map', { replace: true });
+      } else {
+        if (onboardingStatus === 'new') {
+          setRegistered();
+        }
+        navigate('/permisos', { replace: true });
+      }
+    }
+  }, [isAuthenticated, loading, onboardingStatus, navigate, setRegistered]);
 
   return (
     <div className="min-h-screen w-full bg-surface-muted flex flex-col justify-between items-center px-5 pt-6 pb-6 safe-top safe-bottom overflow-x-hidden">

@@ -16,8 +16,15 @@ import { PrivacyBlock } from '../components/permisos/PrivacyBlock';
 import { Button } from '../components/common/Button';
 
 export const PermisosPage = () => {
-  const { setCompleted } = useOnboarding();
+  const { setCompleted, setRegistered, onboardingStatus } = useOnboarding();
   const navigate = useNavigate();
+
+  // Asegurar que el estado del usuario sea al menos 'registered'
+  useEffect(() => {
+    if (onboardingStatus === 'new') {
+      setRegistered();
+    }
+  }, [onboardingStatus, setRegistered]);
 
   // Estados de los permisos ('prompt' | 'granted' | 'denied')
   const [cameraStatus, setCameraStatus] = useState('prompt');
