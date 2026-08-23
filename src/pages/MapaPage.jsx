@@ -38,8 +38,8 @@ const MAX_ZOOM = 16; // Nivel de detalle máximo calle por calle
 const DEFAULT_ZOOM = 12; // Zoom inicial que muestra CABA + Avellaneda completo
 const GEOLOCATE_ZOOM = 14; // Zoom al centrar en la ubicación del usuario
 
-// Estilo Liberty de CARTO (vector tiles, gratuito, sin API key)
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/liberty-gl-style/style.json';
+// Estilo Voyager de CARTO (vector tiles, gratuito, sin API key)
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
 
 // ==============================================================================
 // Componente principal del mapa
