@@ -51,14 +51,13 @@ describe('Flujo Reportalo V2 — Onboarding y Autenticación', () => {
     const registerBtn = screen.getByRole('button', { name: /registrarse/i });
     fireEvent.click(registerBtn);
 
-    // Debe mostrarse el formulario de registro
-    expect(screen.getByText('Crear cuenta')).toBeInTheDocument();
+    // Debe mostrarse el formulario de registro (esperar la transición animada)
+    await screen.findByText('Crear cuenta');
     expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
 
-    // Obtener todos los botones con texto "Registrarse" (el disparador y el submit)
-    const registerButtons = screen.getAllByRole('button', { name: /^registrarse$/i });
-    const submitBtn = registerButtons.find((btn) => btn.getAttribute('type') === 'submit');
+    // Obtener el botón submit del formulario de registro
+    const submitBtn = screen.getByRole('button', { name: /^registrarse$/i });
 
     // El botón submit de registro debe estar deshabilitado hasta aceptar T&C
     expect(submitBtn).toBeDisabled();
