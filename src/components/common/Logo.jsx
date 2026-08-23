@@ -30,7 +30,7 @@ export const Logo = ({ size = 'md', showText = false, className = '' }) => {
       {/* Isotipo PNG Transparente y Recortado */}
       {!imageError ? (
         <img
-          src="/logo-icon.png"
+          src="/logo-icon.webp"
           alt="Reportalo Logo"
           className={`${sizeDimensions[size]} object-contain flex-shrink-0 select-none`}
           onError={() => setImageError(true)}
