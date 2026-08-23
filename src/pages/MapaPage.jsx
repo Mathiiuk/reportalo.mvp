@@ -13,7 +13,6 @@ import maplibregl from 'maplibre-gl';
 import { LogOut, MapPin, Navigation, Loader2 } from 'lucide-react';
 // Navegación flotante inferior
 import { BottomNav } from '../components/navigation/BottomNav';
-import { CameraReportButton } from '../components/navigation/CameraReportButton';
 // Notificaciones Toast de Sonner
 import { toast } from 'sonner';
 // Hooks de autenticación y onboarding
@@ -301,12 +300,7 @@ export const MapaPage = () => {
       </button>
 
       {/* ================================================================== */}
-      {/* 4. Botón Flotante de Reporte con Cámara                            */}
-      {/* ================================================================== */}
-      <CameraReportButton />
-
-      {/* ================================================================== */}
-      {/* 5. Navegación Inferior Flotante (BottomNav)                        */}
+      {/* 4. Navegación Inferior Flotante (BottomNav)                        */}
       {/* ================================================================== */}
       <BottomNav />
     </div>
