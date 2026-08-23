@@ -10,7 +10,10 @@ import { useNavigate } from 'react-router-dom';
 // Motor de mapas vectorial/raster MapLibre GL JS
 import maplibregl from 'maplibre-gl';
 // Iconografía vectorial de Lucide
-import { LogOut, MapPin, Layers, Navigation, Loader2 } from 'lucide-react';
+import { LogOut, MapPin, Navigation, Loader2 } from 'lucide-react';
+// Navegación flotante inferior
+import { BottomNav } from '../components/navigation/BottomNav';
+import { CameraReportButton } from '../components/navigation/CameraReportButton';
 // Notificaciones Toast de Sonner
 import { toast } from 'sonner';
 // Hooks de autenticación y onboarding
@@ -307,12 +310,14 @@ export const MapaPage = () => {
       </button>
 
       {/* ================================================================== */}
-      {/* 4. Badge Informativo Inferior                                      */}
+      {/* 4. Botón Flotante de Reporte con Cámara                            */}
       {/* ================================================================== */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 bg-white/90 backdrop-blur-lg px-4 py-2 rounded-2xl shadow-md border border-slate-200/60 text-xs font-bold text-slate-600 flex items-center gap-2 safe-bottom">
-        <Layers className="w-4 h-4 text-primary" />
-        <span>Mapa de Reportes · CABA · Avellaneda</span>
-      </div>
+      <CameraReportButton />
+
+      {/* ================================================================== */}
+      {/* 5. Navegación Inferior Flotante (BottomNav)                        */}
+      {/* ================================================================== */}
+      <BottomNav />
     </div>
   );
 };
