@@ -1,0 +1,39 @@
+/* Directivas base de Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Configuración de Safe Area para dispositivos móviles con Notch / Dynamic Island */
+:root {
+  /* Insets seguros para iOS y Android */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Reset y optimización de interacción táctil */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Clases de utilidad para respetar áreas seguras */
+.safe-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* Tamaño mínimo para objetivos táctiles accesibles (>=48px) */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}

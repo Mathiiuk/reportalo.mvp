@@ -33,7 +33,7 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
 - **Tipo**: DevOps / Infraestructura / Staging
 - **Responsable**: Matías Krepchuk (Tech Lead)
 - **Destinatarios**: Carlos Ruiz (Sponsor) & Leonel Nuñez (PM)
-- **Estado**: En progreso (`IN_PROGRESS`)
+- **Estado**: Implementado (`DONE`)
 - **Rama**: `feat/REP-3307-configurar-staging` / `staging`
 - **Resumen**:
   - Creación de la arquitectura de 3 entornos: Previews (QA Ivan), Staging (Sponsor Carlos / PM Leonel) y Producción (Ciudadanos / Organismos).
@@ -41,3 +41,19 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Creación de la estructura formal de workflow en `docs/workflow/` para `REP-3307` (manifest, spec, plan, tests y guía operativa).
   - Actualización de los workflows de GitHub Actions `ci.yml` y `security.yml` para ejecutar quality gates automáticos en push a `staging`.
   - Elaboración de guía paso a paso para asignar subdominio fijo en Vercel Settings (`reportalo-staging.vercel.app`) vinculado a la rama `staging`.
+
+### [2026-08-23] — REP-2200: Reportalo V2 — Onboarding, Autenticación Supabase y MapLibre
+- **Tipo**: Frontend / V2 / Supabase Auth / MapLibre / UX-UI
+- **Responsable**: Matías Krepchuk (Líder Técnico)
+- **QA Asignado**: Ivan Juarez
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/onboarding-v2`
+- **Resumen**:
+  - Construcción del frontend desde cero en la rama `feature/onboarding-v2` con React 18, Vite 6, Tailwind CSS, Supabase Auth y MapLibre GL JS.
+  - Landing con acordeón interactivo (`AuthCollapse`) que despliega `LoginForm` o `RegisterForm` de forma fluida con Framer Motion sin recarga de página.
+  - Integración de Supabase Auth con credenciales de base de datos activas y soporte de registro, login y Google OAuth.
+  - Modal obligatorio de Términos y Condiciones para habilitar el botón de registro.
+  - Solicitud secuencial de permisos nativos (Cámara y GPS) con bloque destacado de difuminado facial/patentes y botón "Ahora no".
+  - Ruta protegida `/map` con contenedor de MapLibre GL JS, visualización de usuario y botón de cierre de sesión.
+  - Notificaciones enriquecidas con Sonner y 100% de éxito en Quality Gates de Vitest y Vite Build.
+

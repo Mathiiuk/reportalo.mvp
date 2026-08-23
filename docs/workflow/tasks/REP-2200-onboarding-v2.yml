@@ -1,0 +1,39 @@
+id: REP-2200-onboarding-v2
+external_ref: "https://jira.reportalo.com/browse/REP-2200"
+title: "Reportalo V2 — Onboarding, Autenticación Supabase y Mapa MapLibre"
+type: feat
+status: IN_PROGRESS
+priority: highest
+owner: "Matías Krepchuk"
+base_branch: main
+
+scope:
+  project: "reportalo.mvp"
+  modules: ["frontend", "onboarding-v2", "auth-supabase", "permissions", "maplibre"]
+  environments: [preview, staging, production]
+
+requirements:
+  - "Diseñar e implementar el flujo V2 de onboarding y autenticación desde cero en feature/onboarding-v2."
+  - "Landing page con colapso animado para Login y Registro sin recargar la página."
+  - "Integración de Supabase Auth (Email/Contraseña + Google OAuth) con manejo de errores vía Sonner."
+  - "Modal de Términos y Condiciones obligatorio para habilitar el registro."
+  - "Pantalla de permisos con solicitud secuencial (Cámara y GPS) y bloque destacado de difuminado facial."
+  - "Ruta protegida /map con MapLibre GL JS (tiles de demostración) y botón de cierre de sesión."
+  - "Persistencia del estado de onboarding ('new', 'registered', 'completed') en localStorage."
+  - "Paleta oficial V2: Primary #249EE1, Primary Dark #266AA6, Accent #F88F37."
+
+acceptance_criteria:
+  - "AC-01: El colapso en Home se abre/cierra con animación suave y muestra el formulario correspondiente."
+  - "AC-02: El registro y login con email y Google interactúan con Supabase y notifican con Sonner."
+  - "AC-03: El checkbox de Términos y Condiciones es obligatorio para registrarse y abre un modal con texto."
+  - "AC-04: La pantalla de permisos solicita cámara y ubicación secuencialmente con fallback elegante."
+  - "AC-05: El botón Continuar en permisos redirige a /map y actualiza el estado a 'completed'."
+  - "AC-06: /map inicializa MapLibre GL JS correctamente y solo es accesible con sesión y onboarding completado."
+  - "AC-07: El cierre de sesión limpia el contexto y devuelve al usuario a la Landing."
+
+quality_gates:
+  lint: true
+  typecheck: true
+  unit_tests: true
+  build: true
+  smoke_tests: true
