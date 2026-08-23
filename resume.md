@@ -56,4 +56,5 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Solicitud secuencial de permisos nativos (Cámara y GPS) con bloque destacado de difuminado facial/patentes y botón "Ahora no".
   - Ruta protegida `/map` con contenedor de MapLibre GL JS, visualización de usuario y botón de cierre de sesión.
   - Notificaciones enriquecidas con Sonner y 100% de éxito en Quality Gates de Vitest y Vite Build.
+  - Optimización PWA y Rendimiento: Code Splitting con `React.lazy` y `<Suspense>` para `MapaPage` y `PermisosPage`, atributos semánticos para teclado móvil (`autoComplete`, `inputMode`), validación reforzada de contraseñas (8 caracteres mínimo) y soporte de instalación PWA con `manifest.json` y meta tags de iOS/Android.
 
