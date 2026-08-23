@@ -76,10 +76,10 @@ describe('Flujo Reportalo V2 — Onboarding y Autenticación', () => {
     expect(screen.getByText('Activá los permisos')).toBeInTheDocument();
     expect(screen.getByText('Tu evidencia permanece protegida')).toBeInTheDocument();
     expect(screen.getByText('Cámara')).toBeInTheDocument();
-    expect(screen.getByText('Ubicación')).toBeInTheDocument();
+    expect(screen.getByText(/ubicación/i)).toBeInTheDocument();
 
     // Botones de acción
-    expect(screen.getByRole('button', { name: /continuar al mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continuar/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /ahora no/i })).toBeInTheDocument();
   });
 });

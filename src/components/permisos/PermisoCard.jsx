@@ -1,91 +1,96 @@
 // ==============================================================================
-// Tarjeta de Permiso Individual Minimalista (PermisoCard.jsx)
+// Fila de Permiso Interactiva y Accesible (PermisoCard.jsx)
 // ==============================================================================
 
 // Importación de React
 import React from 'react';
-// Iconos de estado y feedback
-import { Check, RefreshCw } from 'lucide-react';
-// Importación del botón común
-import { Button } from '../common/Button';
+// Iconos de estado
+import { Check, Loader2, RefreshCw } from 'lucide-react';
 
 export const PermisoCard = ({
   icon: Icon,
+  iconBg = 'bg-sky-50 text-primary',
   title,
   description,
   status = 'prompt', // 'prompt' | 'granted' | 'denied'
   onRequest,
   isLoading = false,
 }) => {
+  const isGranted = status === 'granted';
+  const isDenied = status === 'denied';
+
   return (
     <div
-      className={`py-3.5 px-3 rounded-2xl transition-all duration-150 flex items-center justify-between gap-3 ${
-        status === 'granted'
-          ? 'bg-emerald-50/50'
-          : status === 'denied'
-          ? 'bg-red-50/50'
-          : 'bg-slate-50/80 hover:bg-slate-100/80'
+      onClick={!isGranted && !isLoading ? onRequest : undefined}
+      className={`w-full py-3.5 px-4 rounded-2xl transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+        isGranted
+          ? 'bg-emerald-50/60 border border-emerald-100 cursor-default'
+          : isDenied
+          ? 'bg-red-50/50 border border-red-100 cursor-pointer hover:bg-red-50/80'
+          : 'bg-slate-50 hover:bg-slate-100/90 border border-slate-100 cursor-pointer active:scale-[0.99]'
       }`}
+      role="button"
+      tabIndex={0}
+      aria-label={`Permiso de ${title}: ${isGranted ? 'Concedido' : 'Pendiente'}`}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isGranted && !isLoading) {
+          onRequest();
+        }
+      }}
     >
-      {/* Contenedor izquierdo: Icono y Textos */}
+      {/* Icono y Textos Descriptivos */}
       <div className="flex items-center gap-3.5 min-w-0 text-left">
-        {/* Icono temático del permiso */}
+        {/* Contenedor del Icono Vectorial */}
         <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-            status === 'granted'
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors ${
+            isGranted
               ? 'bg-emerald-100 text-emerald-700'
-              : status === 'denied'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-sky-100 text-primary'
+              : isDenied
+              ? 'bg-red-100 text-red-600'
+              : iconBg
           }`}
         >
           {Icon && <Icon className="w-5 h-5 stroke-[2.2]" />}
         </div>
 
-        {/* Textos descriptivos */}
+        {/* Título y Subtítulo */}
         <div className="flex flex-col min-w-0">
           <span className="text-sm font-bold text-slate-900 leading-tight">
             {title}
           </span>
-          <span className="text-xs text-slate-500 leading-snug mt-0.5">
+          <span className="text-xs text-slate-500 leading-tight mt-0.5">
             {description}
           </span>
         </div>
       </div>
 
-      {/* Contenedor derecho: Acción o Badge de Estado */}
+      {/* Switch / Control de Estado */}
       <div className="flex-shrink-0">
-        {status === 'granted' ? (
-          // Estado Concedido
-          <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold">
-            <Check className="w-4 h-4 stroke-[2.5]" />
-            <span>Listo</span>
+        {isLoading ? (
+          <div className="w-8 h-8 flex items-center justify-center text-primary">
+            <Loader2 className="w-5 h-5 animate-spin" />
           </div>
-        ) : status === 'denied' ? (
-          // Estado Denegado
-          <Button
-            variant="outline"
-            size="sm"
-            fullWidth={false}
-            onClick={onRequest}
-            isLoading={isLoading}
-            className="text-xs h-8 px-2.5 rounded-xl"
+        ) : isGranted ? (
+          // Toggle Switch Activado (Estilo iOS verde con check)
+          <div className="w-12 h-7 bg-emerald-500 rounded-full flex items-center justify-end px-1 shadow-xs transition-colors">
+            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-xs">
+              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+            </div>
+          </div>
+        ) : isDenied ? (
+          // Botón de reintento
+          <button
+            type="button"
+            className="text-xs font-bold text-red-600 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
           >
-            <RefreshCw className="w-3.5 h-3.5 mr-1" />
-            Reintentar
-          </Button>
+            <RefreshCw className="w-3 h-3" />
+            <span>Reintentar</span>
+          </button>
         ) : (
-          // Estado Pendiente
-          <Button
-            variant="secondary-light"
-            size="sm"
-            fullWidth={false}
-            onClick={onRequest}
-            isLoading={isLoading}
-            className="text-xs h-8.5 px-3 rounded-xl font-bold"
-          >
-            Permitir
-          </Button>
+          // Toggle Switch Desactivado (Estilo iOS interactivo)
+          <div className="w-12 h-7 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-start px-1 transition-colors cursor-pointer">
+            <div className="w-5 h-5 bg-white rounded-full shadow-xs" />
+          </div>
         )}
       </div>
     </div>
