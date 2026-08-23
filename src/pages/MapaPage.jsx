@@ -21,10 +21,10 @@ import { useOnboarding } from '../hooks/useOnboarding';
 // Constantes geográficas del área de cobertura
 // ==============================================================================
 
-// Bounding box que restringe la navegación a CABA + Avellaneda
+// Bounding box que restringe la navegación a CABA completa + Avellaneda
 const BOUNDS = {
-  sw: [-58.45, -34.70], // Sudoeste: Avellaneda (sur-oeste)
-  ne: [-58.30, -34.53], // Noreste: CABA (norte-este)
+  sw: [-58.56, -34.72], // Sudoeste: Avellaneda sur + margen oeste (más allá de Av. Gral. Paz)
+  ne: [-58.28, -34.52], // Noreste: CABA norte + margen este (Costanera / Río de la Plata)
 };
 
 // Centro geográfico de CABA (punto de inicio del mapa)
