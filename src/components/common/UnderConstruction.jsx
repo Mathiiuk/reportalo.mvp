@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Construction, Clock } from 'lucide-react';
 import { Button } from './Button';
 import { BottomNav } from '../navigation/BottomNav';
-import { CameraReportButton } from '../navigation/CameraReportButton';
 
 export const UnderConstruction = ({ title, description, icon: Icon = Construction }) => {
   const navigate = useNavigate();
@@ -71,7 +70,6 @@ export const UnderConstruction = ({ title, description, icon: Icon = Constructio
         </div>
       </div>
 
-      <CameraReportButton />
       <BottomNav />
     </div>
   );

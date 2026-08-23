@@ -103,15 +103,7 @@ export const MapaPage = () => {
         attributionControl: false, // Atribución personalizada abajo
       });
 
-      // Controles de navegación (zoom +/- y brújula) en esquina superior derecha
-      mapInstanceRef.current.addControl(
-        new maplibregl.NavigationControl({
-          showCompass: true,
-          showZoom: true,
-          visualizePitch: false,
-        }),
-        'top-right'
-      );
+
 
       // Control de atribución colapsable en esquina inferior izquierda
       mapInstanceRef.current.addControl(
@@ -241,7 +233,7 @@ export const MapaPage = () => {
         {/* Logo + Nombre + Email del usuario */}
         <div className="flex items-center gap-2.5">
           <img
-            src="/logo-icon.png"
+            src="/logo-icon.webp"
             alt="Reportalo"
             className="w-7 h-8 object-contain select-none"
           />
@@ -250,7 +242,7 @@ export const MapaPage = () => {
               Reportalo
             </span>
             <span className="text-[11px] font-medium text-slate-500 truncate max-w-[140px] sm:max-w-xs">
-              {user?.email || 'Ciudadano'}
+              {user?.name || 'Ciudadano'}
             </span>
           </div>
         </div>
@@ -292,11 +284,10 @@ export const MapaPage = () => {
         type="button"
         onClick={() => handleGeolocate(false)}
         disabled={isLocating}
-        className={`absolute bottom-[132px] right-4 z-20 w-12 h-12 rounded-full shadow-lg border flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-          userLocated
-            ? 'bg-primary text-white border-primary/30 shadow-primary/20'
-            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-        }`}
+        className={`absolute bottom-[132px] right-4 z-20 w-12 h-12 rounded-full shadow-lg border flex items-center justify-center transition-all active:scale-90 cursor-pointer ${userLocated
+          ? 'bg-primary text-white border-primary/30 shadow-primary/20'
+          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          }`}
         aria-label="Centrar en mi ubicación"
         title="Centrar en mi ubicación"
       >
