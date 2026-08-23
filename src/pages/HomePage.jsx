@@ -78,7 +78,7 @@ export const HomePage = () => {
                 {/* Logo Oficial PNG Transparente y Recortado en Gran Escala */}
                 <div className="my-2 flex items-center justify-center">
                   <img
-                    src="/logo-icon.png"
+                    src="/logo-icon.webp"
                     alt="Logo Reportalo"
                     className="w-32 h-36 object-contain select-none transition-transform hover:scale-105 duration-200"
                   />
@@ -189,7 +189,7 @@ export const HomePage = () => {
                   </button>
 
                   <img
-                    src="/logo-icon.png"
+                    src="/logo-icon.webp"
                     alt="Logo Reportalo"
                     className="w-7 h-8 object-contain select-none"
                   />
