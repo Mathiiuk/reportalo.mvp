@@ -40,6 +40,27 @@ export const signIn = async (email, password) => {
   return data;
 };
 
+// Enviar magic link (OTP) al email del usuario
+// SECURITY: Usa redirect URL validado para prevenir open redirect attacks
+export const signInWithEmail = async (email) => {
+  // Para magic links, redirigir a /auth/callback que verifica el token
+  const redirectUrl = `${getSecureRedirectUrl()}/auth/callback`;
+
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      // URL a la que Supabase redirige después de verificar el link
+      emailRedirectTo: redirectUrl,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
 // Iniciar sesión o registrarse mediante Google OAuth
 // SECURITY: Usa redirect URL validado para prevenir open redirect attacks
 export const signInWithGoogle = async () => {
@@ -121,17 +142,41 @@ export const getSession = async () => {
   return session;
 };
 
-// SECURITY: Limpiar tokens de la URL después del callback OAuth
+// SECURITY: Limpiar tokens de la URL después del callback OAuth o Magic Link
 // Previene que tokens queden expuestos en el historial del navegador
-export const cleanOAuthCallbackUrl = () => {
+export const cleanAuthCallbackUrl = () => {
   const url = new URL(window.location.href);
-  // Supabase agrega hash fragments con tokens después del callback
+  let cleaned = false;
+
+  // Limpiar hash fragments con tokens (OAuth)
   if (url.hash && (url.hash.includes('access_token') || url.hash.includes('refresh_token'))) {
-    // Reemplazar la URL sin los fragments de tokens
-    window.history.replaceState({}, document.title, url.pathname + url.search);
+    url.hash = '';
+    cleaned = true;
   }
-  // También limpiar query params de error de OAuth
+
+  // Limpiar query params de tokens (Magic Link)
+  const tokenParams = ['token_hash', 'type', 'access_token', 'refresh_token'];
+  for (const param of tokenParams) {
+    if (url.searchParams.has(param)) {
+      url.searchParams.delete(param);
+      cleaned = true;
+    }
+  }
+
+  // Limpiar query params de error de OAuth/Magic Link
   if (url.searchParams.has('error') || url.searchParams.has('error_code')) {
-    window.history.replaceState({}, document.title, url.pathname);
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_code');
+    url.searchParams.delete('error_description');
+    cleaned = true;
+  }
+
+  if (cleaned) {
+    // Reconstruir URL limpia (pathname + search restante)
+    const cleanUrl = url.pathname + (url.search ? url.search : '');
+    window.history.replaceState({}, document.title, cleanUrl);
   }
 };
+
+// Mantener compatibilidad con código existente
+export const cleanOAuthCallbackUrl = cleanAuthCallbackUrl;

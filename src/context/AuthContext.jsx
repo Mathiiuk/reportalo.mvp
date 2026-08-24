@@ -7,6 +7,7 @@ import { supabase } from '../utils/supabase';
 import {
   signUp as authSignUp,
   signIn as authSignIn,
+  signInWithEmail as authSignInWithEmail,
   signInWithGoogle as authSignInWithGoogle,
   signOut as authSignOut,
   cleanOAuthCallbackUrl,
@@ -77,6 +78,11 @@ export const AuthProvider = ({ children }) => {
     return authSignInWithGoogle();
   };
 
+  // Función de login con Magic Link (email)
+  const signInWithEmail = async (email) => {
+    return authSignInWithEmail(email);
+  };
+
   // Función de logout
   // SECURITY: Limpieza completa de tokens y estado
   const signOut = async () => {
@@ -98,6 +104,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         signUp,
         signIn,
+        signInWithEmail,
         signInWithGoogle,
         signOut,
       }}

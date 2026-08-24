@@ -1,0 +1,55 @@
+id: REP-3311
+external_ref: ""
+title: "Magic Link — Implementación Completa del Flujo"
+type: feat
+status: IN_PROGRESS
+priority: critical
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, auth, supabase]
+  environments: [local, staging, production]
+
+requirements:
+  - "Usuario ingresa email y recibe un link mágico para autenticarse"
+  - "El link redirige a la app con token de verificación"
+  - "La app verifica el token y establece la sesión"
+  - "Funcion tanto para usuarios nuevos como existentes"
+  - "Reenvío de email con cooldown de 60 segundos"
+
+acceptance_criteria:
+  - "AC-01: signInWithEmail en authService.js llama a supabase.auth.signInWithOtp()"
+  - "AC-02: AuthContext expone signInWithEmail via context provider"
+  - "AC-03: Ruta /auth/callback maneja el redirect del magic link"
+  - "AC-04: Callback procesa token_hash y type=magic_link de URL params"
+  - "AC-05: Limpieza de tokens de URL después de verificar sesión"
+  - "AC-06: HomePage muestra UI de email-sent con countdown de reenvío"
+  - "AC-07: Redirección automática a /onboarding o /map según estado del usuario"
+
+constraints:
+  - "Usar PKCE flow (ya configurado en supabase.js)"
+  - "No romper flujo de Google OAuth existente"
+  - "El callback debe funcionar tanto para magic link como para OAuth"
+
+risks:
+  - "Supabase dashboard debe tener Email provider habilitado y Redirect URLs configurados"
+
+dependencies:
+  - "@supabase/supabase-js ^2.49"
+  - "Supabase Auth>Email provider habilitado"
+  - "Redirect URL configurado en Supabase dashboard"
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3311.md"
+  implementation_plan: "docs/workflow/plans/REP-3311.md"
+  execution_report: "docs/workflow/executions/REP-3311-run-001.md"
+
+branch:
+  type: feat
+  name: "feature/design-system-uiux"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"

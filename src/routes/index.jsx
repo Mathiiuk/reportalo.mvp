@@ -4,6 +4,7 @@ import { HomePage } from '../pages/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from './AppLayout';
+import { AuthCallback } from '../components/auth/AuthCallback';
 import { Spinner } from '../components/common/Spinner';
 
 const PermisosPage = lazy(() =>
@@ -46,6 +47,7 @@ export const AppRoutes = () => {
       <Routes>
         {/* Rutas públicas */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/terminos" element={<TermsPage />} />
         <Route path="/permisos" element={<PermisosPage />} />
