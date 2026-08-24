@@ -15,9 +15,19 @@ import { ProtectedRoute } from './ProtectedRoute';
 // Spinner visual de carga mientras se descargan los chunks bajo demanda
 import { Spinner } from '../components/common/Spinner';
 
-// Carga diferida (Code Splitting) de la pantalla de permisos
-const PermisosPage = lazy(() =>
-  import('../pages/PermisosPage').then((module) => ({ default: module.PermisosPage }))
+// Carga diferida (Code Splitting) de la pantalla de permisos (diseño nuevo)
+const PermissionsPage = lazy(() =>
+  import('../pages/PermissionsPage').then((module) => ({ default: module.PermissionsPage }))
+);
+
+// Carga diferida de la pantalla de onboarding
+const OnboardingPage = lazy(() =>
+  import('../pages/OnboardingPage').then((module) => ({ default: module.OnboardingPage }))
+);
+
+// Carga diferida de la pantalla de términos
+const TermsPage = lazy(() =>
+  import('../pages/TermsPage').then((module) => ({ default: module.TermsPage }))
 );
 
 // Carga diferida (Code Splitting) del módulo pesado del mapa (MapLibre GL JS)
@@ -54,17 +64,16 @@ export const AppRoutes = () => {
         {/* Ruta 1: Landing Pública con Carga Inmediata (<120 KB) */}
         <Route path="/" element={<HomePage />} />
 
-        {/* Ruta 2: Permisos (Carga bajo demanda, protegida por sesión) */}
-        <Route
-          path="/permisos"
-          element={
-            <ProtectedRoute requireCompletedOnboarding={false}>
-              <PermisosPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Ruta 2: Onboarding (sin protección — accesible desde landing) */}
+        <Route path="/onboarding" element={<OnboardingPage />} />
 
-        {/* Ruta 3: Mapa Principal (Carga diferida de MapLibre GL, protegida por sesión y onboarding) */}
+        {/* Ruta 3: Términos y Privacidad (sin protección — accesible post-onboarding) */}
+        <Route path="/terminos" element={<TermsPage />} />
+
+        {/* Ruta 4: Permisos de cámara y ubicación (sin protección — accesible post-términos) */}
+        <Route path="/permisos" element={<PermissionsPage />} />
+
+        {/* Ruta 5: Mapa Principal (protegida por sesión y onboarding) */}
         <Route
           path="/map"
           element={

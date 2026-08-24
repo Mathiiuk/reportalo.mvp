@@ -5,20 +5,20 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F8F9FA",
-  "theme_color": "#249EE1",
+  "background_color": "#F4F7FB",
+  "theme_color": "#1E6FCB",
   "categories": ["utilities", "government", "social"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo-icon.webp",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/webp",
+      "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo-icon.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ]
