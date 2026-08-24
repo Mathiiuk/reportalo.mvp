@@ -7,16 +7,20 @@ import React, { useState, useEffect } from 'react';
 // Hook de navegación de React Router
 import { useNavigate } from 'react-router-dom';
 // Iconografía temática
-import { Camera, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Camera, MapPin, ArrowLeft } from 'lucide-react';
 // Notificaciones Toast
 import { toast } from 'sonner';
 // Hook de contexto de onboarding
 import { useOnboarding } from '../hooks/useOnboarding';
+// Hook de autenticación
+import { useAuth } from '../hooks/useAuth';
 // Handlers nativos de permisos
 import {
   requestCameraPermission,
   requestLocationPermission,
 } from '../utils/permissions';
+// Cliente Supabase para guardar metadata del usuario
+import { supabase } from '../utils/supabase';
 // Componentes de la interfaz
 import { PermisoCard } from '../components/permisos/PermisoCard';
 import { PrivacyBlock } from '../components/permisos/PrivacyBlock';
@@ -24,6 +28,7 @@ import { Button } from '../components/common/Button';
 
 export const PermisosPage = () => {
   const { setCompleted, setRegistered, onboardingStatus } = useOnboarding();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Detectar si hubo error en el callback de OAuth y redirigir a Home con notificación
@@ -52,6 +57,7 @@ export const PermisosPage = () => {
   const [locationStatus, setLocationStatus] = useState('prompt');
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Solicitar cámara
   const handleRequestCamera = async () => {
@@ -81,8 +87,23 @@ export const PermisosPage = () => {
     setIsRequestingLocation(false);
   };
 
+  // Guardar flag de onboarding completado en Supabase (persistente en la DB)
+  const saveOnboardingToSupabase = async () => {
+    if (!user?.id) return;
+    try {
+      await supabase.auth.updateUser({
+        data: { onboarding_completed: true },
+      });
+    } catch {
+      // Silenciar error — el flag en localStorage es fallback
+    }
+  };
+
   // Solicitar todos los permisos pendientes en secuencia
   const handleContinue = async () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+
     if (cameraStatus === 'prompt') {
       await handleRequestCamera();
     }
@@ -90,13 +111,18 @@ export const PermisosPage = () => {
       await handleRequestLocation();
     }
 
+    // Guardar en Supabase (persistente) y en localStorage (rápido)
+    await saveOnboardingToSupabase();
     setCompleted();
     toast.success('¡Todo listo! Bienvenido al mapa de Reportalo.');
     navigate('/map');
   };
 
   // Omitir permisos por el momento
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    await saveOnboardingToSupabase();
     setCompleted();
     toast.info('Podrás conceder los permisos cuando realices tu primer reporte.');
     navigate('/map');
@@ -130,7 +156,7 @@ export const PermisosPage = () => {
           {/* Hero Visual Centrado con Logo Transparente */}
           <div className="flex flex-col items-center text-center mt-2 mb-6">
             <img
-              src="/logo-icon.png"
+              src="/logo-icon.webp"
               alt="Reportalo"
               className="w-16 h-18 object-contain mb-3 select-none drop-shadow-xs"
             />
@@ -177,15 +203,17 @@ export const PermisosPage = () => {
             variant="primary"
             size="lg"
             onClick={handleContinue}
-            icon={<ArrowRight className="w-5 h-5" />}
+            isLoading={isNavigating}
+            disabled={isNavigating}
           >
-            {allGranted ? 'Continuar al mapa' : 'Permitir y continuar'}
+            {isNavigating ? 'Ingresando...' : allGranted ? 'Continuar al mapa' : 'Permitir y continuar'}
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSkip}
+            disabled={isNavigating}
             className="text-slate-400 hover:text-slate-700 font-semibold text-xs py-2 h-auto"
           >
             Ahora no, configurar luego

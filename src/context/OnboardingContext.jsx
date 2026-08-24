@@ -6,13 +6,19 @@ import React, { createContext, useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'reportalo_onboarding';
 
+// Valores permitidos para el estado de onboarding
+const VALID_STATUSES = ['new', 'registered', 'completed'];
+
+const isValidStatus = (value) => VALID_STATUSES.includes(value);
+
 export const OnboardingContext = createContext(null);
 
 export const OnboardingProvider = ({ children }) => {
   // Estado local del onboarding ('new' | 'registered' | 'completed')
   const [onboardingStatus, setOnboardingStatus] = useState(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY) || 'new';
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return isValidStatus(stored) ? stored : 'new';
     } catch {
       return 'new';
     }

@@ -58,3 +58,47 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Notificaciones enriquecidas con Sonner y 100% de éxito en Quality Gates de Vitest y Vite Build.
   - Optimización PWA y Rendimiento: Code Splitting con `React.lazy` y `<Suspense>` para `MapaPage` y `PermisosPage`, atributos semánticos para teclado móvil (`autoComplete`, `inputMode`), validación reforzada de contraseñas (8 caracteres mínimo) y soporte de instalación PWA con `manifest.json` y meta tags de iOS/Android.
 
+### [2026-08-24] — REP-3308: Auditoría Frontend UI/UX y Mejoras de Consistencia
+- **Tipo**: Frontend / Refactor / UI-UX / Accessibility
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/design-system-uiux`
+- **Resumen**:
+  - Auditoría completa del frontend contra las reglas del master-workflow y skills de `react-patterns` y `ux-ui-design-system`.
+  - **Seguridad**: Eliminados fallbacks hardcoded de credenciales Supabase en `src/utils/supabase.js`. Ahora lanza error si faltan env vars.
+  - **PWA**: Service Worker registrado en `main.jsx` (luego eliminado por causar cache stale de chunks en Vercel). Manifest.json completado con campos `id`, `scope`, `shortcuts`.
+  - **Arquitectura**: Ruta `/permisos` unificada a `PermisosPage` (eliminada `PermissionsPage` obsoleta). Agregado `ErrorBoundary` global en `main.jsx`. Validación de valores permitidos en `OnboardingContext`.
+  - **Consistencia**: Fuente Manrope unificada en `tailwind.config.js` (eliminada Inter). Migrados inline styles de `HomePage`, `OnboardingPage` y `TermsPage` a clases Tailwind. Eliminado import CSS duplicado de MapLibre.
+  - **Accesibilidad**: `PermisoCard` usa `<button>` semántico en vez de `div role="button"`. Agregados `aria-labels` en botones faltantes. Fix marker leak en `MapaPage` (referencia `userMarkerRef`).
+  - **UX**: Loading states con spinner "Ingresando..." en botones de `TermsPage` y `PermisosPage`. Tests actualizados para la nueva estructura del HomePage.
+  - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
+
+### [2026-08-24] — REP-3309: Auditoría y Hardening de Seguridad — Auth y Sesión
+- **Tipo**: Security / Auth / Hardening
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/security-audit`
+- **Resumen**:
+  - Auditoría de autenticación contra patrones de `auth-implementation-patterns` y `security-guardian`.
+  - **PKCE Flow**: Supabase client configurado con `flowType: 'pkce'` (más seguro que implicit flow, previene token interception).
+  - **Redirect Validation**: Whitelist `ALLOWED_REDIRECT_ORIGINS` en `supabase.js`. Función `getSecureRedirectUrl()` valida el origin antes de redirigir en OAuth (previene open redirect attacks).
+  - **OAuth Hardening**: `signInWithGoogle()` usa redirect validado + `prompt: 'select_account'` (previene session fixation).
+  - **Logout Seguro**: `signOut()` usa `scope: 'global'` para invalidar TODOS los refresh tokens del usuario en todos los dispositivos. Limpieza de tokens residuales de localStorage (prefijo `sb-`).
+  - **URL Cleanup**: Función `cleanOAuthCallbackUrl()` limpia hash fragments con tokens de la URL después de callbacks OAuth. AuthContext la llama al montar y después de cada `SIGNED_IN`.
+  - **Security Headers**: `vercel.json` actualizado con `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera/microphone denegados, geolocation=self).
+  - **Auditoría**: Logging de eventos de auth (`SIGNED_IN`, `SIGNED_OUT`, `TOKEN_REFRESHED`).
+  - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
+
+### [2026-08-24] — REP-3310: Onboarding Persistente — Flag en Supabase Metadata
+- **Tipo**: Fix / Auth / Onboarding
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/design-system-uiux`
+- **Resumen**:
+  - Corrección del flujo de onboarding: usuarios existentes ahora entran directo a `/map` sin ver onboarding.
+  - **Problema**: El flag de onboarding se almacenaba solo en `localStorage`, por lo que usuarios en nuevos dispositivos o después de limpiar cache eran tratados como nuevos.
+  - **Solución**: Flag persistido en `user.user_metadata.onboarding_completed` de Supabase (DB), con sincronización automática desde localStorage.
+  - `PermisosPage.jsx`: `handleContinue` y `handleSkip` guardan `onboarding_completed: true` en Supabase user metadata mediante `supabase.auth.updateUser({ data: { onboarding_completed: true } })`.
+  - `HomePage.jsx`: Verifica `user.user_metadata.onboarding_completed` ANTES de localStorage. Si el flag está en localStorage pero no en Supabase, se sincroniza automáticamente.
+  - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
+

@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 const TERMS_ITEMS = [
   {
@@ -26,9 +27,11 @@ const TERMS_ITEMS = [
 export const TermsPage = () => {
   const navigate = useNavigate();
   const [accepted, setAccepted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAccept = () => {
-    if (!accepted) return;
+  const handleAccept = async () => {
+    if (!accepted || isLoading) return;
+    setIsLoading(true);
     navigate('/permisos', { replace: true });
   };
 
@@ -37,60 +40,59 @@ export const TermsPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col safe-top safe-bottom" style={{ background: 'rgb(244, 247, 251)' }}>
+    <div className="min-h-[100dvh] w-full flex flex-col safe-top safe-bottom bg-[#F4F7FB]">
       {/* Header */}
-      <div className="flex-shrink-0" style={{ background: 'rgb(255, 255, 255)', padding: '8px 20px 16px', borderBottom: '1px solid rgb(238, 241, 245)' }}>
-        <div style={{ fontFamily: '800 22px Manrope', color: 'rgb(36, 52, 71)', letterSpacing: '-0.3px', fontSize: '22px', fontWeight: 800 }}>
+      <div className="shrink-0 bg-white px-5 pt-2 pb-4 border-b border-[#EEF1F5]">
+        <h1 className="text-[22px] font-extrabold text-[#243447] tracking-[-0.3px]">
           Términos y privacidad
-        </div>
-        <div style={{ fontFamily: '600 13px Manrope', color: 'rgb(154, 167, 181)', marginTop: '4px', fontSize: '13px', fontWeight: 600 }}>
+        </h1>
+        <p className="text-[13px] font-semibold text-[#9AA7B5] mt-1">
           Versión 1.2 · vigente desde 08/2026
-        </div>
+        </p>
       </div>
 
       {/* Contenido scrollable */}
-      <div className="flex-1 overflow-y-auto scroll-area" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div className="flex-1 overflow-y-auto scroll-area p-4 flex flex-col gap-3.5">
         {TERMS_ITEMS.map((item, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center text-center" style={{ gap: '10px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '16px', padding: '22px 18px' }}>
-            <span className="material-symbols-rounded filled" style={{ fontSize: '30px', color: 'rgb(30, 111, 203)' }}>{item.icon}</span>
+          <div key={i} className="flex-1 flex flex-col items-center text-center gap-2.5 bg-white border border-[#E6ECF3] rounded-2xl p-5">
+            <span className="material-symbols-rounded filled text-[30px] text-[#1E6FCB]">{item.icon}</span>
             <div>
-              <div style={{ fontFamily: '700 16px Manrope', color: 'rgb(38, 50, 73)', fontSize: '16px', fontWeight: 700 }}>{item.title}</div>
-              <div style={{ fontFamily: '500 14px / 1.55 Manrope', color: 'rgb(122, 134, 150)', marginTop: '6px', fontSize: '14px', fontWeight: 500, lineHeight: 1.55 }}>{item.description}</div>
+              <h3 className="text-base font-bold text-[#263249]">{item.title}</h3>
+              <p className="text-sm font-medium text-[#7A8696] mt-1.5 leading-relaxed">{item.description}</p>
             </div>
           </div>
         ))}
 
         {/* Link texto completo */}
-        <button type="button" onClick={handleFullTerms} className="flex items-center justify-center cursor-pointer" style={{ gap: '6px', fontFamily: '700 14px Manrope', color: 'rgb(30, 111, 203)', background: 'none', border: 'none', padding: '10px 0', fontSize: '14px', fontWeight: 700, width: '100%' }}>
+        <button
+          type="button"
+          onClick={handleFullTerms}
+          className="flex items-center justify-center cursor-pointer gap-1.5 font-bold text-sm text-[#1E6FCB] bg-transparent border-none py-2.5 w-full"
+        >
           <span>Leer el texto completo</span>
-          <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>open_in_new</span>
+          <span className="material-symbols-rounded text-lg">open_in_new</span>
         </button>
       </div>
 
       {/* Footer fijo */}
-      <div className="flex-shrink-0" style={{ background: 'rgb(255, 255, 255)', borderTop: '1px solid rgb(238, 241, 245)', padding: '16px 18px' }}>
+      <div className="shrink-0 bg-white border-t border-[#EEF1F5] p-4">
         {/* Checkbox */}
         <button
           type="button"
           onClick={() => setAccepted(!accepted)}
-          className="flex items-start cursor-pointer w-full text-left"
-          style={{ gap: '12px', marginBottom: '14px', background: 'none', border: 'none', padding: 0 }}
+          className="flex items-start cursor-pointer w-full text-left gap-3 mb-3.5 bg-transparent border-none p-0"
+          role="checkbox"
+          aria-checked={accepted}
+          aria-label="Acepto los términos y el tratamiento de mis imágenes"
         >
           <span
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: '26px',
-              height: '26px',
-              borderRadius: '7px',
-              background: accepted ? 'rgb(30, 111, 203)' : 'transparent',
-              border: accepted ? 'none' : '2px solid rgb(207, 216, 226)',
-              transition: 'all 0.15s ease',
-              marginTop: '1px',
-            }}
+            className={`shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-[7px] mt-px transition-all duration-150 ${
+              accepted ? 'bg-[#1E6FCB]' : 'border-2 border-[#CFD8E2] bg-transparent'
+            }`}
           >
-            {accepted && <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'rgb(255, 255, 255)' }}>check</span>}
+            {accepted && <span className="material-symbols-rounded text-sm text-white">check</span>}
           </span>
-          <span style={{ fontFamily: '600 13px / 1.5 Manrope', color: 'rgb(70, 86, 107)', fontSize: '13px', fontWeight: 600, lineHeight: 1.5 }}>
+          <span className="text-[13px] font-semibold text-[#46566B] leading-relaxed">
             Acepto los términos y el tratamiento de mis imágenes descripto arriba.
           </span>
         </button>
@@ -99,20 +101,19 @@ export const TermsPage = () => {
         <button
           type="button"
           onClick={handleAccept}
-          disabled={!accepted}
-          className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'rgb(30, 111, 203)',
-            borderRadius: '14px',
-            padding: '16px',
-            textAlign: 'center',
-            border: 'none',
-            boxShadow: 'rgba(30, 111, 203, 0.3) 0px 8px 18px',
-          }}
+          disabled={!accepted || isLoading}
+          className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed bg-[#1E6FCB] rounded-[14px] py-4 text-center border-none shadow-[0_8px_18px_rgba(30,111,203,0.3)]"
         >
-          <span style={{ fontFamily: '800 16px Manrope', color: 'rgb(255, 255, 255)', fontSize: '16px', fontWeight: 800 }}>
-            Aceptar y continuar
-          </span>
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2 font-extrabold text-base text-white">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Ingresando...
+            </span>
+          ) : (
+            <span className="font-extrabold text-base text-white">
+              Aceptar y continuar
+            </span>
+          )}
         </button>
       </div>
     </div>

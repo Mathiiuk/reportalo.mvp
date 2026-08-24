@@ -1,0 +1,68 @@
+id: REP-3310
+external_ref: ""
+title: "Onboarding Persistente — Flag en Supabase Metadata"
+type: fix
+status: DONE
+priority: high
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, auth, onboarding, supabase]
+  environments: [local, staging, production]
+
+requirements:
+  - "Usuarios registrados deben entrar directo a /map sin ver onboarding"
+  - "Flag de onboarding debe persistir en la DB, no solo en localStorage"
+  - "Migración automática de usuarios con flag solo en localStorage"
+
+acceptance_criteria:
+  - "AC-01: PermisosPage guarda onboarding_completed: true en user.user_metadata de Supabase al completar onboarding"
+  - "AC-02: PermisosPage guarda el flag tanto en handleContinue como en handleSkip"
+  - "AC-03: HomePage verifica user.user_metadata.onboarding_completed ANTES de localStorage"
+  - "AC-04: Si flag está en localStorage pero no en Supabase, se sincroniza automáticamente"
+  - "AC-05: Usuario existente en nuevo dispositivo entra directo a /map"
+  - "AC-06: Nuevo usuario pasa por onboarding completo"
+
+constraints:
+  - "No romper flujo de onboarding para nuevos usuarios"
+  - "Mantener compatibilidad con usuarios existentes que solo tienen flag en localStorage"
+
+risks:
+  - "Usuarios sin flag en Supabase (pre-cambio) serán tratados como nuevos una vez — se sincroniza automáticamente"
+
+dependencies:
+  - "@supabase/supabase-js ^2.49"
+  - "Supabase Auth con user metadata habilitado"
+
+requires_approval: false
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3310.md"
+  implementation_plan: "docs/workflow/plans/REP-3310.md"
+  test_plan: "docs/workflow/tests/REP-3310.md"
+  execution_report: "docs/workflow/executions/REP-3310-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: " revert commit"
+
+branch:
+  type: feat
+  name: "feature/design-system-uiux"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"

@@ -1,13 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  // Archivos a escanear para clases de Tailwind
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
-      // Paleta oficial de Reportalo V2
       colors: {
         primary: {
           DEFAULT: '#249EE1',
@@ -31,7 +30,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
         'card': '0 2px 10px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.03)',
@@ -41,6 +40,12 @@ export default {
         'xl': '1rem',
         '2xl': '1.25rem',
         '3xl': '1.5rem',
+      },
+      minHeight: {
+        'touch': '48px',
+      },
+      minWidth: {
+        'touch': '48px',
       },
     },
   },

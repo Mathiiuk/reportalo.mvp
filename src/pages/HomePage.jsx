@@ -7,10 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useOnboarding } from '../hooks/useOnboarding';
+import { supabase } from '../utils/supabase';
 import { toast } from 'sonner';
 
 export const HomePage = () => {
-  const { isAuthenticated, loading, signInWithGoogle, signInWithEmail } = useAuth();
+  const { isAuthenticated, loading, signInWithGoogle, signInWithEmail, user } = useAuth();
   const { onboardingStatus, setRegistered } = useOnboarding();
   const navigate = useNavigate();
 
@@ -36,7 +37,19 @@ export const HomePage = () => {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      if (onboardingStatus === 'completed') {
+      // Verificar si el usuario ya completó onboarding (Supabase metadata o localStorage)
+      // Priorizar metadata de Supabase (persistente en DB) sobre localStorage
+      const hasCompletedInMetadata = user?.user_metadata?.onboarding_completed === true;
+      const hasCompletedInLocal = onboardingStatus === 'completed';
+
+      if (hasCompletedInMetadata || hasCompletedInLocal) {
+        // Si estaba en localStorage pero no en Supabase, sincronizar
+        if (hasCompletedInLocal && !hasCompletedInMetadata) {
+          // Guardar en Supabase para persistencia futura
+          supabase.auth.updateUser({
+            data: { onboarding_completed: true },
+          });
+        }
         navigate('/map', { replace: true });
       } else {
         if (onboardingStatus === 'new') {
@@ -45,9 +58,8 @@ export const HomePage = () => {
         navigate('/onboarding', { replace: true });
       }
     }
-  }, [isAuthenticated, loading, onboardingStatus, navigate, setRegistered]);
+  }, [isAuthenticated, loading, onboardingStatus, navigate, setRegistered, user]);
 
-  // Timer para reenvío
   useEffect(() => {
     if (resentTimer <= 0) return;
     const interval = setInterval(() => {
@@ -117,11 +129,7 @@ export const HomePage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full min-h-[100dvh] flex flex-col"
-            style={{
-              background: 'linear-gradient(165deg, rgb(42, 123, 214), rgb(21, 83, 158))',
-              padding: '0 28px',
-            }}
+            className="w-full min-h-[100dvh] flex flex-col bg-gradient-to-br from-[#2A7BD6] to-[#15539E] px-7"
           >
             <div className="flex-1 flex flex-col justify-center items-center text-center">
               <div className="my-2 flex items-center justify-center">
@@ -132,37 +140,41 @@ export const HomePage = () => {
                 />
               </div>
 
-              <div style={{ fontFamily: '800 42px Manrope', color: 'rgb(255, 255, 255)', letterSpacing: '-0.8px', fontSize: '42px', fontWeight: 800 }}>
+              <h1 className="text-white text-[42px] font-extrabold tracking-[-0.8px]">
                 Reportalo
-              </div>
+              </h1>
 
-              <div className="mt-3" style={{ fontFamily: '500 18px / 1.6 Manrope', color: 'rgba(255, 255, 255, 0.86)', maxWidth: '280px', fontSize: '18px', fontWeight: 500, lineHeight: 1.6 }}>
+              <p className="mt-3 text-white/86 text-lg font-medium leading-relaxed max-w-[280px]">
                 Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
-              </div>
+              </p>
 
-              <div className="flex flex-col items-center mt-7 w-full" style={{ gap: '13px' }}>
-                <div className="flex items-center" style={{ gap: '10px' }}>
-                  <span className="material-symbols-rounded filled" style={{ fontSize: '22px', color: 'rgb(159, 208, 255)' }}>shield</span>
-                  <span style={{ fontFamily: '600 16px Manrope', color: 'rgba(255, 255, 255, 0.92)', textAlign: 'left', fontSize: '16px', fontWeight: 600 }}>Anónimo ante el organismo receptor</span>
+              <div className="flex flex-col items-center mt-7 w-full gap-[13px]">
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">shield</span>
+                  <span className="text-white/92 text-base font-semibold text-left">Anónimo ante el organismo receptor</span>
                 </div>
-                <div className="flex items-center" style={{ gap: '10px' }}>
-                  <span className="material-symbols-rounded filled" style={{ fontSize: '22px', color: 'rgb(159, 208, 255)' }}>auto_awesome</span>
-                  <span style={{ fontFamily: '600 16px Manrope', color: 'rgba(255, 255, 255, 0.92)', textAlign: 'left', fontSize: '16px', fontWeight: 600 }}>La IA encuentra a quién corresponde</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">auto_awesome</span>
+                  <span className="text-white/92 text-base font-semibold text-left">La IA encuentra a quién corresponde</span>
                 </div>
-                <div className="flex items-center" style={{ gap: '10px' }}>
-                  <span className="material-symbols-rounded filled" style={{ fontSize: '22px', color: 'rgb(159, 208, 255)' }}>map</span>
-                  <span style={{ fontFamily: '600 16px Manrope', color: 'rgba(255, 255, 255, 0.92)', textAlign: 'left', fontSize: '16px', fontWeight: 600 }}>Seguimiento hasta resolverse</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">map</span>
+                  <span className="text-white/92 text-base font-semibold text-left">Seguimiento hasta resolverse</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col pb-6 safe-bottom" style={{ gap: '12px' }}>
-              <button type="button" onClick={() => setActiveForm('login')} className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98]" style={{ background: 'rgb(255, 255, 255)', borderRadius: '16px', padding: '18px', textAlign: 'center', fontFamily: '800 18px Manrope', color: 'rgb(30, 111, 203)', boxShadow: 'rgba(0, 0, 0, 0.14) 0px 8px 18px', border: 'none', fontSize: '18px', fontWeight: 800 }}>
+            <div className="flex flex-col pb-6 safe-bottom gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveForm('login')}
+                className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] bg-white rounded-2xl py-[18px] text-center font-extrabold text-lg text-[#1E6FCB] shadow-[0_8px_18px_rgba(0,0,0,0.14)] border-none"
+              >
                 Comenzar
               </button>
-              <div className="text-center px-2" style={{ fontFamily: '500 14px / 1.4 Manrope', color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', fontWeight: 500, lineHeight: 1.4 }}>
+              <p className="text-center px-2 text-white/70 text-sm font-medium leading-relaxed">
                 Entrás con tu correo, sin crear contraseña.
-              </div>
+              </p>
             </div>
           </motion.div>
         )}
@@ -177,62 +189,86 @@ export const HomePage = () => {
             transition={{ duration: 0.2 }}
             className="w-full min-h-[100dvh] bg-white flex flex-col safe-top safe-bottom"
           >
-            <div className="w-full max-w-md mx-auto flex-1 flex flex-col" style={{ padding: '10px 24px 0px' }}>
+            <div className="w-full max-w-md mx-auto flex-1 flex flex-col px-6 pt-2.5">
               {/* Flecha volver */}
-              <button type="button" onClick={() => setActiveForm(null)} className="flex items-center justify-center cursor-pointer" style={{ fontSize: '24px', color: 'rgb(91, 106, 122)', background: 'none', border: 'none', padding: 0, width: 'fit-content' }} aria-label="Volver">
+              <button
+                type="button"
+                onClick={() => setActiveForm(null)}
+                className="flex items-center justify-center cursor-pointer text-2xl text-[#5B6A7A] bg-transparent border-none p-0 w-fit"
+                aria-label="Volver"
+              >
                 <span className="material-symbols-rounded">arrow_back</span>
               </button>
 
               {/* Logo + nombre */}
-              <div className="flex items-center" style={{ gap: '9px', marginTop: '18px' }}>
-                <img src="/logo-icon.webp" alt="Logo Reportalo" style={{ width: '20px', height: '26px', objectFit: 'contain' }} />
-                <span style={{ fontFamily: '800 19px Manrope', color: 'rgb(38, 50, 73)', fontSize: '19px', fontWeight: 800 }}>Reportalo</span>
+              <div className="flex items-center gap-[9px] mt-[18px]">
+                <img src="/logo-icon.webp" alt="Logo Reportalo" className="w-5 h-[26px] object-contain" />
+                <span className="text-[19px] font-extrabold text-[#263249]">Reportalo</span>
               </div>
 
               {/* Título */}
-              <div style={{ fontFamily: '800 26px Manrope', color: 'rgb(36, 52, 71)', marginTop: '24px', letterSpacing: '-0.5px', fontSize: '26px', fontWeight: 800 }}>
+              <h2 className="text-[26px] font-extrabold text-[#243447] mt-6 tracking-[-0.5px]">
                 Ingresá a Reportalo
-              </div>
+              </h2>
 
               {/* Subtítulo */}
-              <div style={{ fontFamily: '500 15px / 1.45 Manrope', color: 'rgb(133, 147, 162)', marginTop: '6px', fontSize: '15px', fontWeight: 500, lineHeight: 1.45 }}>
+              <p className="text-[15px] font-medium text-[#8593A2] mt-1.5 leading-relaxed">
                 Sin contraseñas. Elegí cómo querés entrar.
-              </div>
+              </p>
 
               {/* Botón Google */}
-              <button type="button" onClick={handleGoogleLogin} className="flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-[0.98]" style={{ marginTop: '28px', gap: '11px', background: 'rgb(255, 255, 255)', border: '1.5px solid rgb(221, 228, 236)', borderRadius: '16px', padding: '16px', width: '100%' }}>
-                <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgb(255, 255, 255)', border: '1px solid rgb(238, 241, 245)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '800 13px Manrope', color: 'rgb(66, 133, 244)', fontSize: '13px', fontWeight: 800 }}>G</span>
-                <span style={{ fontFamily: '700 16px Manrope', color: 'rgb(58, 70, 88)', fontSize: '16px', fontWeight: 700 }}>Continuar con Google</span>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-[0.98] mt-7 gap-[11px] bg-white border-[1.5px] border-[#DDE4EC] rounded-2xl p-4 w-full"
+              >
+                <span className="w-[22px] h-[22px] rounded-full bg-white border border-[#EEF1F5] flex items-center justify-center text-[13px] font-extrabold text-[#4285F4]">G</span>
+                <span className="text-base font-bold text-[#3A4658]">Continuar con Google</span>
               </button>
 
               {/* Separador "o" */}
-              <div className="flex items-center" style={{ gap: '10px', margin: '22px 0px' }}>
-                <span style={{ flex: '1 1 0%', height: '1px', background: 'rgb(238, 241, 245)' }} />
-                <span style={{ fontFamily: '600 12px Manrope', color: 'rgb(170, 180, 191)', fontSize: '12px', fontWeight: 600 }}>o</span>
-                <span style={{ flex: '1 1 0%', height: '1px', background: 'rgb(238, 241, 245)' }} />
+              <div className="flex items-center gap-2.5 my-[22px]">
+                <span className="flex-1 h-px bg-[#EEF1F5]" />
+                <span className="text-xs font-semibold text-[#AAB4BF]">o</span>
+                <span className="flex-1 h-px bg-[#EEF1F5]" />
               </div>
 
               {/* Label correo */}
-              <div style={{ fontFamily: '700 13px Manrope', color: 'rgb(86, 101, 122)', marginBottom: '7px', fontSize: '13px', fontWeight: 700 }}>Tu correo</div>
+              <label className="text-[13px] font-bold text-[#56657A] mb-[7px]">Tu correo</label>
 
               {/* Input correo */}
               <form onSubmit={handleEmailSubmit}>
-                <div className="flex items-center" style={{ gap: '10px', background: 'rgb(255, 255, 255)', border: '2px solid rgb(30, 111, 203)', borderRadius: '14px', padding: '14px 14px', boxShadow: 'rgba(30, 111, 203, 0.12) 0px 0px 0px 3px' }}>
-                  <span className="material-symbols-rounded" style={{ fontSize: '20px', color: 'rgb(30, 111, 203)' }}>mail</span>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck="false" disabled={isLoading} className="flex-1 outline-none border-none bg-transparent" style={{ fontFamily: '600 15px Manrope', color: 'rgb(70, 86, 107)', fontSize: '15px', fontWeight: 600 }} />
+                <div className="flex items-center gap-2.5 bg-white border-2 border-[#1E6FCB] rounded-[14px] p-3.5 shadow-[0_0_0_3px_rgba(30,111,203,0.12)]">
+                  <span className="material-symbols-rounded text-xl text-[#1E6FCB]">mail</span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    autoComplete="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    spellCheck="false"
+                    disabled={isLoading}
+                    className="flex-1 outline-none border-none bg-transparent text-[15px] font-semibold text-[#46566B]"
+                  />
                 </div>
 
-                <button type="submit" disabled={isLoading} className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed" style={{ marginTop: '18px', background: 'rgb(30, 111, 203)', borderRadius: '16px', padding: '17px', textAlign: 'center', border: 'none', boxShadow: 'rgba(30, 111, 203, 0.3) 0px 8px 18px' }}>
-                  <span style={{ fontFamily: '800 17px Manrope', color: 'rgb(255, 255, 255)', fontSize: '17px', fontWeight: 800 }}>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-[18px] bg-[#1E6FCB] rounded-2xl py-[17px] text-center border-none shadow-[0_8px_18px_rgba(30,111,203,0.3)]"
+                >
+                  <span className="font-extrabold text-[17px] text-white">
                     {isLoading ? 'Enviando...' : 'Enviarme un enlace'}
                   </span>
                 </button>
               </form>
 
               {/* Bloque de privacidad */}
-              <div className="flex items-start mt-auto" style={{ gap: '10px', background: 'rgb(238, 245, 252)', border: '1px solid rgb(212, 230, 248)', borderRadius: '13px', padding: '13px 14px', marginBottom: '16px', marginTop: 'auto' }}>
-                <span className="material-symbols-rounded filled" style={{ fontSize: '19px', color: 'rgb(30, 111, 203)', flexShrink: 0 }}>shield</span>
-                <span style={{ fontFamily: '500 13px / 1.45 Manrope', color: 'rgb(70, 86, 107)', fontSize: '13px', fontWeight: 500, lineHeight: 1.45 }}>
+              <div className="flex items-start mt-auto gap-2.5 bg-[#EEF5FC] border border-[#D4E6F8] rounded-[13px] p-3.5 mb-4 mt-auto">
+                <span className="material-symbols-rounded filled text-[19px] text-[#1E6FCB] shrink-0">shield</span>
+                <span className="text-[13px] font-medium text-[#46566B] leading-relaxed">
                   Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
                 </span>
               </div>
@@ -248,64 +284,63 @@ export const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.2 }}
-            className="w-full min-h-[100dvh] flex flex-col safe-top safe-bottom"
-            style={{ background: 'rgb(244, 247, 251)' }}
+            className="w-full min-h-[100dvh] flex flex-col safe-top safe-bottom bg-[#F4F7FB]"
           >
-            <div className="w-full max-w-md mx-auto flex-1 flex flex-col" style={{ padding: '10px 26px 0px' }}>
+            <div className="w-full max-w-md mx-auto flex-1 flex flex-col px-[26px] pt-2.5">
               {/* Flecha volver */}
-              <button type="button" onClick={() => setActiveForm('login')} className="flex items-center justify-center cursor-pointer" style={{ fontSize: '24px', color: 'rgb(91, 106, 122)', background: 'none', border: 'none', padding: 0, width: 'fit-content' }} aria-label="Volver">
+              <button
+                type="button"
+                onClick={() => setActiveForm('login')}
+                className="flex items-center justify-center cursor-pointer text-2xl text-[#5B6A7A] bg-transparent border-none p-0 w-fit"
+                aria-label="Volver"
+              >
                 <span className="material-symbols-rounded">arrow_back</span>
               </button>
 
               {/* Contenido centrado */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center" style={{ paddingBottom: '32px' }}>
-                {/* Icono forward_to_inbox */}
-                <div style={{ width: '90px', height: '90px', borderRadius: '28px', background: 'rgb(232, 241, 251)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                  <span className="material-symbols-rounded filled" style={{ fontSize: '46px', color: 'rgb(30, 111, 203)' }}>forward_to_inbox</span>
+              <div className="flex-1 flex flex-col items-center justify-center text-center pb-8">
+                {/* Icono */}
+                <div className="w-[90px] h-[90px] rounded-[28px] bg-[#E8F1FB] flex items-center justify-center mb-6">
+                  <span className="material-symbols-rounded filled text-[46px] text-[#1E6FCB]">forward_to_inbox</span>
                 </div>
 
                 {/* Título */}
-                <div style={{ fontFamily: '800 26px Manrope', color: 'rgb(36, 52, 71)', letterSpacing: '-0.5px', fontSize: '26px', fontWeight: 800 }}>
+                <h2 className="text-[26px] font-extrabold text-[#243447] tracking-[-0.5px]">
                   Revisá tu correo
-                </div>
+                </h2>
 
                 {/* Subtítulo */}
-                <div style={{ fontFamily: '500 15px / 1.55 Manrope', color: 'rgb(122, 134, 150)', marginTop: '10px', fontSize: '15px', fontWeight: 500, lineHeight: 1.55 }}>
+                <p className="text-[15px] font-medium text-[#7A8696] mt-2.5 leading-relaxed">
                   Te enviamos un enlace de acceso a
-                </div>
+                </p>
 
                 {/* Email */}
-                <div style={{ fontFamily: '800 15px Manrope', color: 'rgb(30, 111, 203)', marginTop: '4px', fontSize: '15px', fontWeight: 800 }}>
+                <p className="text-[15px] font-extrabold text-[#1E6FCB] mt-1">
                   {email}
-                </div>
+                </p>
 
                 {/* Instrucción */}
-                <div style={{ fontFamily: '500 14px / 1.5 Manrope', color: 'rgb(133, 147, 162)', marginTop: '16px', maxWidth: '240px', fontSize: '14px', fontWeight: 500, lineHeight: 1.5 }}>
+                <p className="text-sm font-medium text-[#8593A2] mt-4 max-w-[240px] leading-relaxed">
                   Tocá el enlace desde este teléfono y entrás directo.
-                </div>
+                </p>
 
                 {/* Botón Abrir mi correo */}
-                <button type="button" className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98]" style={{ marginTop: '28px', background: 'rgb(30, 111, 203)', borderRadius: '16px', padding: '17px', textAlign: 'center', border: 'none', boxShadow: 'rgba(30, 111, 203, 0.3) 0px 8px 18px' }}>
-                  <span style={{ fontFamily: '800 17px Manrope', color: 'rgb(255, 255, 255)', fontSize: '17px', fontWeight: 800 }}>Abrir mi correo</span>
+                <button
+                  type="button"
+                  className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] mt-7 bg-[#1E6FCB] rounded-2xl py-[17px] text-center border-none shadow-[0_8px_18px_rgba(30,111,203,0.3)]"
+                >
+                  <span className="font-extrabold text-[17px] text-white">Abrir mi correo</span>
                 </button>
 
                 {/* Reenviar timer */}
-                <div className="flex items-center" style={{ gap: '7px', marginTop: '16px' }}>
-                  <span className="material-symbols-rounded" style={{ fontSize: '17px', color: 'rgb(170, 180, 191)' }}>schedule</span>
+                <div className="flex items-center gap-[7px] mt-4">
+                  <span className="material-symbols-rounded text-[17px] text-[#AAB4BF]">schedule</span>
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={resentTimer > 0 || isLoading}
-                    className="cursor-pointer disabled:cursor-not-allowed"
-                    style={{
-                      fontFamily: '700 14px Manrope',
-                      color: resentTimer > 0 ? 'rgb(154, 167, 181)' : 'rgb(30, 111, 203)',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                    }}
+                    className="cursor-pointer disabled:cursor-not-allowed font-bold text-[14px] bg-transparent border-none p-0"
+                    style={{ color: resentTimer > 0 ? '#9AA7B5' : '#1E6FCB' }}
                   >
                     {resentTimer > 0 ? `Reenviar en ${formatTime(resentTimer)}` : 'Reenviar enlace'}
                   </button>
@@ -313,17 +348,17 @@ export const HomePage = () => {
               </div>
 
               {/* Bloque de info */}
-              <div className="flex items-start" style={{ gap: '10px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '13px', padding: '13px 14px', marginBottom: '16px' }}>
-                <span className="material-symbols-rounded" style={{ fontSize: '19px', color: 'rgb(133, 147, 162)', flexShrink: 0 }}>info</span>
-                <span style={{ fontFamily: '500 13px / 1.45 Manrope', color: 'rgb(106, 120, 136)', fontSize: '13px', fontWeight: 500, lineHeight: 1.45 }}>
+              <div className="flex items-start gap-2.5 bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 mb-4">
+                <span className="material-symbols-rounded text-[19px] text-[#8593A2] shrink-0">info</span>
+                <span className="text-[13px] font-medium text-[#6A7888] leading-relaxed">
                   El enlace vence en 15 minutos y sirve una sola vez.
                 </span>
               </div>
             </div>
 
             {/* Drag Handle */}
-            <div className="flex items-center justify-center w-full" style={{ height: '18px', flexShrink: 0, background: 'rgb(244, 247, 251)' }}>
-              <div style={{ width: '100px', height: '4px', borderRadius: '3px', background: 'rgba(0, 0, 0, 0.18)' }} />
+            <div className="flex items-center justify-center w-full h-[18px] shrink-0 bg-[#F4F7FB]">
+              <div className="25px h-1 rounded-[3px] bg-black/18" />
             </div>
           </motion.div>
         )}

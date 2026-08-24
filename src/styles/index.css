@@ -1,21 +1,26 @@
-/* Estilos del motor de mapas MapLibre GL JS (controles, popup, atribución) */
-@import 'maplibre-gl/dist/maplibre-gl.css';
-
-/* Directivas base de Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Configuración de Safe Area para dispositivos móviles con Notch / Dynamic Island */
 :root {
-  /* Insets seguros para iOS y Android */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+
+  --color-primary: #1E6FCB;
+  --color-primary-light: #E8F1FB;
+  --color-accent: #F88F37;
+  --color-success: #2E9E6B;
+  --color-danger: #C0392B;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F8F9FA;
+  --color-border: #E6ECF3;
+  --color-text-primary: #243447;
+  --color-text-secondary: #8593A2;
+  --color-bg: #F4F7FB;
 }
 
-/* Reset y optimización de interacción táctil */
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -26,7 +31,6 @@ html, body, #root {
   touch-action: manipulation;
 }
 
-/* Área scrollable para secciones que lo requieran (reports, alerts, profile) */
 .scroll-area {
   overflow-y: auto;
   overflow-x: hidden;
@@ -35,7 +39,6 @@ html, body, #root {
   scroll-behavior: smooth;
 }
 
-/* Scrollbar sutil en áreas scrollables */
 .scroll-area::-webkit-scrollbar {
   width: 3px;
 }
@@ -49,7 +52,6 @@ html, body, #root {
   border-radius: 99px;
 }
 
-/* Clases de utilidad para respetar áreas seguras */
 .safe-top {
   padding-top: max(16px, env(safe-area-inset-top));
 }
@@ -58,13 +60,44 @@ html, body, #root {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
-/* Tamaño mínimo para objetivos táctiles accesibles (>=48px) */
 .touch-target {
   min-height: 48px;
   min-width: 48px;
 }
 
-/* Material Symbols Rounded */
+/* ===== DARK MODE (manual toggle) ===== */
+.dark {
+  --color-surface: #1A1F2E;
+  --color-surface-muted: #232838;
+  --color-border: #2D3348;
+  --color-text-primary: #E8ECF1;
+  --color-text-secondary: #8B95A8;
+  --color-bg: #111520;
+}
+
+.dark body { background-color: var(--color-bg); color: var(--color-text-primary); }
+.dark .bg-white { background-color: var(--color-surface); }
+.dark .bg-slate-50 { background-color: var(--color-bg); }
+.dark .bg-slate-100 { background-color: var(--color-surface-muted); }
+.dark .border-\[\#E6ECF3\],
+.dark .border-\[\#DDE4EC\] { border-color: var(--color-border); }
+.dark .text-\[\#243447\],
+.dark .text-\[\#263249\],
+.dark .text-\[\#34435A\] { color: var(--color-text-primary); }
+.dark .text-\[\#8593A2\],
+.dark .text-\[\#56657A\] { color: var(--color-text-secondary); }
+.dark .bg-primary-light { background-color: rgba(30, 111, 203, 0.15); }
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .material-symbols-rounded {
   font-family: 'Material Symbols Rounded';
   font-weight: normal;

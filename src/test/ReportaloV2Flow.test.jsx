@@ -27,54 +27,39 @@ describe('Flujo Reportalo V2 — Onboarding y Autenticación', () => {
     localStorage.clear();
   });
 
-  it('1. HomePage — Renderiza Logo Grande, Lema, 3 Beneficios y Botones de Login y Registro', () => {
+  it('1. HomePage — Renderiza Logo, Beneficios y Botón Comenzar', () => {
     renderWithProviders(<HomePage />);
 
-    // Verificar Logo grande y lema
+    // Verificar Logo y nombre
     expect(screen.getByAltText(/logo reportalo/i)).toBeInTheDocument();
-    expect(screen.getByText('Tu ciudad. Tu voz.')).toBeInTheDocument();
+    expect(screen.getByText('Reportalo')).toBeInTheDocument();
 
     // Verificar los 3 beneficios
-    expect(screen.getByText('Tu identidad protegida')).toBeInTheDocument();
+    expect(screen.getByText('Anónimo ante el organismo receptor')).toBeInTheDocument();
     expect(screen.getByText('La IA encuentra a quién corresponde')).toBeInTheDocument();
-    expect(screen.getByText('Seguimiento en tiempo real')).toBeInTheDocument();
+    expect(screen.getByText('Seguimiento hasta resolverse')).toBeInTheDocument();
 
-    // Verificar botones
-    expect(screen.getByRole('button', { name: /registrarse/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument();
+    // Verificar botón principal
+    expect(screen.getByRole('button', { name: /comenzar/i })).toBeInTheDocument();
   });
 
-  it('2. AuthCollapse — Al hacer clic en Registrarse despliega el formulario y valida T&C', async () => {
+  it('2. HomePage — Al hacer clic en Comenzar muestra formulario de login con Google', async () => {
     renderWithProviders(<HomePage />);
 
-    // Clic en Registrarse
-    const registerBtn = screen.getByRole('button', { name: /registrarse/i });
-    fireEvent.click(registerBtn);
+    // Clic en Comenzar
+    const startBtn = screen.getByRole('button', { name: /comenzar/i });
+    fireEvent.click(startBtn);
 
-    // Debe mostrarse el formulario de registro (esperar la transición animada)
-    await screen.findByText('Crear cuenta');
-    expect(screen.getByLabelText(/nombre completo/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
-
-    // Obtener el botón submit del formulario de registro
-    const submitBtn = screen.getByRole('button', { name: /^registrarse$/i });
-
-    // El botón submit de registro debe estar deshabilitado hasta aceptar T&C
-    expect(submitBtn).toBeDisabled();
-
-    // Tildar el checkbox de T&C
-    const termsCheckbox = screen.getByRole('checkbox');
-    fireEvent.click(termsCheckbox);
-
-    // Ahora debe estar habilitado
-    expect(submitBtn).not.toBeDisabled();
+    // Debe mostrarse el formulario de login
+    await screen.findByText('Ingresá a Reportalo');
+    expect(screen.getByText('Continuar con Google')).toBeInTheDocument();
+    expect(screen.getByText('Enviarme un enlace')).toBeInTheDocument();
   });
 
   it('3. PermisosPage — Renderiza tarjetas de Cámara, Ubicación y Bloque de Privacidad', () => {
     renderWithProviders(<PermisosPage />);
 
     expect(screen.getByText('Activá los permisos')).toBeInTheDocument();
-    expect(screen.getByText('Tu evidencia permanece protegida')).toBeInTheDocument();
     expect(screen.getByText('Cámara')).toBeInTheDocument();
     expect(screen.getByText(/ubicación/i)).toBeInTheDocument();
 

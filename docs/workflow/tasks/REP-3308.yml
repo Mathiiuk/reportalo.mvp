@@ -1,0 +1,87 @@
+id: REP-3308
+external_ref: ""
+title: "Auditoría Frontend UI/UX y Mejoras de Consistencia"
+type: refactor
+status: DONE
+priority: high
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, ui, ux, pwa, accessibility]
+  environments: [local, staging, production]
+
+requirements:
+  - "Auditar el frontend completo contra las reglas del master-workflow"
+  - "Mejorar consistencia de diseño, seguridad y accesibilidad"
+  - "Migrar inline styles a Tailwind CSS"
+  - "Corregir bugs de imagen rota, rutas duplicadas y marker leak"
+
+acceptance_criteria:
+  - "AC-01: Eliminar fallbacks hardcoded de credenciales Supabase"
+  - "AC-02: Service Worker registrado para PWA"
+  - "AC-03: Manifest.json completo con campos id, scope, shortcuts"
+  - "AC-04: Eliminar import CSS duplicado de MapLibre"
+  - "AC-05: Unificar a PermisosPage (la correcta) y eliminar PermissionsPage obsoleta"
+  - "AC-06: Ruta /permisos apunta a PermisosPage"
+  - "AC-07: ErrorBoundary global para capturar errores de renderizado"
+  - "AC-08: OnboardingContext valida valores permitidos de localStorage"
+  - "AC-09: Imagen rota /logo-icon.png corregida a /logo-icon.webp"
+  - "AC-10: Fuente Manrope unificada en Tailwind (eliminar Inter)"
+  - "AC-11: HomePage migrado de inline styles a Tailwind"
+  - "AC-12: OnboardingPage migrado de inline styles a Tailwind"
+  - "AC-13: TermsPage migrado de inline styles a Tailwind"
+  - "AC-14: Comentarios de rutas corregidos (numeros duplicados)"
+  - "AC-15: aria-labels agregados en botones faltantes"
+  - "AC-16: PermisoCard usa <button> semántico en vez de div role=button"
+  - "AC-17: Marker leak corregido en MapaPage"
+  - "AC-18: Botón de términos muestra Loading con spinner"
+  - "AC-19: Botón de permisos muestra Loading con spinner"
+  - "AC-20: Tests actualizados para nueva estructura del HomePage"
+
+constraints:
+  - "No romper funcionalidad existente"
+  - "Mantener compatibilidad con móvil (320px+)"
+  - "Seguir patrones de react-patterns"
+
+risks:
+  - "Service Worker pudo causar cache de chunks stale (resuelto: eliminado)"
+  - "Migración de inline styles pudo romper estilos (verificado: build + tests)"
+
+dependencies:
+  - "Tailwind CSS 3.4"
+  - "Lucide React icons"
+  - "Framer Motion"
+  - "MapLibre GL JS"
+
+requires_approval: false
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3308.md"
+  implementation_plan: "docs/workflow/plans/REP-3308.md"
+  test_plan: "docs/workflow/tests/REP-3308.md"
+  execution_report: "docs/workflow/executions/REP-3308-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: " revert commit en rama feature"
+
+branch:
+  type: feat
+  name: "feature/design-system-uiux"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"

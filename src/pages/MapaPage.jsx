@@ -49,6 +49,7 @@ export const MapaPage = () => {
   // Referencias mutables para el contenedor DOM y la instancia del mapa
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const userMarkerRef = useRef(null);
 
   // Estado para el botón de geolocalización
   const [isLocating, setIsLocating] = useState(false);
@@ -99,6 +100,10 @@ export const MapaPage = () => {
 
     // Limpieza al desmontar el componente (previene memory leaks)
     return () => {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -142,8 +147,13 @@ export const MapaPage = () => {
             duration: 1200, // Duración de la animación en milisegundos
           });
 
+          // Remover marcador anterior si existe
+          if (userMarkerRef.current) {
+            userMarkerRef.current.remove();
+          }
+
           // Colocar un marcador visual en la posición del usuario
-          new maplibregl.Marker({
+          userMarkerRef.current = new maplibregl.Marker({
             color: '#0ea5e9', // Color primario de la app (sky-500)
           })
             .setLngLat([longitude, latitude])

@@ -15,9 +15,9 @@ import { ProtectedRoute } from './ProtectedRoute';
 // Spinner visual de carga mientras se descargan los chunks bajo demanda
 import { Spinner } from '../components/common/Spinner';
 
-// Carga diferida (Code Splitting) de la pantalla de permisos (diseño nuevo)
-const PermissionsPage = lazy(() =>
-  import('../pages/PermissionsPage').then((module) => ({ default: module.PermissionsPage }))
+// Carga diferida (Code Splitting) de la pantalla de permisos
+const PermisosPage = lazy(() =>
+  import('../pages/PermisosPage').then((module) => ({ default: module.PermisosPage }))
 );
 
 // Carga diferida de la pantalla de onboarding
@@ -71,7 +71,7 @@ export const AppRoutes = () => {
         <Route path="/terminos" element={<TermsPage />} />
 
         {/* Ruta 4: Permisos de cámara y ubicación (sin protección — accesible post-términos) */}
-        <Route path="/permisos" element={<PermissionsPage />} />
+        <Route path="/permisos" element={<PermisosPage />} />
 
         {/* Ruta 5: Mapa Principal (protegida por sesión y onboarding) */}
         <Route
@@ -83,7 +83,7 @@ export const AppRoutes = () => {
           }
         />
 
-        {/* Ruta 4: Reportes (protegida por sesión y onboarding) */}
+        {/* Ruta 6: Reportes (protegida por sesión y onboarding) */}
         <Route
           path="/reports"
           element={
@@ -93,7 +93,7 @@ export const AppRoutes = () => {
           }
         />
 
-        {/* Ruta 5: Alertas (protegida por sesión y onboarding) */}
+        {/* Ruta 6: Alertas (protegida por sesión y onboarding) */}
         <Route
           path="/alerts"
           element={
@@ -103,7 +103,7 @@ export const AppRoutes = () => {
           }
         />
 
-        {/* Ruta 6: Perfil (protegida por sesión y onboarding) */}
+        {/* Ruta 7: Perfil (protegida por sesión y onboarding) */}
         <Route
           path="/profile"
           element={

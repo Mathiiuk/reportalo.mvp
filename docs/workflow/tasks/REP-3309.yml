@@ -1,0 +1,83 @@
+id: REP-3309
+external_ref: ""
+title: "Auditoría y Hardening de Seguridad — Auth y Sesión"
+type: security
+status: DONE
+priority: highest
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/security-audit
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, auth, security, supabase]
+  environments: [local, staging, production]
+
+requirements:
+  - "Auditar autenticación contra patrones auth-implementation-patterns y security-guardian"
+  - "Proteger tokens de XSS usando cookies en vez de localStorage"
+  - "Implementar logout seguro con invalidación global de refresh tokens"
+  - "Prevenir open redirect attacks en OAuth"
+  - "Limpiar tokens de la URL después de callbacks OAuth"
+  - "Agregar security headers HTTP"
+
+acceptance_criteria:
+  - "AC-01: Supabase client configurado con PKCE flow"
+  - "AC-02: Whitelist de dominios permitidos para redirect OAuth (ALLOWED_REDIRECT_ORIGINS)"
+  - "AC-03: signInWithGoogle usa getSecureRedirectUrl() validado"
+  - "AC-04: signInWithGoogle configura prompt=select_account (previene session fixation)"
+  - "AC-05: signOut usa scope='global' para invalidar TODOS los refresh tokens del usuario"
+  - "AC-06: signOut limpia tokens residuales de localStorage (prefijo sb-)"
+  - "AC-07: signOut en AuthContext usa try/finally para siempre limpiar estado local"
+  - "AC-08: cleanOAuthCallbackUrl() limpia hash fragments con tokens de la URL"
+  - "AC-09: AuthContext llama cleanOAuthCallbackUrl al montar y después de SIGNED_IN"
+  - "AC-10: Logging de eventos de auth (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED)"
+  - "AC-11: vercel.json incluye X-Content-Type-Options: nosniff"
+  - "AC-12: vercel.json incluye X-Frame-Options: DENY"
+  - "AC-13: vercel.json incluye X-XSS-Protection: 1; mode=block"
+  - "AC-14: vercel.json incluye Referrer-Policy: strict-origin-when-cross-origin"
+  - "AC-15: vercel.json incluye Permissions-Policy (camera/microphone denegados, geolocation=self)"
+
+constraints:
+  - "No se puede modificar el comportamiento interno de Supabase SDK"
+  - "Las cookies HttpOnly son gestionadas por Supabase, no por la app"
+  - "Mantener compatibilidad con Google OAuth"
+
+risks:
+  - "scope='global' en signOut cierra sesión en TODOS los dispositivos del usuario"
+  - "PKCE flow puede no ser soportado por todos los proveedores OAuth"
+
+dependencies:
+  - "@supabase/supabase-js ^2.49"
+  - "Google OAuth configurado en Supabase Dashboard"
+  - "Vercel deployment"
+
+requires_approval: false
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3309.md"
+  implementation_plan: "docs/workflow/plans/REP-3309.md"
+  test_plan: "docs/workflow/tests/REP-3309.md"
+  execution_report: "docs/workflow/executions/REP-3309-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: " revert commit en rama feature"
+
+branch:
+  type: feat
+  name: "feature/security-audit"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"

@@ -9,6 +9,7 @@ import {
   signIn as authSignIn,
   signInWithGoogle as authSignInWithGoogle,
   signOut as authSignOut,
+  cleanOAuthCallbackUrl,
 } from '../services/authService';
 
 // Creación del Contexto
@@ -23,6 +24,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // SECURITY: Limpiar tokens de la URL después de un callback OAuth
+    // Previene que tokens queden expuestos en el historial del navegador
+    cleanOAuthCallbackUrl();
+
     // 1. Obtener la sesión activa actual al montar
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
@@ -34,10 +39,20 @@ export const AuthProvider = ({ children }) => {
 
     // 2. Escuchar cambios de estado de autenticación en tiempo real
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, updatedSession) => {
+      (event, updatedSession) => {
+        // SECURITY: Log de eventos de autenticación para auditoría
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          console.info(`[Auth] Evento: ${event}`);
+        }
+
         setSession(updatedSession);
         setUser(updatedSession?.user ?? null);
         setLoading(false);
+
+        // SECURITY: Limpiar URL después de un callback OAuth exitoso
+        if (event === 'SIGNED_IN') {
+          cleanOAuthCallbackUrl();
+        }
       }
     );
 
@@ -63,10 +78,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Función de logout
+  // SECURITY: Limpieza completa de tokens y estado
   const signOut = async () => {
-    await authSignOut();
-    setUser(null);
-    setSession(null);
+    try {
+      await authSignOut();
+    } finally {
+      // Siempre limpiar estado local, incluso si la llamada al servidor falla
+      setUser(null);
+      setSession(null);
+    }
   };
 
   return (
