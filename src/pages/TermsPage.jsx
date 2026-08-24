@@ -9,7 +9,7 @@ const TERMS_ITEMS = [
   {
     icon: 'photo_camera',
     title: 'Tratamiento de imágenes',
-    description: 'Tus fotos se procesan en nuestros servidores y en los de un proveedor de análisis, con el único fin de difuminar rostros y patentes y clasificar el reporte.',
+    description: 'Tus fotos se procesan con el único fin de difuminar rostros y patentes y clasificar el reporte.',
   },
   {
     icon: 'visibility_off',
@@ -19,7 +19,7 @@ const TERMS_ITEMS = [
   {
     icon: 'gavel',
     title: 'Tus derechos',
-    description: 'Podés acceder, rectificar y suprimir tus datos (Ley 25.326). Tu identidad no se comparte con el organismo receptor.',
+    description: 'Podés acceder, rectificar y suprimir tus datos (Ley 25.326). Tu identidad nunca se comparte.',
   },
 ];
 
@@ -30,6 +30,10 @@ export const TermsPage = () => {
   const handleAccept = () => {
     if (!accepted) return;
     navigate('/permisos', { replace: true });
+  };
+
+  const handleFullTerms = () => {
+    window.open('https://reportalo.com.ar/terminos', '_blank');
   };
 
   return (
@@ -47,17 +51,17 @@ export const TermsPage = () => {
       {/* Contenido scrollable */}
       <div className="flex-1 overflow-y-auto scroll-area" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {TERMS_ITEMS.map((item, i) => (
-          <div key={i} className="flex-1 flex items-start" style={{ gap: '14px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '16px', padding: '20px 18px' }}>
-            <span className="material-symbols-rounded filled flex-shrink-0" style={{ fontSize: '26px', color: 'rgb(30, 111, 203)' }}>{item.icon}</span>
+          <div key={i} className="flex-1 flex flex-col items-center text-center" style={{ gap: '10px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '16px', padding: '22px 18px' }}>
+            <span className="material-symbols-rounded filled" style={{ fontSize: '30px', color: 'rgb(30, 111, 203)' }}>{item.icon}</span>
             <div>
               <div style={{ fontFamily: '700 16px Manrope', color: 'rgb(38, 50, 73)', fontSize: '16px', fontWeight: 700 }}>{item.title}</div>
-              <div style={{ fontFamily: '500 15px / 1.55 Manrope', color: 'rgb(122, 134, 150)', marginTop: '6px', fontSize: '15px', fontWeight: 500, lineHeight: 1.55 }}>{item.description}</div>
+              <div style={{ fontFamily: '500 14px / 1.55 Manrope', color: 'rgb(122, 134, 150)', marginTop: '6px', fontSize: '14px', fontWeight: 500, lineHeight: 1.55 }}>{item.description}</div>
             </div>
           </div>
         ))}
 
         {/* Link texto completo */}
-        <button type="button" className="flex items-center justify-center cursor-pointer" style={{ gap: '6px', fontFamily: '700 14px Manrope', color: 'rgb(30, 111, 203)', background: 'none', border: 'none', padding: '10px 0', fontSize: '14px', fontWeight: 700, width: '100%' }}>
+        <button type="button" onClick={handleFullTerms} className="flex items-center justify-center cursor-pointer" style={{ gap: '6px', fontFamily: '700 14px Manrope', color: 'rgb(30, 111, 203)', background: 'none', border: 'none', padding: '10px 0', fontSize: '14px', fontWeight: 700, width: '100%' }}>
           <span>Leer el texto completo</span>
           <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>open_in_new</span>
         </button>
