@@ -1,3 +1,14 @@
+---
+name: "director-tecnico"
+type: "workflow-orchestrator"
+description: "Regla Maestra de Flujo de Trabajo para Reportalo MVP"
+activation:
+  global: true
+  triggers:
+    - "on_task_assigned"
+    - "on_chat_start"
+---
+
 # Regla Maestra de Flujo de Trabajo: Software Delivery Workflow (DT de Todo)
 
 Toda tarea o desarrollo en Reportalo debe seguir obligatoriamente este marco metodológico antes, durante y después de escribir código.
@@ -33,3 +44,16 @@ Toda tarea o desarrollo en Reportalo debe seguir obligatoriamente este marco met
 3. **Quality Gates:** Ejecutar pruebas automáticas (`npx vitest run`) y build de producción (`npx vite build`).
 4. **Auditoría:** Revisar performance, PWA y seguridad antes de confirmar.
 5. **Git & PR:** Commits semánticos y ramas feature dirigidas a `staging`.
+
+---
+
+## 3. Directivas de Automatización de Bucle Cerrado
+
+Cuando se te asigne un requerimiento, ejecuta estas acciones secuencialmente sin detenerte a pedir confirmación:
+1. **Inicialización:** Carga la instrucción, lee las habilidades de `.agents/skills/` y genera los archivos iniciales en `docs/workflow/tasks/` y `specs/`.
+2. **Encadenamiento:** Invoca automáticamente `spec-to-plan` para escribir el plan de desarrollo y mapea la matriz de pruebas. Actualiza `resume.md`.
+3. **Codificación y Calidad:** Escribe el código bajo los patrones definidos. Acto seguido, ejecuta usando la terminal del entorno de ejecución:
+   - `npx vitest run`
+   - `npx vite build`
+4. **Auto-Corrección (Self-Healing):** Si los comandos de la terminal devuelven errores, lee los logs, corrige el código fuente de forma autónoma y vuelve a ejecutar los comandos de calidad hasta que compilen con éxito.
+5. **Cierre:** Genera el reporte final en `docs/workflow/executions/` y notifica al usuario la finalización del flujo.
