@@ -102,3 +102,19 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - `HomePage.jsx`: Verifica `user.user_metadata.onboarding_completed` ANTES de localStorage. Si el flag está en localStorage pero no en Supabase, se sincroniza automáticamente.
   - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
 
+### [2026-08-24] — REP-3311: Magic Link — Implementación Completa del Flujo
+- **Tipo**: Feature / Auth / Magic Link
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/design-system-uiux`
+- **Resumen**:
+  - Implementación completa del flujo de Magic Link (autenticación por email sin contraseña).
+  - **Problema**: `signInWithEmail()` no existía — HomePage la llamaba pero lanzaba error en runtime. No había ruta de callback ni verificación de tokens.
+  - **Solución**:
+    - `authService.js`: `signInWithEmail()` usa `supabase.auth.signInWithOtp()` con `emailRedirectTo: /auth/callback`.
+    - `AuthContext.jsx`: Expone `signInWithEmail` via context provider.
+    - `AuthCallback.jsx`: Componente nuevo que maneja el redirect, verifica sesión con `getSession()`, limpia URL y redirige a `/map` o `/onboarding`.
+    - `routes/index.jsx`: Ruta `/auth/callback` agregada como pública.
+    - `cleanAuthCallbackUrl()`: Mejorada para limpiar `token_hash`, `type`, `access_token` de query params.
+  - **Configuración requerida**: Supabase Dashboard > Authentication > URL Configuration > Redirect URLs debe incluir `/auth/callback`.
+  - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).

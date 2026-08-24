@@ -2,7 +2,7 @@ id: REP-3311
 external_ref: ""
 title: "Magic Link — Implementación Completa del Flujo"
 type: feat
-status: IN_PROGRESS
+status: DONE
 priority: critical
 owner: "Matías Krepchuk (Tech Lead)"
 base_branch: feature/design-system-uiux
@@ -16,35 +16,54 @@ requirements:
   - "Usuario ingresa email y recibe un link mágico para autenticarse"
   - "El link redirige a la app con token de verificación"
   - "La app verifica el token y establece la sesión"
-  - "Funcion tanto para usuarios nuevos como existentes"
+  - "Funciona tanto para usuarios nuevos como existentes"
   - "Reenvío de email con cooldown de 60 segundos"
 
 acceptance_criteria:
-  - "AC-01: signInWithEmail en authService.js llama a supabase.auth.signInWithOtp()"
+  - "AC-01: signInWithEmail en authService.js llama a supabase.auth.signInWithOtp() con emailRedirectTo a /auth/callback"
   - "AC-02: AuthContext expone signInWithEmail via context provider"
-  - "AC-03: Ruta /auth/callback maneja el redirect del magic link"
-  - "AC-04: Callback procesa token_hash y type=magic_link de URL params"
-  - "AC-05: Limpieza de tokens de URL después de verificar sesión"
-  - "AC-06: HomePage muestra UI de email-sent con countdown de reenvío"
-  - "AC-07: Redirección automática a /onboarding o /map según estado del usuario"
+  - "AC-03: Ruta /auth/callback agregada como ruta pública"
+  - "AC-04: AuthCallback.jsx procesa token_hash y type=query params, llama getSession()"
+  - "AC-05: cleanAuthCallbackUrl() limpia token_hash, type, access_token de URL"
+  - "AC-06: AuthCallback redirige a /map si usuario tiene onboarding completado, a /onboarding si no"
+  - "AC-07: UI de error con botón 'Volver al inicio' si el link expira o es inválido"
+  - "AC-08: HomePage signInWithEmail() ya existía (linea 89) — funcionando correctamente"
 
 constraints:
   - "Usar PKCE flow (ya configurado en supabase.js)"
   - "No romper flujo de Google OAuth existente"
   - "El callback debe funcionar tanto para magic link como para OAuth"
+  - "Supabase Dashboard debe tener Redirect URL configurado"
 
 risks:
   - "Supabase dashboard debe tener Email provider habilitado y Redirect URLs configurados"
+  - "Si el usuario no tiene la URL /auth/callback en Supabase, el link no funcionará"
 
 dependencies:
   - "@supabase/supabase-js ^2.49"
-  - "Supabase Auth>Email provider habilitado"
-  - "Redirect URL configurado en Supabase dashboard"
+  - "Supabase Auth > Email provider habilitado"
+  - "Redirect URL https://dominio/auth/callback en Supabase Dashboard"
 
 artifacts:
   specification: "docs/workflow/specs/REP-3311.md"
   implementation_plan: "docs/workflow/plans/REP-3311.md"
+  test_plan: "docs/workflow/tests/REP-3311.md"
   execution_report: "docs/workflow/executions/REP-3311-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "revert commit"
 
 branch:
   type: feat
