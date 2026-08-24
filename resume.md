@@ -118,3 +118,15 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
     - `cleanAuthCallbackUrl()`: Mejorada para limpiar `token_hash`, `type`, `access_token` de query params.
   - **Configuración requerida**: Supabase Dashboard > Authentication > URL Configuration > Redirect URLs debe incluir `/auth/callback`.
   - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
+
+### [2026-08-24] — REP-3312: Login Google — Fix Hardening de Seguridad
+- **Tipo**: Fix / Security / Auth
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `feature/design-system-uiux`
+- **Resumen**:
+  - Hardening de seguridad para Login con Google (continuación de REP-2100).
+  - **Gap #1**: `validateRedirectUrl()` estaba definida pero no se usaba en `signInWithGoogle()`. Ahora valida el redirect URL contra `ALLOWED_REDIRECT_ORIGINS` antes de ejecutar OAuth.
+  - **Gap #2**: Agregado `Content-Security-Policy` header en `vercel.json` — previene XSS y exfiltración de tokens. Permite scripts de Supabase, Google, Framer Motion y MapLibre.
+  - **Gap #3**: Agregado `Strict-Transport-Security` header con `max-age=63072000; includeSubDomains; preload` — fuerza HTTPS.
+  - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).

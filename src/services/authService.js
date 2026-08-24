@@ -3,7 +3,7 @@
 // ==============================================================================
 
 // Importación del cliente configurado de Supabase y utilidades de seguridad
-import { supabase, getSecureRedirectUrl } from '../utils/supabase';
+import { supabase, getSecureRedirectUrl, validateRedirectUrl } from '../utils/supabase';
 
 // Registrar un nuevo usuario con email, contraseña y metadatos
 export const signUp = async (email, password, metadata = {}) => {
@@ -64,8 +64,14 @@ export const signInWithEmail = async (email) => {
 // Iniciar sesión o registrarse mediante Google OAuth
 // SECURITY: Usa redirect URL validado para prevenir open redirect attacks
 export const signInWithGoogle = async () => {
-  // SECURITY: Usar origin validado en vez de window.location.origin directo
+  // SECURITY: Obtener y validar origin contra whitelist de orígenes permitidos
   const redirectUrl = getSecureRedirectUrl();
+
+  // SECURITY: Validar que el redirect URL sea seguro antes de usarlo
+  // Previene open redirect attacks si el origin fuera manipulado
+  if (!validateRedirectUrl(redirectUrl)) {
+    throw new Error('Redirect URL no permitido por seguridad.');
+  }
 
   // Redirección OAuth con proveedor Google hacia el origen seguro de la app
   const { data, error } = await supabase.auth.signInWithOAuth({

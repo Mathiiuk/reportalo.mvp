@@ -1,0 +1,60 @@
+id: REP-3312
+external_ref: "REP-2100"
+title: "Login Google — Fix Hardening de Seguridad"
+type: fix
+status: DONE
+priority: high
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, auth, security]
+  environments: [local, staging, production]
+
+requirements:
+  - "Integrar validateRedirectUrl() en signInWithGoogle()"
+  - "Agregar Content-Security-Policy header en vercel.json"
+  - "Agregar Strict-Transport-Security header en vercel.json"
+
+acceptance_criteria:
+  - "AC-01: signInWithGoogle() valida redirect URL contra ALLOWED_REDIRECT_ORIGINS antes de redirigir"
+  - "AC-02: vercel.json incluye Content-Security-Policy estricto"
+  - "AC-03: vercel.json incluye Strict-Transport-Security con max-age"
+  - "AC-04: No se rompe el flujo OAuth existente"
+
+constraints:
+  - "No romper flujo OAuth de Google"
+  - "CSP no debe bloquear scripts de Supabase, Google o Framer Motion"
+  - "HSTS solo aplica en HTTPS (Vercel lo maneja)"
+
+risks:
+  - "CSP mal configurado puede romper funcionalidad existente"
+
+dependencies:
+  - "@supabase/supabase-js ^2.49"
+  - "Vercel deployment"
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3312.md"
+  implementation_plan: "docs/workflow/plans/REP-3312.md"
+  test_plan: "docs/workflow/tests/REP-3312.md"
+  execution_report: "docs/workflow/executions/REP-3312-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+branch:
+  type: fix
+  name: "feature/design-system-uiux"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"
