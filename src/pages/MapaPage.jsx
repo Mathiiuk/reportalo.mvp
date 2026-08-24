@@ -12,7 +12,7 @@ import maplibregl from 'maplibre-gl';
 // Iconografía vectorial de Lucide
 import { LogOut, MapPin, Navigation, Loader2 } from 'lucide-react';
 // Navegación flotante inferior
-import { BottomNav } from '../components/navigation/BottomNav';
+
 // Notificaciones Toast de Sonner
 import { toast } from 'sonner';
 // Hooks de autenticación y onboarding
@@ -289,10 +289,6 @@ export const MapaPage = () => {
         )}
       </button>
 
-      {/* ================================================================== */}
-      {/* 4. Navegación Inferior Flotante (BottomNav)                        */}
-      {/* ================================================================== */}
-      <BottomNav />
     </div>
   );
 };

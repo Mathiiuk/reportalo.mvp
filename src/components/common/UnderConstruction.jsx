@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Construction, Clock } from 'lucide-react';
 import { Button } from './Button';
-import { BottomNav } from '../navigation/BottomNav';
 
 export const UnderConstruction = ({ title, description, icon: Icon = Construction }) => {
   const navigate = useNavigate();
@@ -70,7 +69,6 @@ export const UnderConstruction = ({ title, description, icon: Icon = Constructio
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 };
