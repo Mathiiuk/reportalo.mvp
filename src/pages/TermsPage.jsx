@@ -33,7 +33,7 @@ export const TermsPage = () => {
   };
 
   const handleFullTerms = () => {
-    window.open('https://reportalo.com.ar/terminos', '_blank');
+    navigate('/termino-condiciones');
   };
 
   return (
