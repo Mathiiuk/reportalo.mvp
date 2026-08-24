@@ -45,21 +45,21 @@ export const TermsPage = () => {
       </div>
 
       {/* Contenido scrollable */}
-      <div className="flex-1 overflow-y-auto scroll-area" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="flex-1 overflow-y-auto scroll-area" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {TERMS_ITEMS.map((item, i) => (
-          <div key={i} className="flex" style={{ gap: '12px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '14px', padding: '14px 15px' }}>
-            <span className="material-symbols-rounded filled flex-shrink-0" style={{ fontSize: '22px', color: 'rgb(30, 111, 203)' }}>{item.icon}</span>
+          <div key={i} className="flex-1 flex items-start" style={{ gap: '14px', background: 'rgb(255, 255, 255)', border: '1px solid rgb(230, 236, 243)', borderRadius: '16px', padding: '20px 18px' }}>
+            <span className="material-symbols-rounded filled flex-shrink-0" style={{ fontSize: '26px', color: 'rgb(30, 111, 203)' }}>{item.icon}</span>
             <div>
-              <div style={{ fontFamily: '700 14px Manrope', color: 'rgb(38, 50, 73)', fontSize: '14px', fontWeight: 700 }}>{item.title}</div>
-              <div style={{ fontFamily: '500 13px / 1.5 Manrope', color: 'rgb(122, 134, 150)', marginTop: '4px', fontSize: '13px', fontWeight: 500, lineHeight: 1.5 }}>{item.description}</div>
+              <div style={{ fontFamily: '700 16px Manrope', color: 'rgb(38, 50, 73)', fontSize: '16px', fontWeight: 700 }}>{item.title}</div>
+              <div style={{ fontFamily: '500 15px / 1.55 Manrope', color: 'rgb(122, 134, 150)', marginTop: '6px', fontSize: '15px', fontWeight: 500, lineHeight: 1.55 }}>{item.description}</div>
             </div>
           </div>
         ))}
 
         {/* Link texto completo */}
-        <button type="button" className="flex items-center justify-center cursor-pointer" style={{ gap: '6px', fontFamily: '700 13px Manrope', color: 'rgb(30, 111, 203)', background: 'none', border: 'none', padding: '8px 0', fontSize: '13px', fontWeight: 700, width: '100%' }}>
+        <button type="button" className="flex items-center justify-center cursor-pointer" style={{ gap: '6px', fontFamily: '700 14px Manrope', color: 'rgb(30, 111, 203)', background: 'none', border: 'none', padding: '10px 0', fontSize: '14px', fontWeight: 700, width: '100%' }}>
           <span>Leer el texto completo</span>
-          <span className="material-symbols-rounded" style={{ fontSize: '17px' }}>open_in_new</span>
+          <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>open_in_new</span>
         </button>
       </div>
 
