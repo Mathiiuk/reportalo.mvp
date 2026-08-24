@@ -1,0 +1,46 @@
+id: REP-3313
+external_ref: "REP-3520"
+title: "Sesión — Fix Tests de QA para Sesión Activa, Logout y Expirada"
+type: fix
+status: IN_PROGRESS
+priority: high
+owner: "Matías Krepchuk (Tech Lead)"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "Reportalo V2"
+  modules: [frontend, auth, testing]
+  environments: [local]
+
+requirements:
+  - "Test de sesión activa: usuario autenticado es redirigido a /map desde /"
+  - "Test de logout: botón cerrar sesión existe y redirige a /"
+  - "Test de sesión expirada: ProtectedRoute redirige a / cuando no hay sesión"
+
+acceptance_criteria:
+  - "AC-01: Test de sesión activa — authenticated user redirects to /map"
+  - "AC-02: Test de logout — PerfilPage renderiza botón Cerrar sesión"
+  - "AC-03: Test de sesión expirada — ProtectedRoute redirige a / cuando no autenticado"
+  - "AC-04: Todos los tests pasan con npx vitest run"
+
+constraints:
+  - "No romper tests existentes"
+  - "Mock de Supabase auth para tests"
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3313.md"
+  implementation_plan: "docs/workflow/plans/REP-3313.md"
+  test_plan: "docs/workflow/tests/REP-3313.md"
+  execution_report: "docs/workflow/executions/REP-3313-run-001.md"
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+branch:
+  type: fix
+  name: "feature/design-system-uiux"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"
