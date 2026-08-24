@@ -71,7 +71,6 @@ export const HomePage = () => {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
-      navigate('/onboarding', { replace: true });
     } catch (error) {
       console.error('Error con Google OAuth:', error);
       toast.error('No se pudo iniciar sesión con Google.');
