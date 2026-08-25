@@ -1,0 +1,22 @@
+id: "REP-3314"
+title: "Rediseño y Reparación de Mapa Interactivo con Heatmap y Capas de Incidentes"
+type: "feature"
+status: "IN_PROGRESS"
+priority: "HIGH"
+created_at: "2026-08-25"
+assignee: "Matías Krepchuk"
+qa: "Ivan Juarez"
+description: >
+  Reparar la carga del mapa MapLibre GL JS asegurando tiles estables (raster tiles de alta disponibilidad),
+  incorporar barra superior con selector de zona (Avellaneda · Centro), métrica flotante de reportes (128 reportes · 7 días),
+  filtro flotante, capa de calor (Heatmap) y marcadores interactivos categorizados con leyenda de intensidad.
+acceptance_criteria:
+  - "El mapa MapLibre carga de forma estable e instantánea sin pantallas en blanco ni fallos de CDN"
+  - "Cabecera superior muestra Logo 'Reportalo' a la izquierda y Campana de notificaciones con badge '2' a la derecha"
+  - "Selector de zona 'Avellaneda · Centro' interactivo y accesible"
+  - "Tarjeta flotante superior izquierda con métrica '128 REPORTES · 7 DÍAS'"
+  - "Botón flotante superior derecho para filtros rápidos"
+  - "Capa de Heatmap con gradiente de calor y marcadores de incidentes circulares coloreados"
+  - "Leyenda inferior izquierda (Menos -> Gradiente verde/naranja/rojo -> Más)"
+  - "Botón de geolocalización funcional para centrar en la ubicación del usuario"
+  - "Botón de reporte omitido en el mapa ya que se encuentra centralizado en el BottomNav flotante"

@@ -6,6 +6,23 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
 
 ## Registro de Tareas
 
+### [2026-08-25] — REP-3314: Rediseño y Reparación de Mapa Interactivo V2 con Heatmap y Selector de Zona
+- **Tipo**: Frontend / MapLibre / UX-UI
+- **Responsable**: Matías Krepchuk (Líder Técnico)
+- **QA Asignado**: Ivan Juarez
+- **Estado**: Implementado y Validado (`DONE`)
+- **Rama**: `fix/REP-3520-session-management`
+- **Resumen**:
+  - Reparación de MapLibre GL JS sustituyendo vector style remoto por raster tiles CARTO Voyager de alta velocidad y 100% de disponibilidad.
+  - Implementación de cabecera con Logo 'Reportalo', botón de alertas con badge dinámico '2', y selector desplegable de zona ('Avellaneda · Centro', 'Piñeyro', 'Sarandí', 'CABA Centro') con animación flyTo.
+  - Inclusión de tarjeta flotante superior izquierda con métrica '128 REPORTES · 7 DÍAS'.
+  - Botón flotante superior derecho de filtros de capas.
+  - Capa de densidad de calor (Heatmap) y marcadores interactivos circulares con modal de detalle al tocar.
+  - Leyenda inferior de calor ('Menos' a 'Más') y FAB de geolocalización.
+  - Se omitió el botón central de reporte ya que se encuentra unificado en el BottomNav flotante.
+  - Quality Gates completados: 100% en Vitest y Vite Build exitoso.
+
+
 ### [2026-08-18] — REP-3304: Configurar Vercel Preview por Rama
 - **Tipo**: DevOps / Infraestructura / CI-CD
 - **Responsable**: Matias Krepchuk (PL)
