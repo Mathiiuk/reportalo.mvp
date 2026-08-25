@@ -128,50 +128,51 @@ export const HomePage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full min-h-[100dvh] flex flex-col bg-gradient-to-br from-[#2A7BD6] to-[#15539E] px-7"
+            className="w-full min-h-[100dvh] flex flex-col bg-[#1E6FCB] px-6"
           >
-            <div className="flex-1 flex flex-col justify-center items-center text-center">
-              <div className="my-2 flex items-center justify-center">
+            <div className="flex-1 flex flex-col justify-center items-center text-center pt-8 pb-4">
+              {/* Logo */}
+              <div className="mb-6 flex items-center justify-center">
                 <img
                   src="/logo-icon.webp"
                   alt="Logo Reportalo"
-                  className="w-32 h-36 object-contain select-none transition-transform hover:scale-105 duration-200"
+                  className="w-28 h-32 object-contain select-none transition-transform hover:scale-105 duration-200 drop-shadow-sm"
                 />
               </div>
 
-              <h1 className="text-white text-[42px] font-extrabold tracking-[-0.8px]">
+              <h1 className="text-white text-[38px] font-extrabold tracking-[-0.6px] leading-tight">
                 Reportalo
               </h1>
 
-              <p className="mt-3 text-white/86 text-lg font-medium leading-relaxed max-w-[280px]">
+              <p className="mt-3.5 text-white/90 text-[15px] font-medium leading-relaxed max-w-[280px]">
                 Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
               </p>
 
-              <div className="flex flex-col items-center mt-7 w-full gap-[13px]">
-                <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">shield</span>
-                  <span className="text-white/92 text-base font-semibold text-left">Anónimo ante el organismo receptor</span>
+              <div className="flex flex-col items-start mt-8 w-full max-w-[310px] gap-3.5 mx-auto">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF] shrink-0">shield</span>
+                  <span className="text-white/95 text-[15px] font-semibold text-left">Anónimo ante el organismo receptor</span>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">auto_awesome</span>
-                  <span className="text-white/92 text-base font-semibold text-left">La IA encuentra a quién corresponde</span>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF] shrink-0">auto_awesome</span>
+                  <span className="text-white/95 text-[15px] font-semibold text-left">La IA encuentra a quién corresponde</span>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF]">map</span>
-                  <span className="text-white/92 text-base font-semibold text-left">Seguimiento hasta resolverse</span>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-rounded filled text-[22px] text-[#9FD0FF] shrink-0">map</span>
+                  <span className="text-white/95 text-[15px] font-semibold text-left">Seguimiento hasta resolverse</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col pb-6 safe-bottom gap-3">
+            <div className="w-full max-w-[340px] mx-auto flex flex-col pb-6 safe-bottom gap-3 mt-auto">
               <button
                 type="button"
                 onClick={() => setActiveForm('login')}
-                className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] bg-white rounded-2xl py-[18px] text-center font-extrabold text-lg text-[#1E6FCB] shadow-[0_8px_18px_rgba(0,0,0,0.14)] border-none"
+                className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] bg-white rounded-[22px] py-[18px] text-center font-extrabold text-lg text-[#1E6FCB] shadow-[0_8px_20px_rgba(0,0,0,0.12)] border-none"
               >
                 Comenzar
               </button>
-              <p className="text-center px-2 text-white/70 text-sm font-medium leading-relaxed">
+              <p className="text-center px-2 text-white/80 text-[13px] font-medium leading-relaxed">
                 Entrás con tu correo, sin crear contraseña.
               </p>
             </div>
@@ -188,30 +189,30 @@ export const HomePage = () => {
             transition={{ duration: 0.2 }}
             className="w-full min-h-[100dvh] bg-white flex flex-col safe-top safe-bottom"
           >
-            <div className="w-full max-w-md mx-auto flex-1 flex flex-col px-6 pt-2.5">
+            <div className="w-full max-w-md mx-auto flex-1 flex flex-col px-6 pt-3 pb-4">
               {/* Flecha volver */}
               <button
                 type="button"
                 onClick={() => setActiveForm(null)}
-                className="flex items-center justify-center cursor-pointer text-2xl text-[#5B6A7A] bg-transparent border-none p-0 w-fit"
+                className="flex items-center justify-center cursor-pointer text-2xl text-[#334155] bg-transparent border-none p-1 -ml-1 w-fit hover:opacity-80 transition-opacity"
                 aria-label="Volver"
               >
-                <span className="material-symbols-rounded">arrow_back</span>
+                <span className="material-symbols-rounded text-[26px]">arrow_back</span>
               </button>
 
               {/* Logo + nombre */}
-              <div className="flex items-center gap-[9px] mt-[18px]">
-                <img src="/logo-icon.webp" alt="Logo Reportalo" className="w-5 h-[26px] object-contain" />
-                <span className="text-[19px] font-extrabold text-[#263249]">Reportalo</span>
+              <div className="flex items-center gap-2.5 mt-4">
+                <img src="/logo-icon.webp" alt="Logo Reportalo" className="w-6 h-7 object-contain" />
+                <span className="text-[20px] font-extrabold text-[#1B365D]">Reportalo</span>
               </div>
 
               {/* Título */}
-              <h2 className="text-[26px] font-extrabold text-[#243447] mt-6 tracking-[-0.5px]">
+              <h2 className="text-[28px] font-extrabold text-[#1B365D] mt-5 tracking-tight">
                 Ingresá a Reportalo
               </h2>
 
               {/* Subtítulo */}
-              <p className="text-[15px] font-medium text-[#8593A2] mt-1.5 leading-relaxed">
+              <p className="text-[15px] font-medium text-[#64748B] mt-1 leading-snug max-w-[280px]">
                 Sin contraseñas. Elegí cómo querés entrar.
               </p>
 
@@ -219,55 +220,66 @@ export const HomePage = () => {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-[0.98] mt-7 gap-[11px] bg-white border-[1.5px] border-[#DDE4EC] rounded-2xl p-4 w-full"
+                className="flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-[0.98] mt-7 gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[20px] py-[15px] px-4 w-full shadow-xs hover:bg-[#F1F5F9]"
               >
-                <span className="w-[22px] h-[22px] rounded-full bg-white border border-[#EEF1F5] flex items-center justify-center text-[13px] font-extrabold text-[#4285F4]">G</span>
-                <span className="text-base font-bold text-[#3A4658]">Continuar con Google</span>
+                <span className="w-[22px] h-[22px] rounded-full bg-white border border-[#E2E8F0] flex items-center justify-center text-[13px] font-extrabold text-[#4285F4] shadow-xs">
+                  G
+                </span>
+                <span className="text-[15px] font-bold text-[#1E293B]">
+                  Continuar con Google
+                </span>
               </button>
 
               {/* Separador "o" */}
-              <div className="flex items-center gap-2.5 my-[22px]">
-                <span className="flex-1 h-px bg-[#EEF1F5]" />
-                <span className="text-xs font-semibold text-[#AAB4BF]">o</span>
-                <span className="flex-1 h-px bg-[#EEF1F5]" />
+              <div className="flex items-center gap-3 my-6 w-full">
+                <span className="flex-1 h-px bg-[#E2E8F0]" />
+                <span className="text-xs font-semibold text-[#94A3B8]">o</span>
+                <span className="flex-1 h-px bg-[#E2E8F0]" />
               </div>
 
-              {/* Label correo */}
-              <label className="text-[13px] font-bold text-[#56657A] mb-[7px]">Tu correo</label>
+              {/* Formulario Email */}
+              <form onSubmit={handleEmailSubmit} className="w-full">
+                {/* Label correo */}
+                <label className="block text-[13px] font-bold text-[#475569] mb-2">
+                  Tu correo
+                </label>
 
-              {/* Input correo */}
-              <form onSubmit={handleEmailSubmit}>
-                <div className="flex items-center gap-2.5 bg-white border-2 border-[#1E6FCB] rounded-[14px] p-3.5 shadow-[0_0_0_3px_rgba(30,111,203,0.12)]">
-                  <span className="material-symbols-rounded text-xl text-[#1E6FCB]">mail</span>
+                {/* Input correo */}
+                <div className="flex items-center gap-3 bg-white border-2 border-[#1E6FCB] rounded-[20px] px-4 py-3.5 shadow-sm">
+                  <span className="material-symbols-rounded text-[22px] text-[#1E6FCB] shrink-0">
+                    mail
+                  </span>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
+                    placeholder="lucia.f@mail.com"
                     autoComplete="email"
                     inputMode="email"
                     autoCapitalize="none"
                     spellCheck="false"
                     disabled={isLoading}
-                    className="flex-1 outline-none border-none bg-transparent text-[15px] font-semibold text-[#46566B]"
+                    className="flex-1 outline-none border-none bg-transparent text-[15px] font-medium text-[#1E293B] placeholder:text-[#94A3B8]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-[18px] bg-[#1E6FCB] rounded-2xl py-[17px] text-center border-none shadow-[0_8px_18px_rgba(30,111,203,0.3)]"
+                  className="w-full cursor-pointer transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-4 bg-[#1E6FCB] rounded-[20px] py-[16px] text-center border-none shadow-[0_10px_25px_-5px_rgba(30,111,203,0.35)] hover:bg-[#1860B3]"
                 >
-                  <span className="font-extrabold text-[17px] text-white">
+                  <span className="font-extrabold text-base text-white">
                     {isLoading ? 'Enviando...' : 'Enviarme un enlace'}
                   </span>
                 </button>
               </form>
 
               {/* Bloque de privacidad */}
-              <div className="flex items-start mt-auto gap-2.5 bg-[#EEF5FC] border border-[#D4E6F8] rounded-[13px] p-3.5 mb-4 mt-auto">
-                <span className="material-symbols-rounded filled text-[19px] text-[#1E6FCB] shrink-0">shield</span>
-                <span className="text-[13px] font-medium text-[#46566B] leading-relaxed">
+              <div className="flex items-start mt-auto gap-3 bg-[#F0F6FE] border border-[#D6E6F8] rounded-[18px] p-4 mt-auto mb-2">
+                <span className="material-symbols-rounded filled text-[20px] text-[#1E6FCB] shrink-0 mt-0.5">
+                  shield
+                </span>
+                <span className="text-[13px] font-medium text-[#475569] leading-relaxed">
                   Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
                 </span>
               </div>

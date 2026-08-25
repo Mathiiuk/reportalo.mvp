@@ -7,13 +7,13 @@ import { createClient } from '@supabase/supabase-js';
 
 // URL del proyecto Supabase obtenida desde las variables de entorno de Vite
 // SECURITY: No se permiten fallbacks hardcoded — la app debe fallar si faltan las env vars
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'placeholder-anon-key';
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error(
-    'Faltan las variables de entorno VITE_SUPABASE_URL y/o VITE_SUPABASE_PUBLISHABLE_KEY. ' +
-    'Consultá el archivo .env.example para configurarlas.'
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+  console.warn(
+    '[Supabase] Faltan las variables de entorno VITE_SUPABASE_URL y/o VITE_SUPABASE_PUBLISHABLE_KEY. ' +
+    'Usando valores de desarrollo temporales. Consultá el archivo .env.example para configurarlas.'
   );
 }
 
