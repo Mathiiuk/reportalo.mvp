@@ -34,7 +34,11 @@ export const AuthProvider = ({ children }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
-    }).catch(() => {
+    }).catch((error) => {
+      // Si falla la obtención de sesión, limpiar estado para evitar estados stale
+      console.error('[Auth] Error al obtener sesión:', error);
+      setSession(null);
+      setUser(null);
       setLoading(false);
     });
 

@@ -7,8 +7,10 @@ import {
   ChevronRight,
   CheckCircle,
   Moon,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { toast } from 'sonner';
 
@@ -20,6 +22,7 @@ const MENU_ITEMS = [
 
 export const PerfilPage = () => {
   const { user, signOut } = useAuth();
+  const { resetOnboarding } = useOnboarding();
   const { isDark, toggleDark } = useDarkMode();
   const navigate = useNavigate();
 
@@ -41,10 +44,11 @@ export const PerfilPage = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success('Sesión cerrada');
+      resetOnboarding();
+      toast.success('Sesión cerrada correctamente.');
       navigate('/', { replace: true });
     } catch {
-      toast.error('No se pudo cerrar sesión');
+      toast.error('No se pudo cerrar la sesión.');
     }
   };
 
@@ -165,9 +169,10 @@ export const PerfilPage = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full py-3 rounded-xl text-[12.5px] font-bold transition-colors active:opacity-70 cursor-pointer touch-target"
-            style={{ border: '1.5px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[12.5px] font-bold transition-colors active:opacity-70 cursor-pointer touch-target"
+            style={{ border: '1.5px solid var(--color-danger)', color: 'var(--color-danger)' }}
           >
+            <LogOut className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
             Cerrar sesión
           </button>
           <button
