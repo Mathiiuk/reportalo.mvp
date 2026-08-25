@@ -1,0 +1,67 @@
+id: REP-3520
+external_ref: ""
+title: "Mantener y cerrar sesión de forma segura"
+type: feature
+status: IN_PROGRESS
+priority: high
+owner: "Matias Krepchuk"
+base_branch: feature/design-system-uiux
+
+scope:
+  project: "reportalo.mvp"
+  modules: ["auth", "session", "routes", "ui"]
+  environments: [development, staging, production]
+
+requirements:
+  - "Una sesión válida se conserva al recargar o volver a abrir la aplicación."
+  - "Si la sesión es válida, el ciudadano no vuelve a autenticarse innecesariamente."
+  - "Existe una acción clara para cerrar sesión."
+  - "Al cerrar sesión se invalidan los datos de autenticación locales y se vuelve a la pantalla de acceso."
+  - "Una sesión expirada redirige de forma controlada al acceso sin mostrar datos protegidos."
+  - "Los casos de sesión activa, logout y sesión expirada quedan validados por QA."
+
+acceptance_criteria:
+  - "AC-01: Sesión persiste al recargar la app (Supabase localStorage + autoRefreshToken)."
+  - "AC-02: ProtectedRoute redirige a / si no hay sesión válida."
+  - "AC-03: Botón de cerrar sesión visible en PerfilPage y accesible desde la UI."
+  - "AC-04: Logout limpia sesión Supabase + onboarding localStorage + redirige a /."
+  - "AC-05: Sesión expirada redirige a / con toast informativo (sin flash de contenido protegido)."
+  - "AC-06: HomePage redirige a /map si sesión es válida y onboarding completado."
+  - "AC-07: Listener onAuthStateChange actualiza estado en tiempo real."
+
+constraints:
+  - "Usar Supabase Auth SDK para manejo de sesiones (no custom JWT)."
+  - "No exponer service roles ni secretos en frontend."
+  - "Compatible con iOS Safari y Android Chrome (PWA standalone)."
+
+risks:
+  - "Magic link (signInWithEmail) no implementado — solo Google OAuth funciona actualmente."
+  - "Onboarding status es solo localStorage — se pierde al limpiar datos del navegador."
+
+dependencies:
+  - "Supabase Auth (signInWithGoogle, signOut, onAuthStateChange)"
+  - "OnboardingContext (resetOnboarding)"
+  - "ProtectedRoute guard"
+
+requires_approval: false
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3520.md"
+  implementation_plan: "docs/workflow/plans/REP-3520.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+branch:
+  type: feat
+  name: "feature/design-system-uiux"
+
+commands:
+  build: "npx vite build"

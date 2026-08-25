@@ -130,3 +130,24 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - **Gap #2**: Agregado `Content-Security-Policy` header en `vercel.json` — previene XSS y exfiltración de tokens. Permite scripts de Supabase, Google, Framer Motion y MapLibre.
   - **Gap #3**: Agregado `Strict-Transport-Security` header con `max-age=63072000; includeSubDomains; preload` — fuerza HTTPS.
   - Quality Gates: `npx vitest run` (3/3 pasan) + `npx vite build` (exitoso).
+
+### [2026-08-25] — REP-3520: Mantener y cerrar sesión de forma segura
+- **Tipo**: Feature / Auth / Session Management / UX
+- **Responsable**: Matías Krepchuk (Líder Técnico)
+- **Estado**: En progreso (`IN_PROGRESS`)
+- **Rama**: `feature/design-system-uiux`
+- **Resumen**:
+  - Auditoría completa del flujo de autenticación, persistencia de sesión y logout en la app.
+  - Documentación workflow creada: task (`REP-3520.yml`), spec (`REP-3520.md`), plan (`REP-3520.md`).
+  - **Estado actual identificado:**
+    - ✅ Sesión persiste al recargar (Supabase `persistSession: true` + `autoRefreshToken: true`)
+    - ✅ ProtectedRoute redirige a `/` si no autenticado
+    - ✅ Logout funcional en MapaPage (`signOut` + `resetOnboarding` + toast + navigate)
+    - ✅ `onAuthStateChange` listener configurado en AuthContext
+    - ✅ HomePage redirige a `/map` si sesión válida + onboarding completed
+  - **Issues encontrados:**
+    - ❌ PerfilPage es placeholder sin UI ni botón de logout
+    - ❌ Sesión expirada redirige silenciosamente a `/` sin toast informativo
+    - ❌ `signInWithEmail` no existe en AuthContext (magic link roto, solo Google funciona)
+    - ❌ Onboarding no se resetea al expirar sesión (solo en logout manual)
+  - **Plan de implementación definido** en 6 pasos con matriz de AC cubiertos.
