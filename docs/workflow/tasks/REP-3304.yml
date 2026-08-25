@@ -1,0 +1,75 @@
+id: REP-3304
+external_ref: "https://jira.reportalo.com/browse/REP-3304"
+title: "Configurar Vercel preview por rama"
+type: chore
+status: IN_PROGRESS
+priority: highest
+owner: "Matias Krepchuk"
+base_branch: main
+
+scope:
+  project: "reportalo.mvp"
+  modules: ["infra", "ci-cd", "vercel"]
+  environments: [preview, staging, production]
+
+requirements:
+  - "Configurar Vercel para generar automáticamente una URL de preview por cada rama o Pull Request."
+  - "Permitir que QA (Ivo) valide visualmente los cambios de Matias mediante el link temporal generado."
+  - "Operar bajo el plan Free (Hobby) de Vercel sin requerir asientos de pago para QA."
+
+acceptance_criteria:
+  - "AC-01: Cada push a rama con PR abierto genera un Preview Deployment en Vercel."
+  - "AC-02: El bot de Vercel comenta automáticamente en el PR con la URL del preview."
+  - "AC-03: La URL de preview es accesible públicamente sin requerir login o invitación para QA (Ivo)."
+
+constraints:
+  - "Plan Vercel Hobby / Free (un solo propietario administrador, enlaces de preview públicos)."
+  - "El framework definitivo de la aplicación se definirá en tareas posteriores."
+
+risks:
+  - "Asegurar que la configuración en vercel.json sea compatible con el stack que se seleccione."
+
+dependencies:
+  - "REP-1013 (DevOps / Infraestructura)"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3304.md"
+  implementation_plan: "docs/workflow/plans/REP-3304.md"
+  test_plan: "docs/workflow/tests/REP-3304.md"
+  execution_report: "docs/workflow/executions/REP-3304-run-001.md"
+
+quality_gates:
+  lint: true
+  typecheck: false
+  unit_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: false
+  production_required: true
+  rollback_strategy: "Vercel Instant Rollback desde dashboard o redeploy del commit previo en main"
+
+branch:
+  type: feat
+  name: "feat/REP-3304-vercel-preview"
+
+commands:
+  install: ""
+  lint: ""
+  typecheck: ""
+  unit_tests: ""
+  integration_tests: ""
+  e2e: ""
+  build: ""
+  security: ""
+  smoke_tests: ""
+  deploy_staging: ""
+  deploy_production: ""
+  rollback: ""
