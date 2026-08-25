@@ -28,3 +28,16 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Integración completa del **Acta de Inicio v3.0** (`RAR-2026`) en `docs/project/acta-de-inicio-v3.md` y `wiki/01-acta-de-inicio.md`.
   - Formalización del equipo oficial (Carlos Ruiz, Leonel Nuñez, Matías Krepchuk, Hernán Gregorini, Ivan Juarez), alcance MVP CABA/Avellaneda, IA Jurídica y métricas de éxito.
   - Creación del pipeline de sincronización continua `.github/workflows/wiki-sync.yml` para publicación automática en la GitHub Wiki al hacer push a `main`.
+
+### [2026-08-19] — REP-3307: Configurar Ambiente Staging
+- **Tipo**: DevOps / Infraestructura / Staging
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **Destinatarios**: Carlos Ruiz (Sponsor) & Leonel Nuñez (PM)
+- **Estado**: En progreso (`IN_PROGRESS`)
+- **Rama**: `feat/REP-3307-configurar-staging` / `staging`
+- **Resumen**:
+  - Creación de la arquitectura de 3 entornos: Previews (QA Ivan), Staging (Sponsor Carlos / PM Leonel) y Producción (Ciudadanos / Organismos).
+  - Creación de rama permanente `staging` en Git.
+  - Creación de la estructura formal de workflow en `docs/workflow/` para `REP-3307` (manifest, spec, plan, tests y guía operativa).
+  - Actualización de los workflows de GitHub Actions `ci.yml` y `security.yml` para ejecutar quality gates automáticos en push a `staging`.
+  - Elaboración de guía paso a paso para asignar subdominio fijo en Vercel Settings (`reportalo-staging.vercel.app`) vinculado a la rama `staging`.
