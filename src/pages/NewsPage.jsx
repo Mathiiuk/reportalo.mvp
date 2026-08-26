@@ -1,0 +1,91 @@
+import React from 'react';
+import { AppLayout } from '../components/layout/AppLayout';
+import { motion } from 'framer-motion';
+
+export const NewsPage = () => {
+  const newsItems = [
+    {
+      id: 'news-1',
+      title: 'Reparación de calzada finalizada en Av. Corrientes',
+      summary: 'El área de obras públicas concluyó el bacheo y repavimentación informado por vecinos mediante Reportalo.',
+      tag: 'Obra concluida',
+      tagColor: 'bg-[#E3F5EC] text-[#2E9E6B]',
+      date: 'Hace 2 horas',
+      icon: 'check_circle',
+    },
+    {
+      id: 'news-2',
+      title: 'Nuevo operativo de recolección diferenciada',
+      summary: 'A partir del próximo lunes se incorporan 20 nuevos puntos verdes en el radio céntrico.',
+      tag: 'Servicio público',
+      tagColor: 'bg-[#EEF5FC] text-[#1E6FCB]',
+      date: 'Ayer',
+      icon: 'recycling',
+    },
+    {
+      id: 'news-3',
+      title: 'Mantenimiento preventivo de luminarias LED',
+      summary: 'Se completaron 150 recambios en avenidas y accesos principales durante el fin de semana.',
+      tag: 'Alumbrado',
+      tagColor: 'bg-[#FFF6E9] text-[#E08A00]',
+      date: '22 Ago 2026',
+      icon: 'lightbulb',
+    },
+  ];
+
+  return (
+    <AppLayout activeTab="novedades">
+      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-12 py-5">
+        <div className="max-w-[620px] mx-auto flex flex-col gap-4">
+          
+          {/* Título de Sección */}
+          <div>
+            <h1 className="font-extrabold text-[22px] sm:text-[24px] text-[#243447] tracking-[-0.4px] m-0">
+              Novedades
+            </h1>
+            <p className="font-medium text-[12px] sm:text-[13px] text-[#8593A2] mt-0.5 mb-0">
+              Avisos oficiales y resoluciones de tu municipio
+            </p>
+          </div>
+
+          {/* Listado de Noticias y Alertas */}
+          <div className="flex flex-col gap-3">
+            {newsItems.map((item) => (
+              <motion.div
+                key={item.id}
+                whileHover={{ y: -2 }}
+                className="bg-white border border-[#E6ECF3] rounded-[16px] p-4 flex flex-col gap-2 shadow-xs cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`font-extrabold text-[10px] px-2 py-0.5 rounded-[6px] uppercase tracking-wider ${item.tagColor}`}>
+                    {item.tag}
+                  </span>
+                  <span className="font-semibold text-[11px] text-[#9AA7B5]">
+                    {item.date}
+                  </span>
+                </div>
+
+                <div className="flex gap-3 items-start mt-1">
+                  <div className="w-9 h-9 rounded-[10px] bg-[#EEF5FC] flex items-center justify-center flex-shrink-0 text-[#1E6FCB]">
+                    <span className="material-symbols-rounded text-[20px] filled">
+                      {item.icon}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-[14px] text-[#263249] m-0">
+                      {item.title}
+                    </h3>
+                    <p className="font-medium text-[12px] leading-[1.45] text-[#7A8696] mt-1 mb-0">
+                      {item.summary}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </AppLayout>
+  );
+};

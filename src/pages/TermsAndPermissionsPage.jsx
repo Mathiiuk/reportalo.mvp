@@ -40,7 +40,7 @@ export const TermsAndPermissionsPage = () => {
       location: locationPermission,
     });
     toast.success('Términos y permisos configurados.');
-    navigate('/app');
+    navigate('/mapa');
   };
 
   // Salir con "Ahora no"
@@ -50,7 +50,7 @@ export const TermsAndPermissionsPage = () => {
       location: false,
     });
     toast.info('Podrás activar los permisos cuando vayas a reportar.');
-    navigate('/app');
+    navigate('/mapa');
   };
 
   return (
