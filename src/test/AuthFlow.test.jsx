@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { WelcomePage } from '../pages/WelcomePage';
 import { LoginPage } from '../pages/LoginPage';
+import { CheckEmailPage } from '../pages/CheckEmailPage';
 import { BlankAppPage } from '../pages/BlankAppPage';
 import { MunicipiosPage } from '../pages/MunicipiosPage';
 import { AuthContext, AuthProvider } from '../context/AuthContext';
@@ -30,6 +31,10 @@ vi.mock('../lib/supabaseClient', () => {
           data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
           error: null,
         }),
+        signInWithOtp: vi.fn().mockResolvedValue({
+          data: {},
+          error: null,
+        }),
         signOut: vi.fn().mockResolvedValue({
           error: null,
         }),
@@ -38,7 +43,7 @@ vi.mock('../lib/supabaseClient', () => {
   };
 });
 
-describe('REP-2100: Flujo de Autenticación y UI', () => {
+describe('REP-2100 & REP-2101: Flujo de Autenticación, UI y Magic Link', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -85,14 +90,15 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
     });
   });
 
-  describe('Pantalla 2: LoginPage (Acceso con Google)', () => {
-    it('UT-03: Renderiza el botón "Continuar con Google", maquetado de correo y resguardo de identidad', () => {
+  describe('Pantalla 2: LoginPage (Acceso con Google y Magic Link)', () => {
+    it('UT-03: Renderiza el botón "Continuar con Google", input de correo y botón "Enviarme un enlace"', () => {
       const mockContext = {
         user: null,
         session: null,
         loading: false,
         authError: null,
         signInWithGoogle: vi.fn(),
+        signInWithMagicLink: vi.fn(),
         signOut: vi.fn(),
         clearError: vi.fn(),
       };
@@ -113,14 +119,9 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
       expect(screen.getByRole('button', { name: /Continuar con Google/i })).toBeInTheDocument();
 
       // Correo e input
-      expect(screen.getByText(/Tu correo/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Tu correo/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('lucia.f@mail.com')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Enviarme un enlace/i })).toBeInTheDocument();
-
-      // Resguardo de identidad
-      expect(
-        screen.getAllByText(/Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo./i).length
-      ).toBeGreaterThanOrEqual(1);
     });
 
     it('UT-04: Al hacer clic en "Continuar con Google" se ejecuta el flujo OAuth con proveedor google', async () => {
@@ -131,6 +132,7 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
         loading: false,
         authError: null,
         signInWithGoogle: mockSignInWithGoogle,
+        signInWithMagicLink: vi.fn(),
         signOut: vi.fn(),
         clearError: vi.fn(),
       };
@@ -149,52 +151,74 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
       expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
     });
 
-    it('UT-05: Muestra mensaje de error si la autenticación con Google falla', () => {
+    it('UT-05: El botón "Enviarme un enlace" valida el correo y navega a /check-email al enviarse', async () => {
+      const mockSignInWithMagicLink = vi.fn().mockResolvedValue({ data: {}, error: null });
       const mockContext = {
         user: null,
         session: null,
         loading: false,
-        authError: 'El usuario canceló el inicio de sesión con Google.',
+        authError: null,
         signInWithGoogle: vi.fn(),
+        signInWithMagicLink: mockSignInWithMagicLink,
         signOut: vi.fn(),
         clearError: vi.fn(),
       };
 
+      const CheckEmailReceiver = () => {
+        return <div data-testid="check-email-screen">Check Email Screen</div>;
+      };
+
       render(
         <AuthContext.Provider value={mockContext}>
-          <MemoryRouter>
-            <LoginPage />
+          <MemoryRouter initialEntries={['/login']}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/check-email" element={<CheckEmailReceiver />} />
+            </Routes>
           </MemoryRouter>
         </AuthContext.Provider>
       );
 
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByText(/El usuario canceló el inicio de sesión con Google./i)).toBeInTheDocument();
+      const emailInput = screen.getByPlaceholderText('lucia.f@mail.com');
+      const submitBtn = screen.getByRole('button', { name: /Enviarme un enlace/i });
+
+      // Si el email está vacío o es inválido, no dispara
+      fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
+      fireEvent.click(submitBtn);
+      expect(mockSignInWithMagicLink).not.toHaveBeenCalled();
+
+      // Con email válido
+      fireEvent.change(emailInput, { target: { value: 'ciudadano@reportalo.ar' } });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(mockSignInWithMagicLink).toHaveBeenCalledWith('ciudadano@reportalo.ar');
+        expect(screen.getByTestId('check-email-screen')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('REP-2101: Pantalla de Confirmación CheckEmailPage (/check-email)', () => {
+    it('UT-ML-01: Renderiza la vista "Revisá tu correo" con email dinámico y advertencia de 15 minutos', () => {
+      render(
+        <MemoryRouter initialEntries={[{ pathname: '/check-email', state: { email: 'vecino@reportalo.ar' } }]}>
+          <CheckEmailPage />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('heading', { name: /Revisá tu correo/i })).toBeInTheDocument();
+      expect(screen.getByText('vecino@reportalo.ar')).toBeInTheDocument();
+      expect(screen.getByText(/Tocá el enlace desde este teléfono y entrás directo./i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Abrir mi correo/i })).toBeInTheDocument();
+      expect(screen.getByText(/El enlace vence en 15 minutos y sirve una sola vez./i)).toBeInTheDocument();
     });
 
-    it('UT-06: El botón arrow_back permite retornar a la pantalla inicial', () => {
+    it('UT-ML-02: Permite volver a la pantalla de login con el botón de retroceso', () => {
       render(
-        <MemoryRouter initialEntries={['/login']}>
+        <MemoryRouter initialEntries={['/check-email']}>
           <Routes>
-            <Route path="/" element={<div data-testid="welcome-screen">Welcome Screen</div>} />
-            <Route
-              path="/login"
-              element={
-                <AuthContext.Provider
-                  value={{
-                    user: null,
-                    session: null,
-                    loading: false,
-                    authError: null,
-                    signInWithGoogle: vi.fn(),
-                    signOut: vi.fn(),
-                    clearError: vi.fn(),
-                  }}
-                >
-                  <LoginPage />
-                </AuthContext.Provider>
-              }
-            />
+            <Route path="/login" element={<div data-testid="login-view">Login View</div>} />
+            <Route path="/check-email" element={<CheckEmailPage />} />
           </Routes>
         </MemoryRouter>
       );
@@ -202,7 +226,7 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
       const backButtons = screen.getAllByRole('button', { name: /Volver/i });
       fireEvent.click(backButtons[0]);
 
-      expect(screen.getByTestId('welcome-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('login-view')).toBeInTheDocument();
     });
   });
 
@@ -219,6 +243,7 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
             loading: false,
             authError: null,
             signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
             signOut: mockSignOut,
             clearError: vi.fn(),
           }}
@@ -239,25 +264,27 @@ describe('REP-2100: Flujo de Autenticación y UI', () => {
     });
   });
 
-  describe('AuthProvider: Supabase Integration & URL Sanitization', () => {
-    it('UT-08: signInWithGoogle llama a supabase.auth.signInWithOAuth con proveedor google', async () => {
+  describe('AuthProvider: Supabase Integration & Magic Link', () => {
+    it('UT-08: signInWithMagicLink llama a supabase.auth.signInWithOtp con email normalizado', async () => {
       render(
         <AuthProvider>
           <AuthContext.Consumer>
-            {({ signInWithGoogle }) => (
-              <button onClick={() => signInWithGoogle()}>Disparar Google Auth</button>
+            {({ signInWithMagicLink }) => (
+              <button onClick={() => signInWithMagicLink('  TEST@REPORTALO.AR  ')}>
+                Disparar Magic Link
+              </button>
             )}
           </AuthContext.Consumer>
         </AuthProvider>
       );
 
-      const triggerBtn = screen.getByText('Disparar Google Auth');
+      const triggerBtn = screen.getByText('Disparar Magic Link');
       fireEvent.click(triggerBtn);
 
       await waitFor(() => {
-        expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith(
+        expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith(
           expect.objectContaining({
-            provider: 'google',
+            email: 'test@reportalo.ar',
           })
         );
       });

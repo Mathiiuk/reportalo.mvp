@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { signInWithGoogle, authError, clearError } = useAuth();
+  const { signInWithGoogle, signInWithMagicLink, authError, clearError } = useAuth();
   const [isSubmittingGoogle, setIsSubmittingGoogle] = useState(false);
+  const [isSubmittingMagicLink, setIsSubmittingMagicLink] = useState(false);
   const [emailInput, setEmailInput] = useState('');
+
+  // Validación de formato de correo electrónico
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim());
 
   // Retorno a la pantalla de bienvenida
   const handleGoBack = () => {
@@ -32,12 +36,37 @@ export const LoginPage = () => {
     }
   };
 
+  // Manejo del envío de Magic Link (REP-2101)
+  const handleMagicLinkSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!isValidEmail || isSubmittingMagicLink) return;
+
+    setIsSubmittingMagicLink(true);
+    clearError();
+
+    try {
+      const normalizedEmail = emailInput.trim().toLowerCase();
+      const { error } = await signInWithMagicLink(normalizedEmail);
+
+      if (error) {
+        setIsSubmittingMagicLink(false);
+        toast.error(error.message || 'No se pudo enviar el enlace.');
+      } else {
+        toast.success('¡Enlace enviado! Revisa tu bandeja de entrada.');
+        navigate('/check-email', { state: { email: normalizedEmail } });
+      }
+    } catch (err) {
+      setIsSubmittingMagicLink(false);
+      toast.error('Ocurrió un error inesperado al enviar el enlace.');
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-white">
       
       {/* Navbar desktop (>= md) */}
       <header className="hidden md:flex flex-shrink-0 border-b border-[#EEF1F5] px-8 lg:px-12 py-4 items-center gap-6 bg-white">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
           <img
             src="/logo-icon.webp"
             alt="Reportalo"
@@ -49,7 +78,7 @@ export const LoginPage = () => {
           <span className="font-bold text-[9px] text-[#1E6FCB] bg-[#EEF5FC] px-2 py-1 rounded-[7px] ml-1">
             CIUDADANOS
           </span>
-        </div>
+        </Link>
 
         <div className="ml-auto flex items-center gap-4">
           <button
@@ -134,7 +163,7 @@ export const LoginPage = () => {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleGoogleLogin}
-              disabled={isSubmittingGoogle}
+              disabled={isSubmittingGoogle || isSubmittingMagicLink}
               type="button"
               className="mt-6 w-full flex items-center justify-center gap-[10px] bg-white border-[1.5px] border-[#DDE4EC] rounded-[14px] p-[14px] hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-60 shadow-sm"
             >
@@ -161,16 +190,24 @@ export const LoginPage = () => {
               <span className="flex-1 h-[1px] bg-[#EEF1F5]"></span>
             </div>
 
-            {/* Formulario de Correo (Maquetado para Magic Link REP-2101) */}
-            <div>
+            {/* Formulario de Correo / Magic Link (REP-2101) */}
+            <form onSubmit={handleMagicLinkSubmit}>
               <label
                 htmlFor="email"
                 className="block font-bold text-[11.5px] text-[#56657A] mb-[6px]"
               >
                 Tu correo
               </label>
-              <div className="flex items-center gap-[9px] bg-white border-2 border-[#1E6FCB] rounded-[13px] py-[12px] px-[13px] shadow-[0px_0px_0px_3px_rgba(30,111,203,0.12)]">
-                <span className="material-symbols-rounded text-[18px] text-[#1E6FCB]">
+              <div
+                className={`flex items-center gap-[9px] bg-white border-2 ${
+                  isValidEmail ? 'border-[#1E6FCB] shadow-[0px_0px_0px_3px_rgba(30,111,203,0.12)]' : 'border-[#DDE4EC]'
+                } rounded-[13px] py-[12px] px-[13px] transition-all`}
+              >
+                <span
+                  className={`material-symbols-rounded text-[18px] ${
+                    isValidEmail ? 'text-[#1E6FCB]' : 'text-[#8593A2]'
+                  }`}
+                >
                   mail
                 </span>
                 <input
@@ -179,21 +216,34 @@ export const LoginPage = () => {
                   placeholder="lucia.f@mail.com"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
+                  disabled={isSubmittingMagicLink}
+                  autoComplete="email"
+                  required
                   className="font-semibold text-[13px] text-[#46566B] placeholder-[#8593A2] flex-1 bg-transparent border-0 outline-none p-0"
                 />
               </div>
 
-              <button
-                type="button"
-                disabled
-                title="Disponible en la siguiente versión"
-                className="w-full mt-3.5 bg-[#1E6FCB] opacity-80 cursor-not-allowed rounded-[14px] py-[15px] px-4 text-center shadow-[0px_8px_18px_rgba(30,111,203,0.3)] border-0"
+              <motion.button
+                whileHover={isValidEmail && !isSubmittingMagicLink ? { scale: 1.01 } : {}}
+                whileTap={isValidEmail && !isSubmittingMagicLink ? { scale: 0.98 } : {}}
+                type="submit"
+                disabled={!isValidEmail || isSubmittingMagicLink}
+                className={`w-full mt-3.5 rounded-[14px] py-[15px] px-4 text-center border-0 font-extrabold text-[15px] text-white transition-all ${
+                  isValidEmail && !isSubmittingMagicLink
+                    ? 'bg-[#1E6FCB] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer'
+                    : 'bg-[#1E6FCB]/70 opacity-80 cursor-not-allowed shadow-none'
+                }`}
               >
-                <span className="font-extrabold text-[15px] text-white">
-                  Enviarme un enlace
-                </span>
-              </button>
-            </div>
+                {isSubmittingMagicLink ? (
+                  <span className="flex items-center justify-center gap-2 text-white">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Enviando enlace...
+                  </span>
+                ) : (
+                  'Enviarme un enlace'
+                )}
+              </motion.button>
+            </form>
           </motion.div>
 
           {/* Tarjeta de resguardo de identidad en móvil (< md) */}
@@ -207,7 +257,7 @@ export const LoginPage = () => {
           </div>
         </main>
 
-        {/* Sidebar desktop (>= md) basada en el diseño de municipios */}
+        {/* Sidebar desktop (>= md) */}
         <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-[#F4F7FB] border-l border-[#EEF1F5] p-8 flex-col justify-between gap-4">
           <div>
             <div className="font-extrabold text-[11px] text-[#8593A2] tracking-[0.5px] mb-4 uppercase">
@@ -244,7 +294,7 @@ export const LoginPage = () => {
                     Sin necesidad de contraseñas
                   </div>
                   <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
-                    Accedé al instante con tu cuenta de Google de manera segura.
+                    Recibí un enlace directo en tu correo de un solo uso o entrá con Google.
                   </div>
                 </div>
               </motion.div>

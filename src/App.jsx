@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
+import { CheckEmailPage } from './pages/CheckEmailPage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 
@@ -72,6 +73,14 @@ export const AppRoutes = () => {
         element={
           <PublicRoute>
             <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/check-email"
+        element={
+          <PublicRoute>
+            <CheckEmailPage />
           </PublicRoute>
         }
       />
