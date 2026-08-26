@@ -1,0 +1,25 @@
+{
+  "name": "Reportalo — Tu ciudad. Tu voz.",
+  "short_name": "Reportalo",
+  "description": "Plataforma ciudadana para reportar incidentes en el espacio público con identidad protegida y geolocalización.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F9FA",
+  "theme_color": "#249EE1",
+  "categories": ["utilities", "government", "social"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

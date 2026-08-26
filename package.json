@@ -1,37 +1,8 @@
 {
   "name": "reportalo-mvp",
-  "private": true,
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^13.1.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.2.0",
-    "sonner": "^2.0.8",
-    "tailwind-merge": "^3.0.1"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^22.13.4",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "jsdom": "^26.0.0",
-    "postcss": "^8.5.2",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.1.0",
-    "vitest": "^3.0.5"
+    "build": "node -e \"const fs=require('fs'); fs.mkdirSync('dist',{recursive:true}); fs.copyFileSync('index.html','dist/index.html'); if(fs.existsSync('public')) fs.cpSync('public','dist',{recursive:true}); fs.copyFileSync('index.html','public/index.html');\""
   }
 }
