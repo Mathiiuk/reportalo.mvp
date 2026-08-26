@@ -1,0 +1,17 @@
+{
+  "name": "Reportalo",
+  "short_name": "Reportalo",
+  "description": "Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1E6FCB",
+  "theme_color": "#1E6FCB",
+  "icons": [
+    {
+      "src": "/logo-icon.webp",
+      "sizes": "192x192 512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

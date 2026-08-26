@@ -40,4 +40,17 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Creación de rama permanente `staging` en Git.
   - Creación de la estructura formal de workflow en `docs/workflow/` para `REP-3307` (manifest, spec, plan, tests y guía operativa).
   - Actualización de los workflows de GitHub Actions `ci.yml` y `security.yml` para ejecutar quality gates automáticos en push a `staging`.
-  - Elaboración de guía paso a paso para asignar subdominio fijo en Vercel Settings (`reportalo-staging.vercel.app`) vinculado a la rama `staging`.
+### [2026-08-26] — REP-2100: Iniciar sesión con Google (OAuth Supabase)
+- **Tipo**: Frontend / Auth / Mobile-PWA
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **QA Asignado**: Ivo
+- **Estado**: Listo para PR (`READY_FOR_PR`)
+- **Rama**: `feat/REP-2100-login-google`
+- **Resumen**:
+  - Implementación de pantalla de bienvenida / onboarding (Screen 1), pantalla de login (Screen 2) y portal institucional `/municipios` con estricta fidelidad de diseño (Manrope, Material Symbols Rounded, gradientes, layout desktop dual-column y estilo Mobile PWA).
+  - Integración de autenticación Google OAuth mediante Supabase Auth (`signInWithOAuth` con provider `'google'`).
+  - Implementación de `AuthProvider` y hook `useAuth`, con sanitización segura de tokens/hashes en la URL (`replaceState`) y captura/notificación de errores.
+  - Integración de notificaciones interactivas con `sonner` y micro-interacciones fluidas con `framer-motion`.
+  - Redirección automática a pantalla protegida post-login y opción de cierre de sesión.
+  - Migración y estandarización completa del gestor de dependencias a `pnpm`.
+  - Quality Gates superados: 9/9 tests unitarios en verde (`pnpm test`) y build de producción exitoso (`pnpm run build`).
