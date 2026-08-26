@@ -80,3 +80,15 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Adaptación responsive de alta fidelidad: Mobile full-bleed y Desktop con split-screen de dos columnas armonizado con el Home.
   - Control de acceso y redirección inteligente en `ProtectedRoute` y `PublicRoute`.
   - Quality Gates superados: 15/15 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
+
+### [2026-08-26] — REP-3532: Aceptar Términos, Privacidad y Permisos (Mobile & Desktop)
+- **Tipo**: Frontend / Auth / Privacy / Legal
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **QA Asignado**: Ivo
+- **Estado**: Listo para PR (`READY_FOR_PR`)
+- **Rama**: `feat/REP-3532-aceptar-terminos`
+- **Resumen**:
+  - Implementación del servicio `termsService` para control de versión vigente (`v1.2`), verificación de consentimiento auditable (`accepted_at` + `terms_version`).
+  - Creación del componente `TermsAndPermissionsPage`: Paso 1 Términos y Privacidad (con modal de texto legal completo y checkbox de consentimiento explícito) y Paso 2 Activación de Permisos (Cámara y Ubicación).
+  - Bloqueo de inicio de reportes en `BlankAppPage` si el usuario no tiene la versión v1.2 aceptada, permitiendo navegación libre en el resto de la app.
+  - Quality Gates superados: 24/24 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).

@@ -51,14 +51,14 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
     });
   });
 
-  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /app', async () => {
-    const AppDestination = () => <div data-testid="app-screen">Dashboard App</div>;
+  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /terminos', async () => {
+    const TermsDestination = () => <div data-testid="terms-screen">Terms Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/app" element={<AppDestination />} />
+          <Route path="/terminos" element={<TermsDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -68,18 +68,18 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
-      expect(screen.getByTestId('app-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('terms-screen')).toBeInTheDocument();
     });
   });
 
-  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /app', async () => {
-    const AppDestination = () => <div data-testid="app-screen">Dashboard App</div>;
+  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /terminos', async () => {
+    const TermsDestination = () => <div data-testid="terms-screen">Terms Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/app" element={<AppDestination />} />
+          <Route path="/terminos" element={<TermsDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -100,7 +100,7 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
-      expect(screen.getByTestId('app-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('terms-screen')).toBeInTheDocument();
     });
   });
 

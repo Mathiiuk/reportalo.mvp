@@ -3,16 +3,18 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
+import { hasAcceptedCurrentTerms } from './services/termsService';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { TermsAndPermissionsPage } from './pages/TermsAndPermissionsPage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 
-// Componente para proteger rutas autenticadas y verificar onboarding
+// Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
-  const { session, loading } = useAuth();
+  const { session, user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -36,22 +38,33 @@ const ProtectedRoute = ({ children }) => {
     typeof window !== 'undefined' &&
     localStorage.getItem('reportalo_onboarding_completed') === 'true';
 
-  // Si no completó el onboarding y no está ya en /onboarding, redirigir a /onboarding
+  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
+
+  // 1. Paso 1 obligatorio: Onboarding de 3 pasos
   if (!onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Si ya completó el onboarding y accede a /onboarding, redirigir a /app
-  if (onboardingCompleted && location.pathname === '/onboarding') {
+  // 2. Paso 2 obligatorio: Términos y permisos (v1.2)
+  if (onboardingCompleted && !termsAccepted && location.pathname !== '/terminos') {
+    return <Navigate to="/terminos" replace />;
+  }
+
+  // 3. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /app
+  if (
+    onboardingCompleted &&
+    termsAccepted &&
+    (location.pathname === '/onboarding' || location.pathname === '/terminos')
+  ) {
     return <Navigate to="/app" replace />;
   }
 
   return children;
 };
 
-// Componente para redirigir si el usuario ya está autenticado
+// Componente para redirigir si el usuario ya está autenticado hacia el paso pendiente
 const PublicRoute = ({ children }) => {
-  const { session, loading } = useAuth();
+  const { session, user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -70,7 +83,15 @@ const PublicRoute = ({ children }) => {
     const onboardingCompleted =
       typeof window !== 'undefined' &&
       localStorage.getItem('reportalo_onboarding_completed') === 'true';
-    return <Navigate to={onboardingCompleted ? '/app' : '/onboarding'} replace />;
+    const termsAccepted = hasAcceptedCurrentTerms(user?.id);
+
+    if (!onboardingCompleted) {
+      return <Navigate to="/onboarding" replace />;
+    }
+    if (!termsAccepted) {
+      return <Navigate to="/terminos" replace />;
+    }
+    return <Navigate to="/app" replace />;
   }
 
   return children;
@@ -108,6 +129,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/terminos"
+        element={
+          <ProtectedRoute>
+            <TermsAndPermissionsPage />
           </ProtectedRoute>
         }
       />
