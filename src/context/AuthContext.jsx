@@ -9,6 +9,7 @@ export const AuthContext = createContext({
   loading: true,
   authError: null,
   signInWithGoogle: async () => {},
+  signInWithMagicLink: async () => {},
   signOut: async () => {},
   clearError: () => {},
 });
@@ -24,14 +25,17 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
   }, []);
 
-  // Función para sanitizar fragmentos o códigos/errores OAuth de la barra de direcciones (AC-05)
+  // Función para sanitizar fragmentos o códigos/errores OAuth y Magic Link de la barra de direcciones (AC-05)
   const sanitizeUrl = useCallback(() => {
     if (typeof window !== 'undefined') {
       const hasHash = Boolean(window.location.hash);
       const hasSearchAuth =
         window.location.search.includes('code=') ||
         window.location.search.includes('error=') ||
-        window.location.search.includes('error_description=');
+        window.location.search.includes('error_description=') ||
+        window.location.search.includes('access_token=') ||
+        window.location.search.includes('type=magiclink') ||
+        window.location.search.includes('type=recovery');
 
       if (hasHash || hasSearchAuth) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -39,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Función para capturar y traducir errores de redirección OAuth de Supabase
+  // Función para capturar y traducir errores de redirección OAuth y Magic Link de Supabase
   const checkUrlForErrors = useCallback(() => {
     if (typeof window === 'undefined') return null;
 
@@ -55,13 +59,20 @@ export const AuthProvider = ({ children }) => {
       searchParams.get('error_description') || hashParams.get('error_description');
 
     if (error || errorDescription || errorCode) {
-      let friendlyMessage = 'Ocurrió un error al autenticar con Google.';
+      let friendlyMessage = 'Ocurrió un error al autenticar con el enlace.';
 
-      if (errorDescription?.includes('Database error saving new user')) {
+      if (
+        errorCode === 'otp_expired' ||
+        errorDescription?.toLowerCase().includes('otp') ||
+        errorDescription?.toLowerCase().includes('expired') ||
+        errorDescription?.toLowerCase().includes('invalid')
+      ) {
+        friendlyMessage = 'El enlace de acceso ha expirado o ya fue utilizado. Por favor, solicita uno nuevo.';
+      } else if (errorDescription?.includes('Database error saving new user')) {
         friendlyMessage =
           'Error en la base de datos de Supabase al guardar el usuario. Revisa los triggers o la tabla de perfiles en tu proyecto.';
       } else if (error === 'access_denied' || errorDescription?.includes('denied')) {
-        friendlyMessage = 'El acceso con Google fue cancelado por el usuario.';
+        friendlyMessage = 'El acceso fue cancelado o no autorizado.';
       } else if (errorDescription) {
         friendlyMessage = decodeURIComponent(errorDescription.replace(/\+/g, ' '));
       }
@@ -77,7 +88,7 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const initAuth = async () => {
-      // 1. Verificamos si la URL contiene errores de retorno de OAuth
+      // 1. Verificamos si la URL contiene errores de retorno de OAuth o Magic Link
       const urlError = checkUrlForErrors();
       if (urlError) {
         if (mounted) {
@@ -122,6 +133,7 @@ export const AuthProvider = ({ children }) => {
         if (event === 'SIGNED_IN') {
           sanitizeUrl();
           setAuthError(null);
+          toast.success('¡Sesión iniciada con éxito!');
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
@@ -146,7 +158,7 @@ export const AuthProvider = ({ children }) => {
         return { data: null, error: new Error(errorMsg) };
       }
 
-      const redirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -167,6 +179,49 @@ export const AuthProvider = ({ children }) => {
       return { data, error: null };
     } catch (err) {
       const message = err?.message || 'Ocurrió un error inesperado al conectar con Google.';
+      setAuthError(message);
+      toast.error(message);
+      return { data: null, error: err };
+    }
+  };
+
+  // Iniciar sesión con Magic Link (REP-2101)
+  const signInWithMagicLink = async (email) => {
+    setAuthError(null);
+    try {
+      if (!isSupabaseConfigured) {
+        const errorMsg = 'Supabase no está configurado con credenciales válidas en .env';
+        setAuthError(errorMsg);
+        toast.error(errorMsg);
+        return { data: null, error: new Error(errorMsg) };
+      }
+
+      const normalizedEmail = email?.trim().toLowerCase();
+      if (!normalizedEmail) {
+        const errorMsg = 'Por favor ingresa un correo electrónico.';
+        setAuthError(errorMsg);
+        toast.error(errorMsg);
+        return { data: null, error: new Error(errorMsg) };
+      }
+
+      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined;
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: true,
+        },
+      });
+
+      if (error) {
+        setAuthError(error.message || 'Error al solicitar el enlace de acceso.');
+        toast.error(error.message || 'Error al solicitar el enlace de acceso.');
+        return { data: null, error };
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      const message = err?.message || 'Ocurrió un error inesperado al enviar el enlace.';
       setAuthError(message);
       toast.error(message);
       return { data: null, error: err };
@@ -194,6 +249,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     authError,
     signInWithGoogle,
+    signInWithMagicLink,
     signOut,
     clearError,
   };

@@ -54,3 +54,16 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Redirección automática a pantalla protegida post-login y opción de cierre de sesión.
   - Migración y estandarización completa del gestor de dependencias a `pnpm`.
   - Quality Gates superados: 9/9 tests unitarios en verde (`pnpm test`) y build de producción exitoso (`pnpm run build`).
+
+### [2026-08-26] — REP-2101: Iniciar sesión con Magic Link (Email OTP)
+- **Tipo**: Frontend / Auth / Mobile-PWA
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **QA Asignado**: Ivo
+- **Estado**: Listo para PR (`READY_FOR_PR`)
+- **Rama**: `feat/REP-2101-login-magic-link`
+- **Resumen**:
+  - Implementación de solicitud de Magic Link mediante `supabase.auth.signInWithOtp`.
+  - Creación de la pantalla de confirmación "Revisá tu correo" (`CheckEmailPage`) con temporizador de reenvío en tiempo real, apertura de gestor de correo y diseño responsive.
+  - Verificación de enlace, sanitización de tokens y manejo seguro de caducidad (15 min).
+  - Auditoría de seguridad `security-guardian` superada (0 claves expuestas en cliente, control Zero Trust).
+  - Quality Gates superados: 10/10 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
