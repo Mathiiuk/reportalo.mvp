@@ -1,0 +1,60 @@
+{
+  "name": "Reportalo — Tu ciudad. Tu voz.",
+  "short_name": "Reportalo",
+  "description": "Plataforma ciudadana para reportar incidentes en el espacio público con identidad protegida y geolocalización.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7FB",
+  "theme_color": "#1E6FCB",
+  "categories": ["utilities", "government", "social"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Abrir mapa",
+      "short_name": "Mapa",
+      "url": "/map",
+      "icons": [
+        {
+          "src": "/logo-icon.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
+        }
+      ]
+    },
+    {
+      "name": "Nuevo reporte",
+      "short_name": "Reportar",
+      "url": "/map",
+      "icons": [
+        {
+          "src": "/logo-icon.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/logo-icon.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-icon.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo-icon.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
