@@ -1,0 +1,79 @@
+id: REP-2100
+external_ref: "HU-REP-2100"
+title: "Iniciar sesión con Google (OAuth Supabase)"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: main
+
+scope:
+  project: "Reportalo MVP"
+  modules:
+    - "auth"
+    - "ui"
+    - "pwa"
+  environments: [local, staging, production]
+
+requirements:
+  - "Ofrecer opción 'Continuar con Google' en la pantalla de acceso."
+  - "Iniciar flujo OAuth configurado en Supabase con Google."
+  - "Crear o recuperar sesión y redirigir al usuario autenticado a la pantalla destino."
+  - "Manejo amigable y comprensible ante errores o cancelación de autenticación."
+  - "Protección y limpieza de tokens/hashes sensibles en la URL."
+  - "Compatibilidad PWA mobile-first (Android, iOS y Desktop)."
+
+acceptance_criteria:
+  - "AC-01: La pantalla de acceso ofrece la opción 'Continuar con Google' con el diseño especificado."
+  - "AC-02: Al hacer clic en 'Continuar con Google', se llama a supabase.auth.signInWithOAuth con provider google."
+  - "AC-03: Una autenticación válida recupera la sesión y redirige al ciudadano a la pantalla destino post-login."
+  - "AC-04: Si la autenticación falla o se cancela, se muestra un mensaje comprensible y el usuario permanece en la pantalla de acceso."
+  - "AC-05: No se exponen tokens en la interfaz ni en la URL final tras la redirección OAuth."
+  - "AC-06: Diseño responsive mobile-first adaptado a PWA (touch targets >= 48px, safe areas, viewport-fit)."
+  - "AC-07: Pruebas unitarias de calidad pasan exitosamente."
+
+constraints:
+  - "React 18, Vite, Tailwind CSS, Supabase backend."
+  - "No implementar la lógica de Magic Link en esta tarea (reservada para REP-2101)."
+  - "Respetar paleta de colores, tipografía Manrope y Google Material Symbols Rounded."
+
+risks:
+  - "Manejo de fragmentos de URL (#access_token) en navegadores móviles."
+  - "Entorno sin variables de Supabase configuradas en local debe degradar con mensaje de configuración sin crashear la UI."
+
+dependencies:
+  - "Supabase Client (@supabase/supabase-js)"
+  - "Google OAuth provider configurado en Supabase Console"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-2100.md"
+  implementation_plan: "docs/workflow/plans/REP-2100.md"
+  test_plan: "docs/workflow/tests/REP-2100.md"
+  execution_report: "docs/workflow/executions/REP-2100-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "Revert git commit and redeploy"
+
+branch:
+  type: feat
+  name: "feat/REP-2100-login-google"
+
+commands:
+  install: "pnpm install"
+  unit_tests: "pnpm test"
+  build: "pnpm run build"

@@ -1,0 +1,8 @@
+{
+  "name": "reportalo-mvp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"const fs=require('fs'); fs.mkdirSync('dist',{recursive:true}); fs.copyFileSync('index.html','dist/index.html'); if(fs.existsSync('public')) fs.cpSync('public','dist',{recursive:true}); fs.copyFileSync('index.html','public/index.html');\""
+  }
+}
