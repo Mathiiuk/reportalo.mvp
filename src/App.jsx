@@ -1,17 +1,19 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 
-// Componente para proteger la ruta /app
+// Componente para proteger rutas autenticadas y verificar onboarding
 const ProtectedRoute = ({ children }) => {
   const { session, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -30,10 +32,24 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
+  const onboardingCompleted =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('reportalo_onboarding_completed') === 'true';
+
+  // Si no completó el onboarding y no está ya en /onboarding, redirigir a /onboarding
+  if (!onboardingCompleted && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Si ya completó el onboarding y accede a /onboarding, redirigir a /app
+  if (onboardingCompleted && location.pathname === '/onboarding') {
+    return <Navigate to="/app" replace />;
+  }
+
   return children;
 };
 
-// Componente para redirigir a /app si el usuario ya está autenticado
+// Componente para redirigir si el usuario ya está autenticado
 const PublicRoute = ({ children }) => {
   const { session, loading } = useAuth();
 
@@ -51,7 +67,10 @@ const PublicRoute = ({ children }) => {
   }
 
   if (session) {
-    return <Navigate to="/app" replace />;
+    const onboardingCompleted =
+      typeof window !== 'undefined' &&
+      localStorage.getItem('reportalo_onboarding_completed') === 'true';
+    return <Navigate to={onboardingCompleted ? '/app' : '/onboarding'} replace />;
   }
 
   return children;
@@ -82,6 +101,14 @@ export const AppRoutes = () => {
           <PublicRoute>
             <CheckEmailPage />
           </PublicRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
         }
       />
       <Route

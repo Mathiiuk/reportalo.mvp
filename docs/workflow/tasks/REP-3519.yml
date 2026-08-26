@@ -1,0 +1,78 @@
+id: REP-3519
+external_ref: "HU-REP-3519"
+title: "Finalizar Onboarding Ciudadano de 3 pasos (Mobile & Desktop)"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: staging
+
+scope:
+  project: "Reportalo MVP"
+  modules:
+    - "onboarding"
+    - "ui"
+    - "auth"
+  environments: [local, staging, production]
+
+requirements:
+  - "Flujo interactivo de 3 pantallas de onboarding post-login (Google o Magic Link)."
+  - "Paso 1: 'Una foto es un reclamo' con ilustración de captura de incidente."
+  - "Paso 2: 'Tu foto se protege sola' con ilustración de anonimización (rostros y patentes difuminadas)."
+  - "Paso 3: 'Seguí cada reporte' con visualizador de estados (Enviado, En revisión, Notificado, Resuelto) y botón 'Empezar'."
+  - "Paginador de puntos interactivo y botón 'Saltar' para omitir."
+  - "Adaptación de alta fidelidad para Mobile y Desktop (con header institucional y sidebar armonizada con el Home)."
+  - "Persistencia del estado de onboarding completado y redirección a /app."
+
+acceptance_criteria:
+  - "AC-01: El onboarding presenta 3 pasos secuenciales con animaciones fluidas (framer-motion)."
+  - "AC-02: En el paso 1 se muestra el título 'Una foto es un reclamo', ilustración azul con add_a_photo y botón 'Siguiente'."
+  - "AC-03: En el paso 2 se muestra 'Tu foto se protege sola', ilustración verde con blur_on y badge de protección."
+  - "AC-04: En el paso 3 se muestra 'Seguí cada reporte', diagrama vertical de 4 estados y botón 'Empezar'."
+  - "AC-05: El botón 'Saltar' o 'Empezar' finaliza el onboarding y redirige al dashboard /app."
+  - "AC-06: Diseño responsive mobile-first y desktop de dos columnas homologado con los tokens de diseño de Reportalo."
+  - "AC-07: Pruebas unitarias pasan con éxito en pnpm test y build limpio en pnpm run build."
+
+constraints:
+  - "React 18, Vite, Tailwind CSS, Framer Motion."
+  - "Sin datos hardcodeados: navegación dinámica y soporte para gestos / teclado."
+
+risks:
+  - "Transiciones bruscas entre slides (mitigadas con AnimatePresence de framer-motion)."
+
+dependencies:
+  - "framer-motion"
+  - "sonner"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3519.md"
+  implementation_plan: "docs/workflow/plans/REP-3519.md"
+  test_plan: "docs/workflow/tests/REP-3519.md"
+  execution_report: "docs/workflow/executions/REP-3519-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "Revert git commit and redeploy"
+
+branch:
+  type: feat
+  name: "feat/REP-3519-finalizar-onboarding"
+
+commands:
+  install: "pnpm install"
+  unit_tests: "pnpm test"
+  build: "pnpm run build"

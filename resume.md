@@ -67,3 +67,16 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Verificación de enlace, sanitización de tokens y manejo seguro de caducidad (15 min).
   - Auditoría de seguridad `security-guardian` superada (0 claves expuestas en cliente, control Zero Trust).
   - Quality Gates superados: 10/10 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
+
+### [2026-08-26] — REP-3519: Finalizar Onboarding Ciudadano de 3 pasos (Mobile & Desktop)
+- **Tipo**: Frontend / UI / Onboarding
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **QA Asignado**: Ivo
+- **Estado**: Listo para PR (`READY_FOR_PR`)
+- **Rama**: `feat/REP-3519-finalizar-onboarding`
+- **Resumen**:
+  - Creación de componente interactivo `OnboardingPage` con 3 pasos educativos: "Una foto es un reclamo", "Tu foto se protege sola" y "Seguí cada reporte".
+  - Transiciones fluidas con `framer-motion` y `AnimatePresence`, paginador de 3 puntos interactivo y botón "Saltar".
+  - Adaptación responsive de alta fidelidad: Mobile full-bleed y Desktop con split-screen de dos columnas armonizado con el Home.
+  - Control de acceso y redirección inteligente en `ProtectedRoute` y `PublicRoute`.
+  - Quality Gates superados: 15/15 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
