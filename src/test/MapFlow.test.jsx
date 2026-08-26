@@ -14,9 +14,10 @@ import { AuthContext } from '../context/AuthContext';
 vi.mock('maplibre-gl', () => {
   return {
     supported: vi.fn(() => true),
+    setWorkerUrl: vi.fn(),
     Map: vi.fn(() => ({
       on: vi.fn((event, cb) => {
-        if (event === 'load') cb();
+        if (event === 'load' || event === 'style.load') cb();
       }),
       addControl: vi.fn(),
       remove: vi.fn(),
@@ -52,7 +53,7 @@ describe('REP-4100: Flujo de Mapa Ciudadano y Navegación Principal', () => {
     );
 
     expect(screen.getByRole('link', { name: /reportalo/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /alertas y notificaciones/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ver alertas y notificaciones/i })).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
@@ -73,11 +74,12 @@ describe('REP-4100: Flujo de Mapa Ciudadano y Navegación Principal', () => {
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
   });
 
-  it('UT-MP-03: CitizenMap renderiza el contenedor MapLibre, botón tune de filtros y leyenda Menos/Más', () => {
+  it('UT-MP-03: CitizenMap renderiza el contenedor MapLibre, botón de filtros y leyenda Menos/Más', () => {
     render(<CitizenMap />);
 
     expect(screen.getByTestId('maplibre-container')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /abrir filtros de mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /filtros del mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /centrar en mi ubicación/i })).toBeInTheDocument();
     expect(screen.getByText('Menos')).toBeInTheDocument();
     expect(screen.getByText('Más')).toBeInTheDocument();
   });

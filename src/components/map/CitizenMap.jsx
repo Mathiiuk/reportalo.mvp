@@ -1,20 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Map, GeolocateControl, Marker } from 'maplibre-gl';
+import { Map, setWorkerUrl } from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { SlidersHorizontal, Navigation } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-// Estilo OpenFreeMap Bright oficial (vectorial, libre y sin API key)
+// Configurar URL del Web Worker de MapLibre para Vite
+if (typeof setWorkerUrl === 'function' && workerUrl) {
+  try {
+    setWorkerUrl(workerUrl);
+  } catch (e) {
+    console.warn('[MapLibre Worker Init]:', e);
+  }
+}
+
+// Estilo OpenFreeMap Bright oficial (sin API key y libre)
 const OPENFREEMAP_BRIGHT_STYLE = 'https://tiles.openfreemap.org/styles/bright';
 
-// Coordenadas por defecto (Buenos Aires, Argentina)
-const DEFAULT_CENTER = [-58.3816, -34.6037];
-const DEFAULT_ZOOM = 13.5;
+// Bounding Box para limitar el movimiento a CABA y Avellaneda
+// [Sudoeste (SW), Noreste (NE)] -> [[lngMin, latMin], [lngMax, latMax]]
+const CABA_AVELLANEDA_BOUNDS = [
+  [-58.5500, -34.7300], // Sudoeste: límite Gral. Paz / Liniers y Sur de Avellaneda / Wilde
+  [-58.3100, -34.5200], // Noreste: Río de la Plata, Nuñez y Costanera Avellaneda
+];
 
-export const CitizenMap = ({ onFilterClick, onReportClick }) => {
+// Coordenadas centrales entre CABA y Avellaneda
+const DEFAULT_CENTER = [-58.4200, -34.6200];
+const DEFAULT_ZOOM = 12.8;
+const MIN_ZOOM = 11.5;
+const MAX_ZOOM = 19;
+
+export const CitizenMap = ({ onFilterClick }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('todos');
+  const [isLocating, setIsLocating] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('todos');
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -31,12 +52,15 @@ export const CitizenMap = ({ onFilterClick, onReportClick }) => {
         style: OPENFREEMAP_BRIGHT_STYLE,
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
+        maxBounds: CABA_AVELLANEDA_BOUNDS,
         attributionControl: false,
         dragRotate: false,
         pitchWithRotate: false,
       });
 
-      // Deshabilitar gestos de rotación y pitch en PWA móvil
+      // Deshabilitar gestos de rotación y pitch para PWA móvil
       if (map.touchZoomRotate) {
         map.touchZoomRotate.disableRotation();
       }
@@ -47,56 +71,37 @@ export const CitizenMap = ({ onFilterClick, onReportClick }) => {
         map.dragRotate.disable();
       }
 
-      // Control de geolocalización de usuario
-      if (typeof GeolocateControl === 'function') {
-        const geolocate = new GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true,
-          },
-          trackUserLocation: true,
-        });
-        map.addControl(geolocate, 'top-left');
-      }
-
-      map.on('load', () => {
+      const markReady = () => {
         setMapLoaded(true);
-        map.resize();
+        if (map && typeof map.resize === 'function') {
+          map.resize();
+        }
+      };
 
-        // Marcadores de reportes de ejemplo
-        const sampleReports = [
-          { lng: -58.3816, lat: -34.6037, title: 'Bache en calzada', status: 'En revisión' },
-          { lng: -58.3850, lat: -34.6080, title: 'Luminaria apagada', status: 'Enviado' },
-          { lng: -58.3780, lat: -34.5990, title: 'Basura acumulada', status: 'Resuelto' },
-        ];
+      map.on('style.load', markReady);
+      map.on('load', markReady);
 
-        sampleReports.forEach((report) => {
-          const el = document.createElement('div');
-          el.className =
-            'w-7 h-7 rounded-full bg-[#1E6FCB] border-2 border-white shadow-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95';
-          el.innerHTML =
-            '<span class="material-symbols-rounded text-[15px] text-white filled" style="display:flex;align-items:center;justify-content:center;">pin_drop</span>';
-
-          el.addEventListener('click', () => {
-            if (onReportClick) onReportClick(report);
-          });
-
-          if (typeof Marker === 'function') {
-            new Marker({ element: el })
-              .setLngLat([report.lng, report.lat])
-              .addTo(map);
-          }
-        });
+      map.on('error', (err) => {
+        console.warn('[OpenFreeMap Warning]:', err);
+        markReady();
       });
 
-      // Listener de redimensionamiento
+      // Timeout de seguridad y resize diferido
+      const initialResizeTimer = setTimeout(markReady, 200);
+      const safetyTimer = setTimeout(markReady, 800);
+
       const handleResize = () => {
-        if (map) map.resize();
+        if (map && typeof map.resize === 'function') {
+          map.resize();
+        }
       };
       window.addEventListener('resize', handleResize);
 
       mapInstanceRef.current = map;
 
       return () => {
+        clearTimeout(initialResizeTimer);
+        clearTimeout(safetyTimer);
         window.removeEventListener('resize', handleResize);
         if (mapInstanceRef.current && typeof mapInstanceRef.current.remove === 'function') {
           mapInstanceRef.current.remove();
@@ -106,50 +111,75 @@ export const CitizenMap = ({ onFilterClick, onReportClick }) => {
       console.warn('[OpenFreeMap Init Warning]:', e);
       setMapLoaded(true);
     }
-  }, [onReportClick]);
+  }, []);
+
+  // Centrar en la ubicación actual del usuario dentro de los límites
+  const handleGeolocate = () => {
+    if (!navigator.geolocation || !mapInstanceRef.current) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocating(false);
+        const { longitude, latitude } = pos.coords;
+        mapInstanceRef.current.flyTo({
+          center: [longitude, latitude],
+          zoom: 15.5,
+          essential: true,
+        });
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        setIsLocating(false);
+        mapInstanceRef.current.flyTo({
+          center: DEFAULT_CENTER,
+          zoom: 13.5,
+        });
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   return (
-    <div className="w-full h-full min-h-0 flex-1 relative overflow-hidden bg-[#E8EEF5]">
+    <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden bg-[#e5e9ec]">
       
-      {/* Contenedor Canvas para OpenFreeMap */}
+      {/* Contenedor DOM para MapLibre con touch-action: none */}
       <div
         ref={mapContainerRef}
         data-testid="maplibre-container"
         className="w-full h-full absolute inset-0"
+        style={{ touchAction: 'none' }}
       />
 
-      {/* Spinner de carga inicial */}
+      {/* Spinner de carga inicial que se desvanece de inmediato */}
       {!mapLoaded && (
-        <div className="absolute inset-0 bg-[#E8EEF5] flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-[#e5e9ec] flex items-center justify-center z-10 pointer-events-none transition-opacity duration-300">
           <div className="flex flex-col items-center gap-2 text-[#7B8A9A]">
             <div className="w-8 h-8 border-3 border-[#1E6FCB] border-t-transparent rounded-full animate-spin" />
-            <span className="font-bold text-xs">Cargando OpenFreeMap...</span>
+            <span className="font-bold text-xs">Cargando mapa...</span>
           </div>
         </div>
       )}
 
-      {/* Botón Flotante de Filtros */}
+      {/* Botón Flotante de Filtros (Top Right) */}
       <button
         type="button"
-        aria-label="Abrir filtros de mapa"
+        aria-label="Filtros del mapa"
         onClick={() => {
           setShowFiltersModal((prev) => !prev);
           if (onFilterClick) onFilterClick();
         }}
-        className="absolute right-3.5 top-3.5 w-[38px] h-[38px] rounded-[12px] bg-white flex items-center justify-center shadow-[0px_5px_16px_rgba(20,40,80,0.14)] text-[#1E6FCB] hover:bg-[#F4F7FB] active:scale-95 transition-all cursor-pointer border-0 z-10"
+        className="absolute top-4 right-4 z-20 w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
       >
-        <span className="material-symbols-rounded text-[20px]">
-          tune
-        </span>
+        <SlidersHorizontal className="w-5 h-5 text-[#1E6FCB]" />
       </button>
 
-      {/* Menú flotante de Filtros */}
+      {/* Menú de Filtros emergente */}
       {showFiltersModal && (
-        <div className="absolute right-3.5 top-14 bg-white rounded-[15px] p-3 shadow-[0px_8px_24px_rgba(20,40,80,0.18)] border border-[#E6ECF3] z-20 w-[180px] flex flex-col gap-1.5 animate-in fade-in zoom-in-95">
+        <div className="absolute right-4 top-18 bg-white rounded-2xl p-3 shadow-xl border border-slate-100 z-30 w-48 flex flex-col gap-1 animate-in fade-in zoom-in-95">
           <div className="font-extrabold text-[11px] text-[#8593A2] uppercase tracking-wider mb-1 px-1">
-            Filtrar por estado
+            Filtrar reclamos
           </div>
-          {['todos', 'Enviado', 'En revisión', 'Resuelto'].map((filter) => (
+          {['todos', 'Enviado', 'En curso', 'Resuelto'].map((filter) => (
             <button
               key={filter}
               type="button"
@@ -157,7 +187,7 @@ export const CitizenMap = ({ onFilterClick, onReportClick }) => {
                 setActiveFilter(filter);
                 setShowFiltersModal(false);
               }}
-              className={`text-left px-2.5 py-1.5 rounded-[8px] font-bold text-[12px] cursor-pointer border-0 transition-colors capitalize ${
+              className={`text-left px-3 py-2 rounded-xl font-bold text-xs cursor-pointer border-0 transition-colors capitalize ${
                 activeFilter === filter
                   ? 'bg-[#EEF5FC] text-[#1E6FCB]'
                   : 'text-[#56657A] hover:bg-slate-50'
@@ -169,16 +199,23 @@ export const CitizenMap = ({ onFilterClick, onReportClick }) => {
         </div>
       )}
 
-      {/* Leyenda de Intensidad / Calor */}
-      <div className="absolute left-3.5 bottom-20 md:bottom-24 bg-white/95 backdrop-blur-xs rounded-[10px] py-[7px] px-[10px] flex items-center gap-[7px] shadow-[0px_4px_12px_rgba(20,40,80,0.12)] border border-white/60 z-10 select-none">
-        <span className="font-bold text-[9px] text-[#8A97A6]">
-          Menos
-        </span>
-        <span className="w-[44px] h-[6px] rounded-[4px] bg-[linear-gradient(90deg,rgb(46,158,107),rgb(247,142,53),rgb(231,76,60))]" />
-        <span className="font-bold text-[9px] text-[#8A97A6]">
-          Más
-        </span>
+      {/* Leyenda Menos / Más (Bottom Left at 104px) */}
+      <div className="absolute bottom-[104px] left-4 z-20 bg-white/95 backdrop-blur-md rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-md border border-slate-100 text-[11px] font-bold text-[#64748B] select-none">
+        <span>Menos</span>
+        <div className="w-14 h-2 rounded-full bg-gradient-to-r from-[#22C55E] via-[#F97316] to-[#EF4444]" />
+        <span>Más</span>
       </div>
+
+      {/* Botón Flotante de Geolocalización (Bottom Right at 104px) */}
+      <button
+        type="button"
+        aria-label="Centrar en mi ubicación"
+        title="Centrar en mi ubicación"
+        onClick={handleGeolocate}
+        className="absolute bottom-[104px] right-4 z-20 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+      >
+        <Navigation className={`w-5 h-5 text-[#1E6FCB] ${isLocating ? 'animate-spin' : ''}`} />
+      </button>
 
     </div>
   );
