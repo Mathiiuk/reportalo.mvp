@@ -70,12 +70,12 @@ export const MunicipiosPage = () => {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="flex-1 flex flex-col justify-center items-start text-left max-w-[560px]"
           >
-            {/* Contenedor icono de sección */}
-            <div className="w-[66px] h-[66px] md:w-[72px] md:h-[72px] rounded-[20px] bg-[#EEF5FC] flex items-center justify-center mb-5 shadow-sm">
-              <span className="material-symbols-rounded filled text-[36px] text-[#1E6FCB]">
-                location_city
-              </span>
-            </div>
+            {/* Logo oficial de Reportalo sin fondo */}
+            <img
+              src="/logo-icon.webp"
+              alt="Reportalo Logo"
+              className="w-[48px] h-[62px] md:w-[56px] md:h-[72px] object-contain mb-4 md:mb-5"
+            />
 
             {/* Título principal con escala proporcional al Home */}
             <h1 className="font-extrabold text-[32px] md:text-[38px] lg:text-[42px] leading-tight md:leading-[1.18] text-[#1F2C3D] tracking-[-0.6px] md:tracking-[-1px]">
