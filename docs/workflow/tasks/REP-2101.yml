@@ -1,0 +1,83 @@
+id: REP-2101
+external_ref: "HU-REP-2101"
+title: "Iniciar sesión con Magic Link (Email OTP Supabase / Resend)"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: staging
+
+scope:
+  project: "Reportalo MVP"
+  modules:
+    - "auth"
+    - "ui"
+    - "email-otp"
+  environments: [local, staging, production]
+
+requirements:
+  - "Permitir ingresar un correo electrónico válido en la pantalla de acceso."
+  - "Enviar Magic Link seguro mediante supabase.auth.signInWithOtp."
+  - "Transición en tiempo real a la pantalla 'Revisá tu correo' con datos dinámicos (email del usuario, temporizador de reenvío, botón abrir correo)."
+  - "Cuenta regresiva en tiempo real para habilitar reenvío de enlace."
+  - "Procesar y sanitizar el retorno de autenticación por Magic Link redirigiendo a /app."
+  - "Manejo seguro de enlaces vencidos, usados o inválidos con mensajes amigables."
+  - "Diseño adaptable de alta fidelidad para mobile y desktop con micro-interacciones (framer-motion) y notificaciones (sonner)."
+
+acceptance_criteria:
+  - "AC-01: La pantalla de login permite ingresar un correo electrónico con validación de formato y solicitar el enlace mágico."
+  - "AC-02: La llamada a signInWithOtp solicita a Supabase el envío del Magic Link seguro sin exponer secretos."
+  - "AC-03: Al enviarse, la UI transiciona a la pantalla 'Revisá tu correo' mostrando el email real ingresado."
+  - "AC-04: La pantalla 'Revisá tu correo' incluye botón 'Abrir mi correo', cuenta regresiva activa para reenviar y nota de vencimiento (15 min)."
+  - "AC-05: El reenvío de enlace vuelve a llamar a la API y reinicia el temporizador."
+  - "AC-06: Al ingresar mediante el enlace del correo, la aplicación valida la sesión, sanitiza la URL y redirige a /app."
+  - "AC-07: Un enlace inválido o vencido no otorga acceso, muestra error amigable y mantiene al usuario en /login."
+  - "AC-08: Diseño responsive 100% fiel en mobile (full-bleed) y desktop (dual-column con navbar y sidebar)."
+  - "AC-09: Pruebas unitarias de calidad pasan exitosamente en pnpm test."
+
+constraints:
+  - "React 18, Vite, Tailwind CSS, Supabase backend con integración de emails."
+  - "Sin datos hardcodeados: email, estado y temporizadores en tiempo real."
+  - "Seguridad Zero Trust y protección de inputs."
+
+risks:
+  - "Rate limiting de envío de correos (controlado con temporizador en frontend)."
+  - "Sanitización de parámetros de retorno de Magic Link en navegadores móviles."
+
+dependencies:
+  - "@supabase/supabase-js"
+  - "framer-motion"
+  - "sonner"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-2101.md"
+  implementation_plan: "docs/workflow/plans/REP-2101.md"
+  test_plan: "docs/workflow/tests/REP-2101.md"
+  execution_report: "docs/workflow/executions/REP-2101-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "Revert git commit and redeploy"
+
+branch:
+  type: feat
+  name: "feat/REP-2101-login-magic-link"
+
+commands:
+  install: "pnpm install"
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
