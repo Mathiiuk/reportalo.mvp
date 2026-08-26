@@ -6,14 +6,15 @@ export const OnboardingPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Finalizar onboarding y navegar a la app
+  // Finalizar onboarding y continuar al flujo de términos y permisos
   const handleFinish = () => {
     try {
       localStorage.setItem('reportalo_onboarding_completed', 'true');
     } catch (e) {
       console.warn('LocalStorage error:', e);
     }
-    navigate('/app');
+    // Tras el onboarding, se guía al usuario a aceptar los términos y permisos
+    navigate('/terminos');
   };
 
   // Avanzar al siguiente paso
