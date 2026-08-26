@@ -92,3 +92,17 @@ Documento histórico de actividades, tareas desarrolladas, decisiones técnicas 
   - Creación del componente `TermsAndPermissionsPage`: Paso 1 Términos y Privacidad (con modal de texto legal completo y checkbox de consentimiento explícito) y Paso 2 Activación de Permisos (Cámara y Ubicación).
   - Bloqueo de inicio de reportes en `BlankAppPage` si el usuario no tiene la versión v1.2 aceptada, permitiendo navegación libre en el resto de la app.
   - Quality Gates superados: 24/24 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
+
+### [2026-08-26] — REP-4100: Mapa Ciudadano y Navegación Principal de 5 Botones
+- **Tipo**: Frontend / Map / Navigation / Mobile-First
+- **Responsable**: Matías Krepchuk (Tech Lead)
+- **QA Asignado**: Ivo
+- **Estado**: Listo para PR (`READY_FOR_PR`)
+- **Rama**: `feat/REP-4100-mapa-ciudadano`
+- **Resumen**:
+  - Integración de MapLibre GL JS (`CitizenMap.jsx`) con botón flotante de filtros (`tune`), leyenda de calor (`Menos / Más`) y geolocalización.
+  - Creación de `AppLayout.jsx` con Topbar (Logo Reportalo + Campana de notificaciones con badge "2") y Barra de Navegación de 5 botones (Mapa, Mis reportes, Botón Central de Cámara, Novedades, Perfil).
+  - Creación de vistas asociadas: `MapPage.jsx` (`/mapa`), `ReportsPage.jsx` (`/reportes`), `NewsPage.jsx` (`/novedades`), `ProfilePage.jsx` (`/perfil`).
+  - Conexión del flujo post-permisos directo hacia `/mapa`.
+  - Quality Gates superados: 31/31 tests unitarios en verde (`pnpm test`) y compilación exitosa (`pnpm run build`).
+
