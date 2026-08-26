@@ -27,13 +27,6 @@ html, body, #root {
   -webkit-touch-callout: none;
 }
 
-/* MapLibre Canvas Container Fix */
-.maplibregl-canvas-container,
-.maplibregl-canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
 /* Material Symbols Rounded standard styling */
 .material-symbols-rounded {
   font-family: 'Material Symbols Rounded';

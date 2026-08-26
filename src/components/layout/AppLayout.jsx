@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
 
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determinar pestaña activa
+  // Determinar pestaña activa según la ruta
   const getActiveTab = () => {
     if (location.pathname.startsWith('/mapa')) return 'mapa';
     if (location.pathname.startsWith('/reportes')) return 'reportes';
@@ -26,33 +27,30 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   };
 
   return (
-    <div className="h-[100dvh] w-full font-manrope select-none flex flex-col bg-[#F8FAFC] overflow-hidden">
+    <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
       
-      {/* Header Superior (Topbar) */}
-      <header className="flex-shrink-0 bg-white border-b border-[#EEF1F5] px-4 py-2.5 sm:px-6 md:px-8 z-20 flex items-center justify-between shadow-2xs">
-        <Link to="/mapa" className="flex items-center gap-2 text-inherit no-underline">
-          <img
-            src="/logo-icon.webp"
-            alt="Reportalo"
-            className="w-[20px] h-[26px] object-contain"
-          />
-          <span className="font-extrabold text-[19px] text-[#263249] tracking-[-0.4px]">
-            Reportalo
-          </span>
-        </Link>
+      {/* Header Superior (Topbar idéntico al modelo) */}
+      <header className="z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
+        <div className="px-5 pt-2 pb-2 flex items-center justify-between">
+          <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
+            <img
+              src="/logo-icon.webp"
+              alt="Logo Reportalo"
+              className="w-6 h-7 object-contain select-none"
+            />
+            <span className="text-[21px] font-extrabold text-[#1B365D] tracking-tight">
+              Reportalo
+            </span>
+          </Link>
 
-        {/* Campana de Notificaciones con Badge */}
-        <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label="Alertas y notificaciones (2 nuevas)"
             onClick={() => navigate('/alertas')}
-            className="relative w-9 h-9 rounded-full flex items-center justify-center text-[#7B8A9A] hover:text-[#1E6FCB] hover:bg-[#EEF5FC] transition-colors cursor-pointer border-0 bg-transparent"
+            className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#475569] hover:bg-slate-100 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
+            aria-label="Ver alertas y notificaciones"
           >
-            <span className="material-symbols-rounded filled text-[22px]">
-              notifications
-            </span>
-            <span className="absolute top-1 right-1 w-[15px] h-[15px] rounded-full bg-[#E74C3C] border-2 border-white flex items-center justify-center font-extrabold text-[8px] text-white">
+            <Bell className="w-5 h-5 text-[#334155]" />
+            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#DC2626] text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow-xs">
               2
             </span>
           </button>
@@ -60,31 +58,29 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       </header>
 
       {/* Contenedor del contenido principal */}
-      <main className="flex-1 relative w-full h-full min-h-0 overflow-hidden flex flex-col">
+      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col">
         {children}
       </main>
 
-      {/* Barra de Navegación Inferior Flotante (5 Botones / Píldora moderna) */}
-      <div className="flex-shrink-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-1 flex justify-center w-full pointer-events-none">
+      {/* Barra de Navegación Inferior Flotante (Exacta al modelo) */}
+      <div className="fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
         <nav
           aria-label="Navegación principal"
-          className="bg-white rounded-[26px] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] border border-[#EBEFF5] px-3 py-1.5 flex items-center justify-between w-full max-w-[380px] pointer-events-auto"
+          className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
         >
           
           {/* 1. Mapa */}
           <button
             type="button"
             onClick={() => navigate('/mapa')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-2.5 transition-all rounded-[14px] ${
+            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
               currentTab === 'mapa'
                 ? 'bg-[#E6F6FD] text-[#0284C7]'
                 : 'text-[#94A3B8] hover:text-[#475569]'
             }`}
           >
-            <span className="material-symbols-rounded text-[20px]">
-              map
-            </span>
-            <span className="text-[9px] font-bold">
+            <MapIcon className="w-5 h-5" />
+            <span className="text-[9.5px] font-bold">
               Mapa
             </span>
           </button>
@@ -93,16 +89,14 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
           <button
             type="button"
             onClick={() => navigate('/reportes')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-2.5 transition-all rounded-[14px] ${
+            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
               currentTab === 'reportes'
                 ? 'bg-[#E6F6FD] text-[#0284C7]'
                 : 'text-[#94A3B8] hover:text-[#475569]'
             }`}
           >
-            <span className="material-symbols-rounded text-[20px]">
-              description
-            </span>
-            <span className="text-[9px] font-bold">
+            <FileText className="w-5 h-5" />
+            <span className="text-[9.5px] font-bold">
               Reportes
             </span>
           </button>
@@ -115,11 +109,9 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               type="button"
               aria-label="Tomar foto y reportar"
               onClick={handleCameraAction}
-              className="w-[52px] h-[52px] -mt-5 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_6px_18px_rgba(234,88,12,0.4)] border-[3px] border-white cursor-pointer transition-all"
+              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all"
             >
-              <span className="material-symbols-rounded text-[24px]">
-                photo_camera
-              </span>
+              <Camera className="w-6 h-6" />
             </motion.button>
           </div>
 
@@ -127,16 +119,14 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
           <button
             type="button"
             onClick={() => navigate('/alertas')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-2.5 transition-all rounded-[14px] ${
+            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
               currentTab === 'alertas'
                 ? 'bg-[#E6F6FD] text-[#0284C7]'
                 : 'text-[#94A3B8] hover:text-[#475569]'
             }`}
           >
-            <span className="material-symbols-rounded text-[20px]">
-              notifications_none
-            </span>
-            <span className="text-[9px] font-bold">
+            <Bell className="w-5 h-5" />
+            <span className="text-[9.5px] font-bold">
               Alertas
             </span>
           </button>
@@ -145,16 +135,14 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
           <button
             type="button"
             onClick={() => navigate('/perfil')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-2.5 transition-all rounded-[14px] ${
+            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
               currentTab === 'perfil'
                 ? 'bg-[#E6F6FD] text-[#0284C7]'
                 : 'text-[#94A3B8] hover:text-[#475569]'
             }`}
           >
-            <span className="material-symbols-rounded text-[20px]">
-              person_outline
-            </span>
-            <span className="text-[9px] font-bold">
+            <User className="w-5 h-5" />
+            <span className="text-[9.5px] font-bold">
               Perfil
             </span>
           </button>
