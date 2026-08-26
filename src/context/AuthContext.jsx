@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
   }, []);
 
-  // Función para sanitizar fragmentos o códigos/errores OAuth y Magic Link de la barra de direcciones (AC-05)
+  // Función para sanitizar fragmentos o códigos/errores OAuth y Magic Link de la barra de direcciones
   const sanitizeUrl = useCallback(() => {
     if (typeof window !== 'undefined') {
       const hasHash = Boolean(window.location.hash);
@@ -83,19 +83,47 @@ export const AuthProvider = ({ children }) => {
     return null;
   }, []);
 
-  // Inicialización y escucha de eventos de autenticación de Supabase
+  // Inicialización y escucha reactiva de eventos de autenticación
   useEffect(() => {
     let mounted = true;
 
+    // Detectamos si la URL contiene fragmentos de retorno de OAuth o Magic Link
+    const isHandlingAuthRedirect =
+      typeof window !== 'undefined' &&
+      (window.location.hash.includes('access_token') ||
+        window.location.search.includes('code='));
+
+    // Suscripción reactiva a cambios de sesión
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        if (!mounted) return;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setLoading(false);
+
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          if (currentSession) {
+            sanitizeUrl();
+            setAuthError(null);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setSession(null);
+        }
+      }
+    );
+
+    // Verificación inicial de sesión
     const initAuth = async () => {
-      // 1. Verificamos si la URL contiene errores de retorno de OAuth o Magic Link
       const urlError = checkUrlForErrors();
       if (urlError) {
         if (mounted) {
           setAuthError(urlError);
           toast.error(urlError);
+          setLoading(false);
         }
         sanitizeUrl();
+        return;
       }
 
       try {
@@ -104,12 +132,14 @@ export const AuthProvider = ({ children }) => {
           console.error('[Auth Error getSession]:', error.message);
         }
         if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-          setLoading(false);
-          // Sanitizamos la URL si vino con tokens de redirección exitosa
           if (initialSession) {
+            setSession(initialSession);
+            setUser(initialSession.user ?? null);
+            setLoading(false);
             sanitizeUrl();
+          } else if (!isHandlingAuthRedirect) {
+            // Solo desactivamos loading si no estamos esperando la resolución del hash OAuth
+            setLoading(false);
           }
         }
       } catch (err) {
@@ -121,25 +151,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-
-    // Suscripción reactiva a cambios de sesión
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        if (!mounted) return;
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setLoading(false);
-
-        if (event === 'SIGNED_IN') {
-          sanitizeUrl();
-          setAuthError(null);
-          toast.success('¡Sesión iniciada con éxito!');
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setSession(null);
-        }
-      }
-    );
 
     return () => {
       mounted = false;
@@ -158,7 +169,10 @@ export const AuthProvider = ({ children }) => {
         return { data: null, error: new Error(errorMsg) };
       }
 
-      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined;
+      // Redirigir directamente al onboarding post autenticación
+      const redirectTo =
+        typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -204,7 +218,9 @@ export const AuthProvider = ({ children }) => {
         return { data: null, error: new Error(errorMsg) };
       }
 
-      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined;
+      const redirectTo =
+        typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined;
+
       const { data, error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: {
