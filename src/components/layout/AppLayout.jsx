@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
 
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
@@ -22,7 +23,9 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
     if (onCameraClick) {
       onCameraClick();
     } else {
-      navigate('/mapa?action=capture');
+      toast.info('Creación de reportes disponible en Sprint 11', {
+        description: 'La captura guiada de fotos y emisión de reclamos se habilitará en el próximo sprint.',
+      });
     }
   };
 
