@@ -124,7 +124,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       });
     });
 
-    it('UT-TM-12: El botón Rechazar redirige a /app sin guardar consentimiento en almacenamiento', async () => {
+    it('UT-TM-12: El botón Rechazar abre el diálogo de confirmación y permite cancelar o confirmar', async () => {
       const AppReceiver = () => <div data-testid="app-dashboard">App Dashboard</div>;
       const mockUser = { id: 'usr-explorador', email: 'explora@reportalo.ar' };
 
@@ -152,6 +152,22 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
 
       const rejectBtn = screen.getByRole('button', { name: /Rechazar/i });
       fireEvent.click(rejectBtn);
+
+      // Debe abrirse el modal con ¿Rechazar los términos?
+      expect(screen.getByRole('heading', { name: /¿Rechazar los términos\?/i })).toBeInTheDocument();
+      expect(screen.getByText(/Sin tu consentimiento no podemos procesar las imágenes/i)).toBeInTheDocument();
+
+      // Probar cancelar con "Volver a los términos"
+      const cancelBtn = screen.getByRole('button', { name: /Volver a los términos/i });
+      fireEvent.click(cancelBtn);
+
+      expect(screen.queryByRole('heading', { name: /¿Rechazar los términos\?/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('app-dashboard')).not.toBeInTheDocument();
+
+      // Volvemos a abrir y confirmamos con "Rechazar y salir"
+      fireEvent.click(rejectBtn);
+      const confirmRejectBtn = screen.getByRole('button', { name: /Rechazar y salir/i });
+      fireEvent.click(confirmRejectBtn);
 
       await waitFor(() => {
         expect(screen.getByTestId('app-dashboard')).toBeInTheDocument();
