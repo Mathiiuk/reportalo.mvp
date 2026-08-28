@@ -45,24 +45,15 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. Paso 2 obligatorio: Términos y permisos (v1.2)
-  if (onboardingCompleted && !termsAccepted && location.pathname !== '/terminos') {
-    return <Navigate to="/terminos" replace />;
-  }
-
-  // 3. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /app
-  if (
-    onboardingCompleted &&
-    termsAccepted &&
-    (location.pathname === '/onboarding' || location.pathname === '/terminos')
-  ) {
+  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /app
+  if (onboardingCompleted && location.pathname === '/onboarding') {
     return <Navigate to="/app" replace />;
   }
 
   return children;
 };
 
-// Componente para redirigir si el usuario ya está autenticado hacia el paso pendiente
+// Componente para redirigir si el usuario ya está autenticado hacia el panel o onboarding
 const PublicRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
 
@@ -83,13 +74,9 @@ const PublicRoute = ({ children }) => {
     const onboardingCompleted =
       typeof window !== 'undefined' &&
       localStorage.getItem('reportalo_onboarding_completed') === 'true';
-    const termsAccepted = hasAcceptedCurrentTerms(user?.id);
 
     if (!onboardingCompleted) {
       return <Navigate to="/onboarding" replace />;
-    }
-    if (!termsAccepted) {
-      return <Navigate to="/terminos" replace />;
     }
     return <Navigate to="/app" replace />;
   }

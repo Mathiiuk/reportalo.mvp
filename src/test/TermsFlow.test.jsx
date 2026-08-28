@@ -49,8 +49,8 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
     });
   });
 
-  describe('Pantalla 1: Términos y Privacidad', () => {
-    it('UT-TM-04: Renderiza los 3 bloques clave y el botón Aceptar deshabilitado por defecto', () => {
+  describe('Pantalla 1: Términos y Privacidad (REP-3544)', () => {
+    it('UT-TM-04: Renderiza encabezado con badge VIGENTE, los 3 bloques clave y botón Rechazar', () => {
       render(
         <MemoryRouter>
           <TermsAndPermissionsPage />
@@ -58,39 +58,104 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       );
 
       expect(screen.getByRole('heading', { name: /Términos y privacidad/i })).toBeInTheDocument();
-      expect(screen.getByText(/Versión 1.2 · vigente desde 08\/2026/i)).toBeInTheDocument();
+      expect(screen.getByText('VIGENTE')).toBeInTheDocument();
+      expect(screen.getByText(/Versión 1.2 · desde 08\/2026/i)).toBeInTheDocument();
 
       // 3 bloques clave
       expect(screen.getByText(/Tratamiento de imágenes/i)).toBeInTheDocument();
       expect(screen.getByText(/Qué se guarda/i)).toBeInTheDocument();
       expect(screen.getByText(/Tus derechos/i)).toBeInTheDocument();
 
-      // Checkbox y botón
+      // Checkbox, botón Aceptar y botón Rechazar
       expect(screen.getByText(/Acepto los términos y el tratamiento de mis imágenes descripto arriba./i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Aceptar y continuar/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Aceptar y continuar/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Rechazar/i })).toBeInTheDocument();
     });
 
-    it('UT-TM-05: Al tildar el checkbox se habilita el botón y avanza a la pantalla de Permisos', async () => {
+    it('UT-TM-10: Al hacer clic en Aceptar sin marcar la casilla, muestra el banner de error y borde de advertencia', async () => {
       render(
         <MemoryRouter>
           <TermsAndPermissionsPage />
         </MemoryRouter>
       );
 
-      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      // Antes de hacer clic no debe estar el mensaje de error
+      expect(screen.queryByText(/La casilla es obligatoria. Marcala para poder continuar./i)).not.toBeInTheDocument();
+
       const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      fireEvent.click(submitBtn);
 
-      expect(submitBtn).toBeDisabled();
+      // Debe mostrarse el banner de error
+      await waitFor(() => {
+        expect(screen.getByText(/La casilla es obligatoria. Marcala para poder continuar./i)).toBeInTheDocument();
+      });
 
+      // No debe haber avanzado a la pantalla de permisos
+      expect(screen.queryByRole('heading', { name: /Activá los permisos/i })).not.toBeInTheDocument();
+    });
+
+    it('UT-TM-11: Al tildar el checkbox desaparece el error y permite avanzar a la pantalla de Permisos', async () => {
+      render(
+        <MemoryRouter>
+          <TermsAndPermissionsPage />
+        </MemoryRouter>
+      );
+
+      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      fireEvent.click(submitBtn);
+
+      // Error visible
+      expect(screen.getByText(/La casilla es obligatoria. Marcala para poder continuar./i)).toBeInTheDocument();
+
+      // Marcamos el checkbox
+      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
       fireEvent.click(checkbox);
-      expect(submitBtn).not.toBeDisabled();
 
+      // El error debe desaparecer
+      expect(screen.queryByText(/La casilla es obligatoria. Marcala para poder continuar./i)).not.toBeInTheDocument();
+
+      // Al presionar de nuevo avanza
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /Activá los permisos/i })).toBeInTheDocument();
         expect(screen.getByText(/Cámara/i)).toBeInTheDocument();
         expect(screen.getByText(/Ubicación/i)).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-12: El botón Rechazar redirige a /app sin guardar consentimiento en almacenamiento', async () => {
+      const AppReceiver = () => <div data-testid="app-dashboard">App Dashboard</div>;
+      const mockUser = { id: 'usr-explorador', email: 'explora@reportalo.ar' };
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={['/terminos']}>
+            <Routes>
+              <Route path="/terminos" element={<TermsAndPermissionsPage />} />
+              <Route path="/app" element={<AppReceiver />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      const rejectBtn = screen.getByRole('button', { name: /Rechazar/i });
+      fireEvent.click(rejectBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('app-dashboard')).toBeInTheDocument();
+        expect(hasAcceptedCurrentTerms('usr-explorador')).toBe(false);
       });
     });
 
