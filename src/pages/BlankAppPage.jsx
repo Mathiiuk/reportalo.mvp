@@ -24,7 +24,7 @@ export const BlankAppPage = () => {
   const handleCreateReport = () => {
     if (!hasAcceptedCurrentTerms(user?.id)) {
       toast.warning(
-        'Antes de enviar tu primer reporte, es necesario aceptar los Términos y Privacidad (v1.2).'
+        `Antes de enviar tu primer reporte, es necesario aceptar los Términos y Privacidad (v${CURRENT_TERMS_VERSION}).`
       );
       navigate('/terminos');
       return;
