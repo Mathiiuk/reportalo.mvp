@@ -1,4 +1,12 @@
-// Servicio de Detección y Gestión de Ubicación del Ciudadano (REP-2300)
+/**
+ * Servicio de Detección, Gestión de Permisos y Geolocalización del Navegador (REP-2302 / REP-2300)
+ *
+ * NOTA ARQUITECTÓNICA OBLIGATORIA (Anti-EXIF Rule):
+ * En cumplimiento con los requerimientos técnicos y la Ley Nacional 25.326 de Protección de Datos Personales,
+ * la ubicación funcional de Reportalo se obtiene de forma exclusiva mediante la API de Geolocalización del
+ * navegador/dispositivo del usuario (GPS/Red). NUNCA se extraen ni utilizan metadatos EXIF de fotografías
+ * como fuente de ubicación funcional.
+ */
 
 export const DEFAULT_CITY_COORDINATES = [-58.4200, -34.6200]; // Centro CABA / Avellaneda
 
@@ -12,7 +20,7 @@ export const LOCATION_STATUS = {
 };
 
 /**
- * Verifica si el navegador soporta la API de Geolocalización.
+ * Verifica si el entorno del navegador soporta la API de Geolocalización.
  * @returns {boolean}
  */
 export const isGeolocationSupported = () => {
@@ -20,8 +28,30 @@ export const isGeolocationSupported = () => {
 };
 
 /**
- * Obtiene la ubicación geográfica actual del dispositivo.
- * @param {object} [options]
+ * Consulta proactivamente el estado del permiso de geolocalización mediante la Permissions API.
+ * @returns {Promise<'granted' | 'denied' | 'prompt' | 'unsupported'>}
+ */
+export const getGeolocationPermissionState = async () => {
+  if (
+    typeof navigator === 'undefined' ||
+    !navigator.permissions ||
+    typeof navigator.permissions.query !== 'function'
+  ) {
+    return 'prompt';
+  }
+
+  try {
+    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+    return permissionStatus.state || 'prompt';
+  } catch (err) {
+    console.warn('[locationService getGeolocationPermissionState warning]:', err);
+    return 'prompt';
+  }
+};
+
+/**
+ * Obtiene la ubicación geográfica actual del dispositivo mediante la Geolocation API del navegador.
+ * @param {object} [options] Opciones de PositionOptions
  * @returns {Promise<{ status: string, coordinates: [number, number], accuracy?: number, error?: string }>}
  */
 export const getUserCoordinates = (options = {}) => {
@@ -74,4 +104,54 @@ export const getUserCoordinates = (options = {}) => {
       defaultOptions
     );
   });
+};
+
+/**
+ * Suscribe un observador a cambios continuos de posición geográfica del dispositivo.
+ * @param {(position: { coordinates: [number, number], accuracy: number }) => void} onSuccess
+ * @param {(error: { status: string, error: string }) => void} [onError]
+ * @param {object} [options]
+ * @returns {number | null} ID del watch para cancelar con navigator.geolocation.clearWatch
+ */
+export const watchUserCoordinates = (onSuccess, onError, options = {}) => {
+  if (!isGeolocationSupported() || typeof navigator.geolocation.watchPosition !== 'function') {
+    if (onError) {
+      onError({
+        status: LOCATION_STATUS.NOT_SUPPORTED,
+        error: 'Geolocalización no soportada.',
+      });
+    }
+    return null;
+  }
+
+  const defaultOptions = {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 30000,
+    ...options,
+  };
+
+  return navigator.geolocation.watchPosition(
+    (pos) => {
+      if (onSuccess) {
+        onSuccess({
+          coordinates: [pos.coords.longitude, pos.coords.latitude],
+          accuracy: pos.coords.accuracy,
+        });
+      }
+    },
+    (err) => {
+      let status = LOCATION_STATUS.UNAVAILABLE;
+      if (err.code === 1) status = LOCATION_STATUS.DENIED;
+      if (err.code === 3) status = LOCATION_STATUS.TIMEOUT;
+
+      if (onError) {
+        onError({
+          status,
+          error: err.message || 'Error en seguimiento de ubicación.',
+        });
+      }
+    },
+    defaultOptions
+  );
 };
