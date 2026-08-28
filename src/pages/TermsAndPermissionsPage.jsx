@@ -101,8 +101,8 @@ export const TermsAndPermissionsPage = () => {
   };
 
   // Guardar consentimiento y permisos completados
-  const handleFinishPermissions = () => {
-    recordTermsAcceptance(user?.id, {
+  const handleFinishPermissions = async () => {
+    await recordTermsAcceptance(user?.id, {
       camera: cameraPermission,
       location: locationPermission,
     });
@@ -111,8 +111,8 @@ export const TermsAndPermissionsPage = () => {
   };
 
   // Salir con "Ahora no"
-  const handleSkipPermissions = () => {
-    recordTermsAcceptance(user?.id, {
+  const handleSkipPermissions = async () => {
+    await recordTermsAcceptance(user?.id, {
       camera: false,
       location: false,
     });
