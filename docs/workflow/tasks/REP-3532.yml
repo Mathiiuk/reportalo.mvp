@@ -1,82 +1,14 @@
-id: REP-3532
-external_ref: "HU-REP-3532"
-title: "Aceptar Términos, Privacidad y Consentimiento de Tratamiento de Imágenes v1.2"
-type: feature
-status: READY_FOR_PR
-priority: high
-owner: "Matías Krepchuk"
-base_branch: staging
-
-scope:
-  project: "Reportalo MVP"
-  modules:
-    - "terms"
-    - "privacy"
-    - "permissions"
-    - "consent-audit"
-    - "ui"
-  environments: [local, staging, production]
-
-requirements:
-  - "El ciudadano puede navegar y explorar Reportalo sin haber aceptado aún los términos."
-  - "Verificación obligatoria de términos vigentes (v1.2) antes de iniciar o enviar el primer reporte."
-  - "Pantalla 1: 'Términos y privacidad' con 3 tarjetas informativas (Tratamiento de imágenes, Qué se guarda, Tus derechos Ley 25.326), modal de texto legal completo, checkbox de aceptación explícita y botón 'Aceptar y continuar'."
-  - "Pantalla 2: 'Activá los permisos' con switches interactivos de Cámara y Ubicación, banner de protección verde y botones 'Continuar' / 'Ahora no'."
-  - "Persistencia y auditoría del consentimiento: user_id, terms_version ('1.2'), accepted_at (ISO timestamp) y permisos concedidos."
-  - "Soporte de cambio de versión: si cambia la versión vigente, solicita re-aceptación antes de permitir nuevos reportes."
-  - "Si el usuario rechaza o cancela, la acción de reportar permanece bloqueada con mensaje informativo."
-  - "Diseño de alta fidelidad para Mobile y Desktop (con Header institucional y Sidebar armonizada)."
-
-acceptance_criteria:
-  - "AC-01: El ciudadano explora la app libremente; el bloqueo de reporte solo actúa al intentar reportar sin consentimiento vigente."
-  - "AC-02: La pantalla de términos presenta versión 1.2, 3 puntos clave y link a texto completo."
-  - "AC-03: El botón 'Aceptar y continuar' se habilita únicamente al marcar el checkbox explícito."
-  - "AC-04: La pantalla de permisos permite configurar Cámara y Ubicación, con opción 'Continuar' o 'Ahora no'."
-  - "AC-05: El consentimiento se persiste con timestamp y versión ('1.2')."
-  - "AC-06: Bloqueo de envío si no existe consentimiento vigente para la versión actual."
-  - "AC-07: Diseño responsive mobile-first y desktop de dos columnas homologado con tokens Reportalo."
-  - "AC-08: Suite de pruebas unitarias pasa al 100% en pnpm test y build limpio en pnpm run build."
-
-constraints:
-  - "React 18, Vite, Tailwind CSS, Framer Motion, Sonner."
-  - "Consentimiento explícito conforme a Ley 25.326 y principios Zero Trust."
-
-risks:
-  - "Consentimiento tácito inválido (mitigado con checkbox obligatorio y timestamp auditado)."
-
-dependencies:
-  - "framer-motion"
-  - "sonner"
-
-requires_approval: false
-approval_reason: ""
-
-artifacts:
-  specification: "docs/workflow/specs/REP-3532.md"
-  implementation_plan: "docs/workflow/plans/REP-3532.md"
-  test_plan: "docs/workflow/tests/REP-3532.md"
-  execution_report: "docs/workflow/executions/REP-3532-run-001.md"
-
-quality_gates:
-  lint: false
-  typecheck: false
-  unit_tests: true
-  integration_tests: false
-  e2e: false
-  build: true
-  security: true
-  smoke_tests: true
-
-deployment:
-  staging_required: true
-  production_required: true
-  rollback_strategy: "Revert git commit and redeploy"
-
-branch:
-  type: feat
-  name: "feat/REP-3532-aceptar-terminos"
-
-commands:
-  install: "pnpm install"
-  unit_tests: "pnpm test"
-  build: "pnpm run build"
+id: "REP-3532"
+title: "Sincronización Asíncrona de Consentimiento de Términos con Supabase y Auditoría Multi-dispositivo"
+epic: "REP-3532"
+assignee: "Matias Krepchuk"
+status: "READY_FOR_PR"
+branch: "feat/REP-3532-aceptar-terminos"
+created_at: "2026-08-28T10:00:00.000Z"
+completed_at: "2026-08-28T10:05:00.000Z"
+tags:
+  - "terms"
+  - "supabase"
+  - "async-sync"
+  - "privacy"
+  - "security"

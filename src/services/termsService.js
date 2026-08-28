@@ -1,4 +1,5 @@
 // Servicio de Gestión y Auditoría de Consentimiento de Términos y Privacidad (REP-3532)
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 export const CURRENT_TERMS_VERSION = '1.3';
 export const TERMS_EFFECTIVE_DATE = '09/2026';
@@ -199,25 +200,31 @@ export const hasAcceptedCurrentTerms = (userId) => {
 };
 
 /**
- * Registra de forma auditable y persistente la aceptación de los términos y permisos.
+ * Registra de forma auditable y persistente la aceptación de los términos y permisos (en Supabase y LocalStorage).
  * @param {string} [userId]
  * @param {object} [permissions]
- * @returns {object} Registro guardado
+ * @returns {Promise<object>} Registro guardado
  */
-export const recordTermsAcceptance = (
+export const recordTermsAcceptance = async (
   userId,
   permissions = { camera: true, location: true }
 ) => {
   const consentRecord = {
     userId: userId || 'auth_user',
+    user_id: userId && userId !== 'auth_user' ? userId : null,
     terms_version: CURRENT_TERMS_VERSION,
     accepted_at: new Date().toISOString(),
     permissions: {
       camera: Boolean(permissions.camera),
       location: Boolean(permissions.location),
     },
+    metadata: {
+      client: 'web',
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    },
   };
 
+  // 1. Guardar de inmediato en localStorage para 0ms de latencia y funcionamiento offline
   try {
     if (typeof window !== 'undefined') {
       localStorage.setItem(TERMS_STORAGE_KEY, JSON.stringify(consentRecord));
@@ -225,10 +232,78 @@ export const recordTermsAcceptance = (
       localStorage.removeItem(TERMS_NOTICES_STORAGE_KEY);
     }
   } catch (e) {
-    console.warn('[termsService recordTermsAcceptance error]:', e);
+    console.warn('[termsService recordTermsAcceptance localStorage error]:', e);
+  }
+
+  // 2. Persistir de forma asíncrona en la tabla terms_consents de Supabase si está disponible
+  try {
+    if (isSupabaseConfigured && userId && userId !== 'auth_user') {
+      const { error } = await supabase.from('terms_consents').insert([
+        {
+          user_id: userId,
+          terms_version: CURRENT_TERMS_VERSION,
+          accepted_at: consentRecord.accepted_at,
+          permissions: consentRecord.permissions,
+          metadata: consentRecord.metadata,
+        },
+      ]);
+
+      if (error) {
+        console.warn('[termsService recordTermsAcceptance Supabase insert error]:', error.message);
+      }
+    }
+  } catch (remoteErr) {
+    console.warn('[termsService recordTermsAcceptance Supabase exception]:', remoteErr);
   }
 
   return consentRecord;
+};
+
+/**
+ * Consulta y sincroniza en segundo plano el consentimiento del usuario desde Supabase.
+ * @param {string} [userId]
+ * @returns {Promise<object|null>}
+ */
+export const syncTermsConsentWithRemote = async (userId) => {
+  if (!isSupabaseConfigured || !userId || userId === 'auth_user') {
+    return getTermsRecord(userId);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('terms_consents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('accepted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[termsService syncTermsConsentWithRemote error]:', error.message);
+      return getTermsRecord(userId);
+    }
+
+    if (data && data.terms_version) {
+      const remoteRecord = {
+        userId: data.user_id,
+        user_id: data.user_id,
+        terms_version: data.terms_version,
+        accepted_at: data.accepted_at,
+        permissions: data.permissions || { camera: true, location: true },
+        metadata: data.metadata || {},
+      };
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(TERMS_STORAGE_KEY, JSON.stringify(remoteRecord));
+        localStorage.removeItem(TERMS_REJECTION_STORAGE_KEY);
+      }
+      return remoteRecord;
+    }
+  } catch (err) {
+    console.warn('[termsService syncTermsConsentWithRemote exception]:', err);
+  }
+
+  return getTermsRecord(userId);
 };
 
 /**
