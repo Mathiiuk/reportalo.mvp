@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { syncTermsConsentWithRemote } from '../services/termsService';
 
 // Creación del contexto de autenticación
 export const AuthContext = createContext({
@@ -105,6 +106,9 @@ export const AuthProvider = ({ children }) => {
           if (currentSession) {
             sanitizeUrl();
             setAuthError(null);
+            if (currentSession.user?.id) {
+              syncTermsConsentWithRemote(currentSession.user.id).catch(() => {});
+            }
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -137,6 +141,9 @@ export const AuthProvider = ({ children }) => {
             setUser(initialSession.user ?? null);
             setLoading(false);
             sanitizeUrl();
+            if (initialSession.user?.id) {
+              syncTermsConsentWithRemote(initialSession.user.id).catch(() => {});
+            }
           } else if (!isHandlingAuthRedirect) {
             // Solo desactivamos loading si no estamos esperando la resolución del hash OAuth
             setLoading(false);
