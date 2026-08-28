@@ -3,13 +3,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TermsAndPermissionsPage } from '../pages/TermsAndPermissionsPage';
+import { LoginPage } from '../pages/LoginPage';
 import { BlankAppPage } from '../pages/BlankAppPage';
 import { AuthContext } from '../context/AuthContext';
 import {
   hasAcceptedCurrentTerms,
   recordTermsAcceptance,
+  getTermsUpdateStatus,
+  postponeTermsUpdate,
   CURRENT_TERMS_VERSION,
   TERMS_STORAGE_KEY,
+  TERMS_NOTICES_STORAGE_KEY,
 } from '../services/termsService';
 
 describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
@@ -49,8 +53,8 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
     });
   });
 
-  describe('Pantalla 1: Términos y Privacidad', () => {
-    it('UT-TM-04: Renderiza los 3 bloques clave y el botón Aceptar deshabilitado por defecto', () => {
+  describe('Pantalla 1: Términos y Privacidad (REP-3544)', () => {
+    it('UT-TM-04: Renderiza encabezado con badge VIGENTE, los 3 bloques clave y botón Rechazar', () => {
       render(
         <MemoryRouter>
           <TermsAndPermissionsPage />
@@ -58,19 +62,77 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       );
 
       expect(screen.getByRole('heading', { name: /Términos y privacidad/i })).toBeInTheDocument();
-      expect(screen.getByText(/Versión 1.2 · vigente desde 08\/2026/i)).toBeInTheDocument();
+      expect(screen.getByText('VIGENTE')).toBeInTheDocument();
+      expect(screen.getByText(/Versión 1.2 · desde 08\/2026/i)).toBeInTheDocument();
 
       // 3 bloques clave
       expect(screen.getByText(/Tratamiento de imágenes/i)).toBeInTheDocument();
       expect(screen.getByText(/Qué se guarda/i)).toBeInTheDocument();
       expect(screen.getByText(/Tus derechos/i)).toBeInTheDocument();
 
-      // Checkbox y botón
+      // Checkbox, botón Aceptar y botón Rechazar
       expect(screen.getByText(/Acepto los términos y el tratamiento de mis imágenes descripto arriba./i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Aceptar y continuar/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Aceptar y continuar/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Rechazar/i })).toBeInTheDocument();
     });
 
-    it('UT-TM-05: Al tildar el checkbox se habilita el botón y avanza a la pantalla de Permisos', async () => {
+    it('UT-TM-10: Al hacer clic en Aceptar sin marcar la casilla, muestra el banner de error y borde de advertencia', async () => {
+      render(
+        <MemoryRouter>
+          <TermsAndPermissionsPage />
+        </MemoryRouter>
+      );
+
+      // Antes de hacer clic no debe estar el mensaje de error
+      expect(screen.queryByText(/La casilla es obligatoria. Marcala para poder continuar./i)).not.toBeInTheDocument();
+
+      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      fireEvent.click(submitBtn);
+
+      // Debe mostrarse el banner de error
+      await waitFor(() => {
+        expect(screen.getByText(/La casilla es obligatoria. Marcala para poder continuar./i)).toBeInTheDocument();
+      });
+
+      // No debe haber avanzado a la pantalla de permisos
+      expect(screen.queryByRole('heading', { name: /Activá los permisos/i })).not.toBeInTheDocument();
+    });
+
+    it('UT-TM-11: Al tildar el checkbox desaparece el error y permite avanzar a la pantalla de Permisos', async () => {
+      render(
+        <MemoryRouter>
+          <TermsAndPermissionsPage />
+        </MemoryRouter>
+      );
+
+      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      fireEvent.click(submitBtn);
+
+      // Error visible
+      expect(screen.getByText(/La casilla es obligatoria. Marcala para poder continuar./i)).toBeInTheDocument();
+
+      // Marcamos el checkbox
+      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      fireEvent.click(checkbox);
+
+      // El error debe desaparecer
+      expect(screen.queryByText(/La casilla es obligatoria. Marcala para poder continuar./i)).not.toBeInTheDocument();
+
+      // Al presionar de nuevo avanza
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Activá los permisos/i })).toBeInTheDocument();
+        expect(screen.getByText(/Cámara/i)).toBeInTheDocument();
+        expect(screen.getByText(/Ubicación/i)).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-17: Ante falla de red al aceptar, muestra el banner cloud_off, mantiene la casilla y botón Reintentar', async () => {
+      // Simular desconexión de red
+      const originalOnLine = navigator.onLine;
+      Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+
       render(
         <MemoryRouter>
           <TermsAndPermissionsPage />
@@ -78,19 +140,134 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       );
 
       const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
-      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
-
-      expect(submitBtn).toBeDisabled();
-
       fireEvent.click(checkbox);
-      expect(submitBtn).not.toBeDisabled();
 
+      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
       fireEvent.click(submitBtn);
+
+      // Debe mostrar el banner de error de red
+      expect(screen.getByText(/No pudimos registrar tu aceptación/i)).toBeInTheDocument();
+      expect(screen.getByText(/Revisá tu conexión y probá de nuevo. Tu casilla queda marcada./i)).toBeInTheDocument();
+
+      // El botón debe haber cambiado a "Reintentar"
+      expect(screen.getByRole('button', { name: /Reintentar/i })).toBeInTheDocument();
+
+      // Restaurar estado de red
+      Object.defineProperty(navigator, 'onLine', { value: originalOnLine, configurable: true });
+    });
+
+    it('UT-TM-18: Al presionar Reintentar con la conexión restablecida, avanza al Paso 2', async () => {
+      // Simular offline y luego online
+      Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
+
+      render(
+        <MemoryRouter>
+          <TermsAndPermissionsPage />
+        </MemoryRouter>
+      );
+
+      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      fireEvent.click(checkbox);
+      fireEvent.click(screen.getByRole('button', { name: /Aceptar y continuar/i }));
+
+      expect(screen.getByText(/No pudimos registrar tu aceptación/i)).toBeInTheDocument();
+
+      // Restablecemos conexión
+      Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
+
+      const retryBtn = screen.getByRole('button', { name: /Reintentar/i });
+      fireEvent.click(retryBtn);
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /Activá los permisos/i })).toBeInTheDocument();
-        expect(screen.getByText(/Cámara/i)).toBeInTheDocument();
-        expect(screen.getByText(/Ubicación/i)).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-12: El botón Rechazar abre el diálogo de confirmación y redirige a /login con aviso de rechazo', async () => {
+      const mockSignOut = vi.fn();
+      const mockUser = { id: 'usr-explorador', email: 'explora@reportalo.ar' };
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: mockSignOut,
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={['/terminos']}>
+            <Routes>
+              <Route path="/terminos" element={<TermsAndPermissionsPage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      const rejectBtn = screen.getByRole('button', { name: /Rechazar/i });
+      fireEvent.click(rejectBtn);
+
+      // Debe abrirse el modal con ¿Rechazar los términos?
+      expect(screen.getByRole('heading', { name: /¿Rechazar los términos\?/i })).toBeInTheDocument();
+      expect(screen.getByText(/Sin tu consentimiento no podemos procesar las imágenes/i)).toBeInTheDocument();
+
+      // Probar cancelar con "Volver a los términos"
+      const cancelBtn = screen.getByRole('button', { name: /Volver a los términos/i });
+      fireEvent.click(cancelBtn);
+
+      expect(screen.queryByRole('heading', { name: /¿Rechazar los términos\?/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/Rechazaste los términos/i)).not.toBeInTheDocument();
+
+      // Volvemos a abrir y confirmamos con "Rechazar y salir"
+      fireEvent.click(rejectBtn);
+      const confirmRejectBtn = screen.getByRole('button', { name: /Rechazar y salir/i });
+      fireEvent.click(confirmRejectBtn);
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+        expect(screen.getByText(/Rechazaste los términos/i)).toBeInTheDocument();
+        expect(screen.getByText(/Para usar Reportalo tenés que aceptar la versión vigente/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Entrar a Reportalo/i })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Ver los términos otra vez/i })).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-16: Desde la pantalla de Login con rechazo, "Ver los términos otra vez" vuelve a /terminos', async () => {
+      const TermsReceiver = () => <div data-testid="terms-page">Pantalla de Términos</div>;
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: null,
+            session: null,
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={[{ pathname: '/login', state: { rejected: true } }]}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/terminos" element={<TermsReceiver />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByText(/Rechazaste los términos/i)).toBeInTheDocument();
+      const backToTermsLink = screen.getByRole('link', { name: /Ver los términos otra vez/i });
+      fireEvent.click(backToTermsLink);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('terms-page')).toBeInTheDocument();
       });
     });
 
@@ -232,7 +409,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </AuthContext.Provider>
       );
 
-      expect(screen.getByText(/Términos v1.2 pendientes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Términos v1.3 pendientes/i)).toBeInTheDocument();
 
       const createBtn = screen.getByRole('button', { name: /Crear nuevo reporte/i });
       fireEvent.click(createBtn);
@@ -240,6 +417,420 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       await waitFor(() => {
         expect(screen.getByTestId('terms-screen')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Versión Desactualizada: 3 Avisos (Aviso 1 de 3)', () => {
+    it('UT-TM-19: Usuaria que aceptó v1.2 ve Aviso 1 de 3 (badge NUEVA VERSIÓN 1.3, banner history, quedan 2 avisos)', () => {
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      // Título y badge de nueva versión
+      expect(screen.getByRole('heading', { name: /Actualizamos los términos/i })).toBeInTheDocument();
+      expect(screen.getByText(/NUEVA VERSIÓN/i)).toBeInTheDocument();
+      expect(screen.getByText(/1.3 · desde 09\/2026/i)).toBeInTheDocument();
+
+      // Banner de historial previo
+      expect(screen.getByText(/Aceptaste la versión 1.2 el 14\/08\/2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/Seguís pudiendo usar la app mientras revisás la nueva/i)).toBeInTheDocument();
+
+      // Checkbox adaptado a la versión 1.3
+      expect(screen.getByText(/Acepto la versión 1.3 de los términos y el tratamiento de mis imágenes/i)).toBeInTheDocument();
+
+      // Botón de postergación e indicador de avisos
+      expect(screen.getByRole('button', { name: /Recordármelo más tarde/i })).toBeInTheDocument();
+      expect(screen.getByText(/quedan 2 avisos/i)).toBeInTheDocument();
+    });
+
+    it('UT-TM-20: Al presionar "Recordármelo más tarde", posterga y navega a /app', async () => {
+      const AppReceiver = () => <div data-testid="app-screen">App Screen</div>;
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={['/terminos']}>
+            <Routes>
+              <Route path="/terminos" element={<TermsAndPermissionsPage />} />
+              <Route path="/app" element={<AppReceiver />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      const postponeBtn = screen.getByRole('button', { name: /Recordármelo más tarde/i });
+      fireEvent.click(postponeBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('app-screen')).toBeInTheDocument();
+        const savedNotices = localStorage.getItem(TERMS_NOTICES_STORAGE_KEY);
+        expect(savedNotices).toBe('1');
+      });
+    });
+
+    it('UT-TM-21: Al marcar y aceptar la versión 1.3, actualiza el consentimiento a v1.3', async () => {
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      const checkbox = screen.getByLabelText(/Acepto la versión 1.3 de los términos/i);
+      fireEvent.click(checkbox);
+
+      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Activá los permisos/i })).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-22: Aviso 2 de 3 muestra "queda 1 aviso" y mantiene el banner de historial', () => {
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+      localStorage.setItem(TERMS_NOTICES_STORAGE_KEY, '1'); // Aviso 2 de 3
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByRole('heading', { name: /Actualizamos los términos/i })).toBeInTheDocument();
+      expect(screen.getByText(/Aceptaste la versión 1.2 el 14\/08\/2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/queda 1 aviso/i)).toBeInTheDocument();
+    });
+
+    it('UT-TM-23: Aviso 3 de 3 (Último aviso) muestra banner notification_important en #FFF2E0 y tag rojo "último aviso"', () => {
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+      localStorage.setItem(TERMS_NOTICES_STORAGE_KEY, '0'); // Aviso 3 de 3 (Último aviso)
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByRole('heading', { name: /Actualizamos los términos/i })).toBeInTheDocument();
+      // Banner de último aviso
+      expect(screen.getByText(/Último aviso/i)).toBeInTheDocument();
+      expect(screen.getByText(/La próxima vez que abras la app vas a tener que aceptar para seguir usándola/i)).toBeInTheDocument();
+      // Tag de último aviso en rojo
+      const lastNoticeTag = screen.getByText(/^último aviso$/i);
+      expect(lastNoticeTag).toBeInTheDocument();
+    });
+
+    it('UT-TM-25: Pantalla Bloqueante (Postergó 3 veces) muestra badge ACEPTACIÓN REQUERIDA, banner lock y botón Rechazar y cerrar sesión', () => {
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+      localStorage.setItem(TERMS_NOTICES_STORAGE_KEY, '-1'); // Bloqueado tras 3 postergaciones
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      // Badge ACEPTACIÓN REQUERIDA
+      expect(screen.getByText(/ACEPTACIÓN REQUERIDA/i)).toBeInTheDocument();
+      // Banner lock rojo
+      expect(screen.getByText(/Ya postergaste tres veces/i)).toBeInTheDocument();
+      expect(screen.getByText(/Para seguir usando Reportalo tenés que aceptar la versión 1.3/i)).toBeInTheDocument();
+      // No debe haber botón de postergar
+      expect(screen.queryByRole('button', { name: /Recordármelo más tarde/i })).not.toBeInTheDocument();
+      // Botón Rechazar y cerrar sesión
+      expect(screen.getByRole('button', { name: /Rechazar y cerrar sesión/i })).toBeInTheDocument();
+    });
+
+    it('UT-TM-26: Al presionar "Rechazar y cerrar sesión" en pantalla bloqueante, cierra sesión y redirige a login', async () => {
+      const mockSignOut = vi.fn();
+      const mockUser = { id: 'usr-v12', email: 'laura@reportalo.ar' };
+      localStorage.setItem(
+        TERMS_STORAGE_KEY,
+        JSON.stringify({
+          userId: 'usr-v12',
+          terms_version: '1.2',
+          accepted_at: '2026-08-14T10:00:00.000Z',
+        })
+      );
+      localStorage.setItem(TERMS_NOTICES_STORAGE_KEY, '-1');
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: mockSignOut,
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={['/terminos']}>
+            <Routes>
+              <Route path="/terminos" element={<TermsAndPermissionsPage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      const rejectBtn = screen.getByRole('button', { name: /Rechazar y cerrar sesión/i });
+      fireEvent.click(rejectBtn);
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+        expect(screen.getByText(/Rechazaste los términos/i)).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-27: Renderiza la barra superior institucional con logo y email del usuario autenticado', () => {
+      const mockUser = { id: 'usr-desktop', email: 'vecina@correo.com' };
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      // Logo y nombre en barra superior
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+      expect(screen.getByText(/^Reportalo$/i)).toBeInTheDocument();
+      expect(screen.getByText(/vecina@correo\.com/i)).toBeInTheDocument();
+    });
+
+    it('UT-TM-28: Contiene la bajada descriptiva para escritorio y los tres bloques en una sola columna', () => {
+      render(
+        <AuthContext.Provider
+          value={{
+            user: null,
+            session: null,
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByText(/Para enviar reportes necesitamos tu consentimiento para procesar las fotos que subís/i)).toBeInTheDocument();
+      expect(screen.getByText(/Tratamiento de imágenes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Qué se guarda/i)).toBeInTheDocument();
+      expect(screen.getByText(/Tus derechos/i)).toBeInTheDocument();
+    });
+
+    it('UT-TM-29: Permite tildar y continuar tanto desde el control móvil como el control desktop', async () => {
+      const mockUser = { id: 'usr-flow', email: 'vecina@correo.com' };
+
+      render(
+        <AuthContext.Provider
+          value={{
+            user: mockUser,
+            session: { access_token: 'fake' },
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter>
+            <TermsAndPermissionsPage />
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      // Seleccionar checkboxes disponibles (móvil / desktop)
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes.length).toBeGreaterThanOrEqual(1);
+      fireEvent.click(checkboxes[0]);
+
+      // Botón aceptar disponible
+      const acceptButtons = screen.getAllByRole('button', { name: /Aceptar y continuar/i });
+      expect(acceptButtons.length).toBeGreaterThanOrEqual(1);
+      fireEvent.click(acceptButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Activá los permisos/i })).toBeInTheDocument();
+      });
+    });
+
+    it('UT-TM-30: En navegación directa a /login, muestra el login estándar con botón de Google y Magic Link', () => {
+      render(
+        <AuthContext.Provider
+          value={{
+            user: null,
+            session: null,
+            loading: false,
+            authError: null,
+            signInWithGoogle: vi.fn(),
+            signInWithMagicLink: vi.fn(),
+            signOut: vi.fn(),
+            clearError: vi.fn(),
+          }}
+        >
+          <MemoryRouter initialEntries={['/login']}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      );
+
+      expect(screen.getByRole('heading', { name: /Ingresá a Reportalo/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Continuar con Google/i })).toBeInTheDocument();
+      expect(screen.queryByText(/Rechazaste los términos/i)).not.toBeInTheDocument();
     });
   });
 });

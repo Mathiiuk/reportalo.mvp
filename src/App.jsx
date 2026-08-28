@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { hasAcceptedCurrentTerms } from './services/termsService';
+import { hasAcceptedCurrentTerms, isTermsConsentBlocked, getTermsRejectionRecord } from './services/termsService';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
@@ -38,31 +38,28 @@ const ProtectedRoute = ({ children }) => {
     typeof window !== 'undefined' &&
     localStorage.getItem('reportalo_onboarding_completed') === 'true';
 
-  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
-
   // 1. Paso 1 obligatorio: Onboarding de 3 pasos
   if (!onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. Paso 2 obligatorio: Términos y permisos (v1.2)
-  if (onboardingCompleted && !termsAccepted && location.pathname !== '/terminos') {
-    return <Navigate to="/terminos" replace />;
+  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /app
+  if (onboardingCompleted && location.pathname === '/onboarding') {
+    return <Navigate to="/app" replace />;
   }
 
-  // 3. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /app
-  if (
-    onboardingCompleted &&
-    termsAccepted &&
-    (location.pathname === '/onboarding' || location.pathname === '/terminos')
-  ) {
-    return <Navigate to="/app" replace />;
+  const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
+  const termsBlocked = isTermsConsentBlocked(user?.id);
+
+  // 3. Blindaje de seguridad: Si los términos están bloqueados o fueron rechazados
+  if ((termsRejected || termsBlocked) && location.pathname !== '/terminos') {
+    return <Navigate to="/terminos" replace />;
   }
 
   return children;
 };
 
-// Componente para redirigir si el usuario ya está autenticado hacia el paso pendiente
+// Componente para redirigir si el usuario ya está autenticado hacia el panel o onboarding
 const PublicRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
 
@@ -83,14 +80,18 @@ const PublicRoute = ({ children }) => {
     const onboardingCompleted =
       typeof window !== 'undefined' &&
       localStorage.getItem('reportalo_onboarding_completed') === 'true';
-    const termsAccepted = hasAcceptedCurrentTerms(user?.id);
 
     if (!onboardingCompleted) {
       return <Navigate to="/onboarding" replace />;
     }
-    if (!termsAccepted) {
+
+    const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
+    const termsBlocked = isTermsConsentBlocked(user?.id);
+
+    if (termsRejected || termsBlocked) {
       return <Navigate to="/terminos" replace />;
     }
+
     return <Navigate to="/app" replace />;
   }
 

@@ -1,0 +1,83 @@
+id: REP-3544
+external_ref: "HU-REP-3544"
+parent_task: "REP-3532"
+title: "Manejo de Términos No Tildados, Rechazo y Validación Visual de Consentimiento"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: feat/REP-3544-implementar-consentimiento-terminos
+
+scope:
+  project: "Reportalo MVP"
+  modules:
+    - "terms"
+    - "privacy"
+    - "validation"
+    - "ui"
+    - "routing"
+  environments: [local, staging, production]
+
+requirements:
+  - "Visualización de estado de error cuando el usuario intenta continuar sin tildar la casilla de términos."
+  - "Banner de alerta de error (#FFF2E0) con icono 'error' y texto 'La casilla es obligatoria. Marcala para poder continuar.' en tono #8A6A3E."
+  - "Contorno de checkbox resaltado en naranja/ámbar (#E07C1A) ante error de validación."
+  - "Botón 'Aceptar y continuar' en estado inactivo (#DDE6EF) cuando no está tildado, activando el mensaje de validación al interactuar."
+  - "Botón 'Rechazar' en la parte inferior que permite explorar la app sin consentimiento previo."
+  - "Permitir navegación y exploración ciudadana en /app sin consentimiento vigente."
+  - "Bloqueo efectivo de la acción de 'Crear nuevo reporte' cuando no existe consentimiento vigente (v1.2), redirigiendo a /terminos."
+  - "Encabezado con badge 'VIGENTE' (#E3F5EC / #2C7A55) y leyenda 'Versión 1.2 · desde 08/2026'."
+  - "Diseño de alta fidelidad 100% fiel al mockup UX y responsive mobile/desktop."
+
+acceptance_criteria:
+  - "AC-01: Al hacer clic en 'Aceptar y continuar' con la casilla desmarcada, se despliega el banner de advertencia 'La casilla es obligatoria. Marcala para poder continuar.' y el checkbox muestra borde #E07C1A."
+  - "AC-02: Al marcar el checkbox, el mensaje de error se oculta inmediatamente y el botón pasa a estado activo azul (#1E6FCB)."
+  - "AC-03: La opción 'Rechazar' redirige a /app con notificación informativa y sin registrar consentimiento."
+  - "AC-04: El usuario puede explorar el dashboard (/app) sin consentimiento previo; la acción de crear reporte permanece bloqueada y redirige a /terminos."
+  - "AC-05: El encabezado muestra el badge 'VIGENTE' y la versión '1.2 · desde 08/2026'."
+  - "AC-06: 100% de tests unitarios y de integración pasando en pnpm test y build limpio en pnpm run build."
+
+constraints:
+  - "React 18, Vite, Tailwind CSS, Framer Motion, Sonner."
+  - "Cumplimiento de Ley 25.326 y principios de consentimiento explícito no presunto."
+
+risks:
+  - "Bloqueo excesivo de rutas que impida la exploración ciudadana (resuelto flexibilizando ProtectedRoute para permitir /app en modo lectura/exploración)."
+
+dependencies:
+  - "framer-motion"
+  - "sonner"
+  - "react-router-dom"
+
+requires_approval: false
+approval_reason: ""
+
+artifacts:
+  specification: "docs/workflow/specs/REP-3544.md"
+  implementation_plan: "docs/workflow/plans/REP-3544.md"
+  test_plan: "docs/workflow/tests/REP-3544.md"
+  execution_report: "docs/workflow/executions/REP-3544-run-001.md"
+
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+
+deployment:
+  staging_required: true
+  production_required: true
+  rollback_strategy: "Revert git commit and redeploy"
+
+branch:
+  type: feat
+  name: "feat/REP-3544-implementar-consentimiento-terminos"
+
+commands:
+  install: "pnpm install"
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
