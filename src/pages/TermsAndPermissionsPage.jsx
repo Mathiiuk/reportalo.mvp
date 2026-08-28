@@ -20,6 +20,9 @@ export const TermsAndPermissionsPage = () => {
   // Estado del checkbox de aceptación explícita
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  // Estado de error visual cuando se intenta continuar sin tildar
+  const [showTermsError, setShowTermsError] = useState(false);
+
   // Estados de switches de permisos
   const [cameraPermission, setCameraPermission] = useState(true);
   const [locationPermission, setLocationPermission] = useState(true);
@@ -29,8 +32,18 @@ export const TermsAndPermissionsPage = () => {
 
   // Avanzar del paso 1 (Términos) al paso 2 (Permisos)
   const handleAcceptTerms = () => {
-    if (!acceptedTerms) return;
+    if (!acceptedTerms) {
+      setShowTermsError(true);
+      return;
+    }
+    setShowTermsError(false);
     setCurrentStep(2);
+  };
+
+  // Rechazar términos y continuar a la app en modo exploración
+  const handleRejectTerms = () => {
+    toast.info('Podés explorar la aplicación. Para reportar incidentes deberás aceptar los términos.');
+    navigate('/app');
   };
 
   // Guardar consentimiento y permisos completados
@@ -112,9 +125,14 @@ export const TermsAndPermissionsPage = () => {
                     <h1 className="font-extrabold text-[22px] sm:text-[24px] md:text-[28px] text-[#243447] tracking-[-0.5px] leading-tight m-0">
                       Términos y privacidad
                     </h1>
-                    <p className="font-semibold text-[11.5px] md:text-[12.5px] text-[#8593A2] mt-1.5 mb-0">
-                      Versión {CURRENT_TERMS_VERSION} · vigente desde {TERMS_EFFECTIVE_DATE}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="font-bold text-[9px] text-[#2C7A55] bg-[#E3F5EC] rounded-[5px] px-[6px] py-[3px] uppercase tracking-wider">
+                        VIGENTE
+                      </span>
+                      <span className="font-semibold text-[10.5px] md:text-[11.5px] text-[#9AA7B5]">
+                        Versión {CURRENT_TERMS_VERSION} · desde {TERMS_EFFECTIVE_DATE}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Lista de los 3 bloques informativos */}
@@ -183,10 +201,26 @@ export const TermsAndPermissionsPage = () => {
                       </span>
                     </button>
 
+                    {/* Alerta visual si se intentó continuar sin marcar el checkbox */}
+                    {showTermsError && !acceptedTerms && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-[#FFF2E0] border border-[#F7E2C8] rounded-[12px] p-[11px_12px] flex items-center gap-2 mt-2 shadow-2xs"
+                      >
+                        <span className="material-symbols-rounded text-[16px] text-[#8A6A3E] flex-shrink-0">
+                          error
+                        </span>
+                        <div className="font-semibold text-[10.5px] md:text-[11.5px] leading-[1.45] text-[#8A6A3E]">
+                          La casilla es obligatoria. Marcala para poder continuar.
+                        </div>
+                      </motion.div>
+                    )}
+
                   </div>
                 </div>
 
-                {/* Zona inferior: Checkbox explícito y Botón Aceptar */}
+                {/* Zona inferior: Checkbox explícito, Botón Aceptar y Rechazar */}
                 <div className="pt-4 mt-auto">
                   <label
                     htmlFor="terms-checkbox"
@@ -196,13 +230,19 @@ export const TermsAndPermissionsPage = () => {
                       id="terms-checkbox"
                       type="checkbox"
                       checked={acceptedTerms}
-                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setAcceptedTerms(val);
+                        if (val) setShowTermsError(false);
+                      }}
                       className="sr-only"
                     />
                     <div
-                      className={`w-[22px] h-[22px] rounded-[7px] flex items-center justify-center flex-shrink-0 transition-all ${
+                      className={`w-[22px] h-[22px] rounded-[6px] flex items-center justify-center flex-shrink-0 transition-all ${
                         acceptedTerms
                           ? 'bg-[#1E6FCB] text-white shadow-xs'
+                          : showTermsError
+                          ? 'border-2 border-[#E07C1A] bg-white'
                           : 'border-2 border-[#CFD8E2] bg-white'
                       }`}
                     >
@@ -212,7 +252,7 @@ export const TermsAndPermissionsPage = () => {
                         </span>
                       )}
                     </div>
-                    <span className="font-semibold text-[11.5px] md:text-[12px] leading-[1.45] text-[#46566B]">
+                    <span className="font-semibold text-[11px] md:text-[12px] leading-[1.45] text-[#46566B]">
                       Acepto los términos y el tratamiento de mis imágenes descripto arriba.
                     </span>
                   </label>
@@ -221,16 +261,25 @@ export const TermsAndPermissionsPage = () => {
                     whileHover={acceptedTerms ? { scale: 1.01 } : {}}
                     whileTap={acceptedTerms ? { scale: 0.98 } : {}}
                     onClick={handleAcceptTerms}
-                    disabled={!acceptedTerms}
                     type="button"
-                    className={`w-full rounded-[14px] py-[15px] px-6 text-center font-extrabold text-[15px] text-white border-0 transition-all ${
+                    className={`w-full rounded-[13px] py-[14px] px-6 text-center font-extrabold text-[14px] md:text-[15px] border-0 transition-all cursor-pointer ${
                       acceptedTerms
-                        ? 'bg-[#1E6FCB] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer'
-                        : 'bg-[#1E6FCB]/60 opacity-60 cursor-not-allowed shadow-none'
+                        ? 'bg-[#1E6FCB] text-white shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E]'
+                        : 'bg-[#DDE6EF] text-[#9AA7B5] hover:bg-[#D5DFEA]'
                     }`}
                   >
                     Aceptar y continuar
                   </motion.button>
+
+                  <div className="text-center pt-2.5 pb-0.5">
+                    <button
+                      onClick={handleRejectTerms}
+                      type="button"
+                      className="font-bold text-[11.5px] md:text-[12px] text-[#8593A2] hover:text-[#263249] cursor-pointer bg-transparent border-0 transition-colors"
+                    >
+                      Rechazar
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
