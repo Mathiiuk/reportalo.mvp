@@ -1,0 +1,15 @@
+id: "REP-2600"
+title: "Visualizar /mapa como pantalla principal ciudadana"
+epic: "REP-2600"
+assignee: "Matias Krepchuk"
+status: "READY_FOR_PR"
+branch: "feat/REP-2600-mapa-ciudadano"
+sprint: 10
+created_at: "2026-08-28T17:50:00.000Z"
+completed_at: "2026-08-28T18:00:00.000Z"
+tags:
+  - "map"
+  - "maplibre"
+  - "citizen"
+  - "sprint-10"
+  - "navigation"
