@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { hasAcceptedCurrentTerms } from './services/termsService';
+import { hasAcceptedCurrentTerms, isTermsConsentBlocked, getTermsRejectionRecord } from './services/termsService';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
@@ -38,8 +38,6 @@ const ProtectedRoute = ({ children }) => {
     typeof window !== 'undefined' &&
     localStorage.getItem('reportalo_onboarding_completed') === 'true';
 
-  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
-
   // 1. Paso 1 obligatorio: Onboarding de 3 pasos
   if (!onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
@@ -48,6 +46,14 @@ const ProtectedRoute = ({ children }) => {
   // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /app
   if (onboardingCompleted && location.pathname === '/onboarding') {
     return <Navigate to="/app" replace />;
+  }
+
+  const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
+  const termsBlocked = isTermsConsentBlocked(user?.id);
+
+  // 3. Blindaje de seguridad: Si los términos están bloqueados o fueron rechazados
+  if ((termsRejected || termsBlocked) && location.pathname !== '/terminos') {
+    return <Navigate to="/terminos" replace />;
   }
 
   return children;
@@ -78,6 +84,14 @@ const PublicRoute = ({ children }) => {
     if (!onboardingCompleted) {
       return <Navigate to="/onboarding" replace />;
     }
+
+    const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
+    const termsBlocked = isTermsConsentBlocked(user?.id);
+
+    if (termsRejected || termsBlocked) {
+      return <Navigate to="/terminos" replace />;
+    }
+
     return <Navigate to="/app" replace />;
   }
 
