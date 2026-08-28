@@ -30,6 +30,9 @@ export const TermsAndPermissionsPage = () => {
   // Modal de lectura de términos completos
   const [showFullTermsModal, setShowFullTermsModal] = useState(false);
 
+  // Modal de confirmación de rechazo
+  const [showRejectModal, setShowRejectModal] = useState(false);
+
   // Avanzar del paso 1 (Términos) al paso 2 (Permisos)
   const handleAcceptTerms = () => {
     if (!acceptedTerms) {
@@ -40,10 +43,21 @@ export const TermsAndPermissionsPage = () => {
     setCurrentStep(2);
   };
 
-  // Rechazar términos y continuar a la app en modo exploración
+  // Abrir diálogo de confirmación de rechazo
   const handleRejectTerms = () => {
+    setShowRejectModal(true);
+  };
+
+  // Confirmar rechazo y continuar a la app en modo exploración
+  const handleConfirmReject = () => {
+    setShowRejectModal(false);
     toast.info('Podés explorar la aplicación. Para reportar incidentes deberás aceptar los términos.');
     navigate('/app');
+  };
+
+  // Cancelar rechazo y permanecer en la pantalla de términos
+  const handleCancelReject = () => {
+    setShowRejectModal(false);
   };
 
   // Guardar consentimiento y permisos completados
@@ -524,6 +538,59 @@ export const TermsAndPermissionsPage = () => {
               >
                 Entendido
               </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal / Bottom Sheet de Confirmación de Rechazo */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 bg-[#182230]/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 25, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 25, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="w-full max-w-[380px] bg-white rounded-[20px] p-[20px_18px_16px] shadow-[0px_20px_40px_rgba(10,20,40,0.32)] overflow-hidden text-left"
+          >
+            {/* Icono block */}
+            <div className="w-[40px] h-[40px] rounded-[12px] bg-[#FDECEA] flex items-center justify-center text-[#C0392B] mb-[13px]">
+              <span className="material-symbols-rounded text-[22px]">
+                block
+              </span>
+            </div>
+
+            {/* Título */}
+            <h3 className="font-extrabold text-[16px] text-[#243447] tracking-[-0.2px] m-0">
+              ¿Rechazar los términos?
+            </h3>
+
+            {/* Descripción */}
+            <p className="font-medium text-[11.5px] leading-[1.55] text-[#56657A] mt-[7px] mb-0">
+              Sin tu consentimiento no podemos procesar las imágenes, así que no vas a poder usar Reportalo. Podés volver y aceptar cuando quieras.
+            </p>
+
+            {/* Botones de acción */}
+            <div className="flex flex-col gap-[9px] mt-[16px]">
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleConfirmReject}
+                type="button"
+                className="w-full bg-[#C0392B] hover:bg-[#A93226] text-white rounded-[12px] p-[13px] text-center font-extrabold text-[13px] border-0 cursor-pointer transition-colors"
+              >
+                Rechazar y salir
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancelReject}
+                type="button"
+                className="w-full bg-[#F2F5F9] hover:bg-[#E5EBF2] text-[#46566B] rounded-[12px] p-[13px] text-center font-extrabold text-[13px] border-0 cursor-pointer transition-colors"
+              >
+                Volver a los términos
+              </motion.button>
             </div>
           </motion.div>
         </div>
