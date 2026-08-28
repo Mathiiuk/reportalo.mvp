@@ -9,12 +9,44 @@ import { AuthContext } from '../context/AuthContext';
 import {
   hasAcceptedCurrentTerms,
   recordTermsAcceptance,
+  syncTermsConsentWithRemote,
   getTermsUpdateStatus,
   postponeTermsUpdate,
   CURRENT_TERMS_VERSION,
   TERMS_STORAGE_KEY,
   TERMS_NOTICES_STORAGE_KEY,
 } from '../services/termsService';
+import { supabase } from '../lib/supabaseClient';
+
+vi.mock('../lib/supabaseClient', () => {
+  const insertMock = vi.fn().mockResolvedValue({ error: null });
+  const maybeSingleMock = vi.fn().mockResolvedValue({
+    data: {
+      user_id: 'user-remote',
+      terms_version: '1.3',
+      accepted_at: '2026-08-28T12:00:00.000Z',
+      permissions: { camera: true, location: true },
+      metadata: { client: 'web' },
+    },
+    error: null,
+  });
+
+  const fromMock = vi.fn().mockReturnValue({
+    insert: insertMock,
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    maybeSingle: maybeSingleMock,
+  });
+
+  return {
+    isSupabaseConfigured: true,
+    supabase: {
+      from: fromMock,
+    },
+  };
+});
 
 describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
   beforeEach(() => {
@@ -831,6 +863,51 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(screen.getByRole('heading', { name: /Ingresá a Reportalo/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Continuar con Google/i })).toBeInTheDocument();
       expect(screen.queryByText(/Rechazaste los términos/i)).not.toBeInTheDocument();
+    });
+
+    it('UT-TM-31: recordTermsAcceptance realiza insert en Supabase terms_consents con JSONB y actualiza localStorage', async () => {
+      const result = await recordTermsAcceptance('usr-supabase-1', {
+        camera: true,
+        location: false,
+      });
+
+      expect(supabase.from).toHaveBeenCalledWith('terms_consents');
+      expect(result.terms_version).toBe('1.3');
+      expect(result.permissions.camera).toBe(true);
+      expect(result.permissions.location).toBe(false);
+
+      const savedLocal = JSON.parse(localStorage.getItem(TERMS_STORAGE_KEY));
+      expect(savedLocal.terms_version).toBe('1.3');
+      expect(savedLocal.userId).toBe('usr-supabase-1');
+    });
+
+    it('UT-TM-32: recordTermsAcceptance tolera fallos de Supabase (offline/error) persistiendo de forma segura en localStorage', async () => {
+      supabase.from.mockReturnValueOnce({
+        insert: vi.fn().mockRejectedValueOnce(new Error('Network error or table missing')),
+      });
+
+      const result = await recordTermsAcceptance('usr-offline-1', {
+        camera: true,
+        location: true,
+      });
+
+      expect(result).toBeDefined();
+      expect(result.terms_version).toBe('1.3');
+
+      const savedLocal = JSON.parse(localStorage.getItem(TERMS_STORAGE_KEY));
+      expect(savedLocal.userId).toBe('usr-offline-1');
+    });
+
+    it('UT-TM-33: syncTermsConsentWithRemote descarga el consentimiento vigente desde Supabase y actualiza el caché local', async () => {
+      const synced = await syncTermsConsentWithRemote('user-remote');
+
+      expect(supabase.from).toHaveBeenCalledWith('terms_consents');
+      expect(synced.terms_version).toBe('1.3');
+      expect(synced.userId).toBe('user-remote');
+
+      const savedLocal = JSON.parse(localStorage.getItem(TERMS_STORAGE_KEY));
+      expect(savedLocal.terms_version).toBe('1.3');
+      expect(savedLocal.userId).toBe('user-remote');
     });
   });
 });
