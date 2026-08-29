@@ -353,7 +353,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.3 y Permisos', () => {
           <MemoryRouter initialEntries={['/terminos']}>
             <Routes>
               <Route path="/terminos" element={<TermsAndPermissionsPage />} />
-              <Route path="/app" element={<AppReceiver />} />
+              <Route path="/mapa" element={<AppReceiver />} />
             </Routes>
           </MemoryRouter>
         </AuthContext.Provider>
@@ -397,7 +397,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.3 y Permisos', () => {
           <MemoryRouter initialEntries={['/terminos']}>
             <Routes>
               <Route path="/terminos" element={<TermsAndPermissionsPage />} />
-              <Route path="/app" element={<AppReceiver />} />
+              <Route path="/mapa" element={<AppReceiver />} />
             </Routes>
           </MemoryRouter>
         </AuthContext.Provider>
