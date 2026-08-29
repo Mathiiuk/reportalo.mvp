@@ -1,0 +1,17 @@
+{
+  "default": {
+    "paths": [
+      "features/**/*.feature",
+      ".agents/workflow/features/**/*.feature"
+    ],
+    "import": [
+      "tests/bdd/steps/**/*.js"
+    ],
+    "format": [
+      "summary"
+    ],
+    "formatOptions": {
+      "snippetInterface": "async-await"
+    }
+  }
+}
