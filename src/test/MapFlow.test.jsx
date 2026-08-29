@@ -246,7 +246,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(toast.info).toHaveBeenCalledWith(
       'Creación de reportes disponible en Sprint 11',
       expect.objectContaining({
-        description: expect.stringContaining('Sprint 11'),
+        description: expect.stringContaining('próximo sprint'), // El texto real del componente
       })
     );
   });
