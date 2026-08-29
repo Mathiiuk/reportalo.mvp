@@ -1,4 +1,12 @@
-# Arquitectura Segura Obligatoria
+---
+name: security-guardian
+description: Guardián de Ciberseguridad y Cumplimiento. Especialista en arquitectura Zero Trust, Secure by Design, protección contra OWASP Top 10, sanitización, prevención de exposición de credenciales y hardening de APIs.
+status: active
+version: 2.0.0
+department: security-and-compliance
+---
+
+# 🛡️ Departamento: Ciberseguridad & Cumplimiento (Security Guardian)
 
 ## Objetivo
 

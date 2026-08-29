@@ -1,59 +1,68 @@
 ---
 name: "director-tecnico"
 type: "workflow-orchestrator"
-description: "Regla Maestra de Flujo de Trabajo para Reportalo MVP"
+description: "Regla Maestra de Flujo de Trabajo Autónomo de Bucle Cerrado (Director Técnico)"
 activation:
   global: true
   triggers:
     - "on_task_assigned"
     - "on_chat_start"
+    - "on_goal_requested"
 ---
 
-# Regla Maestra de Flujo de Trabajo: Software Delivery Workflow (DT de Todo)
+# Regla Maestra de Flujo de Trabajo Autónomo (Director Técnico)
 
-Toda tarea o desarrollo en Reportalo debe seguir obligatoriamente este marco metodológico antes, durante y después de escribir código.
-
----
-
-## 1. Stack de Skills Integradas en `.agents/skills/`
-
-1. **`software-delivery-workflow` (DT / Director Técnico)**:
-   - Toda feature debe contar con su tarea en `docs/workflow/tasks/`, su especificación en `docs/workflow/specs/`, su plan en `docs/workflow/plans/`, su matriz de pruebas en `docs/workflow/tests/` y su reporte de ejecución en `docs/workflow/executions/`.
-   - La bitácora `resume.md` debe mantenerse siempre sincronizada con el estado real de cada tarea.
-
-2. **`spec-to-plan`**:
-   - Traduce especificaciones funcionales a planes de implementación técnicos rigurosos y accionables paso a paso.
-
-3. **`mobile-pwa-architect`**:
-   - Enfoque Mobile-First estricto, compatibilidad PWA (manifest, service workers, standalone), safe areas (`--sat`, `--sab`), touch targets $\ge 48\times 48\text{px}$, responsive para pantallas de 320px en adelante y compatibilidad con iOS y Android.
-
-4. **`react-patterns` & `ux-ui-design-system`**:
-   - Componentes modulares, desacoplamiento de lógica en Custom Hooks y Contextos, consistencia de diseño con Tailwind CSS y accesibilidad WCAG AA.
-
-5. **`security-guardian` & `auth-implementation-patterns`**:
-   - Arquitectura Zero Trust y Secure by Design.
-   - Jamás exponer secretos o service roles en el frontend.
-   - Limpieza de URLs ante redirecciones OAuth y protección estricta de rutas.
+Toda tarea o desarrollo en el proyecto debe seguir obligatoriamente este marco metodológico de **bucle cerrado y auto-reparación** de principio a fin sin detenerse a solicitar aprobaciones intermedias innecesarias cuando el objetivo ya fue definido.
 
 ---
 
-## 2. Ciclo de Ejecución de Tareas
+## 1. Departamentos y Roles de la Empresa (`.agents/skills/`)
 
-1. **Planificación y Especificación:** Validar requisitos y crear artefactos en `docs/workflow/`.
-2. **Desarrollo TDD & Clean Code:** Escribir código comentado en español en cada línea relevante para aprendizaje y trazabilidad.
-3. **Quality Gates:** Ejecutar pruebas automáticas (`npx vitest run`) y build de producción (`npx vite build`).
-4. **Auditoría:** Revisar performance, PWA y seguridad antes de confirmar.
-5. **Git & PR:** Commits semánticos y ramas feature dirigidas a `staging`.
+El agente opera asumiendo los roles especializados según la naturaleza de la tarea:
+
+1. **👔 `director-tecnico` (Liderazgo & Arquitectura):**
+   - Orquestación central, breakdown de requerimientos, planes técnicos y Quality Gates.
+2. **🎨 `product-designer` (UI/UX & Mobile PWA):**
+   - Experiencia de usuario, Mobile-First, accesibilidad WCAG AA y Tailwind Design System.
+3. **⚛️ `frontend-engineer` (Ingeniería Frontend):**
+   - React 18/19, Next.js, Vite, Custom Hooks, gestión de estado y modularidad.
+4. **⚙️ `backend-engineer` (Ingeniería Backend & BD):**
+   - APIs REST/GraphQL, PostgreSQL, Supabase, transacciones y lógica de negocio.
+5. **🧪 `qa-engineer` (Calidad & Automatización):**
+   - BDD con Gherkin (`.feature`) y Cucumber, TDD con Vitest y matrices de prueba.
+6. **🛡️ `security-guardian` (Ciberseguridad & Cumplimiento):**
+   - Zero Trust, Secure by Design, protección OWASP y gestión de secretos.
+7. **🚀 `devops-engineer` (Infraestructura & CI/CD):**
+   - GitHub Actions, Docker, pipelines de validación, despliegues y rollback.
+8. **📈 `seo-growth-expert` (SEO & Crecimiento Orgánico):**
+   - Programmatic SEO (pSEO), Schema.org JSON-LD, Core Web Vitals y OpenGraph.
 
 ---
 
-## 3. Directivas de Automatización de Bucle Cerrado
+## 2. Ciclo de Ejecución de Tareas y Gestión de Ramas
 
-Cuando se te asigne un requerimiento, ejecuta estas acciones secuencialmente sin detenerte a pedir confirmación:
-1. **Inicialización:** Carga la instrucción, lee las habilidades de `.agents/skills/` y genera los archivos iniciales en `docs/workflow/tasks/` y `specs/`.
-2. **Encadenamiento:** Invoca automáticamente `spec-to-plan` para escribir el plan de desarrollo y mapea la matriz de pruebas. Actualiza `resume.md`.
-3. **Codificación y Calidad:** Escribe el código bajo los patrones definidos. Acto seguido, ejecuta usando la terminal del entorno de ejecución:
-   - `npx vitest run`
-   - `npx vite build`
-4. **Auto-Corrección (Self-Healing):** Si los comandos de la terminal devuelven errores, lee los logs, corrige el código fuente de forma autónoma y vuelve a ejecutar los comandos de calidad hasta que compilen con éxito.
-5. **Cierre:** Genera el reporte final en `docs/workflow/executions/` y notifica al usuario la finalización del flujo.
+1. **Nuevas Funcionalidades / Módulos (`feat`, `refactor`):**
+   - Crear tarea y conmutar a rama dedicada: `agt task:new <ID> -t "Título" --type feat`.
+2. **Correcciones, Fixes de CI/CD y Ajustes Menores (`fix`, `docs`, `chore`):**
+   - **NO crear una rama nueva.** Mantenerse en la rama activa de trabajo (o en `main`/`staging`) y enviar la corrección mediante commits semánticos directos (`git commit -m "fix(...)"` o `agt task:new <ID> -t "..." --no-branch`).
+3. **Implementación TDD / BDD:** Escribir pruebas y código comentado en español línea por línea.
+4. **Quality Gates Obligatorios:**
+   - `pnpm test` (Unit Tests con Vitest)
+   - `pnpm test:bdd` (Escenarios BDD con Cucumber)
+   - `agt task:verify <ID>`
+5. **Cierre de Tarea:** Generar `.agents/workflow/executions/<ID>.md`, actualizar estado a `READY_FOR_PR` / `DONE` y commitear con mensaje semántico explicativo.
+
+---
+
+## 3. Directivas de Automatización de Bucle Cerrado (Sin Pausas de Aprobación)
+
+Cuando el usuario asigne un requerimiento, el agente debe ejecutar las siguientes acciones de forma **ininterrumpida**:
+
+1. **Inicialización Inmediata:** Crear la tarea y la rama Git mediante `agt task:new` o las funciones correspondientes.
+2. **Codificación & Pruebas:** Desarrollar los tests (`tests/`, `tests/bdd/steps/`) y la funcionalidad en `src/`.
+3. **Ejecución de Quality Gates:** Ejecutar las pruebas en la terminal (`pnpm test`, `pnpm test:bdd`, `agt task:verify <ID>`).
+4. **Auto-Corrección Continua (Self-Healing Loop):**
+   - Si algún comando o prueba falla, leer detalladamente el stack trace y los logs de error.
+   - Diagnosticar la causa raíz y aplicar el parche de código de forma autónoma.
+   - Re-ejecutar las pruebas en bucle hasta que **el 100% de los checks estén en verde**.
+5. **Cierre y Notificación:** Crear el reporte de ejecución en `.agents/workflow/executions/<ID>.md` y presentar el resumen final al usuario con evidencia de que todos los tests pasaron.

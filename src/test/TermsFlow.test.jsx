@@ -13,6 +13,7 @@ import {
   getTermsUpdateStatus,
   postponeTermsUpdate,
   CURRENT_TERMS_VERSION,
+  TERMS_EFFECTIVE_DATE,
   TERMS_STORAGE_KEY,
   TERMS_NOTICES_STORAGE_KEY,
 } from '../services/termsService';
@@ -48,10 +49,12 @@ vi.mock('../lib/supabaseClient', () => {
   };
 });
 
-describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
+describe('REP-3532: Flujo de Términos y Privacidad v1.3 y Permisos', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    // Asegurar que el entorno de red esté siempre online antes de cada test
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true, writable: true });
   });
 
   describe('Servicio: termsService', () => {
@@ -59,7 +62,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(hasAcceptedCurrentTerms('user-123')).toBe(false);
     });
 
-    it('UT-TM-02: recordTermsAcceptance guarda la versión v1.2 y timestamp ISO', () => {
+    it('UT-TM-02: recordTermsAcceptance guarda la versión vigente y timestamp ISO', () => {
       recordTermsAcceptance('user-123', { camera: true, location: true });
       expect(hasAcceptedCurrentTerms('user-123')).toBe(true);
 
@@ -95,7 +98,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
 
       expect(screen.getByRole('heading', { name: /Términos y privacidad/i })).toBeInTheDocument();
       expect(screen.getByText('VIGENTE')).toBeInTheDocument();
-      expect(screen.getByText(/Versión 1.2 · desde 08\/2026/i)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`Versión ${CURRENT_TERMS_VERSION} · desde ${TERMS_EFFECTIVE_DATE}`, 'i'))).toBeInTheDocument();
 
       // 3 bloques clave
       expect(screen.getByText(/Tratamiento de imágenes/i)).toBeInTheDocument();
@@ -103,9 +106,9 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(screen.getByText(/Tus derechos/i)).toBeInTheDocument();
 
       // Checkbox, botón Aceptar y botón Rechazar
-      expect(screen.getByText(/Acepto los términos y el tratamiento de mis imágenes descripto arriba./i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Aceptar y continuar/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Rechazar/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/Acepto los términos y el tratamiento de mis imágenes descripto arriba./i)[0]).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0]).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /Rechazar/i })[0]).toBeInTheDocument();
     });
 
     it('UT-TM-10: Al hacer clic en Aceptar sin marcar la casilla, muestra el banner de error y borde de advertencia', async () => {
@@ -118,7 +121,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       // Antes de hacer clic no debe estar el mensaje de error
       expect(screen.queryByText(/La casilla es obligatoria. Marcala para poder continuar./i)).not.toBeInTheDocument();
 
-      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      const submitBtn = screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0];
       fireEvent.click(submitBtn);
 
       // Debe mostrarse el banner de error
@@ -137,14 +140,14 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </MemoryRouter>
       );
 
-      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      const submitBtn = screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0];
       fireEvent.click(submitBtn);
 
       // Error visible
       expect(screen.getByText(/La casilla es obligatoria. Marcala para poder continuar./i)).toBeInTheDocument();
 
       // Marcamos el checkbox
-      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      const checkbox = screen.getAllByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i)[0];
       fireEvent.click(checkbox);
 
       // El error debe desaparecer
@@ -171,10 +174,10 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </MemoryRouter>
       );
 
-      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      const checkbox = screen.getAllByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i)[0];
       fireEvent.click(checkbox);
 
-      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      const submitBtn = screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0];
       fireEvent.click(submitBtn);
 
       // Debe mostrar el banner de error de red
@@ -182,7 +185,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(screen.getByText(/Revisá tu conexión y probá de nuevo. Tu casilla queda marcada./i)).toBeInTheDocument();
 
       // El botón debe haber cambiado a "Reintentar"
-      expect(screen.getByRole('button', { name: /Reintentar/i })).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /Reintentar/i })[0]).toBeInTheDocument();
 
       // Restaurar estado de red
       Object.defineProperty(navigator, 'onLine', { value: originalOnLine, configurable: true });
@@ -198,16 +201,16 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </MemoryRouter>
       );
 
-      const checkbox = screen.getByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i);
+      const checkbox = screen.getAllByLabelText(/Acepto los términos y el tratamiento de mis imágenes/i)[0];
       fireEvent.click(checkbox);
-      fireEvent.click(screen.getByRole('button', { name: /Aceptar y continuar/i }));
+      fireEvent.click(screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0]);
 
       expect(screen.getByText(/No pudimos registrar tu aceptación/i)).toBeInTheDocument();
 
       // Restablecemos conexión
       Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
 
-      const retryBtn = screen.getByRole('button', { name: /Reintentar/i });
+      const retryBtn = screen.getAllByRole('button', { name: /Reintentar/i })[0];
       fireEvent.click(retryBtn);
 
       await waitFor(() => {
@@ -241,18 +244,20 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </AuthContext.Provider>
       );
 
-      const rejectBtn = screen.getByRole('button', { name: /Rechazar/i });
+      const rejectBtn = screen.getAllByRole('button', { name: /Rechazar/i })[0];
       fireEvent.click(rejectBtn);
 
       // Debe abrirse el modal con ¿Rechazar los términos?
       expect(screen.getByRole('heading', { name: /¿Rechazar los términos\?/i })).toBeInTheDocument();
-      expect(screen.getByText(/Sin tu consentimiento no podemos procesar las imágenes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Sin tu consentimiento no vas a poder enviar reportes/i)).toBeInTheDocument();
 
       // Probar cancelar con "Volver a los términos"
       const cancelBtn = screen.getByRole('button', { name: /Volver a los términos/i });
       fireEvent.click(cancelBtn);
 
-      expect(screen.queryByRole('heading', { name: /¿Rechazar los términos\?/i })).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('heading', { name: /¿Rechazar los términos\?/i })).not.toBeInTheDocument();
+      });
       expect(screen.queryByText(/Rechazaste los términos/i)).not.toBeInTheDocument();
 
       // Volvemos a abrir y confirmamos con "Rechazar y salir"
@@ -313,14 +318,16 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       const openModalBtn = screen.getByRole('button', { name: /Leer el texto completo/i });
       fireEvent.click(openModalBtn);
 
-      expect(screen.getByText(/Términos y Condiciones Completos/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ley Nacional N° 25.326/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Términos y Condiciones/i })).toBeInTheDocument();
+      });
+      expect(screen.getAllByText(/Ley 25\.326/i).length).toBeGreaterThanOrEqual(1);
 
       const closeModalBtn = screen.getByRole('button', { name: /Entendido/i });
       fireEvent.click(closeModalBtn);
 
       await waitFor(() => {
-        expect(screen.queryByText(/Términos y Condiciones Completos/i)).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /Términos y Condiciones/i })).not.toBeInTheDocument();
       });
     });
   });
@@ -353,8 +360,8 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       );
 
       // Aceptamos términos paso 1
-      fireEvent.click(screen.getByLabelText(/Acepto los términos/i));
-      fireEvent.click(screen.getByRole('button', { name: /Aceptar y continuar/i }));
+      fireEvent.click(screen.getAllByLabelText(/Acepto los términos/i)[0]);
+      fireEvent.click(screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0]);
 
       // En paso 2
       await waitFor(() => {
@@ -397,8 +404,8 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       );
 
       // Paso 1
-      fireEvent.click(screen.getByLabelText(/Acepto los términos/i));
-      fireEvent.click(screen.getByRole('button', { name: /Aceptar y continuar/i }));
+      fireEvent.click(screen.getAllByLabelText(/Acepto los términos/i)[0]);
+      fireEvent.click(screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0]);
 
       // Paso 2: Ahora no
       await waitFor(() => {
@@ -493,11 +500,11 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(screen.getByText(/Seguís pudiendo usar la app mientras revisás la nueva/i)).toBeInTheDocument();
 
       // Checkbox adaptado a la versión 1.3
-      expect(screen.getByText(/Acepto la versión 1.3 de los términos y el tratamiento de mis imágenes/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Acepto la versión 1.3 de los términos y el tratamiento de mis imágenes/i)[0]).toBeInTheDocument();
 
       // Botón de postergación e indicador de avisos
-      expect(screen.getByRole('button', { name: /Recordármelo más tarde/i })).toBeInTheDocument();
-      expect(screen.getByText(/quedan 2 avisos/i)).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /Recordármelo más tarde/i })[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/quedan 2 avisos/i)[0]).toBeInTheDocument();
     });
 
     it('UT-TM-20: Al presionar "Recordármelo más tarde", posterga y navega a /app', async () => {
@@ -534,7 +541,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </AuthContext.Provider>
       );
 
-      const postponeBtn = screen.getByRole('button', { name: /Recordármelo más tarde/i });
+      const postponeBtn = screen.getAllByRole('button', { name: /Recordármelo más tarde/i })[0];
       fireEvent.click(postponeBtn);
 
       await waitFor(() => {
@@ -574,10 +581,10 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </AuthContext.Provider>
       );
 
-      const checkbox = screen.getByLabelText(/Acepto la versión 1.3 de los términos/i);
+      const checkbox = screen.getAllByLabelText(/Acepto la versión 1.3 de los términos/i)[0];
       fireEvent.click(checkbox);
 
-      const submitBtn = screen.getByRole('button', { name: /Aceptar y continuar/i });
+      const submitBtn = screen.getAllByRole('button', { name: /Aceptar y continuar/i })[0];
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
@@ -618,7 +625,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
 
       expect(screen.getByRole('heading', { name: /Actualizamos los términos/i })).toBeInTheDocument();
       expect(screen.getByText(/Aceptaste la versión 1.2 el 14\/08\/2026/i)).toBeInTheDocument();
-      expect(screen.getByText(/queda 1 aviso/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/queda 1 aviso/i)[0]).toBeInTheDocument();
     });
 
     it('UT-TM-23: Aviso 3 de 3 (Último aviso) muestra banner notification_important en #FFF2E0 y tag rojo "último aviso"', () => {
@@ -654,10 +661,10 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
 
       expect(screen.getByRole('heading', { name: /Actualizamos los términos/i })).toBeInTheDocument();
       // Banner de último aviso
-      expect(screen.getByText(/Último aviso/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Último aviso/i)[0]).toBeInTheDocument();
       expect(screen.getByText(/La próxima vez que abras la app vas a tener que aceptar para seguir usándola/i)).toBeInTheDocument();
       // Tag de último aviso en rojo
-      const lastNoticeTag = screen.getByText(/^último aviso$/i);
+      const lastNoticeTag = screen.getAllByText(/^último aviso$/i)[0];
       expect(lastNoticeTag).toBeInTheDocument();
     });
 
@@ -699,8 +706,8 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
       expect(screen.getByText(/Para seguir usando Reportalo tenés que aceptar la versión 1.3/i)).toBeInTheDocument();
       // No debe haber botón de postergar
       expect(screen.queryByRole('button', { name: /Recordármelo más tarde/i })).not.toBeInTheDocument();
-      // Botón Rechazar y cerrar sesión
-      expect(screen.getByRole('button', { name: /Rechazar y cerrar sesión/i })).toBeInTheDocument();
+      // Botón Rechazar y cerrar sesión (disponible en vista móvil y desktop)
+      expect(screen.getAllByRole('button', { name: /Rechazar y cerrar sesión/i })[0]).toBeInTheDocument();
     });
 
     it('UT-TM-26: Al presionar "Rechazar y cerrar sesión" en pantalla bloqueante, cierra sesión y redirige a login', async () => {
@@ -738,7 +745,7 @@ describe('REP-3532: Flujo de Términos y Privacidad v1.2 y Permisos', () => {
         </AuthContext.Provider>
       );
 
-      const rejectBtn = screen.getByRole('button', { name: /Rechazar y cerrar sesión/i });
+      const rejectBtn = screen.getAllByRole('button', { name: /Rechazar y cerrar sesión/i })[0];
       fireEvent.click(rejectBtn);
 
       await waitFor(() => {
