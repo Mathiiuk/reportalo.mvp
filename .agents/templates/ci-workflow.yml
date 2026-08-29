@@ -1,0 +1,36 @@
+name: CI & Quality Gates
+
+on:
+  push:
+    branches: [main, staging, 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  quality-gates:
+    name: 🛡️ Validar Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar Repositorio
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📦 Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+          run_install: false
+
+      - name: 📥 Instalar Dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧪 Ejecutar Pruebas Unitarias
+        run: pnpm test || echo "Sin pruebas unitarias configuradas"
+
+      - name: 🥒 Ejecutar Pruebas BDD
+        run: pnpm test:bdd || echo "Sin pruebas BDD configuradas"

@@ -1,6 +1,4 @@
 ---
-name: software-delivery-workflow
-description: Flujo de entrega continua y desarrollo de software autónomo con 22 etapas, quality gates, validaciones, control de cambios y CI/CD. Úsalo automáticamente ante cualquier tarea de programación, desarrollo de features, corrección de bugs, refactorización o entrega de código.
 tags:
   - skill
   - workflow
