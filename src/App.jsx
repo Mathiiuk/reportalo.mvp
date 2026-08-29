@@ -9,6 +9,10 @@ import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { TermsAndPermissionsPage } from './pages/TermsAndPermissionsPage';
+import { MapPage } from './pages/MapPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { NewsPage } from './pages/NewsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 
@@ -48,12 +52,22 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/app" replace />;
   }
 
+  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
   const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
   const termsBlocked = isTermsConsentBlocked(user?.id);
 
   // 3. Blindaje de seguridad: Si los términos están bloqueados o fueron rechazados
   if ((termsRejected || termsBlocked) && location.pathname !== '/terminos') {
     return <Navigate to="/terminos" replace />;
+  }
+
+  // 4. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /mapa
+  if (
+    onboardingCompleted &&
+    termsAccepted &&
+    (location.pathname === '/onboarding' || location.pathname === '/terminos')
+  ) {
+    return <Navigate to="/mapa" replace />;
   }
 
   return children;
@@ -92,7 +106,7 @@ const PublicRoute = ({ children }) => {
       return <Navigate to="/terminos" replace />;
     }
 
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/mapa" replace />;
   }
 
   return children;
@@ -142,10 +156,50 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/mapa"
+        element={
+          <ProtectedRoute>
+            <MapPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reportes"
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alertas"
+        element={
+          <ProtectedRoute>
+            <NewsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/novedades"
+        element={
+          <ProtectedRoute>
+            <Navigate to="/alertas" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/app"
         element={
           <ProtectedRoute>
-            <BlankAppPage />
+            <Navigate to="/mapa" replace />
           </ProtectedRoute>
         }
       />

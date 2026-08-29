@@ -1,0 +1,16 @@
+id: "REP-4100"
+external_ref: "HU-REP-4100"
+title: "Mapa Ciudadano con MapLibre GL JS y Navegación Principal de 5 Botones"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: staging
+target_branch: feat/REP-4100-mapa-ciudadano
+created_at: 2026-08-26
+tags:
+  - map
+  - maplibre
+  - navigation
+  - ui
+  - mobile-first
