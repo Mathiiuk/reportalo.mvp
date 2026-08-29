@@ -5,4 +5,5 @@ dist-ssr
 .env
 .vite
 /build
-(etc...)
+.DS_Store
+Thumbs.db
