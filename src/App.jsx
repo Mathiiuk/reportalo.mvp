@@ -61,11 +61,19 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/terminos" replace />;
   }
 
-  // 4. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /mapa
+  // 4. Si ya completó ambos pasos obligatorios y entra a /onboarding → llevar a /mapa
+  if (onboardingCompleted && termsAccepted && location.pathname === '/onboarding') {
+    return <Navigate to="/mapa" replace />;
+  }
+
+  // 4b. Si accede a /terminos con T&C vigentes, permitir la consulta voluntaria (desde Perfil)
+  //     pero redirigir a /mapa si no hay intención consultiva (acceso directo a la URL).
+  const esConsultaVoluntaria = Boolean(location.state?.consultaDesde);
   if (
     onboardingCompleted &&
     termsAccepted &&
-    (location.pathname === '/onboarding' || location.pathname === '/terminos')
+    location.pathname === '/terminos' &&
+    !esConsultaVoluntaria
   ) {
     return <Navigate to="/mapa" replace />;
   }
