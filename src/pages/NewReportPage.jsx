@@ -2,19 +2,34 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
+import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
+import { useGeolocation } from '../hooks/useGeolocation';
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Maneja los pasos secuenciales del wizard de creacion.
+ * Integra el Paso 1 de Captura de Evidencia Desacoplada (REP-2201).
  */
 export const NewReportPage = ({ initialEvidence = null }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [evidence, setEvidence] = useState(initialEvidence);
+  const { coordinates } = useGeolocation({ autoFetch: true });
+
+  const {
+    evidence,
+    error,
+    isProcessing,
+    captureFile,
+    clearEvidence,
+  } = useEvidenceCapture({
+    geolocation: coordinates,
+  });
+
+  const activeEvidence = evidence || initialEvidence;
 
   // Cancelar flujo y regresar al mapa sin generar datos residuales
   const handleCancel = () => {
-    setEvidence(null);
+    clearEvidence();
     navigate('/mapa', { replace: true });
   };
 
@@ -72,21 +87,22 @@ export const NewReportPage = ({ initialEvidence = null }) => {
                   Paso 1: Evidencia
                 </span>
                 <h2 className="text-[20px] font-extrabold text-[#1B365D] tracking-tight m-0 leading-snug">
-                  Adjunta una foto del problema
+                  Adjuntá una foto del problema
                 </h2>
                 <p className="text-[13px] font-medium text-[#64748B] mt-1 leading-relaxed">
-                  Toma una foto en el momento o subila desde tu galeria para documentar el reclamo.
+                  Tomá una foto en el momento o subila desde tu galería para documentar el reclamo.
                 </p>
               </div>
 
-              {/* Contenedor para el componente de captura de evidencia (REP-2201) */}
-              <div
-                data-testid="evidence-step-container"
-                className="flex-1 flex flex-col items-center justify-center min-h-[260px] bg-white rounded-3xl border-2 border-dashed border-[#CBD5E1] p-6 text-center shadow-xs"
-              >
-                <p className="text-xs font-semibold text-[#64748B] m-0">
-                  Area de captura de evidencia fotografica
-                </p>
+              {/* Componente interactivo de captura de evidencia desacoplada */}
+              <div data-testid="evidence-step-container" className="flex-1 flex flex-col min-h-[280px]">
+                <EvidenceCaptureStep
+                  evidence={activeEvidence}
+                  error={error}
+                  isProcessing={isProcessing}
+                  onCaptureFile={captureFile}
+                  onClearEvidence={clearEvidence}
+                />
               </div>
             </div>
 
@@ -101,10 +117,10 @@ export const NewReportPage = ({ initialEvidence = null }) => {
               </button>
               <button
                 type="button"
-                disabled={!evidence}
+                disabled={!activeEvidence || isProcessing}
                 onClick={() => setCurrentStep(2)}
                 className={`flex-1 py-3.5 px-4 rounded-2xl font-extrabold text-[13px] transition-all border-0 ${
-                  evidence
+                  activeEvidence && !isProcessing
                     ? 'bg-[#1E6FCB] text-white shadow-md hover:bg-[#185ca8] active:scale-98 cursor-pointer'
                     : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'
                 }`}
