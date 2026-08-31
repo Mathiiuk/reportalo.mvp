@@ -2,12 +2,22 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../hooks/useAuth';
-import { CURRENT_TERMS_VERSION, TERMS_EFFECTIVE_DATE } from '../services/termsService';
+import {
+  CURRENT_TERMS_VERSION,
+  TERMS_EFFECTIVE_DATE,
+  getTermsRecord,
+  formatAcceptedDate,
+} from '../services/termsService';
 import { motion } from 'framer-motion';
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+
+  // Lee el registro de consentimiento real para mostrar versión y fecha aceptada
+  const termsRecord = getTermsRecord(user?.id);
+  const acceptedVersion = termsRecord?.terms_version || CURRENT_TERMS_VERSION;
+  const acceptedDate = formatAcceptedDate(termsRecord?.accepted_at);
 
   const handleLogout = async () => {
     await signOut();
@@ -60,8 +70,9 @@ export const ProfilePage = () => {
 
             <div className="flex items-center justify-between text-[12px] text-[#56657A] pt-2 border-t border-[#EEF1F5]">
               <span>Versión aceptada</span>
+              {/* Muestra la versión y fecha reales del consentimiento registrado */}
               <span className="font-bold text-[#263249]">
-                v{CURRENT_TERMS_VERSION} ({TERMS_EFFECTIVE_DATE})
+                v{acceptedVersion} ({acceptedDate})
               </span>
             </div>
 
@@ -79,8 +90,9 @@ export const ProfilePage = () => {
               </span>
             </div>
 
+            {/* Navega con state consultaDesde para activar el modo lectura en /terminos */}
             <button
-              onClick={() => navigate('/terminos')}
+              onClick={() => navigate('/terminos', { state: { consultaDesde: 'perfil' } })}
               type="button"
               className="text-left font-bold text-[12px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-1"
             >

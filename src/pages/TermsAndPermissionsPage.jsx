@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
@@ -10,16 +10,28 @@ import {
   recordTermsRejection,
   getTermsUpdateStatus,
   postponeTermsUpdate,
+  getTermsRecord,
+  formatAcceptedDate,
   FULL_TERMS_AND_CONDITIONS,
 } from '../services/termsService';
 
 export const TermsAndPermissionsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut } = useAuth();
+
+  // Modo consultivo: activado cuando la navegación proviene de /perfil
+  // Permite leer los T&C sin presentar el flujo de aceptación obligatoria
+  const modoConsulta = location.state?.consultaDesde === 'perfil';
 
   // Detección de versión desactualizada y aviso pendiente
   const updateStatus = getTermsUpdateStatus(user?.id);
   const isOutdatedUpdate = updateStatus.isOutdated;
+
+  // Datos reales del consentimiento aceptado (para el modo consultivo)
+  const termsRecord = getTermsRecord(user?.id);
+  const acceptedVersionLabel = termsRecord?.terms_version || CURRENT_TERMS_VERSION;
+  const acceptedDateLabel = formatAcceptedDate(termsRecord?.accepted_at);
 
   // Paso actual: 1 (Términos) o 2 (Permisos)
   const [currentStep, setCurrentStep] = useState(1);
@@ -154,9 +166,144 @@ export const TermsAndPermissionsPage = () => {
             <AnimatePresence mode="wait">
               
               {/* ========================================================================= */}
-              {/* PASO 1: Términos y Privacidad                                             */}
+              {/* MODO CONSULTIVO: lectura informativa desde /perfil                        */}
+              {/* No modifica ni resetea el estado de consentimiento (REP-3607)             */}
               {/* ========================================================================= */}
-              {currentStep === 1 && (
+              {modoConsulta && (
+                <motion.div
+                  key="modo-consulta"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                  className="flex flex-col gap-4 sm:gap-4.5 lg:gap-5 w-full"
+                >
+                  {/* Encabezado consultivo */}
+                  <div>
+                    <h1 className="font-extrabold text-[22px] sm:text-[26px] lg:text-[30px] text-[#243447] tracking-[-0.6px] leading-tight m-0">
+                      Términos y privacidad
+                    </h1>
+                    <div className="flex items-center gap-2 mt-2">
+                      {isOutdatedUpdate ? (
+                        <span className="font-bold text-[9px] sm:text-[10px] text-[#8A6A3E] bg-[#FFF2E0] rounded-[5px] sm:rounded-[6px] px-2 py-1 uppercase tracking-wider">
+                          NUEVA VERSIÓN
+                        </span>
+                      ) : (
+                        <span className="font-bold text-[9px] sm:text-[10px] text-[#2C7A55] bg-[#E3F5EC] rounded-[5px] sm:rounded-[6px] px-2 py-1 uppercase tracking-wider">
+                          VIGENTE · ACEPTADA
+                        </span>
+                      )}
+                      <span className="font-semibold text-[11px] sm:text-[12px] text-[#9AA7B5]">
+                        Versión {CURRENT_TERMS_VERSION} · desde {TERMS_EFFECTIVE_DATE}
+                      </span>
+                    </div>
+                    <p className="font-medium text-[12.5px] sm:text-[13px] lg:text-[13.5px] leading-[1.6] text-[#56657A] mt-3.5 mb-0">
+                      Estás consultando los términos en modo lectura. No se realizará ningún cambio en tu consentimiento.
+                    </p>
+                  </div>
+
+                  {/* Bloques informativos y banners */}
+                  <div className="flex flex-col gap-2.5 sm:gap-3 lg:gap-3.5">
+
+                    {/* Banner: ya aceptaste la versión vigente */}
+                    {!isOutdatedUpdate && (
+                      <div className="bg-[#E3F5EC] border border-[#D0EADB] rounded-[12px] p-[11px_12px] lg:p-[13px_15px] flex gap-[8px] lg:gap-[10px] items-start shadow-2xs">
+                        <span className="material-symbols-rounded text-[16px] lg:text-[18px] text-[#2E9E6B] flex-shrink-0 mt-0.5">
+                          verified
+                        </span>
+                        <div>
+                          <div className="font-extrabold text-[10.5px] md:text-[11.5px] lg:text-[12px] text-[#2C7A55]">
+                            Ya aceptaste la versión vigente
+                          </div>
+                          <div className="font-medium text-[10.5px] lg:text-[11.5px] leading-[1.45] text-[#2C7A55] mt-[3px]">
+                            Versión {acceptedVersionLabel} — aceptada el {acceptedDateLabel}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Banner: nueva versión disponible (modo consultivo, sin acción obligatoria) */}
+                    {isOutdatedUpdate && (
+                      <div className="bg-[#E8F1FB] border border-[#D4E6F8] rounded-[12px] p-[11px_12px] lg:p-[13px_15px] flex gap-[8px] lg:gap-[10px] items-start shadow-2xs">
+                        <span className="material-symbols-rounded text-[16px] lg:text-[18px] text-[#15539E] flex-shrink-0 mt-0.5">
+                          info
+                        </span>
+                        <div>
+                          <div className="font-extrabold text-[10.5px] md:text-[11.5px] lg:text-[12px] text-[#15539E]">
+                            Hay una nueva versión disponible
+                          </div>
+                          <div className="font-medium text-[10.5px] lg:text-[11.5px] leading-[1.45] text-[#15539E] mt-[3px]">
+                            Aceptaste la v{updateStatus.previousVersion || '1.2'} el {updateStatus.acceptedDate || acceptedDateLabel}. La nueva versión ({CURRENT_TERMS_VERSION}) se solicitará antes de publicar un reporte.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bloque 1: Tratamiento de imágenes */}
+                    <div className="bg-white border border-[#E6ECF3] rounded-[14px] p-3.5 sm:p-4 lg:p-[16px_18px] flex gap-3 lg:gap-[13px] items-start shadow-xs">
+                      <span className="material-symbols-rounded filled text-[20px] lg:text-[22px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
+                        photo_camera
+                      </span>
+                      <div className="flex-1">
+                        <div className="font-bold text-[12.5px] sm:text-[13px] lg:text-[13.5px] text-[#263249]">
+                          Tratamiento de imágenes
+                        </div>
+                        <div className="font-medium text-[11px] sm:text-[12px] lg:text-[12.5px] leading-[1.5] text-[#7A8696] mt-1">
+                          Tus fotos se procesan en nuestros servidores y en los de un proveedor de análisis, con el único fin de difuminar rostros y patentes y clasificar el reporte.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bloque 2: Qué se guarda */}
+                    <div className="bg-white border border-[#E6ECF3] rounded-[14px] p-3.5 sm:p-4 lg:p-[16px_18px] flex gap-3 lg:gap-[13px] items-start shadow-xs">
+                      <span className="material-symbols-rounded filled text-[20px] lg:text-[22px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
+                        visibility_off
+                      </span>
+                      <div className="flex-1">
+                        <div className="font-bold text-[12.5px] sm:text-[13px] lg:text-[13.5px] text-[#263249]">
+                          Qué se guarda
+                        </div>
+                        <div className="font-medium text-[11px] sm:text-[12px] lg:text-[12.5px] leading-[1.5] text-[#7A8696] mt-1">
+                          Solo la versión anonimizada. La imagen original se descarta al terminar el procesamiento.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bloque 3: Tus derechos */}
+                    <div className="bg-white border border-[#E6ECF3] rounded-[14px] p-3.5 sm:p-4 lg:p-[16px_18px] flex gap-3 lg:gap-[13px] items-start shadow-xs">
+                      <span className="material-symbols-rounded filled text-[20px] lg:text-[22px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
+                        gavel
+                      </span>
+                      <div className="flex-1">
+                        <div className="font-bold text-[12.5px] sm:text-[13px] lg:text-[13.5px] text-[#263249]">
+                          Tus derechos
+                        </div>
+                        <div className="font-medium text-[11px] sm:text-[12px] lg:text-[12.5px] leading-[1.5] text-[#7A8696] mt-1">
+                          Podés acceder, rectificar y suprimir tus datos (Ley 25.326). Tu identidad no se comparte con el organismo receptor.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Enlace al articulado legal completo (igual al flujo normal) */}
+                    <button
+                      onClick={() => setShowFullTermsModal(true)}
+                      type="button"
+                      className="flex items-center justify-center gap-1.5 font-bold text-[11px] sm:text-[11.5px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 py-1.5 transition-colors mx-auto"
+                    >
+                      <span>Leer el texto completo</span>
+                      <span className="material-symbols-rounded text-[15px]">
+                        open_in_new
+                      </span>
+                    </button>
+
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ========================================================================= */}
+              {/* PASO 1: Términos y Privacidad (flujo de aceptación obligatoria)           */}
+              {/* ========================================================================= */}
+              {!modoConsulta && currentStep === 1 && (
                 <motion.div
                   key="step-terms"
                   initial={{ opacity: 0, y: 10 }}
@@ -343,7 +490,7 @@ export const TermsAndPermissionsPage = () => {
               {/* ========================================================================= */}
               {/* PASO 2: Activá los Permisos                                               */}
               {/* ========================================================================= */}
-              {currentStep === 2 && (
+              {!modoConsulta && currentStep === 2 && (
                 <motion.div
                   key="step-permissions"
                   initial={{ opacity: 0, y: 10 }}
@@ -454,9 +601,30 @@ export const TermsAndPermissionsPage = () => {
         <div className="w-full max-w-[480px] md:max-w-[560px] lg:max-w-[680px]">
           
           {/* ========================================================================= */}
+          {/* PIE MODO CONSULTIVO                                                     */}
+          {/* ========================================================================= */}
+          {modoConsulta && (
+            <div className="flex justify-end">
+              {/* Botón de regreso sin modificar ningún estado de consentimiento */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(-1)}
+                type="button"
+                className="rounded-[12px] py-[13px] px-[26px] font-extrabold text-[13.5px] text-white bg-[#1E6FCB] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] border-0 transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[44px]"
+              >
+                <span className="material-symbols-rounded text-[17px] text-white">
+                  arrow_back
+                </span>
+                <span>Volver a mi perfil</span>
+              </motion.button>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
           {/* PIE PASO 1 (Términos)                                                     */}
           {/* ========================================================================= */}
-          {currentStep === 1 && (
+          {!modoConsulta && currentStep === 1 && (
             <div>
               {/* Layout Desktop (>= 1024px): Fila horizontal (Casilla a la izquierda, botones a la derecha) */}
               <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-5">
@@ -706,7 +874,7 @@ export const TermsAndPermissionsPage = () => {
           {/* ========================================================================= */}
           {/* PIE PASO 2 (Permisos)                                                     */}
           {/* ========================================================================= */}
-          {currentStep === 2 && (
+          {!modoConsulta && currentStep === 2 && (
             <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 sm:gap-4">
               <button
                 onClick={handleSkipPermissions}
