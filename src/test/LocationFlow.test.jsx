@@ -42,6 +42,7 @@ vi.mock('maplibre-gl', () => {
 
 describe('REP-2300: Detección y Gestión de Ubicación del Ciudadano', () => {
   beforeEach(() => {
+    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
