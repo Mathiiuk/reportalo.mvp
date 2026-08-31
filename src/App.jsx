@@ -15,6 +15,7 @@ import { NewsPage } from './pages/NewsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
+import { NewReportPage } from './pages/NewReportPage';
 
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
@@ -168,6 +169,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MapPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/nuevo-reporte"
+        element={
+          <ProtectedRoute>
+            <NewReportPage />
           </ProtectedRoute>
         }
       />
