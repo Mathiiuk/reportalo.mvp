@@ -23,9 +23,8 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
     if (onCameraClick) {
       onCameraClick();
     } else {
-      toast.info('Creación de reportes disponible en Sprint 11', {
-        description: 'La captura guiada de fotos y emisión de reclamos se habilitará en el próximo sprint.',
-      });
+      // Redirigir al flujo de inicio de nuevo reporte (REP-2600 / REP-2200)
+      navigate('/nuevo-reporte');
     }
   };
 
