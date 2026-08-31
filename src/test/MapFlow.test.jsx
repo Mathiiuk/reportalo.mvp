@@ -55,6 +55,7 @@ vi.mock('maplibre-gl', () => {
 describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
   beforeEach(() => {
     localStorage.clear();
+    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
@@ -214,7 +215,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     });
   });
 
-  it('UT-MP-10: Filtrado reactivo de reportes en el mapa y mensaje de estado vacío al filtrar', async () => {
+  it('UT-MP-10: Filtrado reactivo de reportes en el mapa y actualización de marcadores', async () => {
     render(<CitizenMap />);
 
     // Abrir menú de filtros
@@ -224,35 +225,35 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     // Seleccionar filtro "En curso": solo REP-101 y REP-104 tienen ese estado
     fireEvent.click(screen.getByRole('button', { name: /^En curso$/i }));
 
-    // Verificar que el filtro activo cambió visualmente en los botones del panel
+    // Al seleccionar, el modal se cierra automáticamente y sólo quedan marcadores de ese filtro
     await waitFor(() => {
-      // Al menos uno de los estados filtrados debe aparecer o el botón debe tener clase activa
-      const enCursoBtn = screen.getByRole('button', { name: /^En curso$/i });
-      expect(enCursoBtn).toBeInTheDocument();
+      expect(screen.queryByText(/Filtrar reclamos/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId('marker-REP-101')).toBeInTheDocument();
+      expect(screen.getByTestId('marker-REP-104')).toBeInTheDocument();
+      expect(screen.queryByTestId('marker-REP-102')).not.toBeInTheDocument();
     });
-
-    // Verificar que el panel de filtros puede cerrarse
-    const closeBtn = screen.queryByRole('button', { name: /cerrar filtros/i });
-    if (closeBtn) fireEvent.click(closeBtn);
   });
 
-  it('UT-MP-11: Clic en el botón central de cámara notifica que la creación se habilitará en Sprint 11', () => {
+  it('UT-MP-11: Clic en el botón central de cámara navega a /nuevo-reporte para iniciar el flujo', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
-        <AppLayout activeTab="mapa">
-          <div>Contenido</div>
-        </AppLayout>
+        <Routes>
+          <Route
+            path="/mapa"
+            element={
+              <AppLayout activeTab="mapa">
+                <div>Contenido Mapa</div>
+              </AppLayout>
+            }
+          />
+          <Route path="/nuevo-reporte" element={<div>Pantalla Nuevo Reporte</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
     const cameraBtn = screen.getByRole('button', { name: /tomar foto y reportar/i });
     fireEvent.click(cameraBtn);
 
-    expect(toast.info).toHaveBeenCalledWith(
-      'Creación de reportes disponible en Sprint 11',
-      expect.objectContaining({
-        description: expect.stringContaining('próximo sprint'), // El texto real del componente
-      })
-    );
+    expect(screen.getByText('Pantalla Nuevo Reporte')).toBeInTheDocument();
   });
 });
