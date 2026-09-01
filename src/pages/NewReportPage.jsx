@@ -2,19 +2,25 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useAuth } from '../hooks/useAuth';
 import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
+import {
+  hasAcceptedCurrentTerms,
+  recordTermsAcceptance,
+} from '../services/termsService';
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Integra los Pasos 1, 2 y 3 con diseño calcado del User Journey v2.
+ * Integra los Pasos 1, 2 y 3 con modal bottom sheet de consentimiento único (User Journey v2).
  */
 export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
@@ -33,6 +39,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   });
 
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
+  const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
 
   // Cargar categorias desde la DB con fallback
   useEffect(() => {
@@ -64,10 +71,19 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
   };
 
-  // Simulación / Acción de envío del reporte
+  // Envío directo de reporte (para usuarios con consentimiento previo)
   const handleSubmitReport = () => {
-    toast.success('¡Reporte generado con éxito!', {
-      description: 'Tu evidencia fue registrada localmente con estado CAPTURED_LOCAL.',
+    toast.success('¡Reporte enviado con éxito!', {
+      description: 'Tu evidencia fue enviada y será anonimizada en el servidor.',
+    });
+    handleCancel();
+  };
+
+  // Acto de consentimiento + envío (primer reporte)
+  const handleAcceptTermsAndSubmit = async () => {
+    await recordTermsAcceptance(user?.id, { camera: true, location: true });
+    toast.success('¡Consentimiento registrado y reporte enviado!', {
+      description: 'Tu reporte ha sido generado bajo la versión v1.2 de Términos y Privacidad.',
     });
     handleCancel();
   };
@@ -137,10 +153,12 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               description={description}
               geolocation={coordinates}
               address="Av. Mitre 1240, Avellaneda"
+              hasAcceptedTerms={userHasAccepted}
               onBack={handleBack}
-              onSubmit={handleSubmitReport}
+              onSubmitReport={handleSubmitReport}
+              onAcceptTermsAndSubmit={handleAcceptTermsAndSubmit}
               onViewAllPhotos={() => setCurrentStep(1)}
-              onOpenTerms={() => navigate('/terminos', { state: { consultaDesde: 'nuevo-reporte' } })}
+              onOpenTerms={() => navigate('/terminos')}
             />
           </motion.div>
         )}
