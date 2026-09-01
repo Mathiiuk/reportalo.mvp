@@ -31,8 +31,8 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
       
-      {/* Header Superior (Topbar idéntico al modelo) */}
-      <header className="z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
+      {/* Header Superior (Mobile) */}
+      <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
         <div className="px-5 pt-2 pb-2 flex items-center justify-between">
           <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
             <img
@@ -59,13 +59,42 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
         </div>
       </header>
 
+      {/* Header Superior (Desktop) */}
+      <header className="hidden md:flex flex-none border-b border-[#EEF1F5] px-[26px] py-[12px] bg-white items-center gap-5 z-30">
+        <Link to="/mapa" className="flex items-center gap-2 no-underline text-inherit">
+          <img src="/logo-icon.webp" alt="Reportalo" className="w-[19px] h-[25px] object-contain" />
+          <span className="font-extrabold text-[18px] text-[#263249] tracking-[-0.4px]">
+            Reportalo
+          </span>
+        </Link>
+        <div className="flex gap-5 ml-4">
+          <Link to="/mapa" className={`no-underline text-[12.5px] transition-colors ${currentTab === 'mapa' ? 'font-bold text-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}>Mapa</Link>
+          <Link to="/reportes" className={`no-underline text-[12.5px] transition-colors ${currentTab === 'reportes' ? 'font-bold text-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}>Mis reportes</Link>
+          <Link to="/alertas" className={`no-underline text-[12.5px] transition-colors ${currentTab === 'alertas' ? 'font-bold text-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}>Novedades</Link>
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <button 
+            onClick={handleCameraAction}
+            className="flex items-center gap-[7px] bg-[#1E6FCB] text-white px-[15px] py-[9px] rounded-[10px] cursor-pointer hover:bg-[#15539E] transition-colors border-none"
+          >
+            <span className="material-symbols-rounded text-[17px]">add_a_photo</span>
+            <span className="font-bold text-[12.5px]">Reportar</span>
+          </button>
+          <Link to="/perfil" className="w-[30px] h-[30px] rounded-full bg-[#E8F1FB] flex items-center justify-center font-extrabold text-[11px] text-[#1E6FCB] cursor-pointer no-underline">
+            LF
+          </Link>
+        </div>
+      </header>
+
       {/* Contenedor del contenido principal */}
-      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col">
-        {children}
+      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col items-center justify-center bg-[#F4F7FB]">
+        <div className="w-full h-full md:max-w-[420px] md:border-x md:border-[#E6ECF3] bg-white relative flex flex-col overflow-hidden shadow-sm">
+          {children}
+        </div>
       </main>
 
-      {/* Barra de Navegación Inferior Flotante (Exacta al modelo) */}
-      <div className="fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
+      {/* Barra de Navegación Inferior Flotante (Mobile) */}
+      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
         <nav
           aria-label="Navegación principal"
           className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
