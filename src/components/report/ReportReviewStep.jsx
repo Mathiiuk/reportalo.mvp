@@ -1,15 +1,19 @@
-﻿import React from 'react';
+﻿import React, { useState } from 'react';
 import {
   Check,
-  Clock,
   MapPin,
-  Info,
   Send,
+  Shield,
+  Trash2,
+  Gavel,
+  ArrowRight,
   ArrowLeft,
+  Share2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Componente UI para el Paso 3: Revisión y Envío del Reporte (User Journey v2).
+ * Componente UI para el Paso 3: Revisión y Modal "Antes de enviar" (User Journey v2).
  */
 export const ReportReviewStep = ({
   evidenceList = [],
@@ -17,25 +21,42 @@ export const ReportReviewStep = ({
   description,
   geolocation,
   address,
+  hasAcceptedTerms = false,
   onBack,
-  onSubmit,
+  onSubmitReport,
+  onAcceptTermsAndSubmit,
   onViewAllPhotos,
   onOpenTerms,
 }) => {
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const photoCount = evidenceList.length;
   const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto adjunta' : 'fotos adjuntas'}`;
 
-  // Dirección visible: si no hay dirección geocodificada, mostrar coordenadas o Avellaneda por defecto
   const displayAddress =
     address ||
     (geolocation?.lat
       ? `Lat: ${geolocation.lat.toFixed(4)}, Lng: ${geolocation.lng.toFixed(4)}`
       : 'Av. Mitre 1240, Avellaneda');
 
+  const handleSendClick = () => {
+    if (hasAcceptedTerms) {
+      // Quien ya aceptó pasa derecho al envío
+      onSubmitReport();
+    } else {
+      // Primer reporte: abre el modal bottom sheet de consentimiento
+      setShowConsentModal(true);
+    }
+  };
+
+  const handleAcceptAndSend = () => {
+    setShowConsentModal(false);
+    onAcceptTermsAndSubmit();
+  };
+
   return (
     <div
       data-testid="report-review-step"
-      className="w-full h-full flex flex-col justify-between bg-[#F4F7FB]"
+      className="relative w-full h-full flex flex-col justify-between bg-[#F4F7FB]"
     >
       {/* 1. Header con stepper de 3 pasos completados */}
       <div className="flex-0 bg-white px-4 pt-3 pb-3 border-b border-[#EEF1F5] shadow-2xs">
@@ -159,7 +180,7 @@ export const ReportReviewStep = ({
                 backgroundColor: selectedCategory?.bgLight || '#FFF2E6',
               }}
             >
-              {selectedCategory?.name || 'Infracción de tránsito'}
+              {selectedCategory?.name || 'Tránsito'}
             </span>
           </div>
 
@@ -171,7 +192,7 @@ export const ReportReviewStep = ({
               Descripción
             </div>
             <div className="font-medium text-[11.5px] leading-relaxed text-[#46566B]">
-              {description || 'Sin descripción detallada.'}
+              {description || 'Camión de gran porte circulando por calle residencial, a las 14:30.'}
             </div>
           </div>
 
@@ -195,7 +216,10 @@ export const ReportReviewStep = ({
 
         {/* Tarjeta 3: Banner de Identidad Anónima */}
         <div className="flex items-start gap-2 bg-[#FFF7EE] border border-[#F7E2C8] rounded-xl p-2.5">
-          <span className="material-symbols-rounded text-[17px] text-[#E07C1A] flex-shrink-0 mt-0.5" style={{ fontVariationSettings: '"FILL" 1' }}>
+          <span
+            className="material-symbols-rounded text-[17px] text-[#E07C1A] flex-shrink-0 mt-0.5"
+            style={{ fontVariationSettings: '"FILL" 1' }}
+          >
             info
           </span>
           <span className="font-medium text-[10.5px] leading-relaxed text-[#8A6A3E]">
@@ -208,7 +232,7 @@ export const ReportReviewStep = ({
       <div className="flex-0 bg-white border-t border-[#EEF1F5] p-3 flex flex-col">
         <button
           type="button"
-          onClick={onSubmit}
+          onClick={handleSendClick}
           aria-label="Enviar reporte"
           className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
         >
@@ -216,20 +240,126 @@ export const ReportReviewStep = ({
           <span className="material-symbols-rounded text-[18px]">send</span>
         </button>
 
-        <div className="text-center pt-2">
-          <span className="font-medium text-[9.5px] leading-relaxed text-[#9AA7B5]">
-            Antes de enviar te vamos a pedir aceptar los{' '}
-            <button
-              type="button"
-              onClick={onOpenTerms}
-              className="text-[#8593A2] underline bg-transparent border-0 p-0 cursor-pointer font-medium text-[9.5px]"
-            >
-              términos
-            </button>
-            .
-          </span>
-        </div>
+        {!hasAcceptedTerms && (
+          <div className="text-center pt-2">
+            <span className="font-medium text-[9.5px] leading-relaxed text-[#9AA7B5]">
+              Antes de enviar te vamos a pedir aceptar los{' '}
+              <button
+                type="button"
+                onClick={onOpenTerms}
+                className="text-[#8593A2] underline bg-transparent border-0 p-0 cursor-pointer font-medium text-[9.5px]"
+              >
+                términos
+              </button>
+              .
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* 4. MODAL BOTTOM SHEET: "Antes de enviar" (Consentimiento único al primer reporte) */}
+      <AnimatePresence>
+        {showConsentModal && (
+          <div
+            data-testid="consent-bottom-sheet-backdrop"
+            className="fixed inset-0 z-50 bg-[#182230]/55 flex items-end justify-center backdrop-blur-xs animate-in fade-in"
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+              className="w-full max-w-md bg-white rounded-t-[28px] px-5 pt-3.5 pb-4 shadow-[0_-12px_40px_rgba(10,20,40,0.28)] flex flex-col"
+            >
+              {/* Handle Bar */}
+              <div className="w-9.5 h-1 rounded-full bg-[#DDE4EC] mx-auto mb-3.5" />
+
+              <h2 className="font-extrabold text-[17px] text-[#243447] tracking-tight m-0">
+                Antes de enviar
+              </h2>
+              <p className="font-medium text-[12px] leading-relaxed text-[#56657A] mt-1.5 mb-3.5">
+                Para enviar el reporte necesitamos tu consentimiento para tratar las fotos y la ubicación que aportás.
+              </p>
+
+              {/* 3 Bloques Clave de Garantías */}
+              <div className="flex flex-col gap-2.5 my-1">
+                <div className="flex gap-2.5 items-start">
+                  <span
+                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
+                    style={{ fontVariationSettings: '"FILL" 1' }}
+                  >
+                    shield
+                  </span>
+                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
+                    Difuminamos rostros y patentes en el servidor, antes de guardar.
+                  </span>
+                </div>
+
+                <div className="flex gap-2.5 items-start">
+                  <span
+                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
+                    style={{ fontVariationSettings: '"FILL" 1' }}
+                  >
+                    delete_forever
+                  </span>
+                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
+                    Guardamos solo la versión anonimizada. El original se descarta.
+                  </span>
+                </div>
+
+                <div className="flex gap-2.5 items-start">
+                  <span
+                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
+                    style={{ fontVariationSettings: '"FILL" 1' }}
+                  >
+                    gavel
+                  </span>
+                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
+                    Podés pedir acceso, rectificación y supresión (Ley 25.326).
+                  </span>
+                </div>
+              </div>
+
+              {/* Link a leer términos completos */}
+              <button
+                type="button"
+                onClick={onOpenTerms}
+                className="inline-flex items-center gap-1.5 font-bold text-[11.5px] text-[#1E6FCB] bg-transparent border-0 p-0 cursor-pointer my-3 text-left hover:underline"
+              >
+                <span>Leer términos y privacidad · v1.2</span>
+                <span className="material-symbols-rounded text-[15px]">arrow_forward</span>
+              </button>
+
+              {/* Botón Principal: "Acepto y envío" */}
+              <button
+                type="button"
+                onClick={handleAcceptAndSend}
+                aria-label="Acepto y envío"
+                className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
+              >
+                <span>Acepto y envío</span>
+                <span className="material-symbols-rounded text-[18px]">send</span>
+              </button>
+
+              {/* Botón Secundario: "Ahora no" (vuelve al Paso 3 intacto sin bloquear) */}
+              <button
+                type="button"
+                onClick={() => setShowConsentModal(false)}
+                aria-label="Ahora no"
+                className="text-center py-2.5 font-bold text-[12px] text-[#8593A2] hover:text-[#56657A] bg-transparent border-0 cursor-pointer transition-colors"
+              >
+                Ahora no
+              </button>
+
+              <div className="text-center">
+                <span className="font-medium text-[9.5px] leading-relaxed text-[#9AA7B5]">
+                  Queda registrada la versión y la fecha de tu aceptación.
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
