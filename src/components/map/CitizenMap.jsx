@@ -327,181 +327,275 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
         </div>
       )}
 
-      {/* Spinner de carga inicial que se desvanece de inmediato */}
-      {!mapLoaded && (
-        <div className="absolute inset-0 bg-[#e5e9ec] flex items-center justify-center z-10 pointer-events-none transition-opacity duration-300">
-          <div className="flex flex-col items-center gap-2 text-[#7B8A9A]">
-            <div className="w-8 h-8 border-3 border-[#1E6FCB] border-t-transparent rounded-full animate-spin" />
-            <span className="font-bold text-xs">Cargando mapa...</span>
-          </div>
-        </div>
-      )}
-
-      {/* Banner Informativo No Bloqueante ante Permiso Denegado / Sin Ubicación */}
-      <AnimatePresence>
-        {showLocationBanner && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-4 left-4 right-18 z-20 max-w-[420px]"
-          >
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:px-4 shadow-lg border border-slate-200 flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <AlertCircle className="w-4 h-4 text-[#E08A00] flex-shrink-0" />
-                <div className="text-left min-w-0">
-                  <div className="font-bold text-[12px] text-[#243447] truncate">
-                    Ubicación desactivada
-                  </div>
-                  <div className="text-[11px] text-[#64748B] truncate">
-                    Mostrando CABA y Avellaneda por defecto
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => detectUserLocation(true)}
-                  className="px-2.5 py-1 rounded-lg bg-[#EEF5FC] text-[#1E6FCB] hover:bg-[#E1EFFD] font-extrabold text-[11px] cursor-pointer border-0 transition-colors flex items-center gap-1"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
-                  <span>Activar</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowLocationBanner(false)}
-                  aria-label="Cerrar aviso de ubicación"
-                  className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer border-0 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Botón Flotante de Filtros (Top Right) */}
-      <button
-        type="button"
-        aria-label="Filtros del mapa"
-        onClick={() => {
-          setShowFiltersModal((prev) => !prev);
-          if (onFilterClick) onFilterClick();
-        }}
-        className="absolute top-4 right-4 z-20 w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
-      >
-        <SlidersHorizontal className="w-5 h-5 text-[#1E6FCB]" />
-      </button>
-
-      {/* Menú de Filtros emergente */}
-      {showFiltersModal && (
-        <div className="absolute right-4 top-18 bg-white rounded-2xl p-3 shadow-xl border border-slate-100 z-30 w-48 flex flex-col gap-1 animate-in fade-in zoom-in-95">
-          <div className="font-extrabold text-[11px] text-[#8593A2] uppercase tracking-wider mb-1 px-1">
-            Filtrar reclamos
-          </div>
-          {['todos', 'Enviado', 'En curso', 'Resuelto'].map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => {
-                setActiveFilter(filter);
-                setShowFiltersModal(false);
-              }}
-              className={`text-left px-3 py-2 rounded-xl font-bold text-xs cursor-pointer border-0 transition-colors capitalize ${
-                activeFilter === filter
-                  ? 'bg-[#EEF5FC] text-[#1E6FCB]'
-                  : 'text-[#56657A] hover:bg-slate-50'
-              }`}
-            >
-              {filter === 'todos' ? 'Todos los reclamos' : filter}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Banner de Estado Vacío si el filtro no tiene resultados */}
+      {/* Desktop Empty State Sidebar (Left) */}
       {filteredReports.length === 0 && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-slate-200 text-xs font-bold text-[#56657A] flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-[#E08A00]" />
-          <span>No hay reportes con estado "{activeFilter}"</span>
-        </div>
-      )}
-
-      {/* Tarjeta Flotante de Reporte Seleccionado (Popup Bottom Card) */}
-      <AnimatePresence>
-        {selectedReport && (
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute bottom-[92px] sm:bottom-[102px] left-4 right-4 sm:left-auto sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-30 sm:w-[420px] bg-white rounded-[24px] p-4 sm:p-5 shadow-[0px_14px_40px_rgba(15,30,60,0.22)] border border-[#E4ECF4]"
-          >
-            {/* Cabecera del reporte */}
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#EEF5FC] text-[#1E6FCB]">
-                  {selectedReport.category}
-                </span>
-                <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${selectedReport.statusColor}`}>
-                  {selectedReport.status}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedReport(null)}
-                aria-label="Cerrar detalle de reporte"
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer border-0 transition-colors"
+        <div className="hidden md:flex w-[312px] flex-shrink-0 border-r border-[#EEF1F5] flex-col bg-white z-20 h-full">
+          {/* Header filtros */}
+          <div className="py-3.5 px-5 border-b border-[#EEF1F5]">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-[13px] text-[#243447]">0 resultados</span>
+              <button 
+                onClick={() => setActiveFilter('todos')}
+                className="font-bold text-[11px] text-[#1E6FCB] bg-transparent border-none cursor-pointer p-0"
               >
-                <X className="w-4 h-4" />
+                Limpiar todo
               </button>
             </div>
+            <div className="mt-2.5 flex gap-1.5 flex-wrap">
+              {activeFilter !== 'todos' && (
+                <span className="font-bold text-[10px] text-[#1E6FCB] bg-[#E8F1FB] border border-[#D4E6F8] rounded-[9px] px-2 py-1 inline-flex items-center gap-1">
+                  {activeFilter}
+                  <span className="material-symbols-rounded text-[13px] cursor-pointer" onClick={() => setActiveFilter('todos')}>close</span>
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Content vacío */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-6 pb-6">
+            <svg width="120" height="94" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="12" width="112" height="80" rx="9" fill="#f2f6fa" stroke="#d6dfe9" strokeWidth="2"></rect>
+              <path d="M10 46h112M10 68h112M46 12v80M86 12v80" stroke="#e2e9f1" strokeWidth="3"></path>
+              <path d="M52 30h46L80 52v22l-10-6V52L52 30Z" fill="#fff" stroke="#1E6FCB" strokeWidth="2.6" strokeLinejoin="round"></path>
+              <circle cx="80" cy="40" r="4" fill="#1E6FCB" opacity=".25"></circle>
+              <circle cx="104" cy="76" r="13" fill="#fff" stroke="#c9d4e0" strokeWidth="2.5"></circle>
+              <path d="M99 71l10 10M109 71l-10 10" stroke="#9aa7b5" strokeWidth="2.6" strokeLinecap="round"></path>
+            </svg>
+            
+            <div className="font-extrabold text-[15px] text-[#243447] mt-3 tracking-tight">
+              Ningún reporte con estos filtros
+            </div>
+            
+            <div className="font-medium text-[11.5px] leading-[1.55] text-[#7A8696] mt-1.5">
+              Hay reportes en la zona, pero ninguno coincide con los filtros activos.
+            </div>
+            
+            <div className="mt-4 flex gap-2">
+              <button 
+                onClick={() => setActiveFilter('todos')}
+                className="bg-[#1E6FCB] text-white border-none rounded-[11px] px-4 py-2 font-extrabold text-[12px] cursor-pointer hover:bg-[#15539E] transition-colors"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {/* Título y descripción */}
-            <h3 className="font-extrabold text-[15px] sm:text-[16px] text-[#1B365D] tracking-tight m-0 mb-1 leading-snug">
-              {selectedReport.title}
-            </h3>
-            <p className="font-medium text-[12px] text-[#64748B] m-0 mb-3 line-clamp-2 leading-relaxed">
-              {selectedReport.description}
-            </p>
+      {/* Map Container */}
+      <div className="relative flex-1 h-full w-full">
+        
+        {/* Contenedor DOM para MapLibre con touch-action: none */}
+        <div
+          ref={mapContainerRef}
+          data-testid="maplibre-container"
+          className="w-full h-full absolute inset-0"
+          style={{ touchAction: 'none' }}
+        />
 
-            {/* Footer con Dirección y Fecha */}
-            <div className="flex items-center justify-between text-[11px] text-[#8593A2] pt-2.5 border-t border-slate-100">
-              <div className="flex items-center gap-1 min-w-0">
-                <MapPin className="w-3.5 h-3.5 text-[#1E6FCB] flex-shrink-0" />
-                <span className="truncate font-semibold text-[#475569]">
-                  {selectedReport.address}
+        {/* Overlay central en el mapa para Desktop si no hay resultados */}
+        {filteredReports.length === 0 && (
+          <div className="hidden md:flex absolute inset-0 bg-[#F4F7FB]/60 z-10 pointer-events-none items-center justify-center">
+            <div className="bg-white border border-[#E6ECF3] rounded-[12px] px-4 py-2.5 flex items-center gap-2 shadow-[0_8px_22px_rgba(20,40,80,0.12)]">
+              <span className="material-symbols-rounded text-[18px] text-[#9AA7B5]">layers_clear</span>
+              <span className="font-semibold text-[11.5px] text-[#56657A]">Sin marcadores para mostrar</span>
+            </div>
+          </div>
+        )}
+
+        {/* Renderizado de marcadores fallback para entornos de testing / SSR */}
+        {typeof window !== 'undefined' && typeof Map !== 'function' && (
+          <div data-testid="fallback-markers-container" className="hidden">
+            {filteredReports.map((report) => (
+              <button
+                key={report.id}
+                data-testid={`marker-${report.id}`}
+                onClick={() => setSelectedReport(report)}
+              >
+                {report.title}
+              </button>
+            ))}
+            {userLocation && (
+              <div data-testid="user-location-marker">Tu ubicación</div>
+            )}
+          </div>
+        )}
+
+        {/* Spinner de carga inicial que se desvanece de inmediato */}
+        {!mapLoaded && (
+          <div className="absolute inset-0 bg-[#e5e9ec] flex items-center justify-center z-10 pointer-events-none transition-opacity duration-300">
+            <div className="flex flex-col items-center gap-2 text-[#7B8A9A]">
+              <div className="w-8 h-8 border-3 border-[#1E6FCB] border-t-transparent rounded-full animate-spin" />
+              <span className="font-bold text-xs">Cargando mapa...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Banner Informativo No Bloqueante ante Permiso Denegado / Sin Ubicación */}
+        <AnimatePresence>
+          {showLocationBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-4 left-4 right-18 z-20 max-w-[420px]"
+            >
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:px-4 shadow-lg border border-slate-200 flex items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <AlertCircle className="w-4 h-4 text-[#E08A00] flex-shrink-0" />
+                  <div className="text-left min-w-0">
+                    <div className="font-bold text-[12px] text-[#243447] truncate">
+                      Ubicación desactivada
+                    </div>
+                    <div className="text-[11px] text-[#64748B] truncate">
+                      Mostrando CABA y Avellaneda por defecto
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => detectUserLocation(true)}
+                    className="px-2.5 py-1 rounded-lg bg-[#EEF5FC] text-[#1E6FCB] hover:bg-[#E1EFFD] font-extrabold text-[11px] cursor-pointer border-0 transition-colors flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
+                    <span>Activar</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationBanner(false)}
+                    aria-label="Cerrar aviso de ubicación"
+                    className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer border-0 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Botón Flotante de Filtros (Top Right) */}
+        <button
+          type="button"
+          aria-label="Filtros del mapa"
+          onClick={() => {
+            setShowFiltersModal((prev) => !prev);
+            if (onFilterClick) onFilterClick();
+          }}
+          className="absolute top-4 right-4 z-20 w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+        >
+          <SlidersHorizontal className="w-5 h-5 text-[#1E6FCB]" />
+        </button>
+
+        {/* Menú de Filtros emergente */}
+        {showFiltersModal && (
+          <div className="absolute right-4 top-18 bg-white rounded-2xl p-3 shadow-xl border border-slate-100 z-30 w-48 flex flex-col gap-1 animate-in fade-in zoom-in-95">
+            <div className="font-extrabold text-[11px] text-[#8593A2] uppercase tracking-wider mb-1 px-1">
+              Filtrar reclamos
+            </div>
+            {['todos', 'Enviado', 'En curso', 'Resuelto'].map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => {
+                  setActiveFilter(filter);
+                  setShowFiltersModal(false);
+                }}
+                className={`text-left px-3 py-2 rounded-xl font-bold text-xs cursor-pointer border-0 transition-colors capitalize ${
+                  activeFilter === filter
+                    ? 'bg-[#EEF5FC] text-[#1E6FCB]'
+                    : 'text-[#56657A] hover:bg-slate-50'
+                }`}
+              >
+                {filter === 'todos' ? 'Todos los reclamos' : filter}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Banner de Estado Vacío si el filtro no tiene resultados (Mobile) */}
+        {filteredReports.length === 0 && (
+          <div className="md:hidden absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-slate-200 text-xs font-bold text-[#56657A] flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#E08A00]" />
+            <span>No hay reportes con estado "{activeFilter}"</span>
+          </div>
+        )}
+
+        {/* Tarjeta Flotante de Reporte Seleccionado (Popup Bottom Card) */}
+        <AnimatePresence>
+          {selectedReport && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute bottom-[92px] sm:bottom-[102px] left-4 right-4 sm:left-auto sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-30 sm:w-[420px] bg-white rounded-[24px] p-4 sm:p-5 shadow-[0px_14px_40px_rgba(15,30,60,0.22)] border border-[#E4ECF4]"
+            >
+              {/* Cabecera del reporte */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#EEF5FC] text-[#1E6FCB]">
+                    {selectedReport.category}
+                  </span>
+                  <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${selectedReport.statusColor}`}>
+                    {selectedReport.status}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedReport(null)}
+                  aria-label="Cerrar detalle de reporte"
+                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer border-0 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Título y descripción */}
+              <h3 className="font-extrabold text-[15px] sm:text-[16px] text-[#1B365D] tracking-tight m-0 mb-1 leading-snug">
+                {selectedReport.title}
+              </h3>
+              <p className="font-medium text-[12px] text-[#64748B] m-0 mb-3 line-clamp-2 leading-relaxed">
+                {selectedReport.description}
+              </p>
+
+              {/* Footer con Dirección y Fecha */}
+              <div className="flex items-center justify-between text-[11px] text-[#8593A2] pt-2.5 border-t border-slate-100">
+                <div className="flex items-center gap-1 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 text-[#1E6FCB] flex-shrink-0" />
+                  <span className="truncate font-semibold text-[#475569]">
+                    {selectedReport.address}
+                  </span>
+                </div>
+                <span className="font-semibold flex-shrink-0 ml-2">
+                  {selectedReport.date}
                 </span>
               </div>
-              <span className="font-semibold flex-shrink-0 ml-2">
-                {selectedReport.date}
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Leyenda Menos / Más (Bottom Left at 104px) */}
-      <div className="absolute bottom-[104px] left-4 z-20 bg-white/95 backdrop-blur-md rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-md border border-slate-100 text-[11px] font-bold text-[#64748B] select-none">
-        <span>Menos</span>
-        <div className="w-14 h-2 rounded-full bg-gradient-to-r from-[#22C55E] via-[#F97316] to-[#EF4444]" />
-        <span>Más</span>
+        {/* Leyenda Menos / Más (Bottom Left at 104px) */}
+        <div className="absolute bottom-[104px] left-4 z-20 bg-white/95 backdrop-blur-md rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-md border border-slate-100 text-[11px] font-bold text-[#64748B] select-none">
+          <span>Menos</span>
+          <div className="w-14 h-2 rounded-full bg-gradient-to-r from-[#22C55E] via-[#F97316] to-[#EF4444]" />
+          <span>Más</span>
+        </div>
+
+        {/* Botón Flotante de Geolocalización (Bottom Right at 104px) */}
+        <button
+          type="button"
+          aria-label="Centrar en mi ubicación"
+          title="Centrar en mi ubicación"
+          onClick={() => detectUserLocation(true)}
+          className="absolute bottom-[104px] right-4 z-20 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+        >
+          <Navigation className={`w-5 h-5 text-[#1E6FCB] ${isLocating ? 'animate-spin' : ''}`} />
+        </button>
       </div>
-
-      {/* Botón Flotante de Geolocalización (Bottom Right at 104px) */}
-      <button
-        type="button"
-        aria-label="Centrar en mi ubicación"
-        title="Centrar en mi ubicación"
-        onClick={() => detectUserLocation(true)}
-        className="absolute bottom-[104px] right-4 z-20 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
-      >
-        <Navigation className={`w-5 h-5 text-[#1E6FCB] ${isLocating ? 'animate-spin' : ''}`} />
-      </button>
-
     </div>
   );
 };
