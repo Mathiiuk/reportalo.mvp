@@ -118,103 +118,63 @@ export const ReportsPage = () => {
           {/* Cuerpo: Empty State o Listado de Reportes */}
           {filteredReports.length === 0 ? (
             
-            /* Tarjeta de Empty State (Copia idéntica al diseño) */
-            <div className="bg-white rounded-[28px] border border-[#E8EEF5] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] p-6 sm:p-7 flex flex-col items-center text-center mt-2">
+            /* Tarjeta de Empty State (Responsiva) */
+            <div className="bg-white md:bg-white rounded-[28px] md:rounded-[16px] border border-[#E8EEF5] md:border-[#E6ECF3] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] md:shadow-[0_2px_12px_rgba(20,40,80,0.05)] p-6 sm:p-7 md:p-7 flex flex-col md:flex-row items-center md:items-start text-center md:text-left mt-2 md:mt-10 md:max-w-[580px] md:mx-auto md:gap-[30px]">
               
-              {/* Ilustración de Parque y Calma */}
-              <div className="w-full max-w-[280px] h-[190px] rounded-[22px] overflow-hidden bg-[#E9F5EF] flex items-center justify-center relative mb-4 shadow-inner">
-                {/* SVG Ilustración Parque Pacífico */}
-                <svg viewBox="0 0 320 220" className="w-full h-full object-cover">
-                  <defs>
-                    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#C9E6FF" />
-                      <stop offset="100%" stopColor="#EBF5FB" />
-                    </linearGradient>
-                    <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#A3E098" />
-                      <stop offset="100%" stopColor="#6BC264" />
-                    </linearGradient>
-                  </defs>
-                  
-                  {/* Cielo */}
-                  <rect width="320" height="220" fill="url(#skyGrad)" />
-                  
-                  {/* Sol */}
-                  <circle cx="170" cy="55" r="22" fill="#FDE047" opacity="0.85" />
-                  <circle cx="170" cy="55" r="30" fill="#FEF08A" opacity="0.35" />
-
-                  {/* Nubes */}
-                  <ellipse cx="100" cy="50" rx="35" ry="16" fill="#FFFFFF" opacity="0.85" />
-                  <ellipse cx="120" cy="46" rx="25" ry="14" fill="#FFFFFF" opacity="0.85" />
-                  <ellipse cx="230" cy="65" rx="30" ry="12" fill="#FFFFFF" opacity="0.85" />
-
-                  {/* Colinas de fondo */}
-                  <path d="M-20,180 Q80,120 180,150 T340,140 L340,220 L-20,220 Z" fill="#93C5FD" opacity="0.4" />
-
-                  {/* Prado / Césped */}
-                  <path d="M-10,155 Q80,140 160,150 T330,135 L330,220 L-10,220 Z" fill="url(#grassGrad)" />
-
-                  {/* Árbol Grande Derecho */}
-                  <rect x="230" y="125" width="14" height="60" fill="#8D6E63" rx="2" />
-                  <circle cx="237" cy="110" r="38" fill="#4CAF50" />
-                  <circle cx="215" cy="120" r="26" fill="#43A047" />
-                  <circle cx="255" cy="115" r="24" fill="#388E3C" />
-                  <circle cx="235" cy="95" r="28" fill="#66BB6A" />
-
-                  {/* Árbol Izquierdo */}
-                  <rect x="85" y="135" width="8" height="45" fill="#8D6E63" rx="2" />
-                  <circle cx="89" cy="120" r="26" fill="#66BB6A" />
-                  <circle cx="75" cy="128" r="18" fill="#4CAF50" />
-                  <circle cx="102" cy="126" r="18" fill="#43A047" />
-
-                  {/* Sendero */}
-                  <path d="M-10,210 Q90,180 180,200 L330,215 L330,220 L-10,220 Z" fill="#E2E8F0" opacity="0.8" />
-
-                  {/* Banco de Parque */}
-                  <rect x="135" y="162" width="60" height="6" rx="2" fill="#D97706" />
-                  <rect x="137" y="150" width="56" height="10" rx="2" fill="#B45309" />
-                  <rect x="142" y="168" width="4" height="16" fill="#475569" />
-                  <rect x="184" y="168" width="4" height="16" fill="#475569" />
-
-                  {/* Persona sentada en el banco */}
-                  <circle cx="165" cy="140" r="7" fill="#FBBF24" /> {/* Cabeza */}
-                  <path d="M158,140 Q165,130 172,140 Q174,152 165,150 Z" fill="#78350F" /> {/* Pelo */}
-                  <path d="M159,148 L171,148 L170,165 L160,165 Z" fill="#0D9488" rx="2" /> {/* Camisa */}
-                  <path d="M160,165 L150,178 L154,180 L164,167 Z" fill="#3B82F6" /> {/* Piernas */}
-                  <path d="M166,165 L168,178 L172,178 L170,165 Z" fill="#2563EB" />
+              {/* Ilustración Clipboard */}
+              <div className="flex-none mb-4 md:mb-0 flex items-center justify-center w-[132px] md:mt-1">
+                <svg width="132" height="104" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="30" y="8" width="72" height="88" rx="8" fill="#fff" stroke="#c9d4e0" strokeWidth="2"></rect>
+                  <rect x="52" y="2" width="28" height="12" rx="5" fill="#dde4ec" stroke="#c9d4e0" strokeWidth="2"></rect>
+                  <line x1="42" y1="34" x2="90" y2="34" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
+                  <line x1="42" y1="48" x2="78" y2="48" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
+                  <line x1="42" y1="62" x2="86" y2="62" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
+                  <rect x="16" y="62" width="40" height="30" rx="7" fill="#1E6FCB"></rect>
+                  <rect x="27" y="56" width="14" height="8" rx="3" fill="#1E6FCB"></rect>
+                  <circle cx="36" cy="77" r="9" fill="#fff"></circle>
+                  <circle cx="36" cy="77" r="4.5" fill="#1E6FCB"></circle>
                 </svg>
               </div>
 
-              {/* Título de estado */}
-              <h2 className="font-extrabold text-[20px] text-[#1B365D] tracking-[-0.3px] m-0">
-                Aún no has reportado nada
-              </h2>
+              {/* Contenido */}
+              <div className="flex-1 flex flex-col items-center md:items-start">
+                {/* Título de estado */}
+                <h2 className="font-extrabold text-[17px] text-[#243447] tracking-[-0.2px] m-0">
+                  Todavía no enviaste reportes
+                </h2>
 
-              {/* Mensaje tranquilizador */}
-              <p className="font-medium text-[13px] leading-[1.5] text-[#64748B] mt-2 mb-0 max-w-[320px]">
-                ¡Eso es una buena noticia! Significa que todo está en calma. Si ves un incidente o problema en tu barrio, reportalo fácilmente.
-              </p>
+                {/* Mensaje */}
+                <p className="font-medium text-[12.5px] leading-[1.6] text-[#7A8696] mt-[7px] mb-0 text-pretty">
+                  Cuando envíes uno, acá vas a poder seguir su estado paso a paso hasta que se resuelva, y descargar la constancia de cierre.
+                </p>
 
-              {/* Botón Principal: Explorar mapa */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/mapa')}
-                type="button"
-                className="w-full bg-[#1E6FCB] text-white rounded-full py-[14px] px-6 text-center font-extrabold text-[14px] shadow-[0px_6px_16px_rgba(30,111,203,0.28)] hover:bg-[#15539E] cursor-pointer border-0 mt-5 transition-colors"
-              >
-                Explorar mapa
-              </motion.button>
-
-              {/* Botón Secundario: Ver reportes de ejemplo */}
-              <button
-                onClick={() => setIsDemoActive(true)}
-                type="button"
-                className="w-full bg-white border border-[#E2E8F0] text-[#1E6FCB] hover:bg-slate-50 rounded-full py-[12px] px-6 text-center font-bold text-[13.5px] cursor-pointer mt-2.5 transition-colors"
-              >
-                Ver reportes de ejemplo
-              </button>
-
+                {/* Botones */}
+                <div className="flex flex-col md:flex-row items-center gap-3 md:gap-3.5 mt-4 md:mt-4 w-full md:w-auto">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/nuevo-reporte')}
+                    type="button"
+                    className="w-full md:w-auto bg-[#1E6FCB] text-white rounded-[11px] py-2.5 px-4 md:px-[18px] flex items-center justify-center gap-1.5 font-extrabold text-[12.5px] cursor-pointer border-0 transition-colors hover:bg-[#15539E]"
+                  >
+                    <span className="material-symbols-rounded text-[17px]">
+                      add_a_photo
+                    </span>
+                    Hacer mi primer reporte
+                  </motion.button>
+                  
+                  <button
+                    onClick={() => navigate('/mapa')}
+                    type="button"
+                    className="w-full md:w-auto bg-transparent border-none text-[#8593A2] hover:text-[#5B6A7A] font-bold text-[12px] cursor-pointer transition-colors"
+                  >
+                    Ver el mapa de la zona
+                  </button>
+                </div>
+                
+                {/* Botón oculto para demo */}
+                <button onClick={() => setIsDemoActive(true)} className="opacity-0 w-0 h-0 p-0 m-0 absolute">demo</button>
+              </div>
             </div>
           ) : (
             
