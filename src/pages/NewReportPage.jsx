@@ -1,15 +1,17 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
+import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Integra los Pasos 1 y 2 con diseño calcado del User Journey v2.
+ * Integra los Pasos 1, 2 y 3 con diseño calcado del User Journey v2.
  */
 export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const navigate = useNavigate();
@@ -62,6 +64,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
   };
 
+  // Simulación / Acción de envío del reporte
+  const handleSubmitReport = () => {
+    toast.success('¡Reporte generado con éxito!', {
+      description: 'Tu evidencia fue registrada localmente con estado CAPTURED_LOCAL.',
+    });
+    handleCancel();
+  };
+
   return (
     <div
       data-testid="new-report-page"
@@ -112,40 +122,26 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           </motion.div>
         )}
 
-        {/* PASO 3: Placeholder para el envío final */}
+        {/* PASO 3: Revisión antes de enviar (Diseño exacto Journey v2) */}
         {currentStep === 3 && (
           <motion.div
             key="step-3"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            className="w-full h-full bg-[#F4F7FB] flex flex-col justify-between p-4"
+            className="w-full h-full flex flex-col"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(2)}
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-slate-200 cursor-pointer"
-              >
-                <span className="material-symbols-rounded text-[20px]">arrow_back</span>
-              </button>
-              <h2 className="text-[17px] font-extrabold text-[#1B365D] m-0">Paso 3: Enviar</h2>
-            </div>
-
-            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex-1 flex flex-col items-center justify-center text-center">
-              <p className="text-sm font-bold text-[#1B365D] mb-1">Paso de Revisión y Envío</p>
-              <p className="text-xs text-slate-500 max-w-[260px]">
-                Categoría: <strong>{selectedCategory?.name}</strong> con {activeList.length} foto(s).
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] text-white font-extrabold text-[14px] cursor-pointer border-0 mt-4"
-            >
-              Volver al mapa
-            </button>
+            <ReportReviewStep
+              evidenceList={activeList}
+              selectedCategory={selectedCategory}
+              description={description}
+              geolocation={coordinates}
+              address="Av. Mitre 1240, Avellaneda"
+              onBack={handleBack}
+              onSubmit={handleSubmitReport}
+              onViewAllPhotos={() => setCurrentStep(1)}
+              onOpenTerms={() => navigate('/terminos', { state: { consultaDesde: 'nuevo-reporte' } })}
+            />
           </motion.div>
         )}
       </AnimatePresence>
