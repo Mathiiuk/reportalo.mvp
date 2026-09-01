@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🤖 Agente: Nueva Tarea",
+      "type": "shell",
+      "command": "agt task:new",
+      "problemMatcher": []
+    },
+    {
+      "label": "🤖 Agente: Bucle Autónomo",
+      "type": "shell",
+      "command": "agt task:loop",
+      "problemMatcher": []
+    },
+    {
+      "label": "🤖 Agente: Sincronizar Memoria",
+      "type": "shell",
+      "command": "agt memory:sync",
+      "problemMatcher": []
+    }
+  ]
+}
