@@ -204,6 +204,10 @@ export const AppRoutes = () => {
         path="/municipios"
         element={<MunicipiosPage />}
       />
+      <Route
+        path="/municipalidad/plan"
+        element={<Navigate to="/municipios#planes" replace />}
+      />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
