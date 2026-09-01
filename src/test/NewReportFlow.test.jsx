@@ -3,45 +3,42 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { NewReportPage } from '../pages/NewReportPage';
-import { AuthContext } from '../context/AuthContext';
 
 describe('REP-2200: Iniciar un nuevo reporte ciudadano', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const mockAuthContext = {
-    session: { user: { id: 'usr-123', email: 'vecino@reportalo.com.ar' } },
-    user: { id: 'usr-123', email: 'vecino@reportalo.com.ar' },
-    loading: false,
-    signOut: vi.fn(),
-  };
-
-  it('UT-NR-01: Renderiza la cabecera del flujo de nuevo reporte con indicador de paso', () => {
+  it('UT-NR-01: Renderiza la experiencia de captura de fotos del paso 1 con badge de privacidad y disparo', () => {
     render(
       <MemoryRouter initialEntries={['/nuevo-reporte']}>
         <NewReportPage />
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('heading', { name: /nuevo reporte/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/paso 1 de 3/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /volver al mapa/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancelar reporte/i })).toBeInTheDocument();
+    expect(screen.getByText(/Privacidad activada/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /tomar fotografía/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cerrar cámara/i })).toBeInTheDocument();
   });
 
-  it('UT-NR-02: En el paso 1 el boton Continuar permanece deshabilitado si no hay evidencia adjunta', () => {
+  it('UT-NR-02: En el paso 1 no permite avanzar sin fotos y al agregar una foto se habilita el avance', () => {
     render(
       <MemoryRouter initialEntries={['/nuevo-reporte']}>
         <NewReportPage />
       </MemoryRouter>
     );
 
-    const continueBtn = screen.getByRole('button', { name: /continuar/i });
-    expect(continueBtn).toBeDisabled();
+    // Inicialmente no hay botón continuar (requiere al menos 1 foto)
+    expect(screen.queryByRole('button', { name: /continuar al siguiente paso/i })).not.toBeInTheDocument();
+
+    const galleryInput = screen.getByTestId('gallery-file-input');
+    const validFile = new File(['img'], 'foto.jpg', { type: 'image/jpeg' });
+    fireEvent.change(galleryInput, { target: { files: [validFile] } });
+
+    expect(screen.getByRole('button', { name: /continuar al siguiente paso/i })).toBeInTheDocument();
   });
 
-  it('UT-NR-03: Al hacer clic en Cancelar o Volver al mapa, redirige hacia /mapa sin persistir datos incompletos', () => {
+  it('UT-NR-03: Al hacer clic en Cerrar cámara, redirige hacia /mapa sin persistir datos incompletos', () => {
     render(
       <MemoryRouter initialEntries={['/nuevo-reporte']}>
         <Routes>
@@ -51,8 +48,8 @@ describe('REP-2200: Iniciar un nuevo reporte ciudadano', () => {
       </MemoryRouter>
     );
 
-    const backBtn = screen.getByRole('button', { name: /volver al mapa/i });
-    fireEvent.click(backBtn);
+    const closeBtn = screen.getByRole('button', { name: /cerrar cámara/i });
+    fireEvent.click(closeBtn);
 
     expect(screen.getByText('Pantalla Principal Mapa')).toBeInTheDocument();
   });

@@ -48,34 +48,8 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /app
+  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /mapa
   if (onboardingCompleted && location.pathname === '/onboarding') {
-    return <Navigate to="/app" replace />;
-  }
-
-  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
-  const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
-  const termsBlocked = isTermsConsentBlocked(user?.id);
-
-  // 3. Blindaje de seguridad: Si los términos están bloqueados o fueron rechazados
-  if ((termsRejected || termsBlocked) && location.pathname !== '/terminos') {
-    return <Navigate to="/terminos" replace />;
-  }
-
-  // 4. Si ya completó ambos pasos obligatorios y entra a /onboarding → llevar a /mapa
-  if (onboardingCompleted && termsAccepted && location.pathname === '/onboarding') {
-    return <Navigate to="/mapa" replace />;
-  }
-
-  // 4b. Si accede a /terminos con T&C vigentes, permitir la consulta voluntaria (desde Perfil)
-  //     pero redirigir a /mapa si no hay intención consultiva (acceso directo a la URL).
-  const esConsultaVoluntaria = Boolean(location.state?.consultaDesde);
-  if (
-    onboardingCompleted &&
-    termsAccepted &&
-    location.pathname === '/terminos' &&
-    !esConsultaVoluntaria
-  ) {
     return <Navigate to="/mapa" replace />;
   }
 
