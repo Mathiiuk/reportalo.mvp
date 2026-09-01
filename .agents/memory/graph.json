@@ -1,0 +1,1597 @@
+{
+  "updatedAt": "2026-09-01T16:04:36.494Z",
+  "project": "reportalo.mvp",
+  "metrics": {
+    "totalNodes": 52,
+    "totalEdges": 193,
+    "totalTasks": 12,
+    "totalLessons": 0
+  },
+  "nodes": [
+    {
+      "id": "src/App.jsx",
+      "label": "App.jsx",
+      "type": "module",
+      "sizeBytes": 6088,
+      "lineCount": 218,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "sonner",
+        "./context/AuthContext",
+        "./hooks/useAuth",
+        "./services/termsService",
+        "./pages/WelcomePage",
+        "./pages/LoginPage",
+        "./pages/CheckEmailPage",
+        "./pages/OnboardingPage",
+        "./pages/TermsAndPermissionsPage",
+        "./pages/MapPage",
+        "./pages/ReportsPage",
+        "./pages/NewsPage",
+        "./pages/ProfilePage",
+        "./pages/BlankAppPage",
+        "./pages/MunicipiosPage",
+        "./pages/NewReportPage"
+      ]
+    },
+    {
+      "id": "src/components/layout/AppLayout.jsx",
+      "label": "AppLayout.jsx",
+      "type": "module",
+      "sizeBytes": 6520,
+      "lineCount": 158,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion",
+        "sonner",
+        "lucide-react"
+      ]
+    },
+    {
+      "id": "src/components/map/CitizenMap.jsx",
+      "label": "CitizenMap.jsx",
+      "type": "module",
+      "sizeBytes": 19960,
+      "lineCount": 508,
+      "imports": [
+        "react",
+        "maplibre-gl",
+        "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url",
+        "lucide-react",
+        "framer-motion",
+        "../../data/mockReports",
+        "../../services/locationService",
+        "maplibre-gl/dist/maplibre-gl.css"
+      ]
+    },
+    {
+      "id": "src/components/report/EvidenceCaptureStep.jsx",
+      "label": "EvidenceCaptureStep.jsx",
+      "type": "module",
+      "sizeBytes": 10737,
+      "lineCount": 254,
+      "imports": [
+        "react",
+        "lucide-react",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/components/report/ReportDetailsStep.jsx",
+      "label": "ReportDetailsStep.jsx",
+      "type": "module",
+      "sizeBytes": 8701,
+      "lineCount": 230,
+      "imports": [
+        "react",
+        "lucide-react",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/components/report/ReportReviewStep.jsx",
+      "label": "ReportReviewStep.jsx",
+      "type": "module",
+      "sizeBytes": 14733,
+      "lineCount": 366,
+      "imports": [
+        "react",
+        "lucide-react",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/context/AuthContext.jsx",
+      "label": "AuthContext.jsx",
+      "type": "module",
+      "sizeBytes": 9642,
+      "lineCount": 282,
+      "imports": [
+        "react",
+        "sonner",
+        "../lib/supabaseClient",
+        "../services/termsService"
+      ]
+    },
+    {
+      "id": "src/data/mockReports.js",
+      "label": "mockReports.js",
+      "type": "module",
+      "sizeBytes": 2571,
+      "lineCount": 70,
+      "imports": []
+    },
+    {
+      "id": "src/hooks/useAuth.js",
+      "label": "useAuth.js",
+      "type": "module",
+      "sizeBytes": 373,
+      "lineCount": 12,
+      "imports": [
+        "react",
+        "../context/AuthContext"
+      ]
+    },
+    {
+      "id": "src/hooks/useEvidenceCapture.js",
+      "label": "useEvidenceCapture.js",
+      "type": "module",
+      "sizeBytes": 4103,
+      "lineCount": 124,
+      "imports": [
+        "react",
+        "../types/evidence"
+      ]
+    },
+    {
+      "id": "src/hooks/useGeolocation.js",
+      "label": "useGeolocation.js",
+      "type": "module",
+      "sizeBytes": 2040,
+      "lineCount": 65,
+      "imports": [
+        "react",
+        "../services/locationService"
+      ]
+    },
+    {
+      "id": "src/lib/supabaseClient.js",
+      "label": "supabaseClient.js",
+      "type": "module",
+      "sizeBytes": 1116,
+      "lineCount": 37,
+      "imports": [
+        "@supabase/supabase-js"
+      ]
+    },
+    {
+      "id": "src/main.jsx",
+      "label": "main.jsx",
+      "type": "module",
+      "sizeBytes": 748,
+      "lineCount": 25,
+      "imports": [
+        "react",
+        "react-dom/client",
+        "./App",
+        "./index.css"
+      ]
+    },
+    {
+      "id": "src/pages/BlankAppPage.jsx",
+      "label": "BlankAppPage.jsx",
+      "type": "module",
+      "sizeBytes": 5206,
+      "lineCount": 127,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "sonner",
+        "../hooks/useAuth",
+        "../services/termsService"
+      ]
+    },
+    {
+      "id": "src/pages/CheckEmailPage.jsx",
+      "label": "CheckEmailPage.jsx",
+      "type": "module",
+      "sizeBytes": 12410,
+      "lineCount": 281,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion",
+        "sonner",
+        "../hooks/useAuth"
+      ]
+    },
+    {
+      "id": "src/pages/LoginPage.jsx",
+      "label": "LoginPage.jsx",
+      "type": "module",
+      "sizeBytes": 18324,
+      "lineCount": 401,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion",
+        "sonner",
+        "../hooks/useAuth",
+        "../services/termsService"
+      ]
+    },
+    {
+      "id": "src/pages/MapPage.jsx",
+      "label": "MapPage.jsx",
+      "type": "module",
+      "sizeBytes": 279,
+      "lineCount": 12,
+      "imports": [
+        "react",
+        "../components/layout/AppLayout",
+        "../components/map/CitizenMap"
+      ]
+    },
+    {
+      "id": "src/pages/MunicipiosPage.jsx",
+      "label": "MunicipiosPage.jsx",
+      "type": "module",
+      "sizeBytes": 10318,
+      "lineCount": 215,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/pages/NewReportPage.jsx",
+      "label": "NewReportPage.jsx",
+      "type": "module",
+      "sizeBytes": 5987,
+      "lineCount": 171,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion",
+        "sonner",
+        "../hooks/useAuth",
+        "../hooks/useEvidenceCapture",
+        "../components/report/EvidenceCaptureStep",
+        "../components/report/ReportDetailsStep",
+        "../components/report/ReportReviewStep",
+        "../hooks/useGeolocation",
+        "../services/categoriesService",
+        "../services/termsService"
+      ]
+    },
+    {
+      "id": "src/pages/NewsPage.jsx",
+      "label": "NewsPage.jsx",
+      "type": "module",
+      "sizeBytes": 3559,
+      "lineCount": 92,
+      "imports": [
+        "react",
+        "../components/layout/AppLayout",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/pages/OnboardingPage.jsx",
+      "label": "OnboardingPage.jsx",
+      "type": "module",
+      "sizeBytes": 15007,
+      "lineCount": 345,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/pages/ProfilePage.jsx",
+      "label": "ProfilePage.jsx",
+      "type": "module",
+      "sizeBytes": 5681,
+      "lineCount": 132,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "../components/layout/AppLayout",
+        "../hooks/useAuth",
+        "../services/termsService",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/pages/ReportsPage.jsx",
+      "label": "ReportsPage.jsx",
+      "type": "module",
+      "sizeBytes": 12104,
+      "lineCount": 263,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "../components/layout/AppLayout",
+        "framer-motion"
+      ]
+    },
+    {
+      "id": "src/pages/TermsAndPermissionsPage.jsx",
+      "label": "TermsAndPermissionsPage.jsx",
+      "type": "module",
+      "sizeBytes": 5545,
+      "lineCount": 135,
+      "imports": [
+        "react",
+        "react-router-dom"
+      ]
+    },
+    {
+      "id": "src/pages/WelcomePage.jsx",
+      "label": "WelcomePage.jsx",
+      "type": "module",
+      "sizeBytes": 13201,
+      "lineCount": 285,
+      "imports": [
+        "react",
+        "react-router-dom",
+        "framer-motion",
+        "../hooks/useAuth"
+      ]
+    },
+    {
+      "id": "src/services/categoriesService.js",
+      "label": "categoriesService.js",
+      "type": "module",
+      "sizeBytes": 2351,
+      "lineCount": 80,
+      "imports": [
+        "../lib/supabaseClient"
+      ]
+    },
+    {
+      "id": "src/services/locationService.js",
+      "label": "locationService.js",
+      "type": "module",
+      "sizeBytes": 5196,
+      "lineCount": 158,
+      "imports": []
+    },
+    {
+      "id": "src/services/termsService.js",
+      "label": "termsService.js",
+      "type": "module",
+      "sizeBytes": 12078,
+      "lineCount": 336,
+      "imports": [
+        "../lib/supabaseClient"
+      ]
+    },
+    {
+      "id": "src/test/AuthFlow.test.jsx",
+      "label": "AuthFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 11763,
+      "lineCount": 312,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "../pages/WelcomePage",
+        "../pages/LoginPage",
+        "../pages/CheckEmailPage",
+        "../pages/BlankAppPage",
+        "../pages/MunicipiosPage",
+        "../context/AuthContext",
+        "../lib/supabaseClient"
+      ]
+    },
+    {
+      "id": "src/test/EvidenceCaptureFlow.test.jsx",
+      "label": "EvidenceCaptureFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 6094,
+      "lineCount": 161,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "@testing-library/react",
+        "react-router-dom",
+        "../types/evidence",
+        "../hooks/useEvidenceCapture",
+        "../components/report/EvidenceCaptureStep",
+        "../pages/NewReportPage"
+      ]
+    },
+    {
+      "id": "src/test/LocationFlow.test.jsx",
+      "label": "LocationFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 5269,
+      "lineCount": 162,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "../services/locationService",
+        "../components/map/CitizenMap"
+      ]
+    },
+    {
+      "id": "src/test/LocationService.test.jsx",
+      "label": "LocationService.test.jsx",
+      "type": "module",
+      "sizeBytes": 5424,
+      "lineCount": 151,
+      "imports": [
+        "vitest",
+        "@testing-library/react",
+        "../services/locationService",
+        "../hooks/useGeolocation"
+      ]
+    },
+    {
+      "id": "src/test/MapFlow.test.jsx",
+      "label": "MapFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 10714,
+      "lineCount": 260,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "sonner",
+        "../components/layout/AppLayout",
+        "../components/map/CitizenMap",
+        "../pages/MapPage",
+        "../pages/ReportsPage",
+        "../pages/NewsPage",
+        "../pages/ProfilePage",
+        "../context/AuthContext"
+      ]
+    },
+    {
+      "id": "src/test/NewReportFlow.test.jsx",
+      "label": "NewReportFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 2237,
+      "lineCount": 57,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "../pages/NewReportPage"
+      ]
+    },
+    {
+      "id": "src/test/OnboardingFlow.test.jsx",
+      "label": "OnboardingFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 4860,
+      "lineCount": 123,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "../pages/OnboardingPage"
+      ]
+    },
+    {
+      "id": "src/test/ReportDetailsStep.test.jsx",
+      "label": "ReportDetailsStep.test.jsx",
+      "type": "module",
+      "sizeBytes": 3146,
+      "lineCount": 88,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "../components/report/ReportDetailsStep",
+        "../services/categoriesService"
+      ]
+    },
+    {
+      "id": "src/test/ReportReviewStep.test.jsx",
+      "label": "ReportReviewStep.test.jsx",
+      "type": "module",
+      "sizeBytes": 4262,
+      "lineCount": 117,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "../components/report/ReportReviewStep",
+        "../services/categoriesService"
+      ]
+    },
+    {
+      "id": "src/test/setup.js",
+      "label": "setup.js",
+      "type": "module",
+      "sizeBytes": 325,
+      "lineCount": 11,
+      "imports": [
+        "@testing-library/jest-dom",
+        "vitest"
+      ]
+    },
+    {
+      "id": "src/test/TermsFlow.test.jsx",
+      "label": "TermsFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 1548,
+      "lineCount": 36,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "../pages/TermsAndPermissionsPage"
+      ]
+    },
+    {
+      "id": "src/types/evidence.js",
+      "label": "evidence.js",
+      "type": "module",
+      "sizeBytes": 2174,
+      "lineCount": 64,
+      "imports": []
+    },
+    {
+      "id": "task:REP-2100",
+      "label": "REP-2100: Iniciar sesión con Google (OAuth Supabase)",
+      "type": "task",
+      "status": "READY_FOR_PR",
+      "taskType": "feature"
+    },
+    {
+      "id": "task:REP-2101",
+      "label": "REP-2101: Iniciar sesión con Magic Link (Email OTP Supabase / Resend)",
+      "type": "task",
+      "status": "READY_FOR_PR",
+      "taskType": "feature"
+    },
+    {
+      "id": "task:REP-2200",
+      "label": "REP-2200: Iniciar un nuevo reporte ciudadano",
+      "type": "task",
+      "status": "READY_FOR_PR"
+    },
+    {
+      "id": "task:REP-2201",
+      "label": "REP-2201: Sacar foto desde la app",
+      "type": "task",
+      "status": "READY_FOR_PR"
+    },
+    {
+      "id": "task:REP-2300",
+      "label": "REP-2300: Detectar ubicación del ciudadano",
+      "type": "task",
+      "status": "READY_FOR_PR"
+    },
+    {
+      "id": "task:REP-2600",
+      "label": "REP-2600: Visualizar /mapa como pantalla principal ciudadana",
+      "type": "task",
+      "status": "READY_FOR_PR"
+    },
+    {
+      "id": "task:REP-3304",
+      "label": "REP-3304: Configurar Vercel preview por rama",
+      "type": "task",
+      "status": "IN_PROGRESS",
+      "taskType": "chore"
+    },
+    {
+      "id": "task:REP-3307",
+      "label": "REP-3307: Configurar ambiente staging",
+      "type": "task",
+      "status": "IN_PROGRESS",
+      "taskType": "chore"
+    },
+    {
+      "id": "task:REP-3519",
+      "label": "REP-3519: Finalizar Onboarding Ciudadano de 3 pasos (Mobile & Desktop)",
+      "type": "task",
+      "status": "READY_FOR_PR",
+      "taskType": "feature"
+    },
+    {
+      "id": "task:REP-3532",
+      "label": "REP-3532: Sincronización Asíncrona de Consentimiento de Términos con Supabase y Auditoría Multi-dispositivo",
+      "type": "task",
+      "status": "READY_FOR_PR"
+    },
+    {
+      "id": "task:REP-3544",
+      "label": "REP-3544: Manejo de Términos No Tildados, Rechazo y Validación Visual de Consentimiento",
+      "type": "task",
+      "status": "READY_FOR_PR",
+      "taskType": "feature"
+    },
+    {
+      "id": "task:REP-4100",
+      "label": "REP-4100: Mapa Ciudadano con MapLibre GL JS y Navegación Principal de 5 Botones",
+      "type": "task",
+      "status": "READY_FOR_PR",
+      "taskType": "feature"
+    }
+  ],
+  "edges": [
+    {
+      "from": "src/App.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./context/AuthContext",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/WelcomePage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/LoginPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/CheckEmailPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/OnboardingPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/TermsAndPermissionsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/MapPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/ReportsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/NewsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/ProfilePage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/BlankAppPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/MunicipiosPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/App.jsx",
+      "to": "./pages/NewReportPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/layout/AppLayout.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/layout/AppLayout.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/layout/AppLayout.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/layout/AppLayout.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/layout/AppLayout.jsx",
+      "to": "lucide-react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "maplibre-gl",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "lucide-react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "../../data/mockReports",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "../../services/locationService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/map/CitizenMap.jsx",
+      "to": "maplibre-gl/dist/maplibre-gl.css",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/EvidenceCaptureStep.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/EvidenceCaptureStep.jsx",
+      "to": "lucide-react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/EvidenceCaptureStep.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportDetailsStep.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportDetailsStep.jsx",
+      "to": "lucide-react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportDetailsStep.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportReviewStep.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportReviewStep.jsx",
+      "to": "lucide-react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/components/report/ReportReviewStep.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/context/AuthContext.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/context/AuthContext.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/context/AuthContext.jsx",
+      "to": "../lib/supabaseClient",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/context/AuthContext.jsx",
+      "to": "../services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useAuth.js",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useAuth.js",
+      "to": "../context/AuthContext",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useEvidenceCapture.js",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useEvidenceCapture.js",
+      "to": "../types/evidence",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useGeolocation.js",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/hooks/useGeolocation.js",
+      "to": "../services/locationService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/lib/supabaseClient.js",
+      "to": "@supabase/supabase-js",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/main.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/main.jsx",
+      "to": "react-dom/client",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/main.jsx",
+      "to": "./App",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/main.jsx",
+      "to": "./index.css",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/BlankAppPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/BlankAppPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/BlankAppPage.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/BlankAppPage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/BlankAppPage.jsx",
+      "to": "../services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/CheckEmailPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/CheckEmailPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/CheckEmailPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/CheckEmailPage.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/CheckEmailPage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/LoginPage.jsx",
+      "to": "../services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MapPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MapPage.jsx",
+      "to": "../components/layout/AppLayout",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MapPage.jsx",
+      "to": "../components/map/CitizenMap",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MunicipiosPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MunicipiosPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/MunicipiosPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../hooks/useEvidenceCapture",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../components/report/EvidenceCaptureStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../components/report/ReportDetailsStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../components/report/ReportReviewStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../hooks/useGeolocation",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../services/categoriesService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewReportPage.jsx",
+      "to": "../services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewsPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewsPage.jsx",
+      "to": "../components/layout/AppLayout",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/NewsPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/OnboardingPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/OnboardingPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/OnboardingPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "../components/layout/AppLayout",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "../services/termsService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ReportsPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ReportsPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ReportsPage.jsx",
+      "to": "../components/layout/AppLayout",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ReportsPage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/TermsAndPermissionsPage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/TermsAndPermissionsPage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/WelcomePage.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/WelcomePage.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/WelcomePage.jsx",
+      "to": "framer-motion",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/WelcomePage.jsx",
+      "to": "../hooks/useAuth",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/services/categoriesService.js",
+      "to": "../lib/supabaseClient",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/services/termsService.js",
+      "to": "../lib/supabaseClient",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../pages/WelcomePage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../pages/LoginPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../pages/CheckEmailPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../pages/BlankAppPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../pages/MunicipiosPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../context/AuthContext",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/AuthFlow.test.jsx",
+      "to": "../lib/supabaseClient",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "../types/evidence",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "../hooks/useEvidenceCapture",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "../components/report/EvidenceCaptureStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/EvidenceCaptureFlow.test.jsx",
+      "to": "../pages/NewReportPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationFlow.test.jsx",
+      "to": "../services/locationService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationFlow.test.jsx",
+      "to": "../components/map/CitizenMap",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationService.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationService.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationService.test.jsx",
+      "to": "../services/locationService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/LocationService.test.jsx",
+      "to": "../hooks/useGeolocation",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../components/layout/AppLayout",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../components/map/CitizenMap",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../pages/MapPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../pages/ReportsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../pages/NewsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../pages/ProfilePage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/MapFlow.test.jsx",
+      "to": "../context/AuthContext",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/NewReportFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/NewReportFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/NewReportFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/NewReportFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/NewReportFlow.test.jsx",
+      "to": "../pages/NewReportPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/OnboardingFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/OnboardingFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/OnboardingFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/OnboardingFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/OnboardingFlow.test.jsx",
+      "to": "../pages/OnboardingPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportDetailsStep.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportDetailsStep.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportDetailsStep.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportDetailsStep.test.jsx",
+      "to": "../components/report/ReportDetailsStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportDetailsStep.test.jsx",
+      "to": "../services/categoriesService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportReviewStep.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportReviewStep.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportReviewStep.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportReviewStep.test.jsx",
+      "to": "../components/report/ReportReviewStep",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ReportReviewStep.test.jsx",
+      "to": "../services/categoriesService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/setup.js",
+      "to": "@testing-library/jest-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/setup.js",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/TermsFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/TermsFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/TermsFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/TermsFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/TermsFlow.test.jsx",
+      "to": "../pages/TermsAndPermissionsPage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "task:REP-2100",
+      "to": ".agents/workflow/tasks/REP-2100.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-2101",
+      "to": ".agents/workflow/tasks/REP-2101.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-2200",
+      "to": ".agents/workflow/tasks/REP-2200.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-2201",
+      "to": ".agents/workflow/tasks/REP-2201.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-2300",
+      "to": ".agents/workflow/tasks/REP-2300.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-2600",
+      "to": ".agents/workflow/tasks/REP-2600.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-3304",
+      "to": ".agents/workflow/tasks/REP-3304.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-3307",
+      "to": ".agents/workflow/tasks/REP-3307.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-3519",
+      "to": ".agents/workflow/tasks/REP-3519.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-3532",
+      "to": ".agents/workflow/tasks/REP-3532.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-3544",
+      "to": ".agents/workflow/tasks/REP-3544.yml",
+      "relation": "manifested_by"
+    },
+    {
+      "from": "task:REP-4100",
+      "to": ".agents/workflow/tasks/REP-4100.yml",
+      "relation": "manifested_by"
+    }
+  ],
+  "lessons": []
+}
