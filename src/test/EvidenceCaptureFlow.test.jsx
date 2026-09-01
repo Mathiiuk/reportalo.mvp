@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react';
@@ -151,8 +151,9 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       fireEvent.click(screen.getByRole('button', { name: /continuar al siguiente paso/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/Paso 2 de 3/i)).toBeInTheDocument();
-        expect(screen.getByText(/Evidencia registrada \(1\)/i)).toBeInTheDocument();
+        expect(screen.getByText(/Categoría del incumplimiento/i)).toBeInTheDocument();
+        expect(screen.getByText('Detalle')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Continuar$/i })).toBeInTheDocument();
       });
     });
   });
