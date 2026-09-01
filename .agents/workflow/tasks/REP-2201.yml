@@ -1,0 +1,15 @@
+﻿id: "REP-2201"
+title: "Sacar foto desde la app"
+epic: "REP-1002"
+assignee: "Matias Krepchuk"
+status: "READY_FOR_PR"
+branch: "feat/REP-2201-sacar-foto-app"
+sprint: 10
+created_at: "2026-08-31T20:10:00.000Z"
+completed_at: "2026-08-31T20:25:00.000Z"
+tags:
+  - "evidence"
+  - "camera"
+  - "gallery"
+  - "sprint-10"
+  - "privacy-ready"
