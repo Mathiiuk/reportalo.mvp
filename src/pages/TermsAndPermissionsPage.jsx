@@ -1,16 +1,17 @@
 ﻿import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Pantalla informativa de Términos y Privacidad en Solo Lectura (User Journey v2).
- * Leer esta página no implica aceptación; el consentimiento se otorga al enviar el primer reporte.
+ * Puede usarse como ruta `/terminos` o como modal superpuesto con `onBackOverride`.
  */
-export const TermsAndPermissionsPage = () => {
+export const TermsAndPermissionsPage = ({ onBackOverride }) => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    if (onBackOverride) {
+      onBackOverride();
+    } else if (window.history.length > 1) {
       navigate(-1);
     } else {
       navigate('/mapa', { replace: true });
@@ -118,7 +119,7 @@ export const TermsAndPermissionsPage = () => {
         </div>
       </main>
 
-      {/* 3. Footer Informativo: "Leer esta página no implica aceptación. Se te va a pedir al enviar." */}
+      {/* 3. Footer Informativo */}
       <footer className="flex-0 bg-[#F7F9FC] border-t border-[#EEF1F5] px-4 py-3 flex items-start gap-2 max-w-lg mx-auto w-full">
         <span className="material-symbols-rounded text-[15px] text-[#8593A2] flex-shrink-0 mt-0.5">
           info

@@ -7,6 +7,7 @@ import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
+import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
 import {
@@ -16,12 +17,13 @@ import {
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Integra los Pasos 1, 2 y 3 con modal bottom sheet de consentimiento único (User Journey v2).
+ * Integra los Pasos 1, 2 y 3 con modal bottom sheet y visor de terminos superpuesto (sin perder el estado).
  */
 export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
   const [description, setDescription] = useState('Camión de gran porte circulando por calle residencial, a las 14:30.');
@@ -158,8 +160,23 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onSubmitReport={handleSubmitReport}
               onAcceptTermsAndSubmit={handleAcceptTermsAndSubmit}
               onViewAllPhotos={() => setCurrentStep(1)}
-              onOpenTerms={() => navigate('/terminos')}
+              onOpenTerms={() => setShowTermsModal(true)}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL / PANTALLA SUPERPUESTA DE TÉRMINOS Y PRIVACIDAD (Preserva el estado intacto) */}
+      <AnimatePresence>
+        {showTermsModal && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed inset-0 z-50 bg-white"
+          >
+            <TermsAndPermissionsPage onBackOverride={() => setShowTermsModal(false)} />
           </motion.div>
         )}
       </AnimatePresence>
