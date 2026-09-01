@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "agt:task": "agt task:new",
+    "agt:loop": "agt task:loop",
+    "agt:memory": "agt memory:sync"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

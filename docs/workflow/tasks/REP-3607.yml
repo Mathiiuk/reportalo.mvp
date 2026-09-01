@@ -1,0 +1,22 @@
+id: REP-3607
+type: bug
+status: PLANNED
+priority: high
+title: "BUG | Perfil vuelve a solicitar aceptación de T&C ya aceptados"
+base_branch: staging
+target_branch: fix/REP-3607-terminos-modo-consultivo-perfil
+reported_at: "2026-08-31"
+references:
+  - REP-3532
+  - REP-3544
+  - REP-3603
+  - REP-3552
+requires_approval: true
+quality_gates:
+  build: true
+  unit_tests: true
+  integration_tests: false
+  e2e: false
+  lint: true
+  typecheck: false
+  security: false

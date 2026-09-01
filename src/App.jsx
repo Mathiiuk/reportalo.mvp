@@ -15,6 +15,9 @@ import { NewsPage } from './pages/NewsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
+import { NewReportPage } from './pages/NewReportPage';
+import { NotFoundReportPage } from './pages/NotFoundReportPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
@@ -47,26 +50,8 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /app
+  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /mapa
   if (onboardingCompleted && location.pathname === '/onboarding') {
-    return <Navigate to="/app" replace />;
-  }
-
-  const termsAccepted = hasAcceptedCurrentTerms(user?.id);
-  const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
-  const termsBlocked = isTermsConsentBlocked(user?.id);
-
-  // 3. Blindaje de seguridad: Si los términos están bloqueados o fueron rechazados
-  if ((termsRejected || termsBlocked) && location.pathname !== '/terminos') {
-    return <Navigate to="/terminos" replace />;
-  }
-
-  // 4. Si ya completó ambos pasos obligatorios y entra a /onboarding o /terminos, llevar a /mapa
-  if (
-    onboardingCompleted &&
-    termsAccepted &&
-    (location.pathname === '/onboarding' || location.pathname === '/terminos')
-  ) {
     return <Navigate to="/mapa" replace />;
   }
 
@@ -164,6 +149,14 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/nuevo-reporte"
+        element={
+          <ProtectedRoute>
+            <NewReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/reportes"
         element={
           <ProtectedRoute>
@@ -204,10 +197,14 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/r/:id"
+        element={<NotFoundReportPage />}
+      />
+      <Route
         path="/municipios"
         element={<MunicipiosPage />}
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
