@@ -299,34 +299,8 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
   }, [filteredReports, mapLoaded, selectedReport, userLocation, updateUserMarker]);
 
   return (
-    <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden bg-[#e5e9ec]">
+    <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden bg-[#e5e9ec] flex">
       
-      {/* Contenedor DOM para MapLibre con touch-action: none */}
-      <div
-        ref={mapContainerRef}
-        data-testid="maplibre-container"
-        className="w-full h-full absolute inset-0"
-        style={{ touchAction: 'none' }}
-      />
-
-      {/* Renderizado de marcadores fallback para entornos de testing / SSR */}
-      {typeof window !== 'undefined' && typeof Map !== 'function' && (
-        <div data-testid="fallback-markers-container" className="hidden">
-          {filteredReports.map((report) => (
-            <button
-              key={report.id}
-              data-testid={`marker-${report.id}`}
-              onClick={() => setSelectedReport(report)}
-            >
-              {report.title}
-            </button>
-          ))}
-          {userLocation && (
-            <div data-testid="user-location-marker">Tu ubicación</div>
-          )}
-        </div>
-      )}
-
       {/* Desktop Empty State Sidebar (Left) */}
       {filteredReports.length === 0 && (
         <div className="hidden md:flex w-[312px] flex-shrink-0 border-r border-[#EEF1F5] flex-col bg-white z-20 h-full">
