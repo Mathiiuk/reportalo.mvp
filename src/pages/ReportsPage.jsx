@@ -54,19 +54,24 @@ export const ReportsPage = () => {
 
   return (
     <AppLayout activeTab="reportes">
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-8 py-5">
-        <div className="max-w-[440px] md:max-w-[560px] mx-auto flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-10 py-6">
+        <div className="max-w-5xl mx-auto flex flex-col gap-5">
           
           {/* Header Superior: Título y Cargar demo */}
           <div className="flex items-center justify-between">
-            <h1 className="font-extrabold text-[24px] sm:text-[26px] text-[#1B365D] tracking-[-0.4px] m-0">
-              Mis reportes
-            </h1>
+            <div>
+              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-[#1B365D] tracking-[-0.4px] m-0">
+                Mis reportes
+              </h1>
+              <p className="text-[13px] text-[#7A8696] font-medium mt-1 mb-0">
+                Seguimiento y estado en tiempo real de tus reclamos enviados
+              </p>
+            </div>
             
             <button
               onClick={() => setIsDemoActive((prev) => !prev)}
               type="button"
-              className="font-bold text-[13px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-1 transition-colors"
+              className="font-bold text-[13px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-[#EEF5FC] hover:bg-[#E1EFFD] px-3.5 py-1.5 rounded-lg border-0 transition-colors"
             >
               {isDemoActive ? 'Limpiar demo' : 'Cargar demo'}
             </button>
@@ -119,7 +124,7 @@ export const ReportsPage = () => {
           {filteredReports.length === 0 ? (
             
             /* Tarjeta de Empty State (Responsiva) */
-            <div className="bg-white md:bg-white rounded-[28px] md:rounded-[16px] border border-[#E8EEF5] md:border-[#E6ECF3] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] md:shadow-[0_2px_12px_rgba(20,40,80,0.05)] p-6 sm:p-7 md:p-7 flex flex-col md:flex-row items-center md:items-start text-center md:text-left mt-2 md:mt-10 md:max-w-[580px] md:mx-auto md:gap-[30px]">
+            <div className="bg-white md:bg-white rounded-[28px] md:rounded-[16px] border border-[#E8EEF5] md:border-[#E6ECF3] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] md:shadow-[0_2px_12px_rgba(20,40,80,0.05)] p-6 sm:p-7 md:p-7 flex flex-col md:flex-row items-center md:items-start text-center md:text-left mt-2 md:mt-10 md:max-w-[620px] md:mx-auto md:gap-[30px]">
               
               {/* Ilustración Clipboard */}
               <div className="flex-none mb-4 md:mb-0 flex items-center justify-center w-[132px] md:mt-1">
@@ -178,36 +183,42 @@ export const ReportsPage = () => {
             </div>
           ) : (
             
-            /* Listado de tarjetas de reportes activos */
-            <div className="flex flex-col gap-3">
+            /* Listado de tarjetas de reportes activos en Grid Responsive */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredReports.map((report) => (
                 <motion.div
                   key={report.id}
-                  whileHover={{ y: -2 }}
-                  className="bg-white border border-[#E6ECF3] rounded-[18px] p-4 flex flex-col gap-2 shadow-xs cursor-pointer"
+                  whileHover={{ y: -3 }}
+                  className="bg-white border border-[#E6ECF3] rounded-[18px] p-5 flex flex-col justify-between gap-3 shadow-xs hover:shadow-md transition-all cursor-pointer"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider ${report.statusColor}`}>
-                      {report.status}
-                    </span>
-                    <span className="font-semibold text-[11px] text-[#9AA7B5]">
-                      {report.date}
-                    </span>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider ${report.statusColor}`}>
+                        {report.status}
+                      </span>
+                      <span className="font-semibold text-[11px] text-[#9AA7B5]">
+                        {report.date}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] font-bold text-[#1E6FCB] mb-1">
+                      {report.category}
+                    </div>
+
+                    <h3 className="font-bold text-[15px] text-[#1B365D] m-0 line-clamp-2">
+                      {report.title}
+                    </h3>
                   </div>
 
-                  <h3 className="font-bold text-[15px] text-[#1B365D] m-0">
-                    {report.title}
-                  </h3>
-
-                  <div className="flex items-center justify-between text-[11.5px] text-[#64748B] pt-2 border-t border-[#EEF1F5] mt-1">
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-rounded text-[14px] text-[#1E6FCB]">
+                  <div className="flex items-center justify-between text-[11.5px] text-[#64748B] pt-3 border-t border-[#EEF1F5] mt-1">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="material-symbols-rounded text-[14px] text-[#1E6FCB] shrink-0">
                         location_on
                       </span>
-                      <span>{report.address}</span>
+                      <span className="truncate">{report.address}</span>
                     </div>
-                    <span className="font-bold text-[#1E6FCB]">
-                      Ver seguimiento →
+                    <span className="font-bold text-[#1E6FCB] shrink-0 ml-2">
+                      Ver detalle →
                     </span>
                   </div>
                 </motion.div>
