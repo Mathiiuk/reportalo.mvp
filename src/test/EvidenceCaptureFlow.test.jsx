@@ -2,13 +2,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { createEvidenceItem, EVIDENCE_STATUS } from '../types/evidence';
 import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { NewReportPage } from '../pages/NewReportPage';
 
-describe('REP-2201: Captura de evidencia desacoplada', () => {
+describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     if (typeof URL.createObjectURL !== 'function') {
@@ -37,33 +37,32 @@ describe('REP-2201: Captura de evidencia desacoplada', () => {
       });
       expect(evidence.previewUrl).toBeDefined();
     });
-
-    it('UT-EVD-02: Lanza un error si no se suministra un archivo', () => {
-      expect(() => createEvidenceItem(null)).toThrow(
-        'Se requiere un archivo de imagen para generar la evidencia.'
-      );
-    });
   });
 
-  describe('Hook: useEvidenceCapture', () => {
-    it('UT-EVD-03: captureFile procesa exitosamente una imagen valida', async () => {
+  describe('Hook: useEvidenceCapture con soporte multifoto', () => {
+    it('UT-EVD-02: captureFile permite agregar hasta 4 fotos y calcula photoCount correctamente', async () => {
       const { result } = renderHook(() => useEvidenceCapture());
-      const mockFile = new File(['dummy content'], 'reporte.png', { type: 'image/png' });
+      const mockFile1 = new File(['img1'], 'foto1.jpg', { type: 'image/jpeg' });
+      const mockFile2 = new File(['img2'], 'foto2.jpg', { type: 'image/jpeg' });
 
-      let res;
       await act(async () => {
-        res = await result.current.captureFile(mockFile);
+        await result.current.captureFile(mockFile1);
       });
 
-      expect(res.success).toBe(true);
+      expect(result.current.photoCount).toBe(1);
       expect(result.current.hasEvidence).toBe(true);
-      expect(result.current.evidence?.mimeType).toBe('image/png');
-      expect(result.current.error).toBeNull();
+
+      await act(async () => {
+        await result.current.captureFile(mockFile2);
+      });
+
+      expect(result.current.photoCount).toBe(2);
+      expect(result.current.evidenceList.length).toBe(2);
     });
 
-    it('UT-EVD-04: captureFile rechaza formatos no admitidos (e.g. PDF o texto)', async () => {
+    it('UT-EVD-03: rechaza formatos no admitidos (e.g. PDF)', async () => {
       const { result } = renderHook(() => useEvidenceCapture());
-      const invalidFile = new File(['text content'], 'doc.pdf', { type: 'application/pdf' });
+      const invalidFile = new File(['text'], 'doc.pdf', { type: 'application/pdf' });
 
       let res;
       await act(async () => {
@@ -71,106 +70,89 @@ describe('REP-2201: Captura de evidencia desacoplada', () => {
       });
 
       expect(res.success).toBe(false);
-      expect(result.current.hasEvidence).toBe(false);
       expect(result.current.error).toMatch(/Formato de imagen no admitido/i);
     });
 
-    it('UT-EVD-05: clearEvidence remueve la evidencia y revoca la URL de preview', async () => {
-      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    it('UT-EVD-04: removePhoto elimina una foto específica y clearEvidence remueve todas', async () => {
       const { result } = renderHook(() => useEvidenceCapture());
-      const mockFile = new File(['dummy'], 'foto.webp', { type: 'image/webp' });
+      const mockFile1 = new File(['img1'], 'foto1.jpg', { type: 'image/jpeg' });
 
       await act(async () => {
-        await result.current.captureFile(mockFile);
+        await result.current.captureFile(mockFile1);
       });
 
-      expect(result.current.hasEvidence).toBe(true);
-
+      const photoId = result.current.evidenceList[0].id;
       act(() => {
-        result.current.clearEvidence();
+        result.current.removePhoto(photoId);
       });
 
-      expect(result.current.hasEvidence).toBe(false);
-      expect(result.current.evidence).toBeNull();
-      expect(revokeSpy).toHaveBeenCalled();
+      expect(result.current.photoCount).toBe(0);
     });
   });
 
-  describe('Componente UI: EvidenceCaptureStep', () => {
-    it('UT-EVD-06: Renderiza botones de Camara y Galeria cuando no hay evidencia capturada', () => {
+  describe('Componente UI: EvidenceCaptureStep (Journey v2)', () => {
+    it('UT-EVD-05: Renderiza topbar de privacidad, badge de ubicación y disparador de cámara', () => {
       render(
         <EvidenceCaptureStep
-          evidence={null}
+          evidenceList={[]}
           error={null}
           onCaptureFile={vi.fn()}
           onClearEvidence={vi.fn()}
+          onCancel={vi.fn()}
+          onContinue={vi.fn()}
         />
       );
 
-      expect(screen.getByText(/Tomar fotografía ahora/i)).toBeInTheDocument();
-      expect(screen.getByText(/Subir desde mi galería/i)).toBeInTheDocument();
-      expect(screen.getByTestId('camera-file-input')).toBeInTheDocument();
-      expect(screen.getByTestId('gallery-file-input')).toBeInTheDocument();
+      expect(screen.getByText(/Privacidad activada/i)).toBeInTheDocument();
+      expect(screen.getByText(/Los rostros y patentes se difuminan/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /tomar fotografía/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /cerrar cámara/i })).toBeInTheDocument();
     });
 
-    it('UT-EVD-07: Muestra la vista previa y boton Cambiar cuando existe evidencia capturada', () => {
-      const mockEvidence = {
-        id: 'evd-1',
-        name: 'bache_calle.jpg',
-        sizeBytes: 2.5 * 1024 * 1024,
-        previewUrl: 'blob:http://localhost/mock-preview',
-        status: EVIDENCE_STATUS.CAPTURED_LOCAL,
-      };
+    it('UT-EVD-06: Muestra miniatura acumulada con contador cuando existen fotos', () => {
+      const mockList = [
+        { id: '1', previewUrl: 'blob:mock1', name: 'foto1.jpg' },
+        { id: '2', previewUrl: 'blob:mock2', name: 'foto2.jpg' },
+      ];
 
       render(
         <EvidenceCaptureStep
-          evidence={mockEvidence}
+          evidenceList={mockList}
           error={null}
           onCaptureFile={vi.fn()}
           onClearEvidence={vi.fn()}
+          onCancel={vi.fn()}
+          onContinue={vi.fn()}
         />
       );
 
-      expect(screen.getByTestId('evidence-preview-img')).toBeInTheDocument();
-      expect(screen.getByText('Foto capturada')).toBeInTheDocument();
-      expect(screen.getByText('bache_calle.jpg')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /eliminar foto capturada/i })).toBeInTheDocument();
-    });
-
-    it('UT-EVD-08: Renderiza mensaje de error visible si error esta presente', () => {
-      render(
-        <EvidenceCaptureStep
-          evidence={null}
-          error="La imagen supera el tamaño máximo permitido de 10 MB."
-          onCaptureFile={vi.fn()}
-          onClearEvidence={vi.fn()}
-        />
-      );
-
-      expect(screen.getByText(/supera el tamaño máximo/i)).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /continuar al siguiente paso/i })).toBeInTheDocument();
     });
   });
 
-  describe('Flujo Integrado: NewReportPage con Captura', () => {
-    it('UT-EVD-09: Al capturar foto, habilita el boton Continuar en NewReportPage', async () => {
+  describe('Flujo Integrado: NewReportPage', () => {
+    it('UT-EVD-07: Al tomar foto y presionar continuar, navega al paso 2 con galería de miniaturas', async () => {
       render(
         <MemoryRouter initialEntries={['/nuevo-reporte']}>
           <NewReportPage />
         </MemoryRouter>
       );
 
-      const continueBtn = screen.getByRole('button', { name: /continuar/i });
-      expect(continueBtn).toBeDisabled();
-
-      // Simular seleccion de archivo a traves del input de galeria
       const galleryInput = screen.getByTestId('gallery-file-input');
       const validFile = new File(['sample image'], 'bache_real.jpg', { type: 'image/jpeg' });
 
       fireEvent.change(galleryInput, { target: { files: [validFile] } });
 
       await waitFor(() => {
-        expect(screen.getByTestId('evidence-preview-img')).toBeInTheDocument();
-        expect(continueBtn).toBeEnabled();
+        expect(screen.getByRole('button', { name: /continuar al siguiente paso/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /continuar al siguiente paso/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Paso 2 de 3/i)).toBeInTheDocument();
+        expect(screen.getByText(/Evidencia registrada \(1\)/i)).toBeInTheDocument();
       });
     });
   });

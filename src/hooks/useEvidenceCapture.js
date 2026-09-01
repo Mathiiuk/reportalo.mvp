@@ -5,25 +5,29 @@ import {
   MAX_EVIDENCE_SIZE_BYTES,
 } from '../types/evidence';
 
+const MAX_PHOTOS = 4;
+
 /**
- * Hook para gestionar la captura de evidencia fotografica desacoplada de backend/privacidad.
+ * Hook para gestionar la captura de evidencia multifoto (1 a 4 fotos) desacoplada de backend/privacidad.
  * @param {object} [options]
- * @param {object} [options.geolocation] Coordenadas de ubicacion actuales para etiquetar la foto
+ * @param {object} [options.geolocation] Coordenadas de ubicacion actuales para etiquetar las fotos
  * @param {Function} [options.onEvidenceCaptured] Callback al capturar evidencia exitosa
  */
 export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = {}) => {
-  const [evidence, setEvidence] = useState(null);
+  const [evidenceList, setEvidenceList] = useState([]);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Revocar URL de objeto al desmontar o reemplazar para prevenir memory leaks
+  // Revocar URLs de objetos al desmontar para prevenir memory leaks
   useEffect(() => {
     return () => {
-      if (evidence?.previewUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
-        URL.revokeObjectURL(evidence.previewUrl);
-      }
+      evidenceList.forEach((item) => {
+        if (item?.previewUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
     };
-  }, [evidence]);
+  }, [evidenceList]);
 
   const captureFile = useCallback(
     async (file) => {
@@ -35,6 +39,13 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
         return { success: false, error: 'No se seleccionó ninguna imagen.' };
       }
 
+      if (evidenceList.length >= MAX_PHOTOS) {
+        const errorMsg = `Podés adjuntar un máximo de ${MAX_PHOTOS} fotografías.`;
+        setError(errorMsg);
+        setIsProcessing(false);
+        return { success: false, error: errorMsg };
+      }
+
       // 1. Validar tipo MIME
       const isValidType = ALLOWED_EVIDENCE_MIME_TYPES.includes(file.type);
       if (!isValidType) {
@@ -44,7 +55,7 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
         return { success: false, error: errorMsg };
       }
 
-      // 2. Validar tamaño maximo (10MB)
+      // 2. Validar tamaño maximo (10MB por foto)
       if (file.size > MAX_EVIDENCE_SIZE_BYTES) {
         const errorMsg = 'La imagen supera el tamaño máximo permitido de 10 MB.';
         setError(errorMsg);
@@ -55,14 +66,15 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
       try {
         // 3. Crear EvidenceItem desacoplado con estado CAPTURED_LOCAL
         const newEvidence = createEvidenceItem(file, geolocation);
-        setEvidence(newEvidence);
+        const updatedList = [...evidenceList, newEvidence];
+        setEvidenceList(updatedList);
         setIsProcessing(false);
 
         if (onEvidenceCaptured) {
-          onEvidenceCaptured(newEvidence);
+          onEvidenceCaptured(updatedList);
         }
 
-        return { success: true, evidence: newEvidence };
+        return { success: true, evidence: newEvidence, evidenceList: updatedList };
       } catch (err) {
         const errorMsg = err.message || 'Error al procesar la imagen seleccionada.';
         setError(errorMsg);
@@ -70,23 +82,42 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
         return { success: false, error: errorMsg };
       }
     },
-    [geolocation, onEvidenceCaptured]
+    [evidenceList, geolocation, onEvidenceCaptured]
   );
 
-  const clearEvidence = useCallback(() => {
-    if (evidence?.previewUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
-      URL.revokeObjectURL(evidence.previewUrl);
-    }
-    setEvidence(null);
+  const removePhoto = useCallback((id) => {
+    setEvidenceList((prev) => {
+      const itemToRemove = prev.find((item) => item.id === id);
+      if (itemToRemove?.previewUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(itemToRemove.previewUrl);
+      }
+      return prev.filter((item) => item.id !== id);
+    });
     setError(null);
-  }, [evidence]);
+  }, []);
+
+  const clearEvidence = useCallback(() => {
+    evidenceList.forEach((item) => {
+      if (item?.previewUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+    });
+    setEvidenceList([]);
+    setError(null);
+  }, [evidenceList]);
 
   return {
-    evidence,
+    evidenceList,
+    // Compatibilidad con referencia singular
+    evidence: evidenceList[0] || null,
     error,
     isProcessing,
-    hasEvidence: Boolean(evidence),
+    hasEvidence: evidenceList.length > 0,
+    photoCount: evidenceList.length,
+    maxPhotos: MAX_PHOTOS,
+    canAddMore: evidenceList.length < MAX_PHOTOS,
     captureFile,
+    removePhoto,
     clearEvidence,
   };
 };
