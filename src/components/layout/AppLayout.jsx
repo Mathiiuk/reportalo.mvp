@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
 
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const directCameraInputRef = useRef(null);
 
   // Determinar pestaña activa según la ruta
   const getActiveTab = () => {
@@ -22,16 +22,38 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const handleCameraAction = () => {
     if (onCameraClick) {
       onCameraClick();
-    } else {
-      // Redirigir al flujo de inicio de nuevo reporte (REP-2600 / REP-2200)
-      navigate('/nuevo-reporte');
+      return;
     }
+
+    // Disparar la cámara nativa en el gesto de clic y navegar
+    if (directCameraInputRef.current) {
+      directCameraInputRef.current.click();
+    }
+    navigate('/nuevo-reporte');
+  };
+
+  const handleDirectCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      navigate('/nuevo-reporte', { state: { initialCapturedFile: file } });
+    }
+    e.target.value = '';
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-      
-      {/* Header Superior (Topbar idéntico al modelo) */}
+      {/* Input nativo de cámara disparado en el mismo gesto de clic */}
+      <input
+        ref={directCameraInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        className="hidden"
+        onChange={handleDirectCapture}
+        data-testid="direct-camera-trigger"
+      />
+
+      {/* Header Superior (Topbar) */}
       <header className="z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
         <div className="px-5 pt-2 pb-2 flex items-center justify-between">
           <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
@@ -59,18 +81,18 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
         </div>
       </header>
 
-      {/* Contenedor del contenido principal */}
-      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col">
+      {/* Contenido Principal */}
+      <main className="flex-1 relative overflow-hidden flex flex-col">
         {children}
       </main>
 
-      {/* Barra de Navegación Inferior Flotante (Exacta al modelo) */}
-      <div className="fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
-        <nav
-          aria-label="Navegación principal"
-          className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
-        >
-          
+      {/* Bottom Navigation Bar */}
+      <nav
+        role="navigation"
+        aria-label="Navegación principal inferior"
+        className="z-30 bg-white border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] px-3 pt-1.5 pb-[max(10px,env(safe-area-inset-bottom,10px))]"
+      >
+        <div className="max-w-md mx-auto flex items-center justify-around">
           {/* 1. Mapa */}
           <button
             type="button"
@@ -148,10 +170,8 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               Perfil
             </span>
           </button>
-
-        </nav>
-      </div>
-
+        </div>
+      </nav>
     </div>
   );
 };
