@@ -29,9 +29,15 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       onCameraClick();
       return;
     }
+    navigate('/nuevo-reporte');
+  };
 
-    // Navegar a /nuevo-reporte indicando que abra la cámara nativa de inmediato
-    navigate('/nuevo-reporte', { state: { autoTriggerCamera: true } });
+  const handleDirectCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      navigate('/nuevo-reporte', { state: { initialCapturedFile: file } });
+    }
+    e.target.value = '';
   };
 
   return (
@@ -157,18 +163,24 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
             </span>
           </button>
 
-          {/* 3. Botón Central: Cámara (Naranja flotante) */}
+          {/* 3. Botón Central: Cámara (Naranja flotante con trigger nativo directo) */}
           <div className="relative flex justify-center px-1">
-            <motion.button
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              type="button"
+            <label
+              htmlFor="mobile-direct-camera-trigger"
               aria-label="Tomar foto y reportar"
-              onClick={handleCameraClick}
-              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all"
+              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all hover:scale-105 active:scale-95 select-none"
             >
               <Camera className="w-6 h-6" />
-            </motion.button>
+              <input
+                id="mobile-direct-camera-trigger"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                className="hidden"
+                onChange={handleDirectCapture}
+                data-testid="direct-camera-trigger"
+              />
+            </label>
           </div>
 
           {/* 4. Alertas */}

@@ -80,7 +80,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('UT-MP-02: Renderiza los 5 botones de navegación en la barra inferior flotante (Mapa, Reportes, Cámara, Alertas, Perfil)', () => {
+  it('UT-MP-02: Renderiza los 5 accesos de navegación en la barra inferior flotante (Mapa, Reportes, Cámara, Alertas, Perfil)', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -92,7 +92,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     const nav = screen.getByRole('navigation', { name: /navegación principal/i });
     expect(within(nav).getByRole('button', { name: /mapa/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /reportes/i })).toBeInTheDocument();
-    expect(within(nav).getByRole('button', { name: /tomar foto y reportar/i })).toBeInTheDocument();
+    expect(within(nav).getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /alertas/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
   });
@@ -233,7 +233,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     });
   });
 
-  it('UT-MP-11: Clic en el botón central de cámara navega a /nuevo-reporte para iniciar el flujo', () => {
+  it('UT-MP-11: Al disparar la cámara y capturar foto desde el botón del navbar, navega a /nuevo-reporte con el archivo inicial', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <Routes>
@@ -250,8 +250,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
       </MemoryRouter>
     );
 
-    const cameraBtn = screen.getByRole('button', { name: /tomar foto y reportar/i });
-    fireEvent.click(cameraBtn);
+    const directInput = screen.getByTestId('direct-camera-trigger');
+    const validFile = new File(['mock image binary'], 'foto_directa.jpg', { type: 'image/jpeg' });
+    fireEvent.change(directInput, { target: { files: [validFile] } });
 
     expect(screen.getByText('Pantalla Nuevo Reporte')).toBeInTheDocument();
   });
