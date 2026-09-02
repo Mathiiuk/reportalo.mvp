@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -14,6 +14,8 @@ import {
   hasAcceptedCurrentTerms,
   recordTermsAcceptance,
 } from '../services/termsService';
+
+import { getFriendlyLocationLabel } from '../services/locationService';
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
@@ -53,6 +55,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
+  const currentAddressLabel = getFriendlyLocationLabel(coordinates);
 
   // Cargar categorias desde la DB con fallback
   useEffect(() => {
@@ -165,7 +168,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               selectedCategory={selectedCategory}
               description={description}
               geolocation={coordinates}
-              address="Av. Mitre 1240, Avellaneda"
+              address={currentAddressLabel}
               hasAcceptedTerms={userHasAccepted}
               onBack={handleBack}
               onSubmitReport={handleSubmitReport}
