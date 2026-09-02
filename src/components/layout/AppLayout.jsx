@@ -1,12 +1,18 @@
-import React, { useRef } from 'react';
+﻿import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { getUserInitials } from '../../utils/userUtils';
 
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const directCameraInputRef = useRef(null);
+  const { user } = useAuth();
+
+  // Obtener iniciales dinámicas del usuario autenticado
+  const userInitials = getUserInitials(user);
 
   // Determinar pestaña activa según la ruta
   const getActiveTab = () => {
@@ -53,8 +59,8 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
         data-testid="direct-camera-trigger"
       />
 
-      {/* Header Superior (Topbar) */}
-      <header className="z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
+      {/* Header Superior (Mobile) */}
+      <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
         <div className="px-5 pt-2 pb-2 flex items-center justify-between">
           <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
             <img
@@ -81,18 +87,66 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
         </div>
       </header>
 
-      {/* Contenido Principal */}
-      <main className="flex-1 relative overflow-hidden flex flex-col">
+      {/* Header Superior (Desktop) */}
+      <header className="hidden md:flex flex-none border-b border-[#EEF1F5] px-[26px] py-[12px] bg-white items-center gap-5 z-30 shadow-xs">
+        <Link to="/mapa" className="flex items-center gap-2 no-underline text-inherit hover:opacity-90 transition-opacity">
+          <img src="/logo-icon.webp" alt="Reportalo" className="w-[19px] h-[25px] object-contain" />
+          <span className="font-extrabold text-[18px] text-[#263249] tracking-[-0.4px]">
+            Reportalo
+          </span>
+        </Link>
+        
+        <div className="flex gap-6 ml-4">
+          <Link 
+            to="/mapa" 
+            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'mapa' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
+          >
+            Mapa
+          </Link>
+          <Link 
+            to="/reportes" 
+            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'reportes' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
+          >
+            Mis reportes
+          </Link>
+          <Link 
+            to="/alertas" 
+            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'alertas' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
+          >
+            Novedades
+          </Link>
+        </div>
+
+        <div className="ml-auto flex items-center gap-3">
+          <button 
+            onClick={handleCameraClick}
+            className="flex items-center gap-[7px] bg-[#1E6FCB] text-white px-[16px] py-[9px] rounded-[10px] cursor-pointer hover:bg-[#15539E] transition-colors border-none shadow-xs font-bold text-[12.5px]"
+          >
+            <span className="material-symbols-rounded text-[17px]">add_a_photo</span>
+            <span>Reportar</span>
+          </button>
+          
+          <Link 
+            to="/perfil" 
+            title="Ver mi perfil"
+            className="w-[32px] h-[32px] rounded-full bg-[#E8F1FB] border border-[#D4E6F8] flex items-center justify-center font-extrabold text-[12px] text-[#1E6FCB] cursor-pointer no-underline hover:bg-[#D9EAFB] transition-colors"
+          >
+            {userInitials}
+          </Link>
+        </div>
+      </header>
+
+      {/* Contenedor del contenido principal (Ocupa todo el ancho en desktop) */}
+      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col bg-[#F4F7FB]">
         {children}
       </main>
 
-      {/* Bottom Navigation Bar */}
-      <nav
-        role="navigation"
-        aria-label="Navegación principal inferior"
-        className="z-30 bg-white border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] px-3 pt-1.5 pb-[max(10px,env(safe-area-inset-bottom,10px))]"
-      >
-        <div className="max-w-md mx-auto flex items-center justify-around">
+      {/* Barra de Navegación Inferior Flotante (Mobile) */}
+      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
+        <nav
+          aria-label="Navegación principal"
+          className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
+        >
           {/* 1. Mapa */}
           <button
             type="button"
@@ -170,8 +224,10 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               Perfil
             </span>
           </button>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </div>
   );
 };
+
+export default AppLayout;
