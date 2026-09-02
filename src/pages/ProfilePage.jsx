@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../hooks/useAuth';
+import { getUserInitials } from '../utils/userUtils';
 import {
   CURRENT_TERMS_VERSION,
   TERMS_EFFECTIVE_DATE,
@@ -18,6 +19,7 @@ export const ProfilePage = () => {
   const termsRecord = getTermsRecord(user?.id);
   const acceptedVersion = termsRecord?.terms_version || CURRENT_TERMS_VERSION;
   const acceptedDate = formatAcceptedDate(termsRecord?.accepted_at);
+  const userInitials = getUserInitials(user);
 
   const handleLogout = async () => {
     await signOut();
@@ -26,33 +28,36 @@ export const ProfilePage = () => {
 
   return (
     <AppLayout activeTab="perfil">
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-12 py-5">
-        <div className="max-w-[620px] mx-auto flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-12 py-6">
+        <div className="max-w-3xl mx-auto flex flex-col gap-5">
           
           {/* Título de Sección */}
           <div>
-            <h1 className="font-extrabold text-[22px] sm:text-[24px] text-[#243447] tracking-[-0.4px] m-0">
+            <h1 className="font-extrabold text-[22px] sm:text-[26px] text-[#243447] tracking-[-0.4px] m-0">
               Mi Perfil
             </h1>
-            <p className="font-medium text-[12px] sm:text-[13px] text-[#8593A2] mt-0.5 mb-0">
+            <p className="font-medium text-[12.5px] sm:text-[13px] text-[#8593A2] mt-0.5 mb-0">
               Gestión de cuenta, privacidad y consentimientos
             </p>
           </div>
 
-          {/* Tarjeta de Usuario */}
-          <div className="bg-white border border-[#E6ECF3] rounded-[18px] p-4 sm:p-5 flex items-center gap-4 shadow-xs">
-            <div className="w-12 h-12 rounded-[15px] bg-[#EEF5FC] flex items-center justify-center text-[#1E6FCB] font-extrabold text-[18px] flex-shrink-0">
-              <span className="material-symbols-rounded text-[26px] filled">
-                person
-              </span>
+          {/* Tarjeta de Usuario con iniciales dinámicas */}
+          <div className="bg-white border border-[#E6ECF3] rounded-[18px] p-5 flex items-center gap-4 shadow-xs">
+            <div className="w-13 h-13 rounded-[16px] bg-[#EEF5FC] border border-[#D4E6F8] flex items-center justify-center text-[#1E6FCB] font-extrabold text-[19px] flex-shrink-0">
+              {userInitials}
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[15px] text-[#263249] truncate">
-                  {user?.email || 'Ciudadano autenticado'}
+                <span className="font-extrabold text-[16px] text-[#263249] truncate">
+                  {user?.user_metadata?.full_name || user?.email || 'Ciudadano autenticado'}
                 </span>
               </div>
+              {user?.user_metadata?.full_name && user?.email && (
+                <div className="text-[12px] font-medium text-[#7A8696] truncate">
+                  {user.email}
+                </div>
+              )}
               <span className="font-extrabold text-[10px] text-[#2E9E6B] bg-[#E3F5EC] px-2 py-0.5 rounded-[6px] uppercase tracking-wider inline-block mt-1">
                 Cuenta Verificada
               </span>
