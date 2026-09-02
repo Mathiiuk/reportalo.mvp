@@ -1,4 +1,4 @@
-﻿import React, { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
@@ -8,7 +8,6 @@ import { getUserInitials } from '../../utils/userUtils';
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const directCameraInputRef = useRef(null);
   const { user } = useAuth();
 
   // Obtener iniciales dinámicas del usuario autenticado
@@ -31,33 +30,12 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       return;
     }
 
-    // Disparar la cámara nativa en el gesto de clic del usuario
-    if (directCameraInputRef.current) {
-      directCameraInputRef.current.click();
-    }
-    navigate('/nuevo-reporte');
-  };
-
-  const handleDirectCapture = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      navigate('/nuevo-reporte', { state: { initialCapturedFile: file } });
-    }
-    e.target.value = '';
+    // Navegar a /nuevo-reporte indicando que abra la cámara nativa de inmediato
+    navigate('/nuevo-reporte', { state: { autoTriggerCamera: true } });
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-      {/* Input nativo de cámara oculto */}
-      <input
-        ref={directCameraInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        capture="environment"
-        className="hidden"
-        onChange={handleDirectCapture}
-        data-testid="direct-camera-trigger"
-      />
 
       {/* Header Superior (Mobile) */}
       <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
