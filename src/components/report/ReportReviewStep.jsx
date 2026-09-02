@@ -9,11 +9,14 @@ import {
   ArrowRight,
   ArrowLeft,
   Share2,
+  X,
+  Camera,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * Componente UI para el Paso 3: Revisión y Modal "Antes de enviar" (User Journey v2).
+ * Incluye visor modal de fotos para no perder el estado ni retroceder de paso.
  */
 export const ReportReviewStep = ({
   evidenceList = [],
@@ -25,10 +28,10 @@ export const ReportReviewStep = ({
   onBack,
   onSubmitReport,
   onAcceptTermsAndSubmit,
-  onViewAllPhotos,
   onOpenTerms,
 }) => {
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [showPhotosGalleryModal, setShowPhotosGalleryModal] = useState(false);
   const photoCount = evidenceList.length;
   const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto adjunta' : 'fotos adjuntas'}`;
 
@@ -128,7 +131,7 @@ export const ReportReviewStep = ({
             {photoCount > 0 && (
               <button
                 type="button"
-                onClick={onViewAllPhotos || onBack}
+                onClick={() => setShowPhotosGalleryModal(true)}
                 className="font-bold text-[10.5px] text-[#1E6FCB] bg-transparent border-0 cursor-pointer hover:underline p-0"
               >
                 Ver todas
@@ -136,20 +139,26 @@ export const ReportReviewStep = ({
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             {/* Miniaturas de fotos */}
-            {evidenceList.slice(0, 2).map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="w-16 h-16 rounded-[11px] overflow-hidden bg-[#CFD8E2] border border-slate-200 shadow-xs flex-shrink-0"
-              >
-                <img
-                  src={item.previewUrl}
-                  alt={`Evidencia ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
+            <div
+              className="flex gap-2 cursor-pointer"
+              onClick={() => setShowPhotosGalleryModal(true)}
+              title="Abrir visor de fotos"
+            >
+              {evidenceList.slice(0, 3).map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="w-16 h-16 rounded-[11px] overflow-hidden bg-[#CFD8E2] border border-slate-200 shadow-xs flex-shrink-0 hover:scale-105 transition-transform"
+                >
+                  <img
+                    src={item.previewUrl}
+                    alt={`Evidencia ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
 
             {/* Texto informativo offline/privacidad */}
             <div className="flex-1 flex flex-col justify-center gap-1 pl-1">
@@ -249,49 +258,119 @@ export const ReportReviewStep = ({
                 onClick={onOpenTerms}
                 className="text-[#8593A2] underline bg-transparent border-0 p-0 cursor-pointer font-medium text-[9.5px]"
               >
-                términos
-              </button>
-              .
+                términos y privacidad
+              </button>{' '}
+              por única vez.
             </span>
           </div>
         )}
       </div>
 
-      {/* 4. MODAL BOTTOM SHEET: "Antes de enviar" (Consentimiento único al primer reporte) */}
+      {/* 4. MODAL DE VISUALIZACIÓN DE FOTOS DEL REPORTE */}
+      <AnimatePresence>
+        {showPhotosGalleryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4"
+          >
+            {/* Header del modal */}
+            <div className="flex items-center justify-between pt-[max(8px,env(safe-area-inset-top,8px))]">
+              <span className="font-extrabold text-[15px] text-white">
+                Fotos adjuntas al reporte ({photoCount})
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPhotosGalleryModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white cursor-pointer border-0"
+                aria-label="Cerrar visor de fotos"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Grid de fotos en tamaño grande */}
+            <div className="flex-1 overflow-y-auto py-4 grid grid-cols-2 gap-3.5 items-center justify-center max-w-md mx-auto w-full">
+              {evidenceList.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="relative rounded-2xl overflow-hidden aspect-square border-2 border-white/20 bg-slate-900 shadow-lg"
+                >
+                  <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 font-extrabold text-[10px] text-white">
+                    #{idx + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer del modal: volver al Paso 3 intacto */}
+            <div className="flex flex-col gap-2 max-w-md mx-auto w-full pb-[max(8px,env(safe-area-inset-bottom,8px))]">
+              <button
+                type="button"
+                onClick={() => setShowPhotosGalleryModal(false)}
+                className="w-full py-3.5 rounded-xl bg-[#1E6FCB] text-white font-extrabold text-[13.5px] cursor-pointer border-0 hover:bg-[#15539E] transition-colors"
+              >
+                Volver a la revisión
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. MODAL BOTTOM SHEET: "Antes de enviar" (DECISIÓN D01) */}
       <AnimatePresence>
         {showConsentModal && (
-          <div
-            data-testid="consent-bottom-sheet-backdrop"
-            className="fixed inset-0 z-50 bg-[#182230]/55 flex items-end justify-center backdrop-blur-xs animate-in fade-in"
-          >
+          <div className="fixed inset-0 z-50 flex items-end justify-center">
+            {/* Backdrop oscuro */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowConsentModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+            />
+
+            {/* Sheet modal flotante */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-              className="w-full max-w-md bg-white rounded-t-[28px] px-5 pt-3.5 pb-4 shadow-[0_-12px_40px_rgba(10,20,40,0.28)] flex flex-col"
+              transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+              className="relative w-full max-w-md bg-white rounded-t-[28px] p-6 pb-[max(24px,env(safe-area-inset-bottom,24px))] shadow-2xl flex flex-col gap-3 z-10"
             >
-              {/* Handle Bar */}
-              <div className="w-9.5 h-1 rounded-full bg-[#DDE4EC] mx-auto mb-3.5" />
+              {/* Handle superior de arrastre */}
+              <div className="w-12 h-1.5 rounded-full bg-slate-200 mx-auto mb-1" />
 
-              <h2 className="font-extrabold text-[17px] text-[#243447] tracking-tight m-0">
+              {/* Título */}
+              <div className="font-extrabold text-[18px] text-[#243447] tracking-tight">
                 Antes de enviar
-              </h2>
-              <p className="font-medium text-[12px] leading-relaxed text-[#56657A] mt-1.5 mb-3.5">
-                Para enviar el reporte necesitamos tu consentimiento para tratar las fotos y la ubicación que aportás.
-              </p>
+              </div>
 
-              {/* 3 Bloques Clave de Garantías */}
+              {/* Puntos clave de consentimiento */}
               <div className="flex flex-col gap-2.5 my-1">
                 <div className="flex gap-2.5 items-start">
                   <span
                     className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
                     style={{ fontVariationSettings: '"FILL" 1' }}
                   >
-                    shield
+                    visibility_off
                   </span>
                   <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
-                    Difuminamos rostros y patentes en el servidor, antes de guardar.
+                    El organismo receptor nunca ve tus datos personales.
+                  </span>
+                </div>
+
+                <div className="flex gap-2.5 items-start">
+                  <span
+                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
+                    style={{ fontVariationSettings: '"FILL" 1' }}
+                  >
+                    blur_on
+                  </span>
+                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
+                    Rostros y patentes se difuminan antes de guardarse.
                   </span>
                 </div>
 
@@ -363,3 +442,5 @@ export const ReportReviewStep = ({
     </div>
   );
 };
+
+export default ReportReviewStep;
