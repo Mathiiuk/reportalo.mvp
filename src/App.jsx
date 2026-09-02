@@ -16,6 +16,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 import { NewReportPage } from './pages/NewReportPage';
+import { AppLoadingScreen } from './components/common/AppLoadingScreen';
 import { NotFoundReportPage } from './pages/NotFoundReportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -25,16 +26,7 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#1E6FCB]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-white font-manrope font-semibold text-xs tracking-wider">
-            Cargando Reportalo...
-          </span>
-        </div>
-      </div>
-    );
+    return <AppLoadingScreen message="Cargando Reportalo..." />;
   }
 
   if (!session) {
@@ -63,16 +55,7 @@ const PublicRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#1E6FCB]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-white font-manrope font-semibold text-xs tracking-wider">
-            Cargando Reportalo...
-          </span>
-        </div>
-      </div>
-    );
+    return <AppLoadingScreen message="Iniciando Reportalo..." />;
   }
 
   if (session) {
