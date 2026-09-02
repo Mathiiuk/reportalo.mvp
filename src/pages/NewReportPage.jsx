@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
@@ -15,12 +15,15 @@ import {
   recordTermsAcceptance,
 } from '../services/termsService';
 
+import { getFriendlyLocationLabel } from '../services/locationService';
+
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Integra los Pasos 1, 2 y 3 con modal bottom sheet y visor de terminos superpuesto (sin perder el estado).
+ * Integra los Pasos 1, 2 y 3 con soporte de disparo directo desde el mapa y multifoto (1 a 4).
  */
 export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -40,8 +43,19 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     geolocation: coordinates,
   });
 
+  const processedInitialFileRef = useRef(false);
+
+  // Si vino una foto tomada directamente en el clic del botón de cámara del mapa
+  useEffect(() => {
+    if (!processedInitialFileRef.current && location.state?.initialCapturedFile) {
+      processedInitialFileRef.current = true;
+      captureFile(location.state.initialCapturedFile);
+    }
+  }, [location.state, captureFile]);
+
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
+  const currentAddressLabel = getFriendlyLocationLabel(coordinates);
 
   // Cargar categorias desde la DB con fallback
   useEffect(() => {
@@ -154,7 +168,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               selectedCategory={selectedCategory}
               description={description}
               geolocation={coordinates}
-              address="Av. Mitre 1240, Avellaneda"
+              address={currentAddressLabel}
               hasAcceptedTerms={userHasAccepted}
               onBack={handleBack}
               onSubmitReport={handleSubmitReport}
@@ -166,7 +180,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         )}
       </AnimatePresence>
 
-      {/* MODAL / PANTALLA SUPERPUESTA DE TÉRMINOS Y PRIVACIDAD (Preserva el estado intacto) */}
+      {/* MODAL / PANTALLA SUPERPUESTA DE TÉRMINOS Y PRIVACIDAD */}
       <AnimatePresence>
         {showTermsModal && (
           <motion.div

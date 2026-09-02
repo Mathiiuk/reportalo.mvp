@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserInitials } from '../../utils/userUtils';
@@ -25,18 +24,19 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
   const currentTab = getActiveTab();
 
-  const handleCameraAction = () => {
+  const handleCameraClick = () => {
     if (onCameraClick) {
       onCameraClick();
-    } else {
-      // Redirigir al flujo de inicio de nuevo reporte (REP-2600 / REP-2200)
-      navigate('/nuevo-reporte');
+      return;
     }
+
+    // Navegar a /nuevo-reporte indicando que abra la cámara nativa de inmediato
+    navigate('/nuevo-reporte', { state: { autoTriggerCamera: true } });
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-      
+
       {/* Header Superior (Mobile) */}
       <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
         <div className="px-5 pt-2 pb-2 flex items-center justify-between">
@@ -97,7 +97,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
         <div className="ml-auto flex items-center gap-3">
           <button 
-            onClick={handleCameraAction}
+            onClick={handleCameraClick}
             className="flex items-center gap-[7px] bg-[#1E6FCB] text-white px-[16px] py-[9px] rounded-[10px] cursor-pointer hover:bg-[#15539E] transition-colors border-none shadow-xs font-bold text-[12.5px]"
           >
             <span className="material-symbols-rounded text-[17px]">add_a_photo</span>
@@ -125,7 +125,6 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
           aria-label="Navegación principal"
           className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
         >
-          
           {/* 1. Mapa */}
           <button
             type="button"
@@ -165,7 +164,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               whileTap={{ scale: 0.94 }}
               type="button"
               aria-label="Tomar foto y reportar"
-              onClick={handleCameraAction}
+              onClick={handleCameraClick}
               className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all"
             >
               <Camera className="w-6 h-6" />
@@ -203,10 +202,10 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               Perfil
             </span>
           </button>
-
         </nav>
       </div>
-
     </div>
   );
 };
+
+export default AppLayout;
