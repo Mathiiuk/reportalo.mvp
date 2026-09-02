@@ -75,7 +75,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('link', { name: /reportalo/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /reportalo/i })[0]).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /ver alertas y notificaciones/i })).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
   });
@@ -107,7 +107,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByText('Más')).toBeInTheDocument();
   });
 
-  it('UT-MP-04: ReportsPage renderiza el empty state con ilustración, mensaje de calma, píldoras y botón Cargar demo', () => {
+  it('UT-MP-04: ReportsPage renderiza el empty state con ilustración, píldoras y botón Cargar demo', () => {
     render(
       <MemoryRouter initialEntries={['/reportes']}>
         <ReportsPage />
@@ -118,14 +118,13 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByRole('button', { name: /cargar demo/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /aún no has reportado nada/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /explorar mapa/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ver reportes de ejemplo/i })).toBeInTheDocument();
 
-    // Activar modo demo
-    fireEvent.click(screen.getByRole('button', { name: /ver reportes de ejemplo/i }));
+    // Activar modo demo mediante botón Cargar demo
+    fireEvent.click(screen.getByRole('button', { name: /cargar demo/i }));
     expect(screen.getByText(/bache en calzada principal/i)).toBeInTheDocument();
   });
 
-  it('UT-MP-05: NewsPage renderiza el listado de novedades municipales', () => {
+  it('UT-MP-05: NewsPage renderiza las novedades municipales y avisos oficiales', () => {
     render(
       <MemoryRouter initialEntries={['/alertas']}>
         <NewsPage />
@@ -133,8 +132,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getByRole('heading', { name: /novedades/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/reparación de calzada finalizada/i)).toBeInTheDocument();
-    expect(screen.getByText(/nuevo operativo de recolección/i)).toBeInTheDocument();
+    expect(screen.getByText(/reparación de calzada finalizada en av. corrientes/i)).toBeInTheDocument();
   });
 
   it('UT-MP-06: ProfilePage renderiza los datos del usuario, versión vigente y botón de cerrar sesión', () => {

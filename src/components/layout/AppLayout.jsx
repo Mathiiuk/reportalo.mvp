@@ -19,13 +19,13 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
   const currentTab = getActiveTab();
 
-  const handleCameraAction = () => {
+  const handleCameraClick = () => {
     if (onCameraClick) {
       onCameraClick();
       return;
     }
 
-    // Disparar la cámara nativa en el gesto de clic y navegar
+    // Disparar la cámara nativa en el gesto de clic del usuario
     if (directCameraInputRef.current) {
       directCameraInputRef.current.click();
     }
@@ -42,7 +42,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-      {/* Input nativo de cámara disparado en el mismo gesto de clic */}
+      {/* Input nativo de cámara oculto */}
       <input
         ref={directCameraInputRef}
         type="file"
@@ -132,7 +132,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
               whileTap={{ scale: 0.94 }}
               type="button"
               aria-label="Tomar foto y reportar"
-              onClick={handleCameraAction}
+              onClick={handleCameraClick}
               className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all"
             >
               <Camera className="w-6 h-6" />
