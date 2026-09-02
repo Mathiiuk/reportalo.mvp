@@ -16,6 +16,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { BlankAppPage } from './pages/BlankAppPage';
 import { MunicipiosPage } from './pages/MunicipiosPage';
 import { NewReportPage } from './pages/NewReportPage';
+import { NotFoundReportPage } from './pages/NotFoundReportPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
@@ -195,10 +197,18 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/r/:id"
+        element={<NotFoundReportPage />}
+      />
+      <Route
         path="/municipios"
         element={<MunicipiosPage />}
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="/municipalidad/plan"
+        element={<Navigate to="/municipios#planes" replace />}
+      />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
