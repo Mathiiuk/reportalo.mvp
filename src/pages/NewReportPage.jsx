@@ -8,6 +8,8 @@ import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
+import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
+import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
@@ -91,22 +93,21 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
   };
 
-  // Envío directo de reporte (para usuarios con consentimiento previo)
+  // Envío directo de reporte (para usuarios con consentimiento previo) -> Transición a procesamiento
   const handleSubmitReport = () => {
-    toast.success('¡Reporte enviado con éxito!', {
-      description: 'Tu evidencia fue enviada y será anonimizada en el servidor.',
-    });
-    handleCancel();
+    setCurrentStep(4);
   };
 
-  // Acto de consentimiento + envío (primer reporte)
+  // Acto de consentimiento + envío (primer reporte) -> Registra consentimiento y transiciona a procesamiento
   const handleAcceptTermsAndSubmit = async () => {
     await recordTermsAcceptance(user?.id, { camera: true, location: true });
-    toast.success('¡Consentimiento registrado y reporte enviado!', {
-      description: 'Tu reporte ha sido generado bajo la versión v1.2 de Términos y Privacidad.',
-    });
-    handleCancel();
+    setCurrentStep(4);
   };
+
+  // Determinar agencia receptora según ubicación
+  const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
+    ? 'Municipio de Avellaneda'
+    : 'Gobierno de la Ciudad de Buenos Aires';
 
   return (
     <div
@@ -180,6 +181,50 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onViewAllPhotos={() => setCurrentStep(1)}
               onOpenTerms={() => setShowTermsModal(true)}
               onOpenAdjustLocation={() => setShowAdjustLocationModal(true)}
+            />
+          </motion.div>
+        )}
+
+        {/* PASO 4: Procesamiento y Protección de Fotos ("Protegiendo tus fotos…") */}
+        {currentStep === 4 && (
+          <motion.div
+            key="step-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full h-full flex flex-col"
+          >
+            <ReportProcessingScreen
+              evidenceList={activeList}
+              categoryName={selectedCategory?.name || 'Tránsito'}
+              onProcessingComplete={() => setCurrentStep(5)}
+            />
+          </motion.div>
+        )}
+
+        {/* PASO 5: Confirmación de Envío Exitoso ("Reporte enviado") */}
+        {currentStep === 5 && (
+          <motion.div
+            key="step-5"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full h-full flex flex-col"
+          >
+            <ReportSuccessScreen
+              reportCode="#RP-2048"
+              category={selectedCategory}
+              agencyName={determinedAgency}
+              onViewReport={() => {
+                clearEvidence();
+                navigate('/reportes');
+              }}
+              onReturnToMap={() => {
+                clearEvidence();
+                navigate('/mapa');
+              }}
+              onViewTerms={() => setShowTermsModal(true)}
             />
           </motion.div>
         )}
