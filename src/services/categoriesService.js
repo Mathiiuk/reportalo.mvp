@@ -1,4 +1,4 @@
-﻿import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 /**
  * Categorías oficiales según User Journey v2.
@@ -44,8 +44,8 @@ export const DEFAULT_REPORT_CATEGORIES = [
 ];
 
 /**
- * Obtiene las categorías de reportes desde Supabase (si está configurado)
- * con fallback instantáneo a los datos del Journey v2.
+ * Obtiene las categorías de reportes desde la tabla `services` de Supabase
+ * con fallback instantáneo a las categorías locales del Journey v2.
  * @returns {Promise<Array>} Lista de categorías
  */
 export const getReportCategories = async () => {
@@ -55,23 +55,30 @@ export const getReportCategories = async () => {
 
   try {
     const { data, error } = await supabase
-      .from('report_categories')
+      .from('services')
       .select('*')
-      .order('sort_order', { ascending: true });
+      .order('created_at', { ascending: true });
 
     if (error || !data || data.length === 0) {
       return DEFAULT_REPORT_CATEGORIES;
     }
 
-    return data.map((cat) => ({
-      id: cat.id || cat.code,
-      name: cat.name || cat.title,
-      icon: cat.icon || 'category',
-      color: cat.color || '#1E6FCB',
-      bgLight: cat.bg_light || '#EEF5FC',
-      borderColor: cat.border_color || '#CFE4FA',
-      example: cat.example || cat.description || '',
-    }));
+    return data.map((srv) => {
+      const fallback = DEFAULT_REPORT_CATEGORIES.find(
+        (c) => c.id === srv.service_code || c.id === srv.id
+      );
+
+      return {
+        id: srv.service_code || srv.id,
+        dbId: srv.id,
+        name: srv.service_name || srv.name || fallback?.name || '',
+        icon: fallback?.icon || 'category',
+        color: fallback?.color || '#1E6FCB',
+        bgLight: fallback?.bgLight || '#EEF5FC',
+        borderColor: fallback?.borderColor || '#CFE4FA',
+        example: srv.description || fallback?.example || '',
+      };
+    });
   } catch (err) {
     console.warn('[categoriesService] Fallback a categorías locales:', err);
     return DEFAULT_REPORT_CATEGORIES;
