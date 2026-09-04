@@ -1,16 +1,16 @@
 -- ==============================================================================
 -- Reportalo™ — Dataset Seed Reproducible para el Esquema Oficial de Supabase
 -- Tarea Jira: REP-3471 (Implementar script SQL/seed del MVP en Supabase)
--- Sprint: 10 · Versión Seed: 2.0.0
+-- Sprint: 10 · Versión Seed: 2.0.1
 -- Idempotente: seguro para ejecutarse múltiples veces con ON CONFLICT
 -- Compatible al 100% con las tablas existentes en tu base de datos Supabase
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. PAÍS (Argentina)
+-- 1. PAÍS (Argentina - ISO Alpha-2 'AR')
 -- ------------------------------------------------------------------------------
 INSERT INTO public.countries (id, name, iso_code)
-VALUES ('c0000000-0000-0000-0000-000000000001', 'Argentina', 'ARG')
+VALUES ('c0000000-0000-0000-0000-000000000001', 'Argentina', 'AR')
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     iso_code = EXCLUDED.iso_code;
