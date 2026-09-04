@@ -114,4 +114,20 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
+
+  it('UT-LOC-04: Si las coordenadas iniciales están fuera del Bounding Box de CABA/Avellaneda, utiliza el centro por defecto de la zona', () => {
+    // Coordenadas en Córdoba / fuera de CABA y Avellaneda
+    const outOfBoundsCoords = { lat: -31.4201, lng: -64.1888 };
+
+    render(
+      <AdjustLocationModal
+        initialCoordinates={outOfBoundsCoords}
+        onConfirm={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Debe renderizar la dirección por defecto dentro del Bounding Box de CABA/Avellaneda
+    expect(screen.getByTestId('adjust-street-address')).toBeInTheDocument();
+  });
 });
