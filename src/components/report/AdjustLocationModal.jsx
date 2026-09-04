@@ -2,7 +2,12 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { motion } from 'framer-motion';
-import { resolveAddressDetails, DEFAULT_CITY_COORDINATES } from '../../services/locationService';
+import {
+  resolveAddressDetails,
+  DEFAULT_CITY_COORDINATES,
+  CABA_AVELLANEDA_BOUNDS,
+  isCoordinatesInBounds,
+} from '../../services/locationService';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // Configurar URL del Web Worker de MapLibre para Vite
@@ -15,9 +20,12 @@ if (typeof setWorkerUrl === 'function' && workerUrl) {
 }
 
 const OPENFREEMAP_BRIGHT_STYLE = 'https://tiles.openfreemap.org/styles/bright';
+const MIN_ZOOM = 11.5;
+const MAX_ZOOM = 19;
 
 /**
  * Componente modal/pantalla "¿Dónde ocurrió?" para corregir y ajustar el punto exacto de ubicación.
+ * Limitado estrictamente a las zonas operativas de CABA y Avellaneda.
  * Diseño exacto User Journey v3.1 / Sprint 10.
  */
 export const AdjustLocationModal = ({
@@ -28,18 +36,20 @@ export const AdjustLocationModal = ({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
-  // Coordenadas activas actuales [lng, lat]
+  // Coordenadas activas actuales [lng, lat] (verificando que estén en el bounding box de CABA/Avellaneda)
   const [currentCoords, setCurrentCoords] = useState(() => {
-    if (Array.isArray(initialCoordinates)) return initialCoordinates;
-    if (initialCoordinates?.lng && initialCoordinates?.lat) {
-      return [initialCoordinates.lng, initialCoordinates.lat];
+    let parsedCoords = DEFAULT_CITY_COORDINATES;
+    if (Array.isArray(initialCoordinates)) {
+      parsedCoords = initialCoordinates;
+    } else if (initialCoordinates?.lng && initialCoordinates?.lat) {
+      parsedCoords = [initialCoordinates.lng, initialCoordinates.lat];
     }
-    return DEFAULT_CITY_COORDINATES;
+    return isCoordinatesInBounds(parsedCoords) ? parsedCoords : DEFAULT_CITY_COORDINATES;
   });
 
   const addressDetails = resolveAddressDetails(currentCoords);
 
-  // Inicializar mapa de ajuste
+  // Inicializar mapa de ajuste con límites territoriales
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -50,6 +60,9 @@ export const AdjustLocationModal = ({
         style: OPENFREEMAP_BRIGHT_STYLE,
         center: currentCoords,
         zoom: 15.5,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
+        maxBounds: CABA_AVELLANEDA_BOUNDS,
         attributionControl: false,
       });
 
