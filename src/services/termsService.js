@@ -243,8 +243,8 @@ export const recordTermsAcceptance = async (
           user_id: userId,
           terms_version: CURRENT_TERMS_VERSION,
           accepted_at: consentRecord.accepted_at,
-          permissions: consentRecord.permissions,
-          metadata: consentRecord.metadata,
+          camera_permission: Boolean(permissions.camera),
+          location_permission: Boolean(permissions.location),
         },
       ]);
 
@@ -289,7 +289,10 @@ export const syncTermsConsentWithRemote = async (userId) => {
         user_id: data.user_id,
         terms_version: data.terms_version,
         accepted_at: data.accepted_at,
-        permissions: data.permissions || { camera: true, location: true },
+        permissions: {
+          camera: data.camera_permission !== undefined ? Boolean(data.camera_permission) : (data.permissions?.camera ?? true),
+          location: data.location_permission !== undefined ? Boolean(data.location_permission) : (data.permissions?.location ?? true),
+        },
         metadata: data.metadata || {},
       };
 

@@ -1,4 +1,4 @@
-﻿import React, { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
@@ -8,7 +8,6 @@ import { getUserInitials } from '../../utils/userUtils';
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const directCameraInputRef = useRef(null);
   const { user } = useAuth();
 
   // Obtener iniciales dinámicas del usuario autenticado
@@ -30,11 +29,6 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       onCameraClick();
       return;
     }
-
-    // Disparar la cámara nativa en el gesto de clic del usuario
-    if (directCameraInputRef.current) {
-      directCameraInputRef.current.click();
-    }
     navigate('/nuevo-reporte');
   };
 
@@ -48,16 +42,6 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-      {/* Input nativo de cámara oculto */}
-      <input
-        ref={directCameraInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        capture="environment"
-        className="hidden"
-        onChange={handleDirectCapture}
-        data-testid="direct-camera-trigger"
-      />
 
       {/* Header Superior (Mobile) */}
       <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
@@ -179,18 +163,24 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
             </span>
           </button>
 
-          {/* 3. Botón Central: Cámara (Naranja flotante) */}
+          {/* 3. Botón Central: Cámara (Naranja flotante con trigger nativo directo) */}
           <div className="relative flex justify-center px-1">
-            <motion.button
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              type="button"
+            <label
+              htmlFor="mobile-direct-camera-trigger"
               aria-label="Tomar foto y reportar"
-              onClick={handleCameraClick}
-              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all"
+              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all hover:scale-105 active:scale-95 select-none"
             >
               <Camera className="w-6 h-6" />
-            </motion.button>
+              <input
+                id="mobile-direct-camera-trigger"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                className="hidden"
+                onChange={handleDirectCapture}
+                data-testid="direct-camera-trigger"
+              />
+            </label>
           </div>
 
           {/* 4. Alertas */}
