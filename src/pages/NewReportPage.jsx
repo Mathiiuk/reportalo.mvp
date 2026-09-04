@@ -112,7 +112,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   return (
     <div
       data-testid="new-report-page"
-      className="relative w-full h-[100dvh] bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none"
+      className={`relative w-full h-[100dvh] ${
+        currentStep === 1 || currentStep === 4 ? 'bg-[#0E1116]' : 'bg-[#F4F7FB]'
+      } overflow-hidden flex flex-col font-manrope select-none`}
     >
       <AnimatePresence mode="wait">
         {/* PASO 1: Captura de Evidencia Fullscreen (Diseño exacto Journey v2) */}
@@ -122,6 +124,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
             className="w-full h-full flex flex-col"
           >
             <EvidenceCaptureStep
@@ -142,9 +145,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         {currentStep === 2 && (
           <motion.div
             key="step-2"
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="w-full h-full flex flex-col"
           >
             <ReportDetailsStep
@@ -163,9 +167,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         {currentStep === 3 && (
           <motion.div
             key="step-3"
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="w-full h-full flex flex-col"
           >
             <ReportReviewStep
@@ -192,11 +197,12 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
             className="w-full h-full flex flex-col"
           >
             <ReportProcessingScreen
               evidenceList={activeList}
-              categoryName={selectedCategory?.name || 'Tránsito'}
+              categoryName={selectedCategory?.name || 'Infracción de tránsito'}
               onProcessingComplete={() => setCurrentStep(5)}
             />
           </motion.div>
@@ -206,10 +212,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         {currentStep === 5 && (
           <motion.div
             key="step-5"
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="w-full h-full flex flex-col"
           >
             <ReportSuccessScreen
