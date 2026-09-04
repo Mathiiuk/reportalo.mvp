@@ -6,15 +6,15 @@ export const OnboardingPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Finalizar onboarding y continuar al flujo de términos y permisos
+  // Finalizar onboarding y continuar al mapa (User Journey v3.1)
   const handleFinish = () => {
     try {
       localStorage.setItem('reportalo_onboarding_completed', 'true');
     } catch (e) {
       console.warn('LocalStorage error:', e);
     }
-    // Tras el onboarding, se guía al usuario a aceptar los términos y permisos
-    navigate('/terminos');
+    // Tras el onboarding, se guía al usuario directamente a la experiencia principal del mapa
+    navigate('/mapa');
   };
 
   // Avanzar al siguiente paso
