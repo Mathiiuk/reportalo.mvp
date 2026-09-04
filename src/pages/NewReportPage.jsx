@@ -7,6 +7,7 @@ import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
+import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
@@ -27,6 +28,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showAdjustLocationModal, setShowAdjustLocationModal] = useState(false);
+  const [customLocation, setCustomLocation] = useState(null);
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
   const [description, setDescription] = useState('Camión de gran porte circulando por calle residencial, a las 14:30.');
@@ -55,7 +58,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
-  const currentAddressLabel = getFriendlyLocationLabel(coordinates);
+  const activeCoords = customLocation?.coordinates || coordinates;
+  const activeAddressLabel = customLocation?.fullAddress || getFriendlyLocationLabel(coordinates);
 
   // Cargar categorias desde la DB con fallback
   useEffect(() => {
@@ -154,7 +158,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           </motion.div>
         )}
 
-        {/* PASO 3: Revisión antes de enviar (Diseño exacto Journey v2) */}
+        {/* PASO 3: Revisión antes de enviar (Diseño exacto Journey v3.1) */}
         {currentStep === 3 && (
           <motion.div
             key="step-3"
@@ -167,14 +171,40 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               evidenceList={activeList}
               selectedCategory={selectedCategory}
               description={description}
-              geolocation={coordinates}
-              address={currentAddressLabel}
+              geolocation={activeCoords}
+              address={activeAddressLabel}
               hasAcceptedTerms={userHasAccepted}
               onBack={handleBack}
               onSubmitReport={handleSubmitReport}
               onAcceptTermsAndSubmit={handleAcceptTermsAndSubmit}
               onViewAllPhotos={() => setCurrentStep(1)}
               onOpenTerms={() => setShowTermsModal(true)}
+              onOpenAdjustLocation={() => setShowAdjustLocationModal(true)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL / PANTALLA SUPERPUESTA PARA AJUSTAR UBICACIÓN (¿Dónde ocurrió?) */}
+      <AnimatePresence>
+        {showAdjustLocationModal && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed inset-0 z-50 bg-white"
+          >
+            <AdjustLocationModal
+              initialCoordinates={activeCoords}
+              onClose={() => setShowAdjustLocationModal(false)}
+              onConfirm={(adjustedData) => {
+                setCustomLocation(adjustedData);
+                setShowAdjustLocationModal(false);
+                toast.success('Ubicación actualizada', {
+                  description: adjustedData.fullAddress,
+                });
+              }}
             />
           </motion.div>
         )}
