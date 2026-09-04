@@ -1,400 +1,301 @@
 -- ==============================================================================
--- Reportalo™ — Dataset Seed Reproducible para Supabase
+-- Reportalo™ — Dataset Seed Reproducible para el Esquema Oficial de Supabase
 -- Tarea Jira: REP-3471 (Implementar script SQL/seed del MVP en Supabase)
--- Sprint: 10 · Versión Seed: 1.0.0
+-- Sprint: 10 · Versión Seed: 2.0.0
 -- Idempotente: seguro para ejecutarse múltiples veces con ON CONFLICT
+-- Compatible al 100% con las tablas existentes en tu base de datos Supabase
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. PERFILES FICTICIOS DE PRUEBA (Sin datos personales reales)
+-- 1. PAÍS (Argentina)
 -- ------------------------------------------------------------------------------
-INSERT INTO public.profiles (id, email, full_name, avatar_url, role, phone)
-VALUES
-    ('00000000-0000-0000-0000-000000000001', 'ciudadano.demo@reportalo.ar', 'Juan Vecino (Demo)', 'https://api.dicebear.com/7.x/bottts/svg?seed=ciudadano', 'ciudadano', '+54 11 5555-0101'),
-    ('00000000-0000-0000-0000-000000000002', 'operador.caba@reportalo.ar', 'Operador GCBA Central', 'https://api.dicebear.com/7.x/bottts/svg?seed=gcba', 'organismo', '+54 11 5555-0102'),
-    ('00000000-0000-0000-0000-000000000003', 'operador.avellaneda@reportalo.ar', 'Operador Muni Avellaneda', 'https://api.dicebear.com/7.x/bottts/svg?seed=avellaneda', 'organismo', '+54 11 5555-0103')
+INSERT INTO public.countries (id, name, iso_code)
+VALUES ('c0000000-0000-0000-0000-000000000001', 'Argentina', 'ARG')
 ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
+    name = EXCLUDED.name,
+    iso_code = EXCLUDED.iso_code;
+
+-- ------------------------------------------------------------------------------
+-- 2. PROVINCIAS / JURISDICCIONES (CABA & Provincia de Buenos Aires)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.states_provinces (id, country_id, name)
+VALUES 
+    ('s0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Ciudad Autónoma de Buenos Aires'),
+    ('s0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'Provincia de Buenos Aires')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    country_id = EXCLUDED.country_id;
+
+-- ------------------------------------------------------------------------------
+-- 3. SUBDIVISIONES / COMUNAS Y MUNICIPIOS
+-- ------------------------------------------------------------------------------
+INSERT INTO public.subdivisions (id, state_province_id, name, type)
+VALUES 
+    ('d0000000-0000-0000-0000-000000000001', 's0000000-0000-0000-0000-000000000001', 'Comuna 1', 'comuna'),
+    ('d0000000-0000-0000-0000-000000000005', 's0000000-0000-0000-0000-000000000001', 'Comuna 5', 'comuna'),
+    ('d0000000-0000-0000-0000-000000000013', 's0000000-0000-0000-0000-000000000001', 'Comuna 13', 'comuna'),
+    ('d0000000-0000-0000-0000-000000000014', 's0000000-0000-0000-0000-000000000001', 'Comuna 14', 'comuna'),
+    ('d0000000-0000-0000-0000-000000000020', 's0000000-0000-0000-0000-000000000002', 'Avellaneda', 'municipio')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    type = EXCLUDED.type,
+    state_province_id = EXCLUDED.state_province_id;
+
+-- ------------------------------------------------------------------------------
+-- 4. LOCALIDADES Y BARRIOS (CABA & AVELLANEDA)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.localities (id, subdivision_id, name)
+VALUES 
+    ('l0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'San Nicolás'),
+    ('l0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000005', 'Almagro'),
+    ('l0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000013', 'Belgrano'),
+    ('l0000000-0000-0000-0000-000000000004', 'd0000000-0000-0000-0000-000000000014', 'Palermo'),
+    ('l0000000-0000-0000-0000-000000000005', 'd0000000-0000-0000-0000-000000000020', 'Avellaneda Centro'),
+    ('l0000000-0000-0000-0000-000000000006', 'd0000000-0000-0000-0000-000000000020', 'Piñeyro'),
+    ('l0000000-0000-0000-0000-000000000007', 'd0000000-0000-0000-0000-000000000020', 'Crucecita'),
+    ('l0000000-0000-0000-0000-000000000008', 'd0000000-0000-0000-0000-000000000020', 'Sarandí')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    subdivision_id = EXCLUDED.subdivision_id;
+
+-- ------------------------------------------------------------------------------
+-- 5. ESTADOS DE REPORTES (report_states)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.report_states (code, description)
+VALUES 
+    ('borrador', 'Borrador inicial guardado localmente'),
+    ('enviado', 'Reporte enviado y recibido por el sistema'),
+    ('en_curso', 'En curso de resolución / Cuadrilla asignada'),
+    ('resuelto', 'Incidente resuelto satisfactoriamente'),
+    ('rechazado', 'Rechazado por no corresponder a la jurisdicción')
+ON CONFLICT (code) DO UPDATE SET
+    description = EXCLUDED.description;
+
+-- ------------------------------------------------------------------------------
+-- 6. SERVICIOS Y CATEGORÍAS (User Journey v2)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.services (id, service_code, service_name, group_name, description)
+VALUES 
+    (
+        '00000000-0000-0000-0000-000000000101',
+        'infraestructura_vial',
+        'Infraestructura vial',
+        'Vía Pública',
+        'Ej.: baches, veredas rotas, calzada hundida o falta de cordón cuneta.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000102',
+        'infraccion_transito',
+        'Infracción de tránsito',
+        'Tránsito y Transporte',
+        'Ej.: estacionamiento indebido, bloqueo de rampa, camiones fuera de horario.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000103',
+        'medio_ambiente',
+        'Medio ambiente',
+        'Higiene y Espacios Verdes',
+        'Ej.: microbasurales, podas clandestinas, efluentes o contaminación acústica.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000104',
+        'comercio_irregular',
+        'Comercio irregular',
+        'Espacio Público',
+        'Ej.: venta ambulante en la vereda, feria sin habilitación, ocupación del espacio público.'
+    )
+ON CONFLICT (id) DO UPDATE SET
+    service_code = EXCLUDED.service_code,
+    service_name = EXCLUDED.service_name,
+    group_name = EXCLUDED.group_name,
+    description = EXCLUDED.description;
+
+-- ------------------------------------------------------------------------------
+-- 7. AGENCIAS U ORGANISMOS RECEPTORES (CABA & AVELLANEDA)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.agencies (id, name, subdivision_id)
+VALUES 
+    ('a0000000-0000-0000-0000-000000000001', 'GCBA — Dirección General de Obras Viales', 'd0000000-0000-0000-0000-000000000001'),
+    ('a0000000-0000-0000-0000-000000000002', 'GCBA — Higiene Urbana y Residuos', 'd0000000-0000-0000-0000-000000000001'),
+    ('a0000000-0000-0000-0000-000000000003', 'GCBA — Tránsito y Seguridad Vial', 'd0000000-0000-0000-0000-000000000001'),
+    ('a0000000-0000-0000-0000-000000000004', 'Municipio de Avellaneda — Obras y Servicios Públicos', 'd0000000-0000-0000-0000-000000000020'),
+    ('a0000000-0000-0000-0000-000000000005', 'Municipio de Avellaneda — Ambiente y Arbolado', 'd0000000-0000-0000-0000-000000000020'),
+    ('a0000000-0000-0000-0000-000000000006', 'Municipio de Avellaneda — Tránsito y Transporte', 'd0000000-0000-0000-0000-000000000020')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    subdivision_id = EXCLUDED.subdivision_id;
+
+-- ------------------------------------------------------------------------------
+-- 8. PERFILES DE USUARIO DE PRUEBA (Sin datos personales reales)
+-- ------------------------------------------------------------------------------
+INSERT INTO public.profiles (id, username, full_name, avatar_url, role, agency_id)
+VALUES 
+    (
+        '00000000-0000-0000-0000-000000000001',
+        'ciudadano_demo',
+        'Juan Vecino (Demo)',
+        'https://api.dicebear.com/7.x/bottts/svg?seed=ciudadano',
+        'ciudadano',
+        null
+    ),
+    (
+        '00000000-0000-0000-0000-000000000002',
+        'operador_caba',
+        'Operador GCBA Central',
+        'https://api.dicebear.com/7.x/bottts/svg?seed=gcba',
+        'organismo',
+        'a0000000-0000-0000-0000-000000000001'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000003',
+        'operador_avellaneda',
+        'Operador Muni Avellaneda',
+        'https://api.dicebear.com/7.x/bottts/svg?seed=avellaneda',
+        'organismo',
+        'a0000000-0000-0000-0000-000000000004'
+    )
+ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
     full_name = EXCLUDED.full_name,
     avatar_url = EXCLUDED.avatar_url,
     role = EXCLUDED.role,
-    phone = EXCLUDED.phone,
-    updated_at = timezone('utc'::text, now());
+    agency_id = EXCLUDED.agency_id;
 
 -- ------------------------------------------------------------------------------
--- 2. CATEGORÍAS OFICIALES DE REPORTES (User Journey v2)
+-- 9. REPORTES CIUDADANOS GEORREFERENCIADOS (CABA & AVELLANEDA)
 -- ------------------------------------------------------------------------------
-INSERT INTO public.report_categories (id, name, icon, color, bg_light, border_color, example, sort_order, is_active)
-VALUES
-    (
-        'infraestructura_vial',
-        'Infraestructura vial',
-        'construction',
-        '#1E6FCB',
-        '#EEF5FC',
-        '#CFE4FA',
-        'Ej.: baches, veredas rotas, calzada hundida o falta de cordón cuneta.',
-        1,
-        true
-    ),
-    (
-        'infraccion_transito',
-        'Infracción de tránsito',
-        'local_shipping',
-        '#F78E35',
-        '#FFF6E9',
-        '#FCE2B6',
-        'Ej.: estacionamiento indebido, bloqueo de rampa, camiones fuera de horario.',
-        2,
-        true
-    ),
-    (
-        'medio_ambiente',
-        'Medio ambiente',
-        'eco',
-        '#2E9E6B',
-        '#E3F5EC',
-        '#C3EBD7',
-        'Ej.: microbasurales, podas clandestinas, efluentes o contaminación acústica.',
-        3,
-        true
-    ),
-    (
-        'comercio_irregular',
-        'Comercio irregular',
-        'storefront',
-        '#7C5CD6',
-        '#F4F0FD',
-        '#DED4F5',
-        'Ej.: venta ambulante en la vereda, feria sin habilitación, ocupación del espacio público.',
-        4,
-        true
-    )
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    icon = EXCLUDED.icon,
-    color = EXCLUDED.color,
-    bg_light = EXCLUDED.bg_light,
-    border_color = EXCLUDED.border_color,
-    example = EXCLUDED.example,
-    sort_order = EXCLUDED.sort_order,
-    is_active = EXCLUDED.is_active;
-
--- ------------------------------------------------------------------------------
--- 3. ORGANISMOS RECEPTORES (CABA & AVELLANEDA)
--- ------------------------------------------------------------------------------
-INSERT INTO public.organismos (id, name, jurisdiction, area, contact_email, phone, status)
-VALUES
-    (
-        'gcba_vialidad',
-        'GCBA — Dirección General de Obras Viales',
-        'CABA',
-        'Vialidad y Calzadas',
-        'reclamos.vialidad@buenosaires.gob.ar',
-        '147',
-        'active'
-    ),
-    (
-        'gcba_higiene',
-        'GCBA — Ministerio de Espacio Público e Higiene Urbana',
-        'CABA',
-        'Residuos y Limpieza Urbana',
-        'higiene.urbana@buenosaires.gob.ar',
-        '147',
-        'active'
-    ),
-    (
-        'gcba_transito',
-        'GCBA — Secretaría de Transporte y Seguridad Vial',
-        'CABA',
-        'Fiscalización y Tránsito',
-        'transito@buenosaires.gob.ar',
-        '147',
-        'active'
-    ),
-    (
-        'muni_avellaneda_obras',
-        'Municipio de Avellaneda — Secretaría de Obras y Servicios Públicos',
-        'Avellaneda',
-        'Infraestructura y Vías Públicas',
-        'obraspublicas@mda.gob.ar',
-        '0800-122-6864',
-        'active'
-    ),
-    (
-        'muni_avellaneda_ambiente',
-        'Municipio de Avellaneda — Dirección de Ambiente y Espacios Verdes',
-        'Avellaneda',
-        'Ambiente y Arbolado',
-        'ambiente@mda.gob.ar',
-        '0800-122-6864',
-        'active'
-    ),
-    (
-        'muni_avellaneda_transito',
-        'Municipio de Avellaneda — Dirección General de Tránsito y Transporte',
-        'Avellaneda',
-        'Control y Seguridad Vial',
-        'transito@mda.gob.ar',
-        '0800-122-6864',
-        'active'
-    )
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    jurisdiction = EXCLUDED.jurisdiction,
-    area = EXCLUDED.area,
-    contact_email = EXCLUDED.contact_email,
-    phone = EXCLUDED.phone,
-    status = EXCLUDED.status;
-
--- ------------------------------------------------------------------------------
--- 4. CONSENTIMIENTO DE TÉRMINOS PARA USUARIO DEMO (REP-3532)
--- ------------------------------------------------------------------------------
-INSERT INTO public.terms_consents (id, user_id, terms_version, accepted_at, permissions, metadata)
-VALUES
-    (
-        'a0000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000001',
-        '1.3',
-        '2026-08-25T14:30:00Z',
-        '{"camera": true, "location": true}'::jsonb,
-        '{"client": "web", "user_agent": "Mozilla/5.0 (Demo Seed User)"}'::jsonb
-    )
-ON CONFLICT (id) DO UPDATE SET
-    terms_version = EXCLUDED.terms_version,
-    accepted_at = EXCLUDED.accepted_at,
-    permissions = EXCLUDED.permissions,
-    metadata = EXCLUDED.metadata;
-
--- ------------------------------------------------------------------------------
--- 5. DATASET DE REPORTES GEORREFERENCIADOS (CABA & AVELLANEDA)
--- ------------------------------------------------------------------------------
-INSERT INTO public.reports (
+INSERT INTO public.citizen_reports (
     id,
-    title,
-    description,
-    category_id,
-    category_name,
-    category_icon,
-    status,
-    status_color,
-    pin_color,
-    latitude,
-    longitude,
-    address,
-    jurisdiction,
-    organismo_id,
+    client_side_id,
     user_id,
-    evidence_count,
-    report_date
+    service_id,
+    locality_id,
+    latitud,
+    longitud,
+    description,
+    current_state_code
 )
-VALUES
+VALUES 
     -- REP-101: Obelisco / San Nicolás (CABA)
     (
-        'REP-101',
-        'Bache profundo en calzada principal',
-        'Bache de gran tamaño que dificulta el tránsito vehicular y puede dañar neumáticos.',
-        'infraestructura_vial',
-        'Infraestructura vial',
-        'construction',
-        'En curso',
-        'bg-[#FFF6E9] text-[#E08A00] border-[#FCE2B6]',
-        '#E08A00',
+        'r0000000-0000-0000-0000-000000000101',
+        'f0000000-0000-0000-0000-000000000101',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000101',
+        'l0000000-0000-0000-0000-000000000001',
         -34.6037,
         -58.3816,
-        'Av. Corrientes 1050, San Nicolás',
-        'CABA',
-        'gcba_vialidad',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-24'
+        'Bache profundo en calzada principal sobre Av. Corrientes 1050.',
+        'en_curso'
     ),
     -- REP-102: Almagro (CABA)
     (
-        'REP-102',
-        'Luminaria pública parpadeando',
-        'Columna de alumbrado parpadea constantemente durante la noche dejando la vereda a oscuras.',
-        'infraestructura_vial',
-        'Infraestructura vial',
-        'construction',
-        'Enviado',
-        'bg-[#EEF5FC] text-[#1E6FCB] border-[#CFE4FA]',
-        '#1E6FCB',
+        'r0000000-0000-0000-0000-000000000102',
+        'f0000000-0000-0000-0000-000000000102',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000101',
+        'l0000000-0000-0000-0000-000000000002',
         -34.6158,
         -58.4201,
-        'Av. Medrano 420, Almagro',
-        'CABA',
-        'gcba_vialidad',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-26'
+        'Columna de alumbrado público parpadea constantemente durante la noche en Av. Medrano 420.',
+        'enviado'
     ),
     -- REP-103: Belgrano (CABA)
     (
-        'REP-103',
-        'Contenedor de residuos desbordado',
-        'El contenedor de basura se encontraba saturado y fue vaciado por el servicio municipal.',
-        'medio_ambiente',
-        'Medio ambiente',
-        'eco',
-        'Resuelto',
-        'bg-[#E3F5EC] text-[#2E9E6B] border-[#C3EBD7]',
-        '#2E9E6B',
+        'r0000000-0000-0000-0000-000000000103',
+        'f0000000-0000-0000-0000-000000000103',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000103',
+        'l0000000-0000-0000-0000-000000000003',
         -34.5711,
         -58.4452,
-        'Av. Cabildo 1820, Belgrano',
-        'CABA',
-        'gcba_higiene',
-        '00000000-0000-0000-0000-000000000001',
-        2,
-        '2026-08-15'
+        'Contenedor de residuos desbordado en Av. Cabildo 1820.',
+        'resuelto'
     ),
     -- REP-104: Avellaneda Centro (Avellaneda)
     (
-        'REP-104',
-        'Semáforo fuera de servicio',
-        'Semáforo en intermitente en intersección de alto caudal vehicular.',
-        'infraccion_transito',
-        'Infracción de tránsito',
-        'local_shipping',
-        'En curso',
-        'bg-[#FFF6E9] text-[#E08A00] border-[#FCE2B6]',
-        '#E08A00',
+        'r0000000-0000-0000-0000-000000000104',
+        'f0000000-0000-0000-0000-000000000104',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000102',
+        'l0000000-0000-0000-0000-000000000005',
         -34.6624,
         -58.3662,
-        'Av. Bartolomé Mitre 650, Avellaneda Centro',
-        'Avellaneda',
-        'muni_avellaneda_transito',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-27'
+        'Semáforo fuera de servicio en Av. Bartolomé Mitre 650.',
+        'en_curso'
     ),
     -- REP-105: Palermo (CABA)
     (
-        'REP-105',
-        'Árbol con ramas caídas sobre vereda',
-        'Ramas de gran porte caídas tras tormenta, despejadas por cuadrilla de arbolado.',
-        'medio_ambiente',
-        'Medio ambiente',
-        'eco',
-        'Resuelto',
-        'bg-[#E3F5EC] text-[#2E9E6B] border-[#C3EBD7]',
-        '#2E9E6B',
+        'r0000000-0000-0000-0000-000000000105',
+        'f0000000-0000-0000-0000-000000000105',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000103',
+        'l0000000-0000-0000-0000-000000000004',
         -34.5826,
         -58.4115,
-        'Av. Coronel Díaz 2100, Palermo',
-        'CABA',
-        'gcba_higiene',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-18'
+        'Árbol con ramas de gran porte caídas sobre vereda en Av. Coronel Díaz 2100.',
+        'resuelto'
     ),
     -- REP-106: Piñeyro (Avellaneda)
     (
-        'REP-106',
-        'Microbasural acumulado en esquina',
-        'Acumulación indebida de escombros y restos de poda que obstruyen el paso peatonal.',
-        'medio_ambiente',
-        'Medio ambiente',
-        'eco',
-        'Enviado',
-        'bg-[#EEF5FC] text-[#1E6FCB] border-[#CFE4FA]',
-        '#1E6FCB',
+        'r0000000-0000-0000-0000-000000000106',
+        'f0000000-0000-0000-0000-000000000106',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000103',
+        'l0000000-0000-0000-0000-000000000006',
         -34.6680,
         -58.3789,
-        'Hipólito Yrigoyen 350, Piñeyro',
-        'Avellaneda',
-        'muni_avellaneda_ambiente',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-28'
+        'Microbasural y escombros acumulados en Hipólito Yrigoyen 350.',
+        'enviado'
     ),
     -- REP-107: Crucecita (Avellaneda)
     (
-        'REP-107',
-        'Bloqueo indebido de rampa para personas con movilidad reducida',
-        'Vehículo utilitario estacionado sobre la rampa de acceso a la vereda.',
-        'infraccion_transito',
-        'Infracción de tránsito',
-        'local_shipping',
-        'En curso',
-        'bg-[#FFF6E9] text-[#E08A00] border-[#FCE2B6]',
-        '#E08A00',
+        'r0000000-0000-0000-0000-000000000107',
+        'f0000000-0000-0000-0000-000000000107',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000102',
+        'l0000000-0000-0000-0000-000000000007',
         -34.6590,
         -58.3580,
-        'Av. Belgrano 1100, Crucecita',
-        'Avellaneda',
-        'muni_avellaneda_transito',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-29'
+        'Bloqueo indebido de rampa de accesibilidad en Av. Belgrano 1100.',
+        'en_curso'
     ),
     -- REP-108: Sarandí (Avellaneda)
     (
-        'REP-108',
-        'Venta no autorizada ocupando vereda peatonal',
-        'Instalación de puestos comerciales sin habilitación municipal que impiden la circulación.',
-        'comercio_irregular',
-        'Comercio irregular',
-        'storefront',
-        'Enviado',
-        'bg-[#EEF5FC] text-[#1E6FCB] border-[#CFE4FA]',
-        '#1E6FCB',
+        'r0000000-0000-0000-0000-000000000108',
+        'f0000000-0000-0000-0000-000000000108',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000104',
+        'l0000000-0000-0000-0000-000000000008',
         -34.6750,
         -58.3490,
-        'Av. Mitre 2850, Sarandí',
-        'Avellaneda',
-        'muni_avellaneda_obras',
-        '00000000-0000-0000-0000-000000000001',
-        1,
-        '2026-08-30'
+        'Venta comercial no autorizada ocupando la vereda en Av. Mitre 2850.',
+        'enviado'
     )
 ON CONFLICT (id) DO UPDATE SET
-    title = EXCLUDED.title,
-    description = EXCLUDED.description,
-    category_id = EXCLUDED.category_id,
-    category_name = EXCLUDED.category_name,
-    category_icon = EXCLUDED.category_icon,
-    status = EXCLUDED.status,
-    status_color = EXCLUDED.status_color,
-    pin_color = EXCLUDED.pin_color,
-    latitude = EXCLUDED.latitude,
-    longitude = EXCLUDED.longitude,
-    address = EXCLUDED.address,
-    jurisdiction = EXCLUDED.jurisdiction,
-    organismo_id = EXCLUDED.organismo_id,
+    client_side_id = EXCLUDED.client_side_id,
     user_id = EXCLUDED.user_id,
-    evidence_count = EXCLUDED.evidence_count,
-    report_date = EXCLUDED.report_date,
-    updated_at = timezone('utc'::text, now());
+    service_id = EXCLUDED.service_id,
+    locality_id = EXCLUDED.locality_id,
+    latitud = EXCLUDED.latitud,
+    longitud = EXCLUDED.longitud,
+    description = EXCLUDED.description,
+    current_state_code = EXCLUDED.current_state_code,
+    updated_at = now();
 
 -- ------------------------------------------------------------------------------
--- 6. EVIDENCIAS FOTOGRÁFICAS SANITIZADAS DE PRUEBA (REP-2201)
+-- 10. FOTOGRAFÍAS DE EVIDENCIA ASOCIADAS A REPORTES (report_images)
 -- ------------------------------------------------------------------------------
-INSERT INTO public.report_evidences (
-    id,
-    report_id,
-    image_url,
-    sanitized,
-    blur_faces,
-    blur_license_plates,
-    exif_stripped,
-    quarantine_status
-)
-VALUES
-    ('e0000000-0000-0000-0000-000000000101', 'REP-101', 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000102', 'REP-102', 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000103', 'REP-103', 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000104', 'REP-104', 'https://images.unsplash.com/photo-1525935944571-4e99237764c9?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000105', 'REP-105', 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000106', 'REP-106', 'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000107', 'REP-107', 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved'),
-    ('e0000000-0000-0000-0000-000000000108', 'REP-108', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80', true, true, true, true, 'approved')
+INSERT INTO public.report_images (id, report_id, image_url)
+VALUES 
+    ('e0000000-0000-0000-0000-000000000101', 'r0000000-0000-0000-0000-000000000101', 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000102', 'r0000000-0000-0000-0000-000000000102', 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000103', 'r0000000-0000-0000-0000-000000000103', 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000104', 'r0000000-0000-0000-0000-000000000104', 'https://images.unsplash.com/photo-1525935944571-4e99237764c9?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000105', 'r0000000-0000-0000-0000-000000000105', 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000106', 'r0000000-0000-0000-0000-000000000106', 'https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000107', 'r0000000-0000-0000-0000-000000000107', 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&auto=format&fit=crop&q=80'),
+    ('e0000000-0000-0000-0000-000000000108', 'r0000000-0000-0000-0000-000000000108', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80')
 ON CONFLICT (id) DO UPDATE SET
     report_id = EXCLUDED.report_id,
-    image_url = EXCLUDED.image_url,
-    sanitized = EXCLUDED.sanitized,
-    blur_faces = EXCLUDED.blur_faces,
-    blur_license_plates = EXCLUDED.blur_license_plates,
-    exif_stripped = EXCLUDED.exif_stripped,
-    quarantine_status = EXCLUDED.quarantine_status;
+    image_url = EXCLUDED.image_url;
