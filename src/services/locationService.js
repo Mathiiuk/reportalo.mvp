@@ -155,3 +155,39 @@ export const watchUserCoordinates = (onSuccess, onError, options = {}) => {
     defaultOptions
   );
 };
+
+/**
+ * Retorna una etiqueta amigable y legible para el ciudadano a partir de coordenadas GPS.
+ * @param {[number, number] | { lat: number, lng: number } | null} coords Coordenadas [lng, lat] o {lat, lng}
+ * @returns {string} Dirección o coordenadas legibles
+ */
+export const getFriendlyLocationLabel = (coords) => {
+  if (!coords) return 'Ubicación GPS no detectada';
+
+  let lng, lat;
+  if (Array.isArray(coords)) {
+    [lng, lat] = coords;
+  } else if (typeof coords === 'object') {
+    lat = coords.lat ?? coords.latitude;
+    lng = coords.lng ?? coords.longitude;
+  }
+
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    return 'Ubicación GPS no detectada';
+  }
+
+  // Si está cerca de las zonas conocidas de CABA / Avellaneda, dar referencia amigable
+  const isAvellaneda = lat < -34.645 && lat > -34.730 && lng > -58.410 && lng < -58.330;
+  const isCaba = lat >= -34.710 && lat <= -34.530 && lng >= -58.530 && lng <= -58.350;
+
+  const latStr = lat.toFixed(4);
+  const lngStr = lng.toFixed(4);
+
+  if (isAvellaneda) {
+    return `Avellaneda · GPS (${latStr}, ${lngStr})`;
+  } else if (isCaba) {
+    return `CABA · GPS (${latStr}, ${lngStr})`;
+  }
+
+  return `GPS (${latStr}, ${lngStr})`;
+};

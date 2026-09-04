@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
@@ -54,7 +54,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
     fireEvent.click(submitBtn);
 
     expect(screen.getByText('Antes de enviar')).toBeInTheDocument();
-    expect(screen.getByText(/Para enviar el reporte necesitamos tu consentimiento/i)).toBeInTheDocument();
+    expect(screen.getByText(/El organismo receptor nunca ve tus datos personales/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Acepto y envío/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ahora no/i })).toBeInTheDocument();
   });
