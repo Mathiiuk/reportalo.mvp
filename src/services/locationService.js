@@ -10,6 +10,35 @@
 
 export const DEFAULT_CITY_COORDINATES = [-58.4200, -34.6200]; // Centro CABA / Avellaneda
 
+// Bounding Box oficial para limitar las operaciones a CABA y Avellaneda
+// [[lngMin, latMin], [lngMax, latMax]]
+export const CABA_AVELLANEDA_BOUNDS = [
+  [-58.5500, -34.7300], // Sudoeste: límite Gral. Paz / Liniers y Sur de Avellaneda / Wilde
+  [-58.3100, -34.5200], // Noreste: Río de la Plata, Nuñez y Costanera Avellaneda
+];
+
+/**
+ * Valida si un punto geográfico se encuentra dentro de los límites de CABA o Avellaneda.
+ * @param {[number, number] | { lat: number, lng: number } | null} coords
+ * @returns {boolean}
+ */
+export const isCoordinatesInBounds = (coords) => {
+  let lng, lat;
+  if (Array.isArray(coords)) {
+    [lng, lat] = coords;
+  } else if (coords && typeof coords === 'object') {
+    lat = coords.lat ?? coords.latitude;
+    lng = coords.lng ?? coords.longitude;
+  }
+  if (typeof lat !== 'number' || typeof lng !== 'number') return true;
+  return (
+    lng >= CABA_AVELLANEDA_BOUNDS[0][0] &&
+    lng <= CABA_AVELLANEDA_BOUNDS[1][0] &&
+    lat >= CABA_AVELLANEDA_BOUNDS[0][1] &&
+    lat <= CABA_AVELLANEDA_BOUNDS[1][1]
+  );
+};
+
 export const LOCATION_STATUS = {
   PENDING: 'PENDING',
   GRANTED: 'GRANTED',
