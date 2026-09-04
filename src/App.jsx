@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { hasAcceptedCurrentTerms, isTermsConsentBlocked, getTermsRejectionRecord } from './services/termsService';
 import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
@@ -67,13 +66,7 @@ const PublicRoute = ({ children }) => {
       return <Navigate to="/onboarding" replace />;
     }
 
-    const termsRejected = Boolean(getTermsRejectionRecord(user?.id));
-    const termsBlocked = isTermsConsentBlocked(user?.id);
-
-    if (termsRejected || termsBlocked) {
-      return <Navigate to="/terminos" replace />;
-    }
-
+    // En User Journey v3.1, tras el onboarding el usuario accede directamente a /mapa
     return <Navigate to="/mapa" replace />;
   }
 
