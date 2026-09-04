@@ -51,14 +51,14 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
     });
   });
 
-  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /terminos', async () => {
-    const TermsDestination = () => <div data-testid="terms-screen">Terms Screen</div>;
+  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /mapa', async () => {
+    const MapDestination = () => <div data-testid="map-screen">Citizen Map Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/terminos" element={<TermsDestination />} />
+          <Route path="/mapa" element={<MapDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -68,18 +68,18 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
-      expect(screen.getByTestId('terms-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('map-screen')).toBeInTheDocument();
     });
   });
 
-  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /terminos', async () => {
-    const TermsDestination = () => <div data-testid="terms-screen">Terms Screen</div>;
+  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /mapa', async () => {
+    const MapDestination = () => <div data-testid="map-screen">Citizen Map Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/terminos" element={<TermsDestination />} />
+          <Route path="/mapa" element={<MapDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -100,7 +100,7 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
-      expect(screen.getByTestId('terms-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('map-screen')).toBeInTheDocument();
     });
   });
 
