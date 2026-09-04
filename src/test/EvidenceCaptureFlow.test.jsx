@@ -156,5 +156,57 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         expect(screen.getByRole('button', { name: /^Continuar$/i })).toBeInTheDocument();
       });
     });
+
+    it('UT-EVD-08: Al avanzar al Paso 3 y enviar el reporte, ejecuta la animación de "Protegiendo tus fotos…" (Paso 4) y pasa a "Reporte enviado" (Paso 5)', async () => {
+      render(
+        <MemoryRouter initialEntries={['/nuevo-reporte']}>
+          <NewReportPage />
+        </MemoryRouter>
+      );
+
+      // 1. Paso 1: Cargar foto y continuar
+      const galleryInput = screen.getByTestId('gallery-file-input');
+      const validFile = new File(['sample image'], 'bache_real.jpg', { type: 'image/jpeg' });
+      fireEvent.change(galleryInput, { target: { files: [validFile] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /continuar al siguiente paso/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /continuar al siguiente paso/i }));
+
+      // 2. Paso 2: Continuar a revisión
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /^Continuar$/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^Continuar$/i }));
+
+      // 3. Paso 3: Revisión y presionar "Enviar reporte"
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /enviar reporte/i }));
+
+      // Si es primer reporte, abre el modal "Antes de enviar" y se acepta
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /acepto y envío/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /acepto y envío/i }));
+
+      // 4. Paso 4: Debe renderizar la pantalla "Protegiendo tus fotos…"
+      await waitFor(() => {
+        expect(screen.getByText('Protegiendo tus fotos…')).toBeInTheDocument();
+        expect(screen.getByText('3 zonas detectadas')).toBeInTheDocument();
+      });
+
+      // 5. Paso 5: Al completarse el procesamiento, pasa a "Reporte enviado"
+      await waitFor(
+        () => {
+          expect(screen.getByText('Reporte enviado')).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /ver el reporte/i })).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /volver al mapa/i })).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
   });
 });
