@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Check,
   MapPin,
@@ -29,6 +29,7 @@ export const ReportReviewStep = ({
   onSubmitReport,
   onAcceptTermsAndSubmit,
   onOpenTerms,
+  onOpenAdjustLocation,
 }) => {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [showPhotosGalleryModal, setShowPhotosGalleryModal] = useState(false);
@@ -209,17 +210,25 @@ export const ReportReviewStep = ({
 
           {/* Fila Ubicación */}
           <div className="flex items-center gap-2">
-            <span className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0">
+            <span className="material-symbols-rounded text-[17px] text-[#1E6FCB] flex-shrink-0">
               location_on
             </span>
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-[10px] text-[#8593A2]">
                 Ubicación
               </div>
-              <div className="font-bold text-[11.5px] text-[#34435A] truncate">
+              <div className="font-bold text-[11px] text-[#34435A] truncate">
                 {displayAddress}
               </div>
             </div>
+            <button
+              type="button"
+              onClick={onOpenAdjustLocation}
+              aria-label="Ajustar ubicación"
+              className="font-extrabold text-[10px] text-[#1E6FCB] bg-[#E8F1FB] hover:bg-[#D7E8FA] rounded-[9px] py-1.5 px-3 cursor-pointer border-0 transition-colors flex-shrink-0"
+            >
+              Ajustar
+            </button>
           </div>
         </div>
 
@@ -238,7 +247,7 @@ export const ReportReviewStep = ({
       </div>
 
       {/* 3. Footer con Botón Enviar reporte y disclaimer de Términos */}
-      <div className="flex-0 bg-white border-t border-[#EEF1F5] p-3 flex flex-col">
+      <div className="flex-0 bg-white border-top border-[#EEF1F5] p-3 flex flex-col">
         <button
           type="button"
           onClick={handleSendClick}
@@ -258,9 +267,9 @@ export const ReportReviewStep = ({
                 onClick={onOpenTerms}
                 className="text-[#8593A2] underline bg-transparent border-0 p-0 cursor-pointer font-medium text-[9.5px]"
               >
-                términos y privacidad
-              </button>{' '}
-              por única vez.
+                términos
+              </button>
+              .
             </span>
           </div>
         )}
