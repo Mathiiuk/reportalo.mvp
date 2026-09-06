@@ -1,0 +1,51 @@
+id: "REP-2703"
+external_ref: "https://unlz2026.atlassian.net/browse/REP-2703"
+title: "Persistir borrador y evidencia offline en IndexedDB"
+type: "feat"
+status: "READY_FOR_PR"
+priority: "highest"
+owner: "Matias Krepchuk"
+base_branch: "staging"
+sprint: 11
+tags:
+  - "offline"
+  - "indexeddb"
+  - "pwa"
+  - "evidence"
+  - "sprint11"
+  - "critical-path-s11"
+
+scope:
+  project: "reportalo.mvp"
+  modules:
+    - "src/services/offlineStorageService.js"
+    - "src/hooks/useNetworkStatus.js"
+    - "src/pages/NewReportPage.jsx"
+    - "src/components/report/ReportReviewStep.jsx"
+  environments:
+    - "local"
+    - "staging"
+
+requirements:
+  - "Crear un borrador local del reporte con identificador propio (client_side_id UUID)."
+  - "Persistir temporalmente en IndexedDB la fotografía original capturada y los datos mínimos disponibles del reporte, incluida la geolocalización cuando exista."
+  - "Utilizar un estado explícito PENDING_SYNC cuando no haya conectividad."
+  - "Permitir que el ciudadano continúe completando localmente los datos del reporte que no dependan del backend."
+  - "Si existe conectividad, dejar preparado el punto de salida hacia el flujo online/server-side de anonimización de REP-2400/REP-2404."
+  - "La fotografía almacenada localmente no se considera anonimizada ni enviada hasta que el backend confirme el procesamiento correspondiente."
+  - "Dejar documentado el punto en que, una vez confirmada la sincronización/protección en incrementos posteriores, deberá eliminarse la copia original local."
+
+acceptance_criteria:
+  - "AC-01: Una foto capturada puede conservarse temporalmente en IndexedDB junto con un borrador de reporte."
+  - "AC-02: Al perder conectividad el borrador queda identificado como PENDING_SYNC y no se pierde al navegar dentro del flujo o recargar la PWA según las capacidades implementadas."
+  - "AC-03: La UI/estado distingue claramente evidencia local pendiente de evidencia ya procesada por backend."
+  - "AC-04: Con conectividad disponible existe un punto de integración claro hacia el pipeline server-side, sin implementar todavía la sincronización robusta completa."
+  - "AC-05: La implementación queda alineada con REP-2201 y con el User Journey v2."
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+commands:
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
