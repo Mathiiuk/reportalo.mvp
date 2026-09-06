@@ -1,0 +1,51 @@
+id: "REP-2402"
+external_ref: "https://unlz2026.atlassian.net/browse/REP-2402"
+title: "HU | Previsualizar imagen anonimizada"
+type: "feat"
+status: "READY_FOR_PR"
+priority: "highest"
+owner: "Matias Krepchuk"
+base_branch: "staging"
+sprint: 11
+tags:
+  - "frontend"
+  - "preview"
+  - "anonimizacion"
+  - "privacidad"
+  - "ux-ui"
+  - "sprint11"
+  - "user-journey"
+
+scope:
+  project: "reportalo.mvp"
+  modules:
+    - "src/components/report/EvidencePreviewScreen.jsx"
+    - "src/components/report/ReportProcessingScreen.jsx"
+    - "src/pages/NewReportPage.jsx"
+  environments:
+    - "local"
+    - "staging"
+
+requirements:
+  - "Presentar la pantalla de previsualización de la evidencia anonimizada (EvidencePreviewScreen) tras completar el procesamiento en servidor."
+  - "Mostrar exclusivamente la imagen procesada devuelta por el pipeline (WebP sin EXIF y con rostros/patentes difuminados)."
+  - "Desplegar insignia de privacidad informativa con recuento de zonas sensibles protegidas (rostros, patentes)."
+  - "Proveer acción clara para que el ciudadano confirme la evidencia y proceda al envío exitoso ('Confirmar y enviar reporte')."
+  - "Proveer acción para descartar y volver a capturar si el usuario no está conforme con el resultado ('Volver a sacar la foto')."
+  - "Garantizar diseño Mobile-First y navegación fluida con Framer Motion sin desbordes de viewport."
+  - "Asegurar lenguaje coloquial, tranquilizador y sin tecnicismos para el vecino."
+
+acceptance_criteria:
+  - "AC-01: La previsualización sólo se habilita tras recibir la versión procesada del pipeline de cuarentena."
+  - "AC-02: La imagen mostrada corresponde a la versión anonimizada con indicador de zonas protegidas."
+  - "AC-03: La imagen original cruda no queda disponible ni expuesta en el flujo posterior."
+  - "AC-04: El ciudadano puede confirmar la foto para finalizar el reporte o rechazarla para volver a capturar."
+  - "AC-05: El componente funciona en mobile y desktop manteniendo accesibilidad y adaptabilidad responsiva."
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+commands:
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
