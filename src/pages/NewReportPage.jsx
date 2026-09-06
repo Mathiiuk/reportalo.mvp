@@ -19,10 +19,21 @@ import {
 } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
+// Servicios de persistencia local en IndexedDB para modo offline (REP-2703)
+import {
+  saveDraftReport,
+  getActiveDraftReport,
+  markDraftPendingSync,
+  deleteDraftReport,
+  DRAFT_STATUS,
+} from '../services/offlineStorageService';
+// Hook de monitoreo reactivo de conectividad (REP-2703)
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 /**
- * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200).
- * Integra los Pasos 1, 2 y 3 con soporte de disparo directo desde el mapa y multifoto (1 a 4).
+ * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200 / REP-2703).
+ * Integra los Pasos 1, 2 y 3 con soporte de disparo directo desde el mapa, multifoto (1 a 4)
+ * y persistencia offline resiliente en IndexedDB con estado PENDING_SYNC.
  */
 export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const navigate = useNavigate();
@@ -37,6 +48,21 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [description, setDescription] = useState('Camión de gran porte circulando por calle residencial, a las 14:30.');
   const { coordinates } = useGeolocation({ autoFetch: true });
 
+  // Monitoreo de conectividad a internet en tiempo real (REP-2703)
+  const { isOnline } = useNetworkStatus();
+
+  // Identificador de cliente único (client_side_id UUID) para idempotencia en DB
+  const [clientSideId, setClientSideId] = useState(() => (
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  ));
+
+  // Estado del borrador local (DRAFT_LOCAL o PENDING_SYNC)
+  const [draftStatus, setDraftStatus] = useState(
+    isOnline ? DRAFT_STATUS.DRAFT_LOCAL : DRAFT_STATUS.PENDING_SYNC
+  );
+
   const {
     evidenceList,
     error,
@@ -44,11 +70,22 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     captureFile,
     removePhoto,
     clearEvidence,
+    restoreEvidenceList,
   } = useEvidenceCapture({
+    initialEvidenceList,
     geolocation: coordinates,
   });
 
   const processedInitialFileRef = useRef(false);
+
+  // Referencia para rastrear si el usuario ya navegó manualmente de paso para evitar que la promesa de IndexedDB lo resetee
+  const hasUserNavigatedStepRef = useRef(false);
+
+  // Función controlada para avanzar o retroceder de paso
+  const goToStep = (stepOrUpdater) => {
+    hasUserNavigatedStepRef.current = true;
+    setCurrentStep(stepOrUpdater);
+  };
 
   // Si vino una foto tomada directamente en el clic del botón de cámara del mapa
   useEffect(() => {
@@ -58,10 +95,126 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
   }, [location.state, captureFile]);
 
+  // Recuperación automática de borrador no enviado desde IndexedDB al montar (REP-2703)
+  useEffect(() => {
+    let isMounted = true;
+
+    // Solo restauramos si no se inició el flujo con una foto capturada fresca desde el mapa ni con initialEvidenceList
+    if (!location.state?.initialCapturedFile && initialEvidenceList.length === 0) {
+      getActiveDraftReport()
+        .then((draft) => {
+          if (isMounted && draft && draft.client_side_id) {
+            // Asignamos el identificador del borrador existente
+            setClientSideId(draft.client_side_id);
+            setDraftStatus(draft.status || DRAFT_STATUS.DRAFT_LOCAL);
+
+            // Solo restauramos el paso si el usuario aún no navegó manualmente de paso
+            if (!hasUserNavigatedStepRef.current && draft.currentStep && draft.currentStep >= 1 && draft.currentStep <= 3) {
+              setCurrentStep(draft.currentStep);
+            }
+
+            // Restauramos los campos del formulario
+            if (draft.selectedCategory) {
+              setSelectedCategory(draft.selectedCategory);
+            }
+            if (typeof draft.description === 'string' && draft.description.trim()) {
+              setDescription(draft.description);
+            }
+            if (draft.customLocation) {
+              setCustomLocation(draft.customLocation);
+            }
+
+            // Restauramos la lista de evidencias con sus objetos Blob/File si no hay fotos en memoria
+            if (
+              Array.isArray(draft.evidenceList) &&
+              draft.evidenceList.length > 0 &&
+              evidenceList.length === 0
+            ) {
+              const restoredEvidences = draft.evidenceList.map((ev) => {
+                const fileObj = ev.blob || ev.file;
+                let previewUrl = ev.previewUrl || '';
+                // Generamos una URL de objeto fresca para previsualización si contamos con el blob
+                if (fileObj && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+                  try {
+                    previewUrl = URL.createObjectURL(fileObj);
+                  } catch (e) {
+                    // Fallback a URL previa
+                  }
+                }
+                return {
+                  ...ev,
+                  file: fileObj,
+                  previewUrl,
+                };
+              });
+
+              if (typeof restoreEvidenceList === 'function') {
+                restoreEvidenceList(restoredEvidences);
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('No se pudo recuperar borrador activo de IndexedDB:', err);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
   const activeCoords = customLocation?.coordinates || coordinates;
   const activeAddressLabel = customLocation?.fullAddress || getFriendlyLocationLabel(coordinates);
+
+  // Auto-guardado reactivo en IndexedDB ante cambios en fotos o datos del reporte (REP-2703)
+  useEffect(() => {
+    // Si estamos en Paso 4 (procesando) o Paso 5 (éxito), no sobreescribimos el borrador
+    if (currentStep > 3) return;
+
+    // Solo guardamos si el usuario cargó al menos una foto o descripción
+    if (activeList.length === 0 && !description) return;
+
+    const currentStatus = !isOnline ? DRAFT_STATUS.PENDING_SYNC : draftStatus;
+
+    saveDraftReport({
+      client_side_id: clientSideId,
+      currentStep,
+      evidenceList: activeList,
+      selectedCategory,
+      description,
+      customLocation,
+      geolocation: activeCoords,
+      address: activeAddressLabel,
+      status: currentStatus,
+    }).catch((err) => {
+      console.warn('Auto-guardado en IndexedDB no disponible:', err);
+    });
+  }, [
+    clientSideId,
+    currentStep,
+    activeList,
+    selectedCategory,
+    description,
+    customLocation,
+    activeCoords,
+    activeAddressLabel,
+    isOnline,
+    draftStatus,
+  ]);
+
+  // Manejo reactivo de pérdida de conectividad (REP-2703)
+  useEffect(() => {
+    if (!isOnline && clientSideId) {
+      setDraftStatus(DRAFT_STATUS.PENDING_SYNC);
+      markDraftPendingSync(clientSideId).catch(() => {});
+      toast.warning('Modo sin conexión', {
+        description: 'Tu evidencia se conservará en tu dispositivo bajo PENDING_SYNC.',
+      });
+    }
+  }, [isOnline, clientSideId]);
 
   // Cargar categorias desde la DB con fallback
   useEffect(() => {
@@ -79,35 +232,65 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     };
   }, []);
 
-  // Cancelar flujo y regresar al mapa sin generar datos residuales
+  // Cancelar flujo y regresar al mapa: purga el borrador de IndexedDB de fondo y navega de inmediato (REP-2703)
   const handleCancel = () => {
+    if (clientSideId) {
+      deleteDraftReport(clientSideId).catch(() => {});
+    }
     clearEvidence();
     navigate('/mapa', { replace: true });
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
+      goToStep((prev) => prev - 1);
     } else {
       handleCancel();
     }
   };
 
-  // Envío directo de reporte (para usuarios con consentimiento previo) -> Transición a procesamiento
-  const handleSubmitReport = () => {
-    setCurrentStep(4);
+  // Envío de reporte: si está offline, se persiste en PENDING_SYNC; si está online, avanza a cuarentena
+  const handleSubmitReport = async () => {
+    if (!isOnline) {
+      // Estado explícito PENDING_SYNC cuando no hay conectividad (REP-2703)
+      await markDraftPendingSync(clientSideId);
+      toast.success('Reporte guardado localmente', {
+        description: 'Quedó en espera de conexión (PENDING_SYNC). Se enviará al recuperar señal.',
+      });
+      navigate('/mapa', { replace: true });
+      return;
+    }
+
+    // Si hay conexión: punto de salida hacia el pipeline server-side de cuarentena (REP-2400 / REP-2404)
+    goToStep(4);
   };
 
-  // Acto de consentimiento + envío (primer reporte) -> Registra consentimiento y transiciona a procesamiento
+  // Acto de consentimiento + envío (primer reporte)
   const handleAcceptTermsAndSubmit = async () => {
     await recordTermsAcceptance(user?.id, { camera: true, location: true });
-    setCurrentStep(4);
+    if (!isOnline) {
+      await markDraftPendingSync(clientSideId);
+      toast.success('Reporte guardado localmente', {
+        description: 'Quedó en espera de conexión (PENDING_SYNC). Se enviará al recuperar señal.',
+      });
+      navigate('/mapa', { replace: true });
+      return;
+    }
+    goToStep(4);
   };
+
+  // Purgado de la imagen original local una vez confirmada la sincronización exitosa (REP-2703)
+  useEffect(() => {
+    if (currentStep === 5 && clientSideId) {
+      deleteDraftReport(clientSideId).catch(() => {});
+    }
+  }, [currentStep, clientSideId]);
 
   // Determinar agencia receptora según ubicación
   const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
     ? 'Municipio de Avellaneda'
     : 'Gobierno de la Ciudad de Buenos Aires';
+
 
   return (
     <div
@@ -116,7 +299,21 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         currentStep === 1 || currentStep === 4 ? 'bg-[#0E1116]' : 'bg-[#F4F7FB]'
       } overflow-hidden flex flex-col font-manrope select-none`}
     >
+      {/* Banner informativo de estado sin conexión (REP-2703) */}
+      {!isOnline && (
+        <div
+          data-testid="offline-status-banner"
+          className="bg-[#FFF4E5] border-b border-[#FFE2B8] px-4 py-2 flex items-center justify-between text-[#B25E00] text-[12px] font-semibold z-20 flex-shrink-0"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-rounded text-[16px]">wifi_off</span>
+            <span>Sin conexión — Reporte guardado localmente (PENDING_SYNC)</span>
+          </div>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
+
         {/* PASO 1: Captura de Evidencia Fullscreen (Diseño exacto Journey v2) */}
         {currentStep === 1 && (
           <motion.div
@@ -136,7 +333,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onClearEvidence={clearEvidence}
               onRemovePhoto={removePhoto}
               onCancel={handleCancel}
-              onContinue={() => setCurrentStep(2)}
+              onContinue={() => goToStep(2)}
             />
           </motion.div>
         )}
@@ -158,7 +355,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onSelectCategory={setSelectedCategory}
               onChangeDescription={setDescription}
               onBack={handleBack}
-              onContinue={() => setCurrentStep(3)}
+              onContinue={() => goToStep(3)}
             />
           </motion.div>
         )}
@@ -180,13 +377,16 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               geolocation={activeCoords}
               address={activeAddressLabel}
               hasAcceptedTerms={userHasAccepted}
+              isOnline={isOnline}
+              draftStatus={draftStatus}
               onBack={handleBack}
               onSubmitReport={handleSubmitReport}
               onAcceptTermsAndSubmit={handleAcceptTermsAndSubmit}
-              onViewAllPhotos={() => setCurrentStep(1)}
+              onViewAllPhotos={() => goToStep(1)}
               onOpenTerms={() => setShowTermsModal(true)}
               onOpenAdjustLocation={() => setShowAdjustLocationModal(true)}
             />
+
           </motion.div>
         )}
 
@@ -203,7 +403,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             <ReportProcessingScreen
               evidenceList={activeList}
               categoryName={selectedCategory?.name || 'Infracción de tránsito'}
-              onProcessingComplete={() => setCurrentStep(5)}
+              onProcessingComplete={() => goToStep(5)}
             />
           </motion.div>
         )}

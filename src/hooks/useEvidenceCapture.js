@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   createEvidenceItem,
   ALLOWED_EVIDENCE_MIME_TYPES,
@@ -10,11 +10,13 @@ const MAX_PHOTOS = 4;
 /**
  * Hook para gestionar la captura de evidencia multifoto (1 a 4 fotos) desacoplada de backend/privacidad.
  * @param {object} [options]
+ * @param {Array} [options.initialEvidenceList] Lista inicial de fotos (opcional, para inicialización o tests)
  * @param {object} [options.geolocation] Coordenadas de ubicacion actuales para etiquetar las fotos
  * @param {Function} [options.onEvidenceCaptured] Callback al capturar evidencia exitosa
  */
-export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = {}) => {
-  const [evidenceList, setEvidenceList] = useState([]);
+export const useEvidenceCapture = ({ initialEvidenceList = [], geolocation = null, onEvidenceCaptured } = {}) => {
+  // Estado local que almacena la lista de evidencias capturadas
+  const [evidenceList, setEvidenceList] = useState(initialEvidenceList);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -106,6 +108,15 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
     setError(null);
   }, [evidenceList]);
 
+  // Función para restaurar evidencias desde un borrador guardado en IndexedDB (REP-2703)
+  const restoreEvidenceList = useCallback((newList) => {
+    // Si la lista es válida, la establecemos directamente en el estado
+    if (Array.isArray(newList)) {
+      setEvidenceList(newList);
+      setError(null);
+    }
+  }, []);
+
   return {
     evidenceList,
     // Compatibilidad con referencia singular
@@ -119,5 +130,7 @@ export const useEvidenceCapture = ({ geolocation = null, onEvidenceCaptured } = 
     captureFile,
     removePhoto,
     clearEvidence,
+    restoreEvidenceList,
   };
 };
+
