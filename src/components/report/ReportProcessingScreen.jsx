@@ -50,7 +50,7 @@ export const ReportProcessingScreen = ({
   return (
     <div
       data-testid="report-processing-screen"
-      className="relative w-full h-[100dvh] bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
+      className="relative w-full h-full flex-1 min-h-0 bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
     >
       <style>{`
         @keyframes repScanBeam {

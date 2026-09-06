@@ -25,12 +25,15 @@ export const ReportReviewStep = ({
   geolocation,
   address,
   hasAcceptedTerms = false,
+  isOnline = true,
+  draftStatus = 'DRAFT_LOCAL',
   onBack,
   onSubmitReport,
   onAcceptTermsAndSubmit,
   onOpenTerms,
   onOpenAdjustLocation,
 }) => {
+
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [showPhotosGalleryModal, setShowPhotosGalleryModal] = useState(false);
   const photoCount = evidenceList.length;
@@ -163,16 +166,33 @@ export const ReportReviewStep = ({
 
             {/* Texto informativo offline/privacidad */}
             <div className="flex-1 flex flex-col justify-center gap-1 pl-1">
-              <div className="inline-flex items-center gap-1 text-[#8593A2]">
-                <span className="material-symbols-rounded text-[14px]">schedule</span>
-                <span className="font-bold text-[9.5px]">
-                  Todavía en tu teléfono
-                </span>
-              </div>
-              <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
-                Se suben y se anonimizan al enviar
-              </span>
+              {!isOnline || draftStatus === 'PENDING_SYNC' ? (
+                <>
+                  <div className="inline-flex items-center gap-1 text-[#D97706]">
+                    <span className="material-symbols-rounded text-[14px]">cloud_off</span>
+                    <span className="font-bold text-[9.5px]">
+                      Guardado en tu teléfono
+                    </span>
+                  </div>
+                  <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
+                    Se enviará automáticamente cuando tengas señal
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center gap-1 text-[#8593A2]">
+                    <span className="material-symbols-rounded text-[14px]">schedule</span>
+                    <span className="font-bold text-[9.5px]">
+                      Todavía en tu teléfono
+                    </span>
+                  </div>
+                  <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
+                    Se suben y se anonimizan al enviar
+                  </span>
+                </>
+              )}
             </div>
+
           </div>
         </div>
 
@@ -251,12 +271,15 @@ export const ReportReviewStep = ({
         <button
           type="button"
           onClick={handleSendClick}
-          aria-label="Enviar reporte"
+          aria-label={!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}
           className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
         >
-          <span>Enviar reporte</span>
-          <span className="material-symbols-rounded text-[18px]">send</span>
+          <span>{!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}</span>
+          <span className="material-symbols-rounded text-[18px]">
+            {!isOnline ? 'save' : 'send'}
+          </span>
         </button>
+
 
         {!hasAcceptedTerms && (
           <div className="text-center pt-2">
