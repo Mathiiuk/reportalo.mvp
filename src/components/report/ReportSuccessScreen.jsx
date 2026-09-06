@@ -27,7 +27,7 @@ export const ReportSuccessScreen = ({
   return (
     <div
       data-testid="report-success-screen"
-      className="relative w-full h-[100dvh] overflow-hidden flex flex-col font-manrope select-none"
+      className="relative w-full h-full flex-1 min-h-0 overflow-hidden flex flex-col font-manrope select-none"
       style={{
         animation: '0.8s cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal forwards running repBg',
       }}
