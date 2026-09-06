@@ -9,6 +9,7 @@ import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
+import { EvidencePreviewScreen } from '../components/report/EvidencePreviewScreen';
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -62,6 +63,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [draftStatus, setDraftStatus] = useState(
     isOnline ? DRAFT_STATUS.DRAFT_LOCAL : DRAFT_STATUS.PENDING_SYNC
   );
+
+  // Lista de evidencias anonimizadas devueltas por el pipeline de cuarentena (REP-2402)
+  const [processedEvidenceList, setProcessedEvidenceList] = useState([]);
 
   const {
     evidenceList,
@@ -282,9 +286,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     goToStep(4);
   };
 
-  // Purgado de la imagen original local una vez confirmada la sincronización exitosa (REP-2703)
+  // Purgado de la imagen original local una vez confirmada la sincronización exitosa (REP-2703 / REP-2402)
   useEffect(() => {
-    if (currentStep === 5 && clientSideId) {
+    if (currentStep === 6 && clientSideId) {
       deleteDraftReport(clientSideId).catch(() => {});
     }
   }, [currentStep, clientSideId]);
@@ -299,7 +303,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     <div
       data-testid="new-report-page"
       className={`relative w-full h-[100dvh] ${
-        currentStep === 1 || currentStep === 4 ? 'bg-[#0E1116]' : 'bg-[#F4F7FB]'
+        currentStep === 1 || currentStep === 4 || currentStep === 5
+          ? 'bg-[#0E1116]'
+          : 'bg-[#F4F7FB]'
       } overflow-hidden flex flex-col font-manrope select-none`}
     >
       {/* Banner informativo de estado sin conexión (REP-2703) */}
@@ -411,17 +417,40 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
               onProcessingComplete={(processedEvidences) => {
-                // Al completar la anonimización y sanitización en cuarentena, avanzamos a confirmación
+                // Al completar la anonimización y sanitización, almacenamos las fotos procesadas y pasamos a previsualizar (REP-2402)
+                setProcessedEvidenceList(processedEvidences || activeList);
                 goToStep(5);
               }}
             />
           </motion.div>
         )}
 
-        {/* PASO 5: Confirmación de Envío Exitoso ("Reporte enviado") */}
+        {/* PASO 5: Previsualización de Evidencia Anonimizada ("Tu foto está lista y protegida" - REP-2402) */}
         {currentStep === 5 && (
           <motion.div
             key="step-5"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
+          >
+            <EvidencePreviewScreen
+              evidenceList={processedEvidenceList.length > 0 ? processedEvidenceList : activeList}
+              categoryName={selectedCategory?.name || 'Infracción de tránsito'}
+              onConfirm={() => goToStep(6)}
+              onRetake={() => {
+                clearEvidence();
+                goToStep(1);
+              }}
+            />
+          </motion.div>
+        )}
+
+        {/* PASO 6: Confirmación de Envío Exitoso ("Reporte enviado") */}
+        {currentStep === 6 && (
+          <motion.div
+            key="step-6"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
