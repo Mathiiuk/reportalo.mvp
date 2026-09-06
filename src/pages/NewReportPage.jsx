@@ -210,8 +210,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     if (!isOnline && clientSideId) {
       setDraftStatus(DRAFT_STATUS.PENDING_SYNC);
       markDraftPendingSync(clientSideId).catch(() => {});
-      toast.warning('Modo sin conexión', {
-        description: 'Tu evidencia se conservará en tu dispositivo bajo PENDING_SYNC.',
+      // Notificación coloquial y tranquilizadora al usuario
+      toast.warning('Te quedaste sin conexión', {
+        description: 'Tus fotos y datos están guardados en tu teléfono y no se van a perder.',
       });
     }
   }, [isOnline, clientSideId]);
@@ -254,8 +255,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     if (!isOnline) {
       // Estado explícito PENDING_SYNC cuando no hay conectividad (REP-2703)
       await markDraftPendingSync(clientSideId);
-      toast.success('Reporte guardado localmente', {
-        description: 'Quedó en espera de conexión (PENDING_SYNC). Se enviará al recuperar señal.',
+      // Mensaje coloquial informando que se guardó y enviará solo
+      toast.success('Reporte guardado con éxito', {
+        description: 'Se enviará automáticamente apenas recuperes señal.',
       });
       navigate('/mapa', { replace: true });
       return;
@@ -270,8 +272,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     await recordTermsAcceptance(user?.id, { camera: true, location: true });
     if (!isOnline) {
       await markDraftPendingSync(clientSideId);
-      toast.success('Reporte guardado localmente', {
-        description: 'Quedó en espera de conexión (PENDING_SYNC). Se enviará al recuperar señal.',
+      // Mensaje coloquial informando que se guardó y enviará solo
+      toast.success('Reporte guardado con éxito', {
+        description: 'Se enviará automáticamente apenas recuperes señal.',
       });
       navigate('/mapa', { replace: true });
       return;
@@ -307,7 +310,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         >
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-rounded text-[16px]">wifi_off</span>
-            <span>Sin conexión — Reporte guardado localmente (PENDING_SYNC)</span>
+            <span>Estás sin conexión — Tu reporte quedó guardado en tu teléfono</span>
           </div>
         </div>
       )}
