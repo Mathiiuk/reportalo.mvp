@@ -393,7 +393,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           </motion.div>
         )}
 
-        {/* PASO 4: Procesamiento y Protección de Fotos ("Protegiendo tus fotos…") */}
+        {/* PASO 4: Procesamiento y Protección de Fotos ("Protegiendo tus fotos…") - Pipeline Server-Side Cuarentena (REP-2404) */}
         {currentStep === 4 && (
           <motion.div
             key="step-4"
@@ -403,10 +403,17 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             transition={{ duration: 0.18 }}
             className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
+            {/* Pantalla de procesamiento sincronizada con el pipeline server-side de cuarentena */}
             <ReportProcessingScreen
               evidenceList={activeList}
               categoryName={selectedCategory?.name || 'Infracción de tránsito'}
-              onProcessingComplete={() => goToStep(5)}
+              clientSideId={clientSideId}
+              durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
+              onErrorBack={() => goToStep(1)}
+              onProcessingComplete={(processedEvidences) => {
+                // Al completar la anonimización y sanitización en cuarentena, avanzamos a confirmación
+                goToStep(5);
+              }}
             />
           </motion.div>
         )}
