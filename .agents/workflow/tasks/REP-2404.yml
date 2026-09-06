@@ -1,0 +1,54 @@
+id: "REP-2404"
+external_ref: "https://unlz2026.atlassian.net/browse/REP-2404"
+title: "T | Implementar pipeline server-side de cuarentena de imágenes"
+type: "feat"
+status: "READY_FOR_PR"
+priority: "highest"
+owner: "Matias Krepchuk"
+base_branch: "staging"
+sprint: 11
+tags:
+  - "backend"
+  - "cuarentena"
+  - "edge-functions"
+  - "storage"
+  - "fail-safe"
+  - "privacy"
+  - "sprint11"
+  - "critical-path-s11"
+
+scope:
+  project: "reportalo.mvp"
+  modules:
+    - "supabase/schema.sql"
+    - "supabase/functions/quarantine-anonymize/index.ts"
+    - "src/services/quarantinePipelineService.js"
+    - "src/components/report/ReportProcessingScreen.jsx"
+    - "src/pages/NewReportPage.jsx"
+  environments:
+    - "local"
+    - "staging"
+
+requirements:
+  - "Crear la infraestructura de almacenamiento temporal en Supabase Storage (bucket evidence-quarantine) con RLS privado y estricto."
+  - "Implementar la Edge Function o servicio de cuarentena que reciba la imagen original cifrada (TLS) de forma transitoria."
+  - "Ejecutar la detección y difuminado de zonas sensibles (rostros y patentes) y la eliminación de metadatos EXIF."
+  - "Persistir exclusivamente la versión final anonimizada en el bucket definitivo report-evidences."
+  - "Eliminar/destruir inmediatamente la fotografía original del almacenamiento de cuarentena tras el procesamiento."
+  - "Garantizar comportamiento fail-safe: ante cualquier fallo de procesamiento, nunca persistir ni exponer el original y notificar al frontend."
+  - "Conectar el flujo del frontend (ReportProcessingScreen) con el pipeline de cuarentena server-side."
+
+acceptance_criteria:
+  - "AC-01: El bucket de cuarentena es estrictamente privado y no permite acceso de lectura pública ni directa a las imágenes originales."
+  - "AC-02: La Edge Function procesa la imagen, sanitiza metadatos EXIF y genera la versión anonimizada."
+  - "AC-03: La imagen original en cuarentena se elimina inmediatamente al finalizar o si se produce un error (fail-safe)."
+  - "AC-04: Sólo la versión procesada y protegida llega al almacenamiento persistente final."
+  - "AC-05: El frontend refleja el progreso del pipeline y maneja adecuadamente los estados de éxito y error fail-safe."
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+commands:
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
