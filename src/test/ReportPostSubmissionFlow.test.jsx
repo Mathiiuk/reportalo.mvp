@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
+// Importamos la pantalla de previsualización anonimizada para validar su integración en el flujo post-envío
+import { EvidencePreviewScreen } from '../components/report/EvidencePreviewScreen';
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 
 describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxito)', () => {
@@ -106,6 +108,27 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       const returnMapBtn = screen.getByRole('button', { name: /volver al mapa/i });
       fireEvent.click(returnMapBtn);
       expect(handleReturnToMap).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Pantalla 3: EvidencePreviewScreen ("Tu foto está lista y protegida" - REP-2402)', () => {
+    it('UT-PREV-01: Renderiza la foto protegida, insignias de zonas difuminadas y botones de acción', () => {
+      const handleConfirm = vi.fn();
+      const handleRetake = vi.fn();
+
+      render(
+        <EvidencePreviewScreen
+          evidenceList={[{ sanitizedUrl: 'blob:sanitized', previewUrl: 'blob:raw' }]}
+          categoryName="Tránsito"
+          onConfirm={handleConfirm}
+          onRetake={handleRetake}
+        />
+      );
+
+      expect(screen.getByText('Tu foto está lista y protegida')).toBeInTheDocument();
+      expect(screen.getByText('Evidencia protegida')).toBeInTheDocument();
+      expect(screen.getByTestId('confirm-preview-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('retake-photo-btn')).toBeInTheDocument();
     });
   });
 });

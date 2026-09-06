@@ -198,7 +198,19 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         expect(screen.getByText('3 zonas detectadas')).toBeInTheDocument();
       });
 
-      // 5. Paso 5: Al completarse el procesamiento, pasa a "Reporte enviado"
+      // 5. Paso 5: Al completarse el procesamiento, pasa a "Tu foto está lista y protegida" (REP-2402)
+      await waitFor(
+        () => {
+          expect(screen.getByText('Tu foto está lista y protegida')).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /confirmar y enviar reporte/i })).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      // Confirmar la foto anonimizada para avanzar al éxito
+      fireEvent.click(screen.getByRole('button', { name: /confirmar y enviar reporte/i }));
+
+      // 6. Paso 6: Confirmación de reporte enviado
       await waitFor(
         () => {
           expect(screen.getByText('Reporte enviado')).toBeInTheDocument();
