@@ -306,10 +306,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       {!isOnline && (
         <div
           data-testid="offline-status-banner"
-          className="bg-[#FFF4E5] border-b border-[#FFE2B8] px-4 py-2 flex items-center justify-between text-[#B25E00] text-[12px] font-semibold z-20 flex-shrink-0"
+          className="bg-[#FFF4E5] border-b border-[#FFE2B8] px-3 py-1 flex items-center justify-between text-[#B25E00] text-[11.5px] font-semibold z-20 flex-shrink-0"
         >
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-rounded text-[16px]">wifi_off</span>
+            <span className="material-symbols-rounded text-[15px]">wifi_off</span>
             <span>Estás sin conexión — Tu reporte quedó guardado en tu teléfono</span>
           </div>
         </div>
@@ -325,7 +325,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className="w-full h-full flex flex-col"
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <EvidenceCaptureStep
               evidenceList={activeList}
@@ -349,7 +349,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="w-full h-full flex flex-col"
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportDetailsStep
               categories={categories}
@@ -371,7 +371,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="w-full h-full flex flex-col"
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportReviewStep
               evidenceList={activeList}
@@ -401,7 +401,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="w-full h-full flex flex-col"
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportProcessingScreen
               evidenceList={activeList}
@@ -419,7 +419,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full h-full flex flex-col"
+            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportSuccessScreen
               reportCode="#RP-2048"

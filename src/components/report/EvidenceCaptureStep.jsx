@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Shield, Zap, X, MapPin, Camera, RefreshCw, AlertCircle, ArrowRight, Trash2, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFriendlyLocationLabel } from '../../services/locationService';
@@ -57,7 +57,7 @@ export const EvidenceCaptureStep = ({
   return (
     <div
       data-testid="evidence-capture-step"
-      className="relative w-full h-[100dvh] bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
+      className="relative w-full h-full flex-1 min-h-0 bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
     >
       {/* Inputs nativos ocultos */}
       <input
