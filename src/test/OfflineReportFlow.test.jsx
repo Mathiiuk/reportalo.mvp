@@ -101,7 +101,7 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
       const banner = screen.getByTestId('offline-status-banner');
       expect(banner).toBeInTheDocument();
       expect(banner).toHaveTextContent(/Sin conexión/i);
-      expect(banner).toHaveTextContent(/PENDING_SYNC/i);
+      expect(banner).toHaveTextContent(/guardado en tu teléfono/i);
     });
   });
 
@@ -151,14 +151,14 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
       expect(screen.getByTestId('report-review-step')).toBeInTheDocument();
     });
 
-    // En Paso 3 verificamos que el botón de envío indique guardado offline
-    const saveOfflineBtn = screen.getByRole('button', { name: /guardar reporte offline/i });
+    // En Paso 3 verificamos que el botón de envío indique guardado offline con lenguaje coloquial
+    const saveOfflineBtn = screen.getByRole('button', { name: /guardar reporte sin conexión/i });
     expect(saveOfflineBtn).toBeInTheDocument();
-    expect(saveOfflineBtn).toHaveTextContent(/Guardar reporte \(Offline\)/i);
+    expect(saveOfflineBtn).toHaveTextContent(/Guardar reporte sin conexión/i);
 
-    // Verificamos el texto de la evidencia local en la tarjeta
-    expect(screen.getByText(/Evidencia local \(PENDING_SYNC\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pendiente de procesar por el servidor/i)).toBeInTheDocument();
+    // Verificamos el texto coloquial de las fotos en la tarjeta
+    expect(screen.getByText(/^guardado en tu teléfono$/i)).toBeInTheDocument();
+    expect(screen.getByText(/Se enviará automáticamente cuando tengas señal/i)).toBeInTheDocument();
   });
 
   it('UT-OFF-FLOW-04: Al guardar reporte en modo offline, persiste en IndexedDB como PENDING_SYNC', async () => {
@@ -202,7 +202,7 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
     });
 
     // Hacemos clic en guardar offline
-    const saveBtn = screen.getByRole('button', { name: /guardar reporte offline/i });
+    const saveBtn = screen.getByRole('button', { name: /guardar reporte sin conexión/i });
     fireEvent.click(saveBtn);
 
     // Verificamos en IndexedDB que haya quedado un reporte en PENDING_SYNC con la evidencia original

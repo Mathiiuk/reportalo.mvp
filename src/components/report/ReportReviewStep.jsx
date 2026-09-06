@@ -171,11 +171,11 @@ export const ReportReviewStep = ({
                   <div className="inline-flex items-center gap-1 text-[#D97706]">
                     <span className="material-symbols-rounded text-[14px]">cloud_off</span>
                     <span className="font-bold text-[9.5px]">
-                      Evidencia local (PENDING_SYNC)
+                      Guardado en tu teléfono
                     </span>
                   </div>
                   <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
-                    Pendiente de procesar por el servidor
+                    Se enviará automáticamente cuando tengas señal
                   </span>
                 </>
               ) : (
@@ -271,10 +271,10 @@ export const ReportReviewStep = ({
         <button
           type="button"
           onClick={handleSendClick}
-          aria-label={!isOnline ? 'Guardar reporte offline' : 'Enviar reporte'}
+          aria-label={!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}
           className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
         >
-          <span>{!isOnline ? 'Guardar reporte (Offline)' : 'Enviar reporte'}</span>
+          <span>{!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}</span>
           <span className="material-symbols-rounded text-[18px]">
             {!isOnline ? 'save' : 'send'}
           </span>
