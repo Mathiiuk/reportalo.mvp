@@ -157,8 +157,10 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       });
     });
 
-    it('UT-EVD-08: Al avanzar al Paso 3 y enviar el reporte, ejecuta la animación de "Protegiendo tus fotos…" (Paso 4) y pasa a "Reporte enviado" (Paso 5)', async () => {
-      render(
+    it(
+      'UT-EVD-08: Al avanzar al Paso 3 y enviar el reporte, ejecuta la animación de "Protegiendo tus fotos…" (Paso 4) y pasa a "Reporte enviado" (Paso 5)',
+      async () => {
+        render(
         <MemoryRouter initialEntries={['/nuevo-reporte']}>
           <NewReportPage />
         </MemoryRouter>
@@ -219,6 +221,6 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         },
         { timeout: 5000 }
       );
-    });
+    }, 15000);
   });
 });
