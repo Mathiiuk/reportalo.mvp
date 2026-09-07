@@ -129,40 +129,60 @@ ON CONFLICT (id) DO UPDATE SET
     allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
 
 -- Políticas de seguridad para storage.objects en Cuarentena
--- Permitir subida transitoria a cualquier ciudadano (anónimo o autenticado)
+-- Permitir ciclo de vida transitorio a cualquier ciudadano (anónimo o autenticado)
+DROP POLICY IF EXISTS "Denegar lectura publica de fotos en cuarentena" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir subida transitoria a cuarentena" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir actualizacion transitoria en cuarentena" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir lectura transitoria de cuarentena" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir purga de cuarentena" ON storage.objects;
+
 CREATE POLICY "Permitir subida transitoria a cuarentena"
 ON storage.objects FOR INSERT
 TO public
 WITH CHECK (bucket_id = 'evidence-quarantine');
 
--- Permitir purgado transitorio de cuarentena ante cancelación o fail-safe
-DROP POLICY IF EXISTS "Permitir purga de cuarentena" ON storage.objects;
+CREATE POLICY "Permitir actualizacion transitoria en cuarentena"
+ON storage.objects FOR UPDATE
+TO public
+USING (bucket_id = 'evidence-quarantine')
+WITH CHECK (bucket_id = 'evidence-quarantine');
+
+CREATE POLICY "Permitir lectura transitoria de cuarentena"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'evidence-quarantine');
+
 CREATE POLICY "Permitir purga de cuarentena"
 ON storage.objects FOR DELETE
 TO public
 USING (bucket_id = 'evidence-quarantine');
 
--- Bloquear estrictamente toda lectura pública de imágenes crudas en cuarentena (solo service_role puede leerlas)
-DROP POLICY IF EXISTS "Denegar lectura publica de fotos en cuarentena" ON storage.objects;
-CREATE POLICY "Denegar lectura publica de fotos en cuarentena"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'evidence-quarantine' AND false);
-
 -- Políticas de seguridad para storage.objects en Evidencias Protegidas
--- Lectura pública universal de evidencias ya procesadas y anonimizadas
+DROP POLICY IF EXISTS "Permitir subida de evidencias protegidas" ON storage.objects;
 DROP POLICY IF EXISTS "Lectura publica de evidencias anonimizadas" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir actualizacion de evidencias protegidas" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir eliminacion de evidencias protegidas" ON storage.objects;
+
 CREATE POLICY "Lectura publica de evidencias anonimizadas"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'report-evidences');
 
--- Permitir guardado de evidencias ya anonimizadas y protegidas
-DROP POLICY IF EXISTS "Permitir subida de evidencias protegidas" ON storage.objects;
 CREATE POLICY "Permitir subida de evidencias protegidas"
 ON storage.objects FOR INSERT
 TO public
 WITH CHECK (bucket_id = 'report-evidences');
+
+CREATE POLICY "Permitir actualizacion de evidencias protegidas"
+ON storage.objects FOR UPDATE
+TO public
+USING (bucket_id = 'report-evidences')
+WITH CHECK (bucket_id = 'report-evidences');
+
+CREATE POLICY "Permitir eliminacion de evidencias protegidas"
+ON storage.objects FOR DELETE
+TO public
+USING (bucket_id = 'report-evidences');
+
 
 
