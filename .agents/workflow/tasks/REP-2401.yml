@@ -1,0 +1,34 @@
+id: "REP-2401"
+external_ref: "https://unlz2026.atlassian.net/browse/REP-2401"
+title: "HU | Proteger metadatos de la evidencia"
+type: "feat"
+status: "READY_FOR_PR"
+priority: "highest"
+owner: "Matias Krepchuk"
+base_branch: "staging"
+sprint: 11
+tags:
+  - "privacidad"
+  - "exif"
+  - "sanitizacion"
+  - "server-side"
+  - "fail-safe"
+  - "sprint11"
+  - "invest"
+
+scope:
+  project: "reportalo.mvp"
+  modules:
+    - "src/services/quarantinePipelineService.js"
+    - "supabase/functions/quarantine-anonymize/index.ts"
+    - "src/services/metadataSanitizer.js"
+  environments:
+    - "local"
+    - "staging"
+
+requirements:
+  - "Sanitizar metadatos EXIF (GPS, modelo de cámara, fecha de captura) dentro del pipeline de cuarentena antes de persistir."
+  - "Garantizar que la versión almacenada no conserve marcadores APP1 ni cabeceras identificatorias."
+  - "Garantizar que la ubicación funcional del reporte dependa exclusivamente de los datos explícitos del flujo y no del EXIF de la foto."
+  - "Comportamiento fail-safe: ante error de sanitización, purgar la imagen y bloquear el envío."
+  - "Auditoría determinística de limpieza de metadatos para QA."
