@@ -6,6 +6,15 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+// Importamos las utilidades especializadas de sanitización y auditoría de metadatos (REP-2401)
+import {
+  sanitizeFileMetadata,
+  hasExifMetadata,
+  stripExifFromJpeg,
+} from './metadataSanitizer';
+
+// Reexportamos las funciones para trazabilidad de la suite de pruebas y auditoría de QA
+export { sanitizeFileMetadata, hasExifMetadata, stripExifFromJpeg };
 
 // Nombre del bucket de cuarentena temporal y privada
 export const BUCKET_QUARANTINE = 'evidence-quarantine';
@@ -228,8 +237,20 @@ export const processEvidenceThroughQuarantine = async ({
 
   // 4. Entorno de desarrollo / Vitest sin backend activo: Emulador determinístico fail-safe
   try {
-    // Sanitizamos los metadatos EXIF
-    const sanitizedBlob = await sanitizeImageMetadataLocally(file);
+    // Sanitizamos los metadatos EXIF utilizando el módulo especializado (REP-2401)
+    const { cleanFile: sanitizedBlob } = await sanitizeFileMetadata(file);
+
+    // Auditoría de seguridad fail-safe: verificamos que el Blob limpio no tenga metadatos remanentes
+    if (typeof sanitizedBlob.arrayBuffer === 'function') {
+      const auditBuffer = new Uint8Array(await sanitizedBlob.arrayBuffer());
+      if (hasExifMetadata(auditBuffer)) {
+        return {
+          success: false,
+          error: 'Fallo de seguridad: no se pudieron remover los metadatos EXIF del archivo.',
+          failSafeTriggered: true,
+        };
+      }
+    }
 
     // Generamos URL de objeto protegida para previsualización
     const sanitizedUrl = typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function'
@@ -250,7 +271,7 @@ export const processEvidenceThroughQuarantine = async ({
   } catch (emulatorError) {
     return {
       success: false,
-      error: 'Error en el emulador local de cuarentena.',
+      error: `Error en el emulador local de cuarentena: ${emulatorError.message || 'Fallo de procesamiento.'}`,
       failSafeTriggered: true,
     };
   }
