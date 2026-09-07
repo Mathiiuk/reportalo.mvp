@@ -137,11 +137,23 @@ export const uploadToQuarantine = async (file, clientSideId) => {
         });
 
       if (error) {
+        // En desarrollo interactivo en navegador (DEV fuera de test runners), si falla la política RLS
+        // o el bucket remoto no está listo, recurrimos al emulador para no bloquear al desarrollador.
+        const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+        if (!isTesting && import.meta.env?.DEV) {
+          console.warn(`[Quarantine Pipeline] Advertencia RLS/Storage en DEV (${error.message}). Activando emulador de seguridad local.`);
+          return { success: true, quarantinePath, isFallback: true };
+        }
         return { success: false, error: `Fallo al subir a cuarentena: ${error.message}` };
       }
 
       return { success: true, quarantinePath: data?.path || quarantinePath };
     } catch (err) {
+      const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+      if (!isTesting && import.meta.env?.DEV) {
+        console.warn('[Quarantine Pipeline] Error de red en cuarentena en DEV. Activando emulador local.');
+        return { success: true, quarantinePath, isFallback: true };
+      }
       return { success: false, error: err.message || 'Error inesperado al subir a cuarentena.' };
     }
   }
@@ -183,12 +195,12 @@ export const processEvidenceThroughQuarantine = async ({
     };
   }
 
-  const { quarantinePath } = uploadResult;
+  const { quarantinePath, isFallback } = uploadResult;
 
   // 2. Si se solicitó simulación de error para probar el comportamiento fail-safe
   if (simulateError) {
     // Purgamos inmediatamente la imagen de cuarentena
-    if (shouldInvokeSupabaseBackend()) {
+    if (shouldInvokeSupabaseBackend() && !isFallback) {
       await supabase.storage.from(BUCKET_QUARANTINE).remove([quarantinePath]).catch(() => {});
     }
     return {
@@ -199,7 +211,7 @@ export const processEvidenceThroughQuarantine = async ({
   }
 
   // 3. Paso 2: Ejecución del pipeline de anonimización (Edge Function)
-  if (shouldInvokeSupabaseBackend()) {
+  if (shouldInvokeSupabaseBackend() && !isFallback) {
     try {
       const { data, error } = await supabase.functions.invoke('quarantine-anonymize', {
         body: {
@@ -208,30 +220,40 @@ export const processEvidenceThroughQuarantine = async ({
         },
       });
 
+      const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+
       if (error || !data?.success) {
-        // En caso de fallo, la Edge Function ya ejecuta la purga en su bloque finally
+        // En DEV interactivo (fuera de tests), si la función no está desplegada en el proyecto remoto, pasamos al emulador local
+        if (!isTesting && import.meta.env?.DEV) {
+          console.warn('[Quarantine Pipeline] Edge function no disponible en DEV. Usando emulador de seguridad local.');
+        } else {
+          return {
+            success: false,
+            error: error?.message || data?.error || 'Error en el procesamiento de la imagen.',
+            failSafeTriggered: true,
+          };
+        }
+      } else {
+        return {
+          success: true,
+          sanitizedUrl: data.sanitizedUrl,
+          clientSideId: data.clientSideId,
+          entitiesDetectedCount: data.entitiesDetectedCount || 0,
+          detectedZones: data.detectedZones || [],
+        };
+      }
+    } catch (err) {
+      const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+      if (!isTesting && import.meta.env?.DEV) {
+        console.warn('[Quarantine Pipeline] Excepción de Edge Function en DEV. Usando emulador local.');
+      } else {
+        await supabase.storage.from(BUCKET_QUARANTINE).remove([quarantinePath]).catch(() => {});
         return {
           success: false,
-          error: error?.message || data?.error || 'Error en el procesamiento de la imagen.',
+          error: err.message || 'Error de red en la Edge Function.',
           failSafeTriggered: true,
         };
       }
-
-      return {
-        success: true,
-        sanitizedUrl: data.sanitizedUrl,
-        clientSideId: data.clientSideId,
-        entitiesDetectedCount: data.entitiesDetectedCount || 0,
-        detectedZones: data.detectedZones || [],
-      };
-    } catch (err) {
-      // Purgado de seguridad de respaldo en cliente ante fallo de comunicación de red
-      await supabase.storage.from(BUCKET_QUARANTINE).remove([quarantinePath]).catch(() => {});
-      return {
-        success: false,
-        error: err.message || 'Error de red en la Edge Function.',
-        failSafeTriggered: true,
-      };
     }
   }
 
