@@ -11,8 +11,7 @@
  * - Purgado Fail-Safe: Destruye obligatoriamente la imagen original de cuarentena tanto al finalizar como ante errores.
  */
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
 
 // Cabeceras estándar para permitir CORS en las peticiones del frontend
 const CORS_HEADERS = {
@@ -185,7 +184,7 @@ export const detectSensitiveEntities = async (
 /**
  * Handler principal de la Edge Function servida por Supabase.
  */
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Manejo de solicitudes pre-flight OPTIONS de CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS });
