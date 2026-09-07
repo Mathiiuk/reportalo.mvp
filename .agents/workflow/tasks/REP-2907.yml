@@ -1,0 +1,53 @@
+id: "REP-2907"
+external_ref: "https://unlz2026.atlassian.net/browse/REP-2907"
+title: "T | Implementar vertical slice RAG: carga, embeddings y retrieval — Sprint 11"
+type: "feat"
+status: "IN_PROGRESS"
+priority: "high"
+owner: "Matias Krepchuk"
+base_branch: "staging"
+sprint: 11
+tags:
+  - "backend"
+  - "pgvector"
+  - "rag"
+  - "rag-seq-03"
+  - "risk-reduction"
+  - "secondary-track-s11"
+  - "spike-vertical-slice"
+  - "sprint11"
+  - "timeboxed"
+
+scope:
+  project: "reportalo.mvp"
+  modules:
+    - "supabase/rag_normativas.sql"
+    - "src/services/legalRagService.js"
+    - "src/test/LegalRagService.test.js"
+  environments:
+    - "local"
+    - "staging"
+
+requirements:
+  - "Cargar el corpus inicial de 8 normas jurídicas municipales y nacionales de tránsito y convivencia (REP-2906)."
+  - "Generar chunks con metadatos completos de trazabilidad (norma_codigo, titulo, jurisdiccion, autoridad, articulo, fuente_url, categoria)."
+  - "Persistir los embeddings en la tabla normativas con extensión pgvector en Supabase."
+  - "Habilitar la función RPC match_normativas con filtros de similitud, categoría y metadatos de respuesta."
+  - "Implementar el servicio legalRagService con fallback determinístico para desarrollo local y tests sin dependencia de red."
+  - "Ejecutar y evaluar la suite de consultas representativas de REP-3764 (casos positivos, ambiguos y negativos)."
+  - "Medir y documentar la latencia de recuperación y el umbral de similitud para alimentar REP-3765 y REP-3767."
+
+acceptance_criteria:
+  - "AC-01: Existe un flujo reproducible completo: documento → chunk trazable → embedding → pgvector → consulta → recuperación."
+  - "AC-02: Los resultados recuperados conservan trazabilidad inequívoca a su norma, artículo, fuente oficial y autoridad."
+  - "AC-03: Se ejecutan con éxito las consultas de prueba de REP-3764 identificando normas correctas ante descripciones ciudadanas."
+  - "AC-04: Las consultas ambiguas y fuera de dominio son controladas adecuadamente mediante el umbral de similitud (match_threshold)."
+  - "AC-05: El 100% de los tests unitarios y Quality Gates pasan en verde."
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+commands:
+  unit_tests: "pnpm test"
+  build: "pnpm run build"
