@@ -1,14 +1,43 @@
-id: "REP-3532"
-title: "Sincronización Asíncrona de Consentimiento de Términos con Supabase y Auditoría Multi-dispositivo"
-epic: "REP-3532"
-assignee: "Matias Krepchuk"
-status: "READY_FOR_PR"
-branch: "feat/REP-3532-aceptar-terminos"
-created_at: "2026-08-28T10:00:00.000Z"
-completed_at: "2026-08-28T10:05:00.000Z"
-tags:
-  - "terms"
-  - "supabase"
-  - "async-sync"
-  - "privacy"
-  - "security"
+id: REP-3532
+external_ref: "https://unlz2026.atlassian.net/browse/REP-3532"
+title: "Sincronización Asíncrona de Consentimiento de Términos y Activación de Permisos PWA"
+type: feature
+status: READY_FOR_PR
+priority: high
+owner: "Matías Krepchuk"
+base_branch: staging
+
+scope:
+  project: "Reportalo MVP"
+  modules:
+    - "terms"
+    - "permissions"
+    - "notifications"
+    - "pwa"
+  environments: [local, staging, production]
+
+requirements:
+  - "Pantalla de activación de permisos post-onboarding con switches interactivos estilo iOS (Cámara, Ubicación y Notificaciones PWA)."
+  - "Soporte de Web Push y Service Worker para notificaciones en segundo plano e inmediatas."
+  - "Persistencia de consentimiento y estado de permisos configurados en localStorage y navegación hacia /mapa."
+  - "Garantía de Retrocompatibilidad y bypass seguro con botón 'Ahora no'."
+
+acceptance_criteria:
+  - "AC-01: La pantalla /permisos se visualiza por única vez luego de completar o saltar el onboarding."
+  - "AC-02: Los switches de cámara, ubicación y notificaciones responden y solicitan permisos nativos al activarse."
+  - "AC-03: Las notificaciones PWA envían confirmación visual mediante toast y notificación local de prueba."
+  - "AC-04: Botones 'Continuar' y 'Ahora no' registran la finalización y navegan a /mapa sin bloquear al ciudadano."
+  - "AC-05: El 100% de los tests unitarios y quality gates pasan con éxito."
+
+quality_gates:
+  unit_tests: true
+  build: true
+
+branch:
+  type: feat
+  name: "feat/REP-3532-aceptar-terminos"
+
+commands:
+  unit_tests: "npx vitest run"
+  build: "npx vite build"
+

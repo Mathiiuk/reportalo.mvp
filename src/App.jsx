@@ -7,6 +7,7 @@ import { WelcomePage } from './pages/WelcomePage';
 import { LoginPage } from './pages/LoginPage';
 import { CheckEmailPage } from './pages/CheckEmailPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { PermissionsPage } from './pages/PermissionsPage';
 import { TermsAndPermissionsPage } from './pages/TermsAndPermissionsPage';
 import { MapPage } from './pages/MapPage';
 import { ReportsPage } from './pages/ReportsPage';
@@ -36,13 +37,27 @@ const ProtectedRoute = ({ children }) => {
     typeof window !== 'undefined' &&
     localStorage.getItem('reportalo_onboarding_completed') === 'true';
 
+  const permissionsConfigured =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('reportalo_permissions_configured') === 'true';
+
   // 1. Paso 1 obligatorio: Onboarding de 3 pasos
   if (!onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. Si ya completó el onboarding e ingresa a /onboarding, redirigir a /mapa
+  // 2. Paso 2 obligatorio por única vez: Activación de permisos
+  if (onboardingCompleted && !permissionsConfigured && location.pathname !== '/permisos') {
+    return <Navigate to="/permisos" replace />;
+  }
+
+  // 3. Si ya completó onboarding e intenta ingresar a /onboarding, redirigir
   if (onboardingCompleted && location.pathname === '/onboarding') {
+    return <Navigate to={permissionsConfigured ? '/mapa' : '/permisos'} replace />;
+  }
+
+  // 4. Si ya configuró permisos e intenta reingresar a /permisos, redirigir a /mapa
+  if (permissionsConfigured && location.pathname === '/permisos') {
     return <Navigate to="/mapa" replace />;
   }
 
@@ -62,11 +77,19 @@ const PublicRoute = ({ children }) => {
       typeof window !== 'undefined' &&
       localStorage.getItem('reportalo_onboarding_completed') === 'true';
 
+    const permissionsConfigured =
+      typeof window !== 'undefined' &&
+      localStorage.getItem('reportalo_permissions_configured') === 'true';
+
     if (!onboardingCompleted) {
       return <Navigate to="/onboarding" replace />;
     }
 
-    // En User Journey v3.1, tras el onboarding el usuario accede directamente a /mapa
+    if (!permissionsConfigured) {
+      return <Navigate to="/permisos" replace />;
+    }
+
+    // Si ya completó onboarding y permisos, accede al mapa
     return <Navigate to="/mapa" replace />;
   }
 
@@ -105,6 +128,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/permisos"
+        element={
+          <ProtectedRoute>
+            <PermissionsPage />
           </ProtectedRoute>
         }
       />
