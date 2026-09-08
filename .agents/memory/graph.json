@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-09-08T15:07:02.420Z",
+  "updatedAt": "2026-09-08T17:12:54.480Z",
   "project": "reportalo.mvp",
   "metrics": {
-    "totalNodes": 88,
-    "totalEdges": 304,
+    "totalNodes": 89,
+    "totalEdges": 312,
     "totalTasks": 18,
     "totalLessons": 0
   },
@@ -53,8 +53,8 @@
       "id": "src/components/layout/AppLayout.jsx",
       "label": "AppLayout.jsx",
       "type": "module",
-      "sizeBytes": 9699,
-      "lineCount": 224,
+      "sizeBytes": 9765,
+      "lineCount": 225,
       "imports": [
         "react",
         "react-router-dom",
@@ -424,16 +424,17 @@
       "id": "src/pages/ProfilePage.jsx",
       "label": "ProfilePage.jsx",
       "type": "module",
-      "sizeBytes": 5991,
-      "lineCount": 137,
+      "sizeBytes": 19139,
+      "lineCount": 444,
       "imports": [
         "react",
         "react-router-dom",
+        "sonner",
         "../components/layout/AppLayout",
         "../hooks/useAuth",
         "../utils/userUtils",
         "../services/termsService",
-        "framer-motion"
+        "../services/notificationService"
       ]
     },
     {
@@ -513,8 +514,8 @@
       "id": "src/services/notificationService.js",
       "label": "notificationService.js",
       "type": "module",
-      "sizeBytes": 3790,
-      "lineCount": 124,
+      "sizeBytes": 5207,
+      "lineCount": 169,
       "imports": []
     },
     {
@@ -779,6 +780,22 @@
         "@testing-library/react",
         "react-router-dom",
         "../pages/PermissionsPage",
+        "../services/notificationService"
+      ]
+    },
+    {
+      "id": "src/test/ProfileFlow.test.jsx",
+      "label": "ProfileFlow.test.jsx",
+      "type": "module",
+      "sizeBytes": 9349,
+      "lineCount": 241,
+      "imports": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "react-router-dom",
+        "../pages/ProfilePage",
+        "../context/AuthContext",
         "../services/notificationService"
       ]
     },
@@ -1723,6 +1740,11 @@
     },
     {
       "from": "src/pages/ProfilePage.jsx",
+      "to": "sonner",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/pages/ProfilePage.jsx",
       "to": "../components/layout/AppLayout",
       "relation": "depends_on"
     },
@@ -1743,7 +1765,7 @@
     },
     {
       "from": "src/pages/ProfilePage.jsx",
-      "to": "framer-motion",
+      "to": "../services/notificationService",
       "relation": "depends_on"
     },
     {
@@ -2273,6 +2295,41 @@
     },
     {
       "from": "src/test/PermissionsFlow.test.jsx",
+      "to": "../services/notificationService",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "vitest",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "@testing-library/react",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "react-router-dom",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "../pages/ProfilePage",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
+      "to": "../context/AuthContext",
+      "relation": "depends_on"
+    },
+    {
+      "from": "src/test/ProfileFlow.test.jsx",
       "to": "../services/notificationService",
       "relation": "depends_on"
     },
