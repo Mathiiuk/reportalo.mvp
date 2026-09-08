@@ -6,15 +6,23 @@ export const OnboardingPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Finalizar onboarding y continuar al mapa (User Journey v3.1)
+  // Finalizar onboarding y continuar a la activación de permisos por única vez
   const handleFinish = () => {
     try {
       localStorage.setItem('reportalo_onboarding_completed', 'true');
     } catch (e) {
       console.warn('LocalStorage error:', e);
     }
-    // Tras el onboarding, se guía al usuario directamente a la experiencia principal del mapa
-    navigate('/mapa');
+
+    const permissionsConfigured =
+      typeof window !== 'undefined' &&
+      localStorage.getItem('reportalo_permissions_configured') === 'true';
+
+    if (permissionsConfigured) {
+      navigate('/mapa');
+    } else {
+      navigate('/permisos');
+    }
   };
 
   // Avanzar al siguiente paso
