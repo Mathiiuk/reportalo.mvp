@@ -37,6 +37,51 @@ export const getNotificationPermission = () => {
 };
 
 /**
+ * Indica si las notificaciones están bloqueadas a nivel de sistema / navegador.
+ * @returns {boolean}
+ */
+export const isNotificationPermissionBlocked = () => {
+  return getNotificationPermission() === 'denied';
+};
+
+/**
+ * Indica si las notificaciones están activas tanto a nivel de permiso nativo como de preferencia de usuario.
+ * @returns {boolean}
+ */
+export const isNotificationsEnabled = () => {
+  if (getNotificationPermission() !== 'granted') return false;
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('reportalo_perm_notifications') !== 'false';
+};
+
+/**
+ * Guarda la preferencia de notificaciones localmente.
+ * @param {boolean} enabled
+ */
+export const setNotificationPreference = (enabled) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('reportalo_perm_notifications', enabled ? 'true' : 'false');
+  }
+};
+
+/**
+ * Intenta abrir los ajustes de la aplicación en el sistema operativo / PWA
+ * cuando el permiso ha sido bloqueado previamente.
+ * @returns {boolean}
+ */
+export const openSystemNotificationSettings = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    // Esquema de URL para abrir ajustes en entornos PWA / WebAPK / iOS
+    window.open('app-settings:', '_blank');
+    return true;
+  } catch (err) {
+    console.warn('[Notifications] No se pudo abrir app-settings directamente:', err);
+    return false;
+  }
+};
+
+/**
  * Solicita al usuario permiso para emitir notificaciones en el navegador / PWA.
  * @returns {Promise<'granted' | 'denied' | 'default' | 'unsupported'>}
  */

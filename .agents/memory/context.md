@@ -1,6 +1,6 @@
 # 🧠 Contexto y Memoria del Proyecto: reportalo.mvp
 
-> **Última sincronización:** 2026-09-08T15:07:02.420Z | **Nodos:** 88 | **Tareas:** 18
+> **Última sincronización:** 2026-09-08T17:12:54.480Z | **Nodos:** 89 | **Tareas:** 18
 
 ## 📦 Mapa de Módulos y Dependencias
 
@@ -8,7 +8,7 @@
 |---|---|---|
 | `src/App.jsx` | 235 | react, react-router-dom, sonner |
 | `src/components/common/AppLoadingScreen.jsx` | 49 | react, framer-motion |
-| `src/components/layout/AppLayout.jsx` | 224 | react, react-router-dom, framer-motion |
+| `src/components/layout/AppLayout.jsx` | 225 | react, react-router-dom, framer-motion |
 | `src/components/map/CitizenMap.jsx` | 576 | react, maplibre-gl, maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url |
 | `src/components/report/AdjustLocationModal.jsx` | 219 | react, maplibre-gl, maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url |
 | `src/components/report/EvidenceCaptureStep.jsx` | 362 | react, lucide-react, framer-motion |
@@ -37,7 +37,7 @@
 | `src/pages/OnboardingPage.jsx` | 353 | react, react-router-dom, framer-motion |
 | `src/pages/PermissionsPage.jsx` | 284 | react, react-router-dom, framer-motion |
 | `src/pages/PlanPage.jsx` | 148 | react, react-router-dom |
-| `src/pages/ProfilePage.jsx` | 137 | react, react-router-dom, ../components/layout/AppLayout |
+| `src/pages/ProfilePage.jsx` | 444 | react, react-router-dom, sonner |
 | `src/pages/ReportsPage.jsx` | 234 | react, react-router-dom, ../components/layout/AppLayout |
 | `src/pages/TermsAndPermissionsPage.jsx` | 136 | react, react-router-dom |
 | `src/pages/WelcomePage.jsx` | 285 | react, react-router-dom, framer-motion |
@@ -45,7 +45,7 @@
 | `src/services/legalRagService.js` | 691 | ../lib/supabaseClient.js |
 | `src/services/locationService.js` | 284 | ninguna |
 | `src/services/metadataSanitizer.js` | 199 | ninguna |
-| `src/services/notificationService.js` | 124 | ninguna |
+| `src/services/notificationService.js` | 169 | ninguna |
 | `src/services/offlineStorageService.js` | 401 | ../types/evidence |
 | `src/services/quarantinePipelineService.js` | 428 | ../lib/supabaseClient, ./metadataSanitizer |
 | `src/services/termsService.js` | 339 | ../lib/supabaseClient |
@@ -65,6 +65,7 @@
 | `src/test/OfflineStorageService.test.js` | 161 | vitest, ../services/offlineStorageService, ../types/evidence |
 | `src/test/OnboardingFlow.test.jsx` | 145 | react, vitest, @testing-library/react |
 | `src/test/PermissionsFlow.test.jsx` | 143 | react, vitest, @testing-library/react |
+| `src/test/ProfileFlow.test.jsx` | 241 | react, vitest, @testing-library/react |
 | `src/test/QuarantinePipelineFlow.test.jsx` | 146 | react, vitest, @testing-library/react |
 | `src/test/QuarantinePipelineService.test.js` | 277 | vitest, ../services/quarantinePipelineService |
 | `src/test/ReportDetailsStep.test.jsx` | 88 | react, vitest, @testing-library/react |
