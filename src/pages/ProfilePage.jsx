@@ -158,197 +158,221 @@ export const ProfilePage = () => {
 
   return (
     <AppLayout activeTab="perfil">
-      {/* Título accesible para lectores de pantalla y tests unitarios */}
-      <h1 className="sr-only">Mi Perfil</h1>
-
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-3 sm:px-4 md:px-6 py-3 flex flex-col justify-start items-center">
-        <div className="w-full max-w-[340px] flex flex-col gap-[7px] min-h-[calc(100dvh-130px)] md:min-h-0">
+      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-10 py-4 md:py-6">
+        <div className="max-w-5xl mx-auto flex flex-col gap-4 md:gap-6">
           
-          {/* 1. Header de Usuario (Avatar e Identidad) */}
-          <div className="flex items-center gap-3 py-1">
-            <div
-              className="w-[56px] h-[56px] rounded-full bg-[#E8F1FB] flex items-center justify-center font-extrabold text-[20px] text-[#1E6FCB] flex-shrink-0 select-none shadow-2xs"
-            >
-              {userInitials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-extrabold text-[16px] text-[#243447] truncate leading-tight">
-                {userName}
-              </div>
-              <div className="font-medium text-[11px] text-[#8593A2] mt-0.5 truncate">
-                {userEmail}
-              </div>
+          {/* Header de Sección */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-[#243447] tracking-[-0.4px] m-0">
+                Mi perfil
+              </h1>
+              <p className="text-[12px] md:text-[13px] text-[#7A8696] font-medium mt-0.5 md:mt-1 mb-0">
+                Gestión de cuenta, notificaciones y consentimientos legales
+              </p>
             </div>
           </div>
 
-          {/* 2. Métricas de Reportes */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white border border-[#E6ECF3] rounded-[12px] p-[11px] text-center shadow-2xs">
-              <div className="font-extrabold text-[19px] leading-none text-[#1E6FCB]">
-                7
-              </div>
-              <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 tracking-[0.3px] uppercase">
-                REPORTES
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E6ECF3] rounded-[12px] p-[11px] text-center shadow-2xs">
-              <div className="font-extrabold text-[19px] leading-none text-[#2E9E6B]">
-                3
-              </div>
-              <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 tracking-[0.3px] uppercase">
-                RESUELTOS
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E6ECF3] rounded-[12px] p-[11px] text-center shadow-2xs">
-              <div className="font-extrabold text-[19px] leading-none text-[#F78E35]">
-                1
-              </div>
-              <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 tracking-[0.3px] uppercase">
-                SIN ENVIAR
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Menú de Configuración y Navegación */}
-          <div className="bg-white border border-[#E6ECF3] rounded-[13px] overflow-hidden shadow-2xs">
+          {/* Grid Responsivo: 1 columna en móvil, 2 columnas en Desktop */}
+          <div className="w-full max-w-[340px] md:max-w-none mx-auto grid grid-cols-1 md:grid-cols-12 gap-3.5 md:gap-6">
             
-            {/* Control Propio: Notificaciones con Toggle */}
-            <div className="flex items-center gap-[10px] p-[11px_13px] border-b border-[#F2F5F9]">
-              <span
-                className="material-symbols-rounded text-[19px] text-[#1E6FCB] select-none"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                notifications
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[12px] text-[#34435A]">
-                  Notificaciones
+            {/* Columna Izquierda: Identidad + Métricas + Términos (md:col-span-5) */}
+            <div className="md:col-span-5 flex flex-col gap-3.5 md:gap-4">
+              
+              {/* Tarjeta de Identidad de Usuario */}
+              <div className="bg-white border border-[#E6ECF3] rounded-[16px] md:rounded-[18px] p-4 md:p-5 flex items-center gap-3.5 md:gap-4 shadow-2xs md:shadow-xs">
+                <div className="w-[52px] h-[52px] md:w-[56px] md:h-[56px] rounded-full bg-[#E8F1FB] flex items-center justify-center font-extrabold text-[19px] md:text-[20px] text-[#1E6FCB] flex-shrink-0 select-none shadow-2xs">
+                  {userInitials}
                 </div>
-                <div className="font-medium text-[9.5px] text-[#9AA7B5] mt-0.5">
-                  Avisos del estado de tus reportes
+                <div className="min-w-0 flex-1">
+                  <div className="font-extrabold text-[15.5px] md:text-[16px] text-[#243447] truncate leading-tight">
+                    {userName}
+                  </div>
+                  <div className="font-medium text-[11px] text-[#8593A2] mt-0.5 truncate">
+                    {userEmail}
+                  </div>
+                  <span className="font-extrabold text-[9.5px] md:text-[10px] text-[#2E9E6B] bg-[#E3F5EC] px-2 py-0.5 rounded-[6px] uppercase tracking-wider inline-block mt-1.5">
+                    Cuenta Verificada
+                  </span>
+                </div>
+              </div>
+
+              {/* 3 Métricas de Reportes */}
+              <div className="grid grid-cols-3 gap-2 md:gap-2.5">
+                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#1E6FCB]">
+                    7
+                  </div>
+                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                    REPORTES
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#2E9E6B]">
+                    3
+                  </div>
+                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                    RESUELTOS
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#F78E35]">
+                    1
+                  </div>
+                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                    SIN ENVIAR
+                  </div>
                 </div>
               </div>
 
-              {/* Toggle switch iOS-style */}
-              <button
-                type="button"
-                role="switch"
-                aria-label="Notificaciones"
-                aria-checked={notificationsActive}
-                onClick={handleToggleNotifications}
-                className={`w-[40px] h-[24px] rounded-[12px] flex-shrink-0 relative cursor-pointer border-0 transition-colors p-0 ${
-                  notificationsActive ? 'bg-[#1E6FCB]' : 'bg-[#D1D9E2]'
-                }`}
-              >
-                <span
-                  className={`absolute top-[2.5px] w-[19px] h-[19px] rounded-full bg-white transition-all shadow-xs ${
-                    notificationsActive ? 'right-[2.5px]' : 'left-[2.5px]'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Novedades (con ícono newspaper) */}
-            <button
-              type="button"
-              data-testid="profile-news-btn"
-              onClick={() => navigate('/alertas')}
-              className="w-full flex items-center gap-[10px] p-[11px_13px] border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
-            >
-              <span className="material-symbols-rounded text-[19px] text-[#1E6FCB] select-none">
-                newspaper
-              </span>
-              <span className="font-semibold text-[12px] text-[#34435A] flex-1">
-                Novedades
-              </span>
-              <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                chevron_right
-              </span>
-            </button>
-
-            {/* Permisos de la app */}
-            <button
-              type="button"
-              data-testid="profile-permissions-btn"
-              onClick={() => navigate('/permisos')}
-              className="w-full flex items-center gap-[10px] p-[11px_13px] border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
-            >
-              <span className="material-symbols-rounded text-[19px] text-[#1E6FCB] select-none">
-                verified_user
-              </span>
-              <span className="font-semibold text-[12px] text-[#34435A] flex-1">
-                Permisos de la app
-              </span>
-              <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                chevron_right
-              </span>
-            </button>
-
-            {/* Descargar mis datos */}
-            <button
-              type="button"
-              data-testid="profile-download-btn"
-              onClick={handleDownloadData}
-              className="w-full flex items-center gap-[10px] p-[11px_13px] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
-            >
-              <span className="material-symbols-rounded text-[19px] text-[#1E6FCB] select-none">
-                download_for_offline
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[12px] text-[#34435A]">
-                  Descargar mis datos
+              {/* Términos aceptados */}
+              <div className="bg-white border border-[#E6ECF3] rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="material-symbols-rounded text-[18px] text-[#2E9E6B] select-none"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    task_alt
+                  </span>
+                  <span className="font-bold text-[11.5px] md:text-[12.5px] text-[#263249]">
+                    Términos aceptados
+                  </span>
                 </div>
+                <div className="font-medium text-[10.5px] md:text-[11.5px] leading-[1.45] text-[#8593A2] mt-0.5">
+                  Versión v{acceptedVersion} · {acceptedDate} a las 14:32, aceptada al enviar el reporte #RP-2048.
+                </div>
+                <button
+                  type="button"
+                  data-testid="profile-terms-btn"
+                  onClick={() => navigate('/terminos', { state: { consultaDesde: 'perfil' } })}
+                  className="font-bold text-[10.5px] md:text-[11.5px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-1 block text-left"
+                >
+                  Ver el texto aceptado →
+                </button>
               </div>
-              <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                chevron_right
-              </span>
-            </button>
-          </div>
 
-          {/* 4. Términos aceptados */}
-          <div className="bg-white border border-[#E6ECF3] rounded-[13px] p-[12px_13px] shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span
-                className="material-symbols-rounded text-[18px] text-[#2E9E6B] select-none"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                task_alt
-              </span>
-              <span className="font-bold text-[11.5px] text-[#263249]">
-                Términos aceptados
-              </span>
             </div>
-            <div className="font-medium text-[10.5px] leading-[1.45] text-[#8593A2] mt-1.5">
-              Versión v{acceptedVersion} · {acceptedDate} a las 14:32, aceptada al enviar el reporte #RP-2048.
-            </div>
-            <button
-              type="button"
-              data-testid="profile-terms-btn"
-              onClick={() => navigate('/terminos', { state: { consultaDesde: 'perfil' } })}
-              className="font-bold text-[10.5px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-2 block"
-            >
-              Ver el texto aceptado
-            </button>
-          </div>
 
-          {/* 5. Acciones de Sesión y Cuenta */}
-          <div className="mt-auto pt-1 pb-3 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-full text-center p-[11px] border-[1.5px] border-[#DDE4EC] rounded-[12px] font-bold text-[12.5px] text-[#56657A] hover:bg-slate-50 active:scale-98 transition-all cursor-pointer bg-white"
-            >
-              Cerrar sesión
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full text-center font-semibold text-[10.5px] text-[#C0392B] hover:underline cursor-pointer bg-transparent border-0 py-1"
-            >
-              Eliminar mi cuenta y mis datos
-            </button>
+            {/* Columna Derecha: Menú de Acciones y Seguridad (md:col-span-7) */}
+            <div className="md:col-span-7 flex flex-col gap-3.5 md:gap-4">
+              
+              {/* Menú de Configuración y Navegación */}
+              <div className="bg-white border border-[#E6ECF3] rounded-[13px] md:rounded-[18px] overflow-hidden shadow-2xs md:shadow-xs">
+                
+                {/* Control Propio: Notificaciones con Toggle */}
+                <div className="flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9]">
+                  <span
+                    className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    notifications
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
+                      Notificaciones
+                    </div>
+                    <div className="font-medium text-[9.5px] md:text-[10.5px] text-[#9AA7B5] mt-0.5">
+                      Avisos del estado de tus reportes
+                    </div>
+                  </div>
+
+                  {/* Toggle switch iOS-style */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-label="Notificaciones"
+                    aria-checked={notificationsActive}
+                    onClick={handleToggleNotifications}
+                    className={`w-[40px] md:w-[42px] h-[24px] md:h-[25px] rounded-[12px] md:rounded-[13px] flex-shrink-0 relative cursor-pointer border-0 transition-colors p-0 ${
+                      notificationsActive ? 'bg-[#1E6FCB]' : 'bg-[#D1D9E2]'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-[2.5px] w-[19px] md:w-[20px] h-[19px] md:h-[20px] rounded-full bg-white transition-all shadow-xs ${
+                        notificationsActive ? 'right-[2.5px]' : 'left-[2.5px]'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Novedades (con ícono newspaper) */}
+                <button
+                  type="button"
+                  data-testid="profile-news-btn"
+                  onClick={() => navigate('/alertas')}
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                >
+                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
+                    newspaper
+                  </span>
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
+                    Novedades
+                  </span>
+                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
+                    chevron_right
+                  </span>
+                </button>
+
+                {/* Permisos de la app */}
+                <button
+                  type="button"
+                  data-testid="profile-permissions-btn"
+                  onClick={() => navigate('/permisos')}
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                >
+                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
+                    verified_user
+                  </span>
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
+                    Permisos de la app
+                  </span>
+                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
+                    chevron_right
+                  </span>
+                </button>
+
+                {/* Descargar mis datos */}
+                <button
+                  type="button"
+                  data-testid="profile-download-btn"
+                  onClick={handleDownloadData}
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                >
+                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
+                    download_for_offline
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
+                      Descargar mis datos
+                    </div>
+                  </div>
+                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
+                    chevron_right
+                  </span>
+                </button>
+              </div>
+
+              {/* Acciones de Sesión y Cuenta */}
+              <div className="bg-transparent md:bg-white md:border md:border-[#E6ECF3] rounded-[18px] md:p-5 md:shadow-xs flex flex-col gap-2 md:gap-3 mt-auto md:mt-0 pt-1 pb-3 md:py-5">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full text-center p-[11px] md:p-3 border-[1.5px] border-[#DDE4EC] rounded-[12px] font-bold text-[12.5px] md:text-[13px] text-[#56657A] hover:bg-slate-50 active:scale-98 transition-all cursor-pointer bg-white"
+                >
+                  Cerrar sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  className="w-full text-center font-semibold text-[10.5px] md:text-[11px] text-[#C0392B] hover:underline cursor-pointer bg-transparent border-0 py-1"
+                >
+                  Eliminar mi cuenta y mis datos
+                </button>
+              </div>
+
+            </div>
           </div>
 
         </div>
