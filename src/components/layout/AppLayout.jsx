@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, Map as MapIcon, FileText, Camera, User } from 'lucide-react';
+import { Bell, Map as MapIcon, FileText, Camera, User, Newspaper } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserInitials } from '../../utils/userUtils';
 
@@ -183,19 +183,20 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
             </label>
           </div>
 
-          {/* 4. Alertas */}
+          {/* 4. Novedades */}
           <button
             type="button"
             onClick={() => navigate('/alertas')}
+            aria-label="Alertas y novedades"
             className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
               currentTab === 'alertas'
                 ? 'bg-[#E6F6FD] text-[#0284C7]'
                 : 'text-[#94A3B8] hover:text-[#475569]'
             }`}
           >
-            <Bell className="w-5 h-5" />
+            <Newspaper className="w-5 h-5" />
             <span className="text-[9.5px] font-bold">
-              Alertas
+              Novedades
             </span>
           </button>
 
