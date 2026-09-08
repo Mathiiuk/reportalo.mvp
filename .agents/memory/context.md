@@ -1,6 +1,6 @@
 # 🧠 Contexto y Memoria del Proyecto: reportalo.mvp
 
-> **Última sincronización:** 2026-09-08T17:12:54.480Z | **Nodos:** 89 | **Tareas:** 18
+> **Última sincronización:** 2026-09-08T17:22:40.185Z | **Nodos:** 89 | **Tareas:** 18
 
 ## 📦 Mapa de Módulos y Dependencias
 
@@ -35,9 +35,9 @@
 | `src/pages/NotFoundPage.jsx` | 75 | react, react-router-dom |
 | `src/pages/NotFoundReportPage.jsx` | 89 | react, react-router-dom |
 | `src/pages/OnboardingPage.jsx` | 353 | react, react-router-dom, framer-motion |
-| `src/pages/PermissionsPage.jsx` | 284 | react, react-router-dom, framer-motion |
+| `src/pages/PermissionsPage.jsx` | 321 | react, react-router-dom, framer-motion |
 | `src/pages/PlanPage.jsx` | 148 | react, react-router-dom |
-| `src/pages/ProfilePage.jsx` | 444 | react, react-router-dom, sonner |
+| `src/pages/ProfilePage.jsx` | 468 | react, react-router-dom, sonner |
 | `src/pages/ReportsPage.jsx` | 234 | react, react-router-dom, ../components/layout/AppLayout |
 | `src/pages/TermsAndPermissionsPage.jsx` | 136 | react, react-router-dom |
 | `src/pages/WelcomePage.jsx` | 285 | react, react-router-dom, framer-motion |

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-08T17:12:54.480Z",
+  "updatedAt": "2026-09-08T17:22:40.185Z",
   "project": "reportalo.mvp",
   "metrics": {
     "totalNodes": 89,
@@ -399,8 +399,8 @@
       "id": "src/pages/PermissionsPage.jsx",
       "label": "PermissionsPage.jsx",
       "type": "module",
-      "sizeBytes": 11973,
-      "lineCount": 284,
+      "sizeBytes": 14588,
+      "lineCount": 321,
       "imports": [
         "react",
         "react-router-dom",
@@ -424,8 +424,8 @@
       "id": "src/pages/ProfilePage.jsx",
       "label": "ProfilePage.jsx",
       "type": "module",
-      "sizeBytes": 19139,
-      "lineCount": 444,
+      "sizeBytes": 21988,
+      "lineCount": 468,
       "imports": [
         "react",
         "react-router-dom",
