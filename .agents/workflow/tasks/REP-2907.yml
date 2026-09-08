@@ -1,53 +1,72 @@
-id: "REP-2907"
-external_ref: "https://unlz2026.atlassian.net/browse/REP-2907"
-title: "T | Implementar vertical slice RAG: carga, embeddings y retrieval — Sprint 11"
-type: "feat"
-status: "IN_PROGRESS"
-priority: "high"
-owner: "Matias Krepchuk"
-base_branch: "staging"
+id: REP-2907
+external_ref: https://unlz2026.atlassian.net/browse/REP-2907
+title: rag-vertical-slice
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
 sprint: 11
 tags:
-  - "backend"
-  - "pgvector"
-  - "rag"
-  - "rag-seq-03"
-  - "risk-reduction"
-  - "secondary-track-s11"
-  - "spike-vertical-slice"
-  - "sprint11"
-  - "timeboxed"
-
+  - backend
+  - pgvector
+  - rag
+  - rag-seq-03
+  - risk-reduction
+  - secondary-track-s11
+  - spike-vertical-slice
+  - sprint11
+  - timeboxed
 scope:
-  project: "reportalo.mvp"
+  project: reportalo.mvp
   modules:
-    - "supabase/rag_normativas.sql"
-    - "src/services/legalRagService.js"
-    - "src/test/LegalRagService.test.js"
+    - supabase/rag_normativas.sql
+    - src/services/legalRagService.js
+    - src/test/LegalRagService.test.js
   environments:
-    - "local"
-    - "staging"
-
+    - local
+    - staging
 requirements:
-  - "Cargar el corpus inicial de 8 normas jurídicas municipales y nacionales de tránsito y convivencia (REP-2906)."
-  - "Generar chunks con metadatos completos de trazabilidad (norma_codigo, titulo, jurisdiccion, autoridad, articulo, fuente_url, categoria)."
-  - "Persistir los embeddings en la tabla normativas con extensión pgvector en Supabase."
-  - "Habilitar la función RPC match_normativas con filtros de similitud, categoría y metadatos de respuesta."
-  - "Implementar el servicio legalRagService con fallback determinístico para desarrollo local y tests sin dependencia de red."
-  - "Ejecutar y evaluar la suite de consultas representativas de REP-3764 (casos positivos, ambiguos y negativos)."
-  - "Medir y documentar la latencia de recuperación y el umbral de similitud para alimentar REP-3765 y REP-3767."
-
+  - >-
+    Cargar el corpus oficial de 8 normas (9 fragmentos vectorizables) verificado
+    contra textos consolidados (REP-2906).
+  - >-
+    Generar chunks con metadatos completos de trazabilidad (norma_codigo,
+    titulo, jurisdiccion, autoridad, articulo, fuente_url, tipo_fundamento).
+  - >-
+    Persistir embeddings y soportar busqueda por similitud de coseno con
+    pgvector en Supabase y fallback deterministico in-memory.
+  - >-
+    Implementar resolucion de jurisdiccion en cascada (Avellaneda -> Municipal +
+    PBA + Nacional; CABA -> Municipal + Nacional).
+  - >-
+    Ejecutar y validar los 6 casos de prueba esperados (A, B, C, D, E y F) de
+    REP-3764.
+  - >-
+    Garantizar que el distractor (Dec-Ley 8031/73) sea descartado en el Caso E y
+    que el Caso F devuelva sin fundamento de forma transparente.
+  - >-
+    Medir y documentar latencia, umbrales de similitud y precision para la
+    entrega de Sprint 11.
 acceptance_criteria:
-  - "AC-01: Existe un flujo reproducible completo: documento → chunk trazable → embedding → pgvector → consulta → recuperación."
-  - "AC-02: Los resultados recuperados conservan trazabilidad inequívoca a su norma, artículo, fuente oficial y autoridad."
-  - "AC-03: Se ejecutan con éxito las consultas de prueba de REP-3764 identificando normas correctas ante descripciones ciudadanas."
-  - "AC-04: Las consultas ambiguas y fuera de dominio son controladas adecuadamente mediante el umbral de similitud (match_threshold)."
-  - "AC-05: El 100% de los tests unitarios y Quality Gates pasan en verde."
-
+  - >-
+    AC-01: El corpus incluye los 8 documentos verbatim de REP-2906 trazables a
+    norma, articulo, autoridad y fuente consolidada.
+  - >-
+    AC-02: La busqueda aplica filtro jurisdiccional estricto excluyendo
+    normativas incompatibles (ej. CABA en Avellaneda).
+  - >-
+    AC-03: Los casos A, B, C, D, E y F de REP-3764 pasan con 100% de
+    correspondencia segun lo especificado.
+  - >-
+    AC-04: El Caso E no confunde el distractor Dec-Ley 8031/73 y el Caso F no
+    inventa ni alucina citas.
+  - >-
+    AC-05: El 100% de los tests unitarios y Quality Gates pasan en verde sin
+    errores.
 quality_gates:
   unit_tests: true
   build: true
-
 commands:
-  unit_tests: "pnpm test"
-  build: "pnpm run build"
+  unit_tests: pnpm test
+  build: pnpm run build
