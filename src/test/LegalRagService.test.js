@@ -41,6 +41,11 @@ describe('REP-2907: Servicio de RAG Jurídico — Corpus Oficial (REP-2906) y Be
 
     INITIAL_LEGAL_CORPUS.forEach((norma) => {
       requiredFields.forEach((field) => {
+        // En el distractor, categoria y tipo_fundamento son deliberadamente nulos para competir en igualdad (Hallazgo 2 Hernán)
+        if (norma.norma_codigo === 'DECLEY-8031-73-INDICE' && (field === 'categoria' || field === 'tipo_fundamento')) {
+          expect(norma[field]).toBeNull();
+          return;
+        }
         expect(norma[field], `El campo ${field} de ${norma.norma_codigo} debe existir`).toBeDefined();
         expect(typeof norma[field]).toBe('string');
         expect(norma[field].length).toBeGreaterThan(0);
@@ -52,10 +57,11 @@ describe('REP-2907: Servicio de RAG Jurídico — Corpus Oficial (REP-2906) y Be
     const codigosUnicos = new Set(codigos);
     expect(codigosUnicos.size).toBe(8);
 
-    // Verificamos presencia del distractor deliberado (Dec-Ley 8031/73)
+    // Verificamos que el distractor deliberado (Dec-Ley 8031/73) NO tenga etiquetas privilegiadas
     const distractor = INITIAL_LEGAL_CORPUS.find((n) => n.norma_codigo === 'DECLEY-8031-73-INDICE');
     expect(distractor).toBeDefined();
-    expect(distractor.tipo_fundamento).toBe('distractor');
+    expect(distractor.categoria).toBeNull();
+    expect(distractor.tipo_fundamento).toBeNull();
   });
 
   it('UT-RAG-01-B: Generación determinística y normalización L2 del embedding', () => {
@@ -235,6 +241,26 @@ describe('REP-2907: Servicio de RAG Jurídico — Corpus Oficial (REP-2906) y Be
     report.evaluations.forEach((evaluation) => {
       expect(evaluation.isCorrect, `El caso ${evaluation.caseName} debe ser correcto`).toBe(true);
     });
+  });
+
+  it('UT-RAG-08-B: Caso Ciego / Generalización Léxica ante consulta con vocabulario coloquial no visto', async () => {
+    // Consulta ciega de infraestructura pluvial/vial en Avellaneda con vocabulario alternativo
+    const response = await searchRelevantNormativas({
+      query: 'Se rompió el sumidero de la esquina y el agua podrida rebalsa la calzada',
+      jurisdiction: 'Avellaneda',
+      threshold: 0.40,
+      limit: 3,
+    });
+
+    expect(response.success).toBe(true);
+    expect(response.hasGrounding).toBe(true);
+    const retrievedCodes = response.results.map((r) => r.norma_codigo);
+
+    // Debe recuperar la obligación municipal de desagües pluviales
+    expect(retrievedCodes).toContain('LOM-DECLEY-6769-ART52');
+    // Descarta el distractor y normativas de CABA
+    expect(retrievedCodes).not.toContain('DECLEY-8031-73-INDICE');
+    expect(retrievedCodes).not.toContain('LEY-210-CABA-ARTS2-3');
   });
 
   it('UT-RAG-09: Resiliencia y manejo de errores ante entradas inválidas', async () => {
