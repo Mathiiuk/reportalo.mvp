@@ -1,5 +1,6 @@
 -- =====================================================================
 -- Spike RAG: Infraestructura y Corpus Normativo con pgvector (REP-2907)
+-- Corpus oficial verificado REP-2906 con URLs de fuente consolidada
 -- =====================================================================
 
 -- 1. Asegurar extensión pgvector
@@ -12,11 +13,12 @@ ALTER TABLE public.normativas
     ADD COLUMN IF NOT EXISTS jurisdiccion TEXT DEFAULT 'Municipal',
     ADD COLUMN IF NOT EXISTS autoridad TEXT DEFAULT 'Juzgado de Faltas',
     ADD COLUMN IF NOT EXISTS articulo TEXT,
+    ADD COLUMN IF NOT EXISTS tipo_fundamento TEXT,
     ADD COLUMN IF NOT EXISTS fuente_url TEXT,
     ADD COLUMN IF NOT EXISTS vigencia TEXT DEFAULT 'vigente',
     ADD COLUMN IF NOT EXISTS version TEXT DEFAULT '1.0';
 
--- Permitir vectores de dimensión flexible (ej. 768 para Gemini o 1536 para OpenAI)
+-- Permitir vectores de dimensión flexible (ej. 64 en spike, 768 en producción Gemini)
 ALTER TABLE public.normativas ALTER COLUMN embedding TYPE vector;
 
 -- 3. Habilitar RLS y políticas de acceso
@@ -41,7 +43,7 @@ DROP FUNCTION IF EXISTS public.match_normativas(vector, double precision, intege
 
 CREATE OR REPLACE FUNCTION public.match_normativas(
   query_embedding vector,
-  match_threshold double precision DEFAULT 0.5,
+  match_threshold double precision DEFAULT 0.45,
   match_count integer DEFAULT 5,
   filter_categoria text DEFAULT NULL,
   filter_jurisdiccion text DEFAULT NULL
@@ -55,6 +57,7 @@ RETURNS TABLE (
   tipo_documento character varying,
   categoria text,
   articulo text,
+  tipo_fundamento text,
   regla text,
   fuente_url text,
   similarity double precision
@@ -72,6 +75,7 @@ AS $$
     normativas.tipo_documento,
     normativas.categoria,
     COALESCE(normativas.articulo, 'General') AS articulo,
+    normativas.tipo_fundamento,
     normativas.regla,
     COALESCE(normativas.fuente_url, '') AS fuente_url,
     1 - (normativas.embedding <=> query_embedding) AS similarity
@@ -83,131 +87,139 @@ AS $$
   LIMIT match_count;
 $$;
 
--- 5. Seed data del corpus normativo inicial (REP-2906)
+-- 5. Seed data del corpus normativo oficial (REP-2906 con URLs verificadas)
 INSERT INTO public.normativas (
   id, norma_codigo, titulo, categoria, jurisdiccion, autoridad,
-  tipo_documento, articulo, regla, fuente_url, vigencia, version, embedding
+  tipo_documento, articulo, tipo_fundamento, regla, fuente_url, vigencia, version, embedding
 )
 VALUES
 (
     'e1000001-0000-0000-0000-000000000001',
-    'LEY-24449-ART49B',
-    'Obstrucción de rampa para personas con movilidad reducida',
-    'mal_estacionado',
-    'Nacional / Municipal',
-    'Dirección General de Tránsito y Seguridad Vial',
-    'Ley Nacional',
-    'Art. 49 bis',
-    'Queda terminantemente prohibido estacionar o detener vehículos frente o sobre rampas destinadas a personas con movilidad reducida o sillas de ruedas, garantizando el libre paso y accesibilidad.',
-    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/15000-19999/17887/texact.htm#49',
+    'CONST-PBA-ART192-INC4',
+    'Constitución de la Provincia de Buenos Aires, art. 192 inc. 4',
+    'infraestructura',
+    'Provincial — Buenos Aires',
+    'Municipalidad / Provincia de Buenos Aires',
+    'Constitución Provincial',
+    'Art. 192 inc. 4',
+    'obligacion',
+    'Tener a su cargo el ornato y salubridad, los establecimientos de beneficencia que no estén a cargo de sociedades particulares, asilos de inmigrantes que sostenga la Provincia, las cárceles locales de detenidos y la vialidad pública.',
+    'https://www.infoleg.gob.ar/?page_id=173',
     'vigente',
     '1.0',
-    '[0.410655,0.410655,0.410655,0.410655,0.045628,0.045628,0.045628,0.045628,0.228142,0.228142,0.228142,0.228142,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.091257,0.091257,0.091257,0.091257,0,0,0,0,0.091257,0.091257,0.091257,0.091257,0.091257,0.091257,0.091257,0.091257,0,0,0,0,0,0.018251,0.018251,0.036503,0.073005,0,0,0,0.036503,0,0.018251,0]'::vector
+    '[0.274825,0.274825,0.274825,0.274825,0.274825,0.274825,0.274825,0.274825,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.137412,0.137412,0.137412,0.137412,0.137412,0.137412,0.137412,0.137412,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.10993,0.10993,0.054965,0.164895,0.054965,0,0,0,0.10993,0.164895,0.21986,0,0.21986,0.164895,0.10993,0.10993]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000002',
-    'LEY-24449-ART49',
-    'Estacionamiento sobre senda peatonal u ochava',
-    'mal_estacionado',
-    'Nacional / Municipal',
-    'Dirección General de Tránsito y Seguridad Vial',
-    'Ley Nacional',
-    'Art. 49 inc. b',
-    'En zona urbana está prohibido estacionar sobre la senda para peatones o ciclovías, en las esquinas u ochavas entre su vértice y la línea imaginaria que resulte de prolongar la ochava.',
-    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/15000-19999/17887/texact.htm#49',
+    'LOM-DECLEY-6769-ART52',
+    'Ley Orgánica de las Municipalidades (Dec-Ley 6769/58), art. 52',
+    'infraestructura',
+    'Provincial — Buenos Aires',
+    'Concejo Deliberante / Departamento Ejecutivo Municipal',
+    'Decreto-Ley',
+    'Art. 52',
+    'obligacion',
+    'Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales, inspecciones, registro de guías, transporte y todo otro tendiente a satisfacer necesidades colectivas de carácter local, siempre que su ejecución no se encuentre a cargo de la Provincia o de la Nación.',
+    'https://normas.gba.gob.ar/documentos/OVG48SW0.html',
     'vigente',
     '1.0',
-    '[0,0,0,0,0.441511,0.441511,0.441511,0.441511,0.165567,0.165567,0.165567,0.165567,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.110378,0.110378,0.110378,0.110378,0.110378,0.110378,0.110378,0.110378,0,0,0,0,0,0.044151,0,0,0.088302,0,0.044151,0,0,0.022076,0.022076,0.022076]'::vector
+    '[0.167412,0.167412,0.167412,0.167412,0.167412,0.167412,0.167412,0.167412,0.251119,0.251119,0.251119,0.251119,0.251119,0.251119,0.251119,0.251119,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0.083706,0.066965,0.066965,0.100447,0.234377,0.033482,0.167412,0.100447,0.033482,0.033482,0.033482,0.033482,0.066965,0.100447,0.13393,0.066965,0.066965]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000003',
-    'LEY-24449-ART44',
-    'Violación de semáforo con luz roja',
-    'semaforo',
-    'Nacional / Municipal',
-    'Juzgado Administrativo de Faltas',
-    'Ley Nacional',
-    'Art. 44 inc. a',
-    'En las vías reguladas por semáforos, los vehículos deben detenerse antes de la línea señalada o de la senda peatonal ante luz roja fija o intermitente, considerándose falta grave su inobservancia.',
-    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/15000-19999/17887/texact.htm#44',
+    'LOM-DECLEY-6769-ART59',
+    'Ley Orgánica de las Municipalidades (Dec-Ley 6769/58), art. 59',
+    'infraestructura',
+    'Provincial — Buenos Aires',
+    'Municipalidad de la Provincia de Buenos Aires',
+    'Decreto-Ley',
+    'Art. 59 inc. d',
+    'obligacion',
+    'Constituyen obras públicas municipales: a) Las concernientes a los servicios de competencia municipal; ... d) Pavimentación, repavimentación, nivelación, ensanche, conservación de calles, veredas y caminos vecinales.',
+    'https://normas.gba.gob.ar/documentos/OVG48SW0.html',
     'vigente',
     '1.0',
-    '[0,0,0,0,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.430169,0.430169,0.430169,0.430169,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.122905,0.073743,0,0,0.024581,0,0.073743,0.049162,0.024581,0,0,0.049162,0,0,0.024581,0.024581,0]'::vector
+    '[0.27683,0.27683,0.27683,0.27683,0.27683,0.27683,0.27683,0.27683,0.184553,0.184553,0.184553,0.184553,0.184553,0.184553,0.184553,0.184553,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.147643,0.036911,0.110732,0.110732,0.221464,0,0.036911,0,0.036911,0.036911,0.036911,0.073821,0,0,0.073821,0.036911]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000004',
-    'LEY-24449-ART48',
-    'Circulación vehicular en sentido contrario (contramano)',
-    'mal_estacionado',
-    'Nacional / Municipal',
-    'Dirección General de Tránsito y Transporte',
-    'Ley Nacional',
-    'Art. 48 inc. d',
-    'Está prohibido transitar en contramano, no respetar los carriles correspondientes o girar en U en lugares no permitidos por la reglamentación municipal o provincial.',
-    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/15000-19999/17887/texact.htm#48',
+    'LEY-210-CABA-ARTS2-3',
+    'Ley 210 — Ente Único Regulador de Servicios Públicos de CABA',
+    'infraestructura',
+    'Municipal — CABA',
+    'Ente Único Regulador de los Servicios Públicos de la CABA',
+    'Ley Municipal',
+    'Arts. 2 y 3 inc. j',
+    'competencia',
+    'El Ente ejerce el control, seguimiento y resguardo de la calidad de los servicios públicos prestados por la administración o terceros: alumbrado, barrido y limpieza, mantenimiento de desagües pluviales. Corresponde tramitar y resolver en sede administrativa los reclamos que presenten los usuarios.',
+    'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/4623',
     'vigente',
     '1.0',
-    '[0,0,0,0,0,0,0,0,0.102815,0.102815,0.102815,0.102815,0,0,0,0,0.308444,0.308444,0.308444,0.308444,0,0,0,0,0,0,0,0,0.102815,0.102815,0.102815,0.102815,0,0,0,0,0,0,0,0,0.257036,0.257036,0.257036,0.257036,0.257036,0.257036,0.257036,0.257036,0.020563,0,0.020563,0,0.041126,0,0,0.020563,0.020563,0,0.020563,0,0,0.020563,0.020563,0.041126]'::vector
+    '[0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.278964,0.278964,0.278964,0.278964,0.278964,0.278964,0.278964,0.278964,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.139482,0.055793,0.027896,0,0.083689,0.083689,0.055793,0.111586,0,0,0.027896,0.139482,0.027896,0.083689,0.055793,0.027896,0.027896]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000005',
-    'ORD-RESIDUOS-CLAND',
-    'Disposición clandestina de residuos y escombros en vía pública',
-    'basura',
-    'Municipal',
-    'Dirección de Higiene Urbana y Gestión Ambiental',
-    'Ordenanza Municipal',
-    'Art. 12 Ord. 8820',
-    'Se prohíbe arrojar, verter o acumular residuos domiciliarios, restos de poda, tierra o escombros en la vía pública, calzadas, aceras o baldíos fuera de los horarios y contenedores autorizados.',
-    'https://boletinoficial.buenosaires.gob.ar/normativa/higiene_urbana',
+    'LEY-24449-ARTS48-49',
+    'Ley Nacional de Tránsito 24.449, arts. 48 y 49',
+    'transito',
+    'Nacional',
+    'Agencia Nacional de Seguridad Vial / Dirección de Tránsito',
+    'Ley Nacional',
+    'Arts. 48 inc. i, 49 inc. b',
+    'conducta_prohibida',
+    'Está prohibido en la vía pública: Estacionar en zona urbana sobre la senda para peatones o ciclovías, en las esquinas u ochavas, obstruir la circulación vehicular o peatonal, o estacionar en doble fila afectando el tránsito libre.',
+    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/norma.htm',
     'vigente',
     '1.0',
-    '[0,0,0,0,0,0,0,0,0.059272,0.059272,0.059272,0.059272,0,0,0,0,0,0,0,0,0.296362,0.296362,0.296362,0.296362,0.177817,0.177817,0.177817,0.177817,0,0,0,0,0.059272,0.059272,0.059272,0.059272,0.237089,0.237089,0.237089,0.237089,0.177817,0.177817,0.177817,0.177817,0.177817,0.177817,0.177817,0.177817,0,0.047418,0.023709,0,0.023709,0.023709,0.023709,0,0.047418,0,0,0.023709,0,0,0.094836,0]'::vector
+    '[0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.037541,0,0.01877,0.009385,0.01877,0.028156,0,0,0.028156,0.01877,0,0,0,0.009385,0.01877,0.009385]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000006',
-    'COD-EDIF-ACERA',
-    'Obstrucción de acera con materiales de obra sin vallado reglamentario',
-    'bache',
-    'Municipal',
-    'Dirección de Obras Particulares y Catastro',
-    'Código de Edificación',
-    'Art. 35 Código de Edificación',
-    'Toda obra en construcción debe garantizar un paso peatonal techado y seguro de al menos un metro de ancho en la acera, prohibiéndose el depósito de ladrillos, áridos y andamios sin cerco.',
-    'https://normativas.buenosaires.gob.ar/obras_particulares',
+    'LEY-2148-CABA-ARTS718-719',
+    'Código de Tránsito y Transporte de la CABA — Ley 2148',
+    'transito',
+    'Municipal — CABA',
+    'Cuerpo de Agentes de Tránsito CABA',
+    'Ley Municipal',
+    'Arts. 7.1.8 inc. c, 7.1.9',
+    'conducta_prohibida',
+    'Prohibición general de estacionar frente a las entradas de garajes y rampas para personas con necesidades especiales o movilidad reducida, y en las esquinas entre su vértice y la prolongación de la ochava.',
+    'https://juristeca.jusbaires.gob.ar/documento/ley-2148/',
     'vigente',
     '1.0',
-    '[0,0,0,0,0.11399,0.11399,0.11399,0.11399,0.056995,0.056995,0.056995,0.056995,0,0,0,0,0,0,0,0,0,0,0,0,0.398966,0.398966,0.398966,0.398966,0,0,0,0,0,0,0,0,0.11399,0.11399,0.11399,0.11399,0.170985,0.170985,0.170985,0.170985,0.170985,0.170985,0.170985,0.170985,0.022798,0.068394,0.022798,0,0.022798,0.022798,0.022798,0,0,0.045596,0.022798,0,0.022798,0.045596,0,0]'::vector
+    '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.036049,0,0.018025,0.018025,0,0,0,0.018025,0.018025,0.018025,0.036049,0,0.036049,0.054074,0.018025,0.018025]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000007',
-    'ORD-RUIDOS-MOL',
-    'Ruidos molestos y emisiones sonoras por encima del límite legal',
-    'otro',
-    'Municipal',
-    'Dirección de Control Comunal y Convivencia',
-    'Ordenanza de Convivencia',
-    'Art. 18 Régimen de Faltas',
-    'Queda prohibido perturbar el descanso o la tranquilidad pública mediante música en alto volumen, alarmas continuas, motores o gritos que excedan los 45 decibeles en horario nocturno (22:00 a 07:00 hs).',
-    'https://boletinoficial.buenosaires.gob.ar/normativa/convivencia_acustica',
+    'LEY-451-CABA-ART6152',
+    'Régimen de Faltas de la CABA — Ley 451, art. 6.1.52',
+    'transito',
+    'Municipal — CABA',
+    'Dirección General de Administración de Infracciones (DGAI)',
+    'Ley Municipal',
+    'Art. 6.1.52',
+    'sancion',
+    'Estacionamiento indebido. El conductor de un vehículo que estacione en lugares prohibidos o antirreglamentarios. Cuando el estacionamiento se produzca en rampas para personas con movilidad reducida la sanción se agravará.',
+    'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/391197',
     'vigente',
     '1.0',
-    '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.454621,0.454621,0.454621,0.454621,0,0,0,0,0.045462,0.045462,0.045462,0.045462,0.136386,0.136386,0.136386,0.136386,0.136386,0.136386,0.136386,0.136386,0.090924,0.03637,0.03637,0.03637,0.018185,0,0.018185,0.03637,0,0.018185,0.018185,0.018185,0.018185,0,0.018185,0.018185]'::vector
+    '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0,0,0,0,0,0,0,0,0.033624,0,0,0.050436,0,0,0,0.033624,0.016812,0,0.033624,0,0,0.067248,0,0]'::vector
   ),
 (
     'e1000001-0000-0000-0000-000000000008',
-    'LEY-PROT-ARBOL',
-    'Poda o tala clandestina del arbolado público',
-    'otro',
-    'Provincial / Municipal',
-    'Secretaría de Espacios Públicos y Arbolado',
-    'Ley Provincial',
-    'Art. 4 Ley 12.276',
-    'Queda prohibida la extracción, tala, poda drástica o daño directo sobre ejemplares del arbolado público urbano sin previa autorización y dictamen técnico de la autoridad competente.',
-    'https://normas.gba.gob.ar/arbolado_publico',
+    'DECLEY-8031-73-INDICE',
+    'Código de Faltas de la Provincia de Buenos Aires — Dec-Ley 8031/73',
+    NULL,
+    'Provincial — Buenos Aires',
+    'Juzgados de Paz / Justicia de Faltas Provincial',
+    'Decreto-Ley',
+    'Índice Títulos I a III',
+    NULL,
+    'Régimen contravencional general de la provincia: faltas contra la seguridad de las personas, el patrimonio, la moralidad pública, la tranquilidad y el orden público, la autoridad y la fe pública. No regula la vía pública vehicular ni el tránsito urbano.',
+    'https://normas.gba.gob.ar/documentos/ZBOPDhkV.html',
     'vigente',
     '1.0',
-    '[0,0,0,0,0,0,0,0,0.114799,0.114799,0.114799,0.114799,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.401795,0.401795,0.401795,0.401795,0.114799,0.114799,0.114799,0.114799,0.172198,0.172198,0.172198,0.172198,0.172198,0.172198,0.172198,0.172198,0,0.045919,0.02296,0.02296,0.02296,0,0.02296,0,0.045919,0.02296,0,0.045919,0,0.02296,0.045919,0]'::vector
+    '[0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0.038281,0,0,0,0,0,0,0,0,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.114842,0.306246,0.306246,0.306246,0.306246,0.306246,0.306246,0.306246,0.306246,0.045937,0.015312,0.015312,0,0,0,0.015312,0.045937,0.076562,0.030625,0.015312,0.015312,0.030625,0.045937,0,0]'::vector
   )
 ON CONFLICT (id) DO UPDATE SET
   norma_codigo = EXCLUDED.norma_codigo,
@@ -217,6 +229,7 @@ ON CONFLICT (id) DO UPDATE SET
   autoridad = EXCLUDED.autoridad,
   tipo_documento = EXCLUDED.tipo_documento,
   articulo = EXCLUDED.articulo,
+  tipo_fundamento = EXCLUDED.tipo_fundamento,
   regla = EXCLUDED.regla,
   fuente_url = EXCLUDED.fuente_url,
   vigencia = EXCLUDED.vigencia,
