@@ -1,6 +1,6 @@
 # 🧠 Contexto y Memoria del Proyecto: reportalo.mvp
 
-> **Última sincronización:** 2026-09-08T17:22:40.185Z | **Nodos:** 89 | **Tareas:** 18
+> **Última sincronización:** 2026-09-09T21:40:39.163Z | **Nodos:** 89 | **Tareas:** 18
 
 ## 📦 Mapa de Módulos y Dependencias
 
@@ -42,7 +42,7 @@
 | `src/pages/TermsAndPermissionsPage.jsx` | 136 | react, react-router-dom |
 | `src/pages/WelcomePage.jsx` | 285 | react, react-router-dom, framer-motion |
 | `src/services/categoriesService.js` | 87 | ../lib/supabaseClient |
-| `src/services/legalRagService.js` | 691 | ../lib/supabaseClient.js |
+| `src/services/legalRagService.js` | 686 | ../lib/supabaseClient.js |
 | `src/services/locationService.js` | 284 | ninguna |
 | `src/services/metadataSanitizer.js` | 199 | ninguna |
 | `src/services/notificationService.js` | 169 | ninguna |
@@ -55,7 +55,7 @@
 | `src/test/EvidenceCaptureFlow.test.jsx` | 227 | react, vitest, @testing-library/react |
 | `src/test/EvidenceGallery.test.jsx` | 47 | react, vitest, @testing-library/react |
 | `src/test/EvidencePreviewScreen.test.jsx` | 175 | react, vitest, @testing-library/react |
-| `src/test/LegalRagService.test.js` | 250 | vitest, ../services/legalRagService |
+| `src/test/LegalRagService.test.js` | 276 | vitest, ../services/legalRagService |
 | `src/test/LocationFlow.test.jsx` | 162 | react, vitest, @testing-library/react |
 | `src/test/LocationService.test.jsx` | 151 | vitest, @testing-library/react, ../services/locationService |
 | `src/test/MapFlow.test.jsx` | 260 | react, vitest, @testing-library/react |
