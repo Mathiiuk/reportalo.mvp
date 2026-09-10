@@ -1,4 +1,4 @@
-﻿# 📑 Informe Técnico de Handoff (Revisado): REP-2907
+# 📑 Informe Técnico de Handoff (Revisado): REP-2907
 ## Vertical Slice RAG: Carga, Embeddings y Retrieval — Sprint 11
 
 - **Ticket Jira:** [REP-2907: T | Implementar vertical slice RAG: carga, embeddings y retrieval](https://unlz2026.atlassian.net/browse/REP-2907)
@@ -133,7 +133,7 @@ Tal como solicitó Hernán en la **Observación 3**:
    - La vectorización léxica determinística de 64 dimensiones desarrollada en este sprint fue concebida exclusivamente para resolver el spike de arquitectura de forma autónoma, sin costos de llamadas a APIs externas y permitiendo pruebas unitarias instantáneas (< 40ms) en entornos CI/CD offline.
 2. **Advertencia sobre Validez del Benchmark:**
    - Si bien el modelo obtuvo 100% en los 7 casos evaluados y en el Caso Ciego `UT-RAG-08-B`, **no debe tomarse este 100% como garantía de generalización frente a lenguaje natural ilimitado**. Un vocabulario no mapeado caerá en las dimensiones secundarias de hashing, lo que podría reducir la precisión.
-3. **Paso a Producción (Gemini text-embedding-004 / OpenAI):**
+3. **Paso a Producción (Google Gemini text-embedding-004 de 768 dimensiones):**
    - Para la fase productiva y la evaluación en REP-3767, se debe migrar al modelo oficial de 768 dimensiones (`vector(768)`). La tabla `normativas` y la función RPC `match_normativas` de Supabase ya fueron creadas con tipo `vector` flexible para admitir esta migración sin rehacer la arquitectura de base de datos.
 
 ---
