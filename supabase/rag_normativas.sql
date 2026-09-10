@@ -18,6 +18,9 @@ ALTER TABLE public.normativas
     ADD COLUMN IF NOT EXISTS vigencia TEXT DEFAULT 'vigente',
     ADD COLUMN IF NOT EXISTS version TEXT DEFAULT '1.0';
 
+-- Permitir categoría nula para el distractor neutro (Hallazgo 2 Hernán)
+ALTER TABLE public.normativas ALTER COLUMN categoria DROP NOT NULL;
+
 -- Permitir vectores de dimensión flexible (ej. 64 en spike, 768 en producción Gemini)
 ALTER TABLE public.normativas ALTER COLUMN embedding TYPE vector;
 
