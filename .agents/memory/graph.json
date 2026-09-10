@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-08T17:22:40.185Z",
+  "updatedAt": "2026-09-09T21:40:39.163Z",
   "project": "reportalo.mvp",
   "metrics": {
     "totalNodes": 89,
@@ -488,8 +488,8 @@
       "id": "src/services/legalRagService.js",
       "label": "legalRagService.js",
       "type": "module",
-      "sizeBytes": 28515,
-      "lineCount": 691,
+      "sizeBytes": 28216,
+      "lineCount": 686,
       "imports": [
         "../lib/supabaseClient.js"
       ]
@@ -645,8 +645,8 @@
       "id": "src/test/LegalRagService.test.js",
       "label": "LegalRagService.test.js",
       "type": "module",
-      "sizeBytes": 9937,
-      "lineCount": 250,
+      "sizeBytes": 11274,
+      "lineCount": 276,
       "imports": [
         "vitest",
         "../services/legalRagService"
