@@ -75,11 +75,11 @@ const SEMANTIC_CONCEPT_BUCKETS = [
       'sancion', 'mult', 'agrava', 'falt', 'infractor', 'infracc', 'antirreglamentari', 'regimen'
     ],
   },
-  // Dims 40-47: Faltas generales contra orden público / moralidad (Distractor)
+  // Dims 40-47: Faltas generales contra orden público / moralidad (Dec-Ley 8031/73)
   {
     dims: [40, 41, 42, 43, 44, 45, 46, 47],
     stems: [
-      'quilomb', 'discut', 'pelea', 'moralidad', 'patrimoni', 'tranquilidad', 'orden',
+      'moralidad', 'patrimoni', 'tranquilidad', 'orden',
       'publico', 'fe', 'autoridad', 'contravenc'
     ],
   },
@@ -154,7 +154,7 @@ export const INITIAL_LEGAL_CORPUS = [
     articulo: 'Arts. 2 y 3 inc. j',
     tipo_fundamento: 'competencia',
     regla: 'El Ente ejerce el control, seguimiento y resguardo de la calidad de los servicios públicos prestados por la administración o terceros: alumbrado, barrido y limpieza, mantenimiento de desagües pluviales. Corresponde tramitar y resolver en sede administrativa los reclamos que presenten los usuarios.',
-    fuente_url: 'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/1336',
+    fuente_url: 'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/4623',
     vigencia: 'vigente',
     version: '1.0',
   },
@@ -172,7 +172,7 @@ export const INITIAL_LEGAL_CORPUS = [
     articulo: 'Arts. 48 inc. i, 49 inc. b',
     tipo_fundamento: 'conducta_prohibida',
     regla: 'Está prohibido en la vía pública: Estacionar en zona urbana sobre la senda para peatones o ciclovías, en las esquinas u ochavas, obstruir la circulación vehicular o peatonal, o estacionar en doble fila afectando el tránsito libre.',
-    fuente_url: 'http://servicios.infoleg.gob.ar/infolegInternet/anexos/15000-19999/17887/texact.htm#48',
+    fuente_url: 'https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/texact.htm',
     vigencia: 'vigente',
     version: '1.0',
   },
@@ -189,7 +189,7 @@ export const INITIAL_LEGAL_CORPUS = [
     articulo: 'Arts. 7.1.8 inc. c, 7.1.9',
     tipo_fundamento: 'conducta_prohibida',
     regla: 'Prohibición general de estacionar frente a las entradas de garajes y rampas para personas con necesidades especiales o movilidad reducida, y en las esquinas entre su vértice y la prolongación de la ochava.',
-    fuente_url: 'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/3196',
+    fuente_url: 'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/',
     vigencia: 'vigente',
     version: '1.0',
   },
@@ -206,22 +206,22 @@ export const INITIAL_LEGAL_CORPUS = [
     articulo: 'Art. 6.1.52',
     tipo_fundamento: 'sancion',
     regla: 'Estacionamiento indebido. El conductor de un vehículo que estacione en lugares prohibidos o antirreglamentarios. Cuando el estacionamiento se produzca en rampas para personas con movilidad reducida la sanción se agravará.',
-    fuente_url: 'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/2119',
+    fuente_url: 'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/391197',
     vigencia: 'vigente',
     version: '1.0',
   },
-  // Fragmento 8: Decreto-Ley 8031/73 (Provincial PBA — Distractor)
+  // Fragmento 8: Decreto-Ley 8031/73 (Provincial PBA — Distractor sin categoría ni fundamento privilegiado)
   {
     id: 'e1000001-0000-0000-0000-000000000008',
     fragment_id: 'FRAG-008',
     norma_codigo: 'DECLEY-8031-73-INDICE',
     titulo: 'Código de Faltas de la Provincia de Buenos Aires — Dec-Ley 8031/73',
-    categoria: 'distractor',
+    categoria: null,
     jurisdiccion: 'Provincial — Buenos Aires',
     autoridad: 'Juzgados de Paz / Justicia de Faltas Provincial',
     tipo_documento: 'Decreto-Ley',
     articulo: 'Índice Títulos I a III',
-    tipo_fundamento: 'distractor',
+    tipo_fundamento: null,
     regla: 'Régimen contravencional general de la provincia: faltas contra la seguridad de las personas, el patrimonio, la moralidad pública, la tranquilidad y el orden público, la autoridad y la fe pública. No regula la vía pública vehicular ni el tránsito urbano.',
     fuente_url: 'https://normas.gba.gob.ar/documentos/ZBOPDhkV.html',
     vigencia: 'vigente',
@@ -461,7 +461,6 @@ export const searchRelevantNormativas = async ({
 
   // Fallback / Entorno Local & Testing: Búsqueda vectorial en memoria con cascada jurisdiccional
   const corpus = getLegalCorpusWithEmbeddings();
-  const isTransitQuery = normQuery.includes('transit') || normQuery.includes('auto') || normQuery.includes('fren');
 
   const ranked = corpus
     .filter((norma) => {
@@ -469,12 +468,8 @@ export const searchRelevantNormativas = async ({
       if (eligibleJurisdictions && !eligibleJurisdictions.has(norma.jurisdiccion)) {
         return false;
       }
-      // 2. Filtro opcional por categoría
-      if (category && norma.categoria !== category) {
-        return false;
-      }
-      // 3. Caso E: El distractor (Dec-Ley 8031/73) no aplica para tránsito ni infraestructura vial
-      if (norma.categoria === 'distractor' && isTransitQuery) {
+      // 2. Filtro opcional por categoría si fue provisto
+      if (category && norma.categoria && norma.categoria !== category) {
         return false;
       }
       return true;
