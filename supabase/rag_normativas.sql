@@ -187,7 +187,7 @@ VALUES
     'Arts. 7.1.8 inc. c, 7.1.9',
     'conducta_prohibida',
     'Prohibición general de estacionar frente a las entradas de garajes y rampas para personas con necesidades especiales o movilidad reducida, y en las esquinas entre su vértice y la prolongación de la ochava.',
-    'https://juristeca.jusbaires.gob.ar/documento/ley-2148/',
+    'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/',
     'vigente',
     '1.0',
     '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.036049,0,0.018025,0.018025,0,0,0,0.018025,0.018025,0.018025,0.036049,0,0.036049,0.054074,0.018025,0.018025]'::vector
@@ -203,7 +203,7 @@ VALUES
     'Art. 6.1.52',
     'sancion',
     'Estacionamiento indebido. El conductor de un vehículo que estacione en lugares prohibidos o antirreglamentarios. Cuando el estacionamiento se produzca en rampas para personas con movilidad reducida la sanción se agravará.',
-    'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/391197',
+    'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-451',
     'vigente',
     '1.0',
     '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0,0,0,0,0,0,0,0,0.033624,0,0,0.050436,0,0,0,0.033624,0.016812,0,0.033624,0,0,0.067248,0,0]'::vector
