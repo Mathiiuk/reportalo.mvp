@@ -51,14 +51,14 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
     });
   });
 
-  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /mapa', async () => {
-    const MapDestination = () => <div data-testid="map-screen">Citizen Map Screen</div>;
+  it('UT-OB-03: El botón "Saltar" guarda el estado de completado y redirige a /permisos si no se configuraron', async () => {
+    const PermissionsDestination = () => <div data-testid="permissions-screen">Permissions Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/mapa" element={<MapDestination />} />
+          <Route path="/permisos" element={<PermissionsDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -68,18 +68,18 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
-      expect(screen.getByTestId('map-screen')).toBeInTheDocument();
+      expect(screen.getByTestId('permissions-screen')).toBeInTheDocument();
     });
   });
 
-  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /mapa', async () => {
-    const MapDestination = () => <div data-testid="map-screen">Citizen Map Screen</div>;
+  it('UT-OB-04: El botón "Empezar" en el Paso 3 finaliza el onboarding y navega a /permisos', async () => {
+    const PermissionsDestination = () => <div data-testid="permissions-screen">Permissions Screen</div>;
 
     render(
       <MemoryRouter initialEntries={['/onboarding']}>
         <Routes>
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/mapa" element={<MapDestination />} />
+          <Route path="/permisos" element={<PermissionsDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -97,6 +97,28 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     const startBtn = screen.getByRole('button', { name: /Empezar/i });
     fireEvent.click(startBtn);
+
+    await waitFor(() => {
+      expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
+      expect(screen.getByTestId('permissions-screen')).toBeInTheDocument();
+    });
+  });
+
+  it('UT-OB-04-B: Si los permisos ya fueron configurados previamente, finaliza y navega directo a /mapa', async () => {
+    localStorage.setItem('reportalo_permissions_configured', 'true');
+    const MapDestination = () => <div data-testid="map-screen">Citizen Map Screen</div>;
+
+    render(
+      <MemoryRouter initialEntries={['/onboarding']}>
+        <Routes>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/mapa" element={<MapDestination />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const skipButtons = screen.getAllByRole('button', { name: /Saltar/i });
+    fireEvent.click(skipButtons[0]);
 
     await waitFor(() => {
       expect(localStorage.getItem('reportalo_onboarding_completed')).toBe('true');
