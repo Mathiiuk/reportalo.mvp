@@ -187,7 +187,7 @@ VALUES
     'Arts. 7.1.8 inc. c, 7.1.9',
     'conducta_prohibida',
     'Prohibición general de estacionar frente a las entradas de garajes y rampas para personas con necesidades especiales o movilidad reducida, y en las esquinas entre su vértice y la prolongación de la ochava.',
-    'https://juristeca.jusbaires.gob.ar/documento/ley-2148/',
+    'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/',
     'vigente',
     '1.0',
     '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.036049,0,0.018025,0.018025,0,0,0,0.018025,0.018025,0.018025,0.036049,0,0.036049,0.054074,0.018025,0.018025]'::vector
