@@ -59,8 +59,8 @@ Se actualizaron los 8 fragmentos en `src/services/legalRagService.js` y `supabas
 | **2** | `FRAG-002` | `LOM-DECLEY-6769-ART52` | Ley Orgánica de las Municipalidades (Dec-Ley 6769/58), art. 52 | Provincial — Buenos Aires | `infraestructura` | `obligacion` | [normas.gba.gob.ar/documentos/OVG48SW0.html](https://normas.gba.gob.ar/documentos/OVG48SW0.html) |
 | **3** | `FRAG-003` | `LOM-DECLEY-6769-ART59` | Ley Orgánica de las Municipalidades (Dec-Ley 6769/58), art. 59 | Provincial — Buenos Aires | `infraestructura` | `obligacion` | [normas.gba.gob.ar/documentos/OVG48SW0.html](https://normas.gba.gob.ar/documentos/OVG48SW0.html) |
 | **4** | `FRAG-004` | `LEY-210-CABA-ARTS2-3` | Ley 210 de la CABA (Ente Regulador), arts. 2 y 3 | Municipal — CABA | `infraestructura` | `competencia` | [boletinoficial.buenosaires.gob.ar/normativaba/norma/4623](https://boletinoficial.buenosaires.gob.ar/normativaba/norma/4623) |
-| **5** | `FRAG-005` | `LEY-24449-ARTS48-49` | Ley Nacional de Tránsito 24.449, arts. 48 y 49 | Nacional (rige en PBA ley 13.927) | `transito` | `conducta_prohibida` | [servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/norma.htm](http://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/norma.htm) |
-| **6** | `FRAG-006` | `LEY-2148-CABA-ARTS718-719` | Código de Tránsito CABA (Ley 2148), arts. 7.1.8 y 7.1.9 | Municipal — CABA | `transito` | `conducta_prohibida` | [juristeca.jusbaires.gob.ar/documento/ley-2148/](https://juristeca.jusbaires.gob.ar/documento/ley-2148/) |
+| **5** | `FRAG-005` | `LEY-24449-ARTS48-49` | Ley Nacional de Tránsito 24.449, arts. 48 y 49 | Nacional (rige en PBA ley 13.927) | `transito` | `conducta_prohibida` | [servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/texact.htm](https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/texact.htm) |
+| **6** | `FRAG-006` | `LEY-2148-CABA-ARTS718-719` | Código de Tránsito CABA (Ley 2148), arts. 7.1.8 y 7.1.9 | Municipal — CABA | `transito` | `conducta_prohibida` | [juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/](https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/) |
 | **7** | `FRAG-007` | `LEY-451-CABA-ART6152` | Régimen de Faltas CABA (Ley 451), art. 6.1.52 | Municipal — CABA | `transito` | `sancion` | [boletinoficial.buenosaires.gob.ar/normativaba/norma/391197](https://boletinoficial.buenosaires.gob.ar/normativaba/norma/391197) |
 | **8** | `FRAG-008` | `DECLEY-8031-73-INDICE` | Código de Faltas PBA (Dec-Ley 8031/73) | Provincial — Buenos Aires | `null` | `null` | [normas.gba.gob.ar/documentos/ZBOPDhkV.html](https://normas.gba.gob.ar/documentos/ZBOPDhkV.html) |
 
@@ -129,10 +129,14 @@ const ranked = corpus
 ## 5. ⚠️ Declaración de Limitaciones del Modelo Local para REP-3767
 
 Tal como solicitó Hernán en la **Observación 3**:
+
+> **Declaración obligatoria:**  
+> "El benchmark de 100% de acierto se corrió con un embedding léxico local de 64 dimensiones, hecho a medida para este spike, no con Gemini `text-embedding-004` (768 dimensiones, la opción de producción) ni con OpenAI. Es válido para probar la arquitectura (carga, filtrado jurisdiccional, estructura de recuperación) pero **no valida la calidad de recuperación semántica real**, porque el esquema se ajustó a mano contra los mismos casos con los que después se mide. No debe leerse como una cifra de precisión productiva."
+
 1. **Representación de 64 dimensiones como herramienta de Spike:**
    - La vectorización léxica determinística de 64 dimensiones desarrollada en este sprint fue concebida exclusivamente para resolver el spike de arquitectura de forma autónoma, sin costos de llamadas a APIs externas y permitiendo pruebas unitarias instantáneas (< 40ms) en entornos CI/CD offline.
-2. **Advertencia sobre Validez del Benchmark:**
-   - Si bien el modelo obtuvo 100% en los 7 casos evaluados y en el Caso Ciego `UT-RAG-08-B`, **no debe tomarse este 100% como garantía de generalización frente a lenguaje natural ilimitado**. Un vocabulario no mapeado caerá en las dimensiones secundarias de hashing, lo que podría reducir la precisión.
+2. **Advertencia sobre Validez del Benchmark y Caso Ciego:**
+   - Si bien el modelo obtuvo 100% en los 7 casos evaluados y en el Caso Ciego `UT-RAG-08-B`, no debe tomarse este 100% como garantía de generalización frente a lenguaje natural ilimitado. Un vocabulario no mapeado caerá en las dimensiones secundarias de hashing, lo que podría reducir la precisión.
 3. **Paso a Producción (Google Gemini text-embedding-004 de 768 dimensiones):**
    - Para la fase productiva y la evaluación en REP-3767, se debe migrar al modelo oficial de 768 dimensiones (`vector(768)`). La tabla `normativas` y la función RPC `match_normativas` de Supabase ya fueron creadas con tipo `vector` flexible para admitir esta migración sin rehacer la arquitectura de base de datos.
 
