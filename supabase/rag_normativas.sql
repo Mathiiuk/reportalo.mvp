@@ -203,7 +203,7 @@ VALUES
     'Art. 6.1.52',
     'sancion',
     'Estacionamiento indebido. El conductor de un vehículo que estacione en lugares prohibidos o antirreglamentarios. Cuando el estacionamiento se produzca en rampas para personas con movilidad reducida la sanción se agravará.',
-    'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/391197',
+    'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-451',
     'vigente',
     '1.0',
     '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.12609,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.210151,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0.252181,0,0,0,0,0,0,0,0,0.033624,0,0,0.050436,0,0,0,0.033624,0.016812,0,0.033624,0,0,0.067248,0,0]'::vector
