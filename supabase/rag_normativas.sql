@@ -171,7 +171,7 @@ VALUES
     'Arts. 48 inc. i, 49 inc. b',
     'conducta_prohibida',
     'Está prohibido en la vía pública: Estacionar en zona urbana sobre la senda para peatones o ciclovías, en las esquinas u ochavas, obstruir la circulación vehicular o peatonal, o estacionar en doble fila afectando el tránsito libre.',
-    'https://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/texact.htm',
+    'http://servicios.infoleg.gob.ar/infolegInternet/anexos/0-4999/818/norma.htm',
     'vigente',
     '1.0',
     '[0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0.023463,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0.351946,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.037541,0,0.01877,0.009385,0.01877,0.028156,0,0,0.028156,0.01877,0,0,0,0.009385,0.01877,0.009385]'::vector
@@ -187,7 +187,7 @@ VALUES
     'Arts. 7.1.8 inc. c, 7.1.9',
     'conducta_prohibida',
     'Prohibición general de estacionar frente a las entradas de garajes y rampas para personas con necesidades especiales o movilidad reducida, y en las esquinas entre su vértice y la prolongación de la ochava.',
-    'https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-2148/h-tit-7/',
+    'https://juristeca.jusbaires.gob.ar/documento/ley-2148/',
     'vigente',
     '1.0',
     '[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.225308,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0.270369,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.036049,0,0.018025,0.018025,0,0,0,0.018025,0.018025,0.018025,0.036049,0,0.036049,0.054074,0.018025,0.018025]'::vector

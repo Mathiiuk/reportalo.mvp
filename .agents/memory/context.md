@@ -1,14 +1,14 @@
 # 🧠 Contexto y Memoria del Proyecto: reportalo.mvp
 
-> **Última sincronización:** 2026-09-08T12:09:16.518Z | **Nodos:** 85 | **Tareas:** 18
+> **Última sincronización:** 2026-09-09T21:40:39.163Z | **Nodos:** 89 | **Tareas:** 18
 
 ## 📦 Mapa de Módulos y Dependencias
 
 | Módulo | Líneas | Dependencias Principales |
 |---|---|---|
-| `src/App.jsx` | 204 | react, react-router-dom, sonner |
+| `src/App.jsx` | 235 | react, react-router-dom, sonner |
 | `src/components/common/AppLoadingScreen.jsx` | 49 | react, framer-motion |
-| `src/components/layout/AppLayout.jsx` | 224 | react, react-router-dom, framer-motion |
+| `src/components/layout/AppLayout.jsx` | 225 | react, react-router-dom, framer-motion |
 | `src/components/map/CitizenMap.jsx` | 576 | react, maplibre-gl, maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url |
 | `src/components/report/AdjustLocationModal.jsx` | 219 | react, maplibre-gl, maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url |
 | `src/components/report/EvidenceCaptureStep.jsx` | 362 | react, lucide-react, framer-motion |
@@ -34,16 +34,18 @@
 | `src/pages/NewsPage.jsx` | 94 | react, ../components/layout/AppLayout, framer-motion |
 | `src/pages/NotFoundPage.jsx` | 75 | react, react-router-dom |
 | `src/pages/NotFoundReportPage.jsx` | 89 | react, react-router-dom |
-| `src/pages/OnboardingPage.jsx` | 345 | react, react-router-dom, framer-motion |
+| `src/pages/OnboardingPage.jsx` | 353 | react, react-router-dom, framer-motion |
+| `src/pages/PermissionsPage.jsx` | 321 | react, react-router-dom, framer-motion |
 | `src/pages/PlanPage.jsx` | 148 | react, react-router-dom |
-| `src/pages/ProfilePage.jsx` | 137 | react, react-router-dom, ../components/layout/AppLayout |
+| `src/pages/ProfilePage.jsx` | 468 | react, react-router-dom, sonner |
 | `src/pages/ReportsPage.jsx` | 234 | react, react-router-dom, ../components/layout/AppLayout |
 | `src/pages/TermsAndPermissionsPage.jsx` | 136 | react, react-router-dom |
 | `src/pages/WelcomePage.jsx` | 285 | react, react-router-dom, framer-motion |
 | `src/services/categoriesService.js` | 87 | ../lib/supabaseClient |
-| `src/services/legalRagService.js` | 691 | ../lib/supabaseClient.js |
+| `src/services/legalRagService.js` | 686 | ../lib/supabaseClient.js |
 | `src/services/locationService.js` | 284 | ninguna |
 | `src/services/metadataSanitizer.js` | 199 | ninguna |
+| `src/services/notificationService.js` | 169 | ninguna |
 | `src/services/offlineStorageService.js` | 401 | ../types/evidence |
 | `src/services/quarantinePipelineService.js` | 428 | ../lib/supabaseClient, ./metadataSanitizer |
 | `src/services/termsService.js` | 339 | ../lib/supabaseClient |
@@ -53,7 +55,7 @@
 | `src/test/EvidenceCaptureFlow.test.jsx` | 227 | react, vitest, @testing-library/react |
 | `src/test/EvidenceGallery.test.jsx` | 47 | react, vitest, @testing-library/react |
 | `src/test/EvidencePreviewScreen.test.jsx` | 175 | react, vitest, @testing-library/react |
-| `src/test/LegalRagService.test.js` | 250 | vitest, ../services/legalRagService |
+| `src/test/LegalRagService.test.js` | 276 | vitest, ../services/legalRagService |
 | `src/test/LocationFlow.test.jsx` | 162 | react, vitest, @testing-library/react |
 | `src/test/LocationService.test.jsx` | 151 | vitest, @testing-library/react, ../services/locationService |
 | `src/test/MapFlow.test.jsx` | 260 | react, vitest, @testing-library/react |
@@ -61,7 +63,9 @@
 | `src/test/NewReportFlow.test.jsx` | 57 | react, vitest, @testing-library/react |
 | `src/test/OfflineReportFlow.test.jsx` | 218 | react, vitest, @testing-library/react |
 | `src/test/OfflineStorageService.test.js` | 161 | vitest, ../services/offlineStorageService, ../types/evidence |
-| `src/test/OnboardingFlow.test.jsx` | 123 | react, vitest, @testing-library/react |
+| `src/test/OnboardingFlow.test.jsx` | 145 | react, vitest, @testing-library/react |
+| `src/test/PermissionsFlow.test.jsx` | 143 | react, vitest, @testing-library/react |
+| `src/test/ProfileFlow.test.jsx` | 241 | react, vitest, @testing-library/react |
 | `src/test/QuarantinePipelineFlow.test.jsx` | 146 | react, vitest, @testing-library/react |
 | `src/test/QuarantinePipelineService.test.js` | 277 | vitest, ../services/quarantinePipelineService |
 | `src/test/ReportDetailsStep.test.jsx` | 88 | react, vitest, @testing-library/react |
@@ -86,11 +90,11 @@
 - **REP-2404: T | Implementar pipeline server-side de cuarentena de imágenes** `[READY_FOR_PR]`
 - **REP-2600: Visualizar /mapa como pantalla principal ciudadana** `[READY_FOR_PR]`
 - **REP-2703: Persistir borrador y evidencia offline en IndexedDB** `[READY_FOR_PR]`
-- **REP-2907: rag-vertical-slice** `[IN_PROGRESS]`
+- **REP-2907: rag-vertical-slice** `[READY_FOR_PR]`
 - **REP-3304: Configurar Vercel preview por rama** `[IN_PROGRESS]`
 - **REP-3307: Configurar ambiente staging** `[IN_PROGRESS]`
 - **REP-3471: Implementar script SQL/seed del MVP en Supabase** `[READY_FOR_PR]`
 - **REP-3519: Finalizar Onboarding Ciudadano de 3 pasos (Mobile & Desktop)** `[READY_FOR_PR]`
-- **REP-3532: Sincronización Asíncrona de Consentimiento de Términos con Supabase y Auditoría Multi-dispositivo** `[READY_FOR_PR]`
+- **REP-3532: Sincronización Asíncrona de Consentimiento de Términos y Activación de Permisos PWA** `[READY_FOR_PR]`
 - **REP-3544: Manejo de Términos No Tildados, Rechazo y Validación Visual de Consentimiento** `[READY_FOR_PR]`
 - **REP-4100: Mapa Ciudadano con MapLibre GL JS y Navegación Principal de 5 Botones** `[READY_FOR_PR]`
