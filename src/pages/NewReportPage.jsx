@@ -30,6 +30,7 @@ import {
 } from '../services/offlineStorageService';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { WifiOff } from 'lucide-react';
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200 / REP-2703).
@@ -315,7 +316,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           className="bg-[#FFF4E5] border-b border-[#FFE2B8] px-3 py-1 flex items-center justify-between text-[#B25E00] text-[11.5px] font-semibold z-20 flex-shrink-0"
         >
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-rounded text-[15px]">wifi_off</span>
+            <WifiOff className="w-[15px] h-[15px]" strokeWidth={2.25} />
             <span>Estás sin conexión — Tu reporte quedó guardado en tu teléfono</span>
           </div>
         </div>

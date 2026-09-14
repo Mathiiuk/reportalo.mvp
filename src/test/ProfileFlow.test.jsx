@@ -64,7 +64,8 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     expect(screen.getByText('Notificaciones')).toBeInTheDocument();
     expect(screen.getByText('Avisos del estado de tus reportes')).toBeInTheDocument();
     expect(screen.getAllByText('Novedades').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('newspaper')).toBeInTheDocument();
+    // El ícono es un SVG de Lucide (bundleado), no el nombre del ícono como texto literal
+    expect(screen.getByTestId('profile-news-btn').querySelector('svg')).toBeInTheDocument();
     expect(screen.getByText('Permisos de la app')).toBeInTheDocument();
     expect(screen.getByText('Descargar mis datos')).toBeInTheDocument();
   });

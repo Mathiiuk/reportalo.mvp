@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
 
 export const NotFoundPage = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export const NotFoundPage = () => {
         </div>
 
         <div className="mt-5 flex items-center gap-1.5">
-          <span className="material-symbols-rounded text-[14px] text-[#C3CED9]">error</span>
+          <AlertCircle className="w-[14px] h-[14px] text-[#C3CED9]" strokeWidth={2.25} />
           <span className="font-semibold text-[10px] text-[#A8B4C0]">Error 404 · ruta desconocida</span>
         </div>
       </div>

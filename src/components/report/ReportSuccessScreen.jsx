@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle2, Landmark, Check, Ban, ShieldCheck } from 'lucide-react';
 
 /**
  * Pantalla de confirmación tras el envío del reporte ("Reporte enviado").
@@ -65,16 +66,14 @@ export const ReportSuccessScreen = ({
             animation: '0.7s cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal forwards running repRise',
           }}
         >
-          <span
-            className="material-symbols-rounded text-[44px]"
+          <CheckCircle2
+            className="w-[44px] h-[44px]"
+            strokeWidth={1.75}
             style={{
-              fontVariationSettings: '"FILL" 1',
               color: 'rgb(46, 158, 107)',
               animation: '0.65s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s 1 normal forwards running repPop',
             }}
-          >
-            check_circle
-          </span>
+          />
           <div
             className="font-extrabold text-[20px] mt-1.5 tracking-tight"
             style={{
@@ -124,9 +123,7 @@ export const ReportSuccessScreen = ({
             <div className="h-[1px] bg-[#EEF1F5] my-[9px]" />
 
             <div className="flex items-center gap-[9px]">
-              <span className="material-symbols-rounded text-[18px] text-[#1E6FCB]">
-                account_balance
-              </span>
+              <Landmark className="w-[18px] h-[18px] text-[#1E6FCB]" strokeWidth={2} />
               <span className="font-semibold text-[11.5px] text-[#46566B]">
                 {agencyName}
               </span>
@@ -137,8 +134,8 @@ export const ReportSuccessScreen = ({
           <div className="bg-white border border-[#E6ECF3] rounded-[14px] p-[10px_13px]">
             {/* Paso 1: Enviado */}
             <div className="flex gap-[10px] items-start">
-              <span className="w-[20px] h-[20px] rounded-full bg-[#2E9E6B] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[13px] text-white flex-shrink-0">
-                check
+              <span className="w-[20px] h-[20px] rounded-full bg-[#2E9E6B] flex items-center justify-center text-white flex-shrink-0">
+                <Check className="w-[13px] h-[13px]" strokeWidth={3} />
               </span>
               <div>
                 <div className="font-bold text-[12px] text-[#263249]">
@@ -184,9 +181,7 @@ export const ReportSuccessScreen = ({
 
             {/* Nota Descartado */}
             <div className="flex gap-[8px] items-start">
-              <span className="material-symbols-rounded text-[15px] text-[#C3CED9] flex-shrink-0 mt-[1px]">
-                block
-              </span>
+              <Ban className="w-[15px] h-[15px] text-[#C3CED9] flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
               <span className="font-semibold text-[9.5px] leading-[1.35] text-[#9AA7B5]">
                 También puede cerrarse como <b className="text-[#56657A]">Descartado</b>, con el motivo a la vista.
               </span>
@@ -195,12 +190,7 @@ export const ReportSuccessScreen = ({
 
           {/* Fila de Constancia de Consentimiento */}
           <div className="flex items-start gap-[8px] mt-[9px] px-[2px]">
-            <span
-              className="material-symbols-rounded text-[16px] text-[#2E9E6B] flex-shrink-0"
-              style={{ fontVariationSettings: '"FILL" 1' }}
-            >
-              verified_user
-            </span>
+            <ShieldCheck className="w-[16px] h-[16px] text-[#2E9E6B] flex-shrink-0" strokeWidth={2.25} />
             <span className="font-semibold text-[10px] leading-[1.35] text-[#1E6FCB]">
               Consentimiento registrado · v1.2 · {timeLabel.toLowerCase()} ·{' '}
               <button

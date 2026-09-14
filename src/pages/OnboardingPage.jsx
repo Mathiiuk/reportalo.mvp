@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImagePlus, ScanFace, ArrowRight, Shield, Check, Eye, ShieldCheck } from 'lucide-react';
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
@@ -43,9 +44,7 @@ export const OnboardingPage = () => {
         'Sacás la foto de lo que está mal en tu barrio y Reportalo la convierte en un reclamo formal ante quien tiene que resolverlo.',
       renderIllustration: () => (
         <div className="h-[250px] rounded-[20px] bg-[#EEF3F9] border border-[#E6ECF3] flex flex-col items-center justify-center gap-3 shadow-inner">
-          <span className="material-symbols-rounded filled text-[52px] text-[#1E6FCB]">
-            add_a_photo
-          </span>
+          <ImagePlus className="w-[52px] h-[52px] text-[#1E6FCB]" strokeWidth={1.5} />
           <span className="font-semibold text-[10.5px] text-[#9AA7B5] tracking-[0.4px] uppercase">
             ILUSTRACIÓN · foto de un incidente
           </span>
@@ -59,16 +58,12 @@ export const OnboardingPage = () => {
         'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
       renderIllustration: () => (
         <div className="h-[250px] rounded-[20px] bg-[#E9F5EF] border border-[#D5EBE0] flex flex-col items-center justify-center gap-3.5 shadow-inner">
-          <span className="material-symbols-rounded filled text-[52px] text-[#2E9E6B]">
-            blur_on
-          </span>
+          <ScanFace className="w-[52px] h-[52px] text-[#2E9E6B]" strokeWidth={1.5} />
           <div className="flex items-center gap-2 bg-white rounded-[10px] py-2 px-3 shadow-[0px_3px_10px_rgba(20,40,80,0.08)]">
             <span className="w-[26px] h-[26px] rounded-[7px] bg-[repeating-linear-gradient(45deg,#C9D5E2_0px,#C9D5E2_3px,#E2E9F0_3px,#E2E9F0_6px)] flex-shrink-0" />
-            <span className="material-symbols-rounded text-[15px] text-[#2E9E6B]">
-              arrow_forward
-            </span>
-            <span className="w-[26px] h-[26px] rounded-[7px] bg-[#E3F5EC] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[15px] filled text-[#2E9E6B] flex-shrink-0">
-              shield
+            <ArrowRight className="w-[15px] h-[15px] text-[#2E9E6B]" strokeWidth={2.25} />
+            <span className="w-[26px] h-[26px] rounded-[7px] bg-[#E3F5EC] flex items-center justify-center text-[#2E9E6B] flex-shrink-0">
+              <Shield className="w-[15px] h-[15px]" strokeWidth={2.25} />
             </span>
           </div>
         </div>
@@ -83,8 +78,8 @@ export const OnboardingPage = () => {
         <div className="h-[250px] rounded-[20px] bg-[#EEF3F9] border border-[#E6ECF3] flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left">
           {/* 1. Enviado */}
           <div className="flex items-center gap-2.5">
-            <span className="w-[18px] h-[18px] rounded-full bg-[#2E9E6B] flex items-center justify-center text-white text-[12px] material-symbols-rounded flex-shrink-0">
-              check
+            <span className="w-[18px] h-[18px] rounded-full bg-[#2E9E6B] flex items-center justify-center text-white flex-shrink-0">
+              <Check className="w-[12px] h-[12px]" strokeWidth={3} />
             </span>
             <span className="font-bold text-[12px] text-[#34435A]">
               Enviado
@@ -94,8 +89,8 @@ export const OnboardingPage = () => {
 
           {/* 2. En revisión */}
           <div className="flex items-center gap-2.5">
-            <span className="w-[18px] h-[18px] rounded-full bg-[#1E6FCB] flex items-center justify-center text-white text-[12px] material-symbols-rounded flex-shrink-0">
-              visibility
+            <span className="w-[18px] h-[18px] rounded-full bg-[#1E6FCB] flex items-center justify-center text-white flex-shrink-0">
+              <Eye className="w-[12px] h-[12px]" strokeWidth={2.5} />
             </span>
             <span className="font-bold text-[12px] text-[#34435A]">
               En revisión
@@ -336,9 +331,7 @@ export const OnboardingPage = () => {
           </div>
 
           <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <span className="material-symbols-rounded filled text-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
-              verified_user
-            </span>
+            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
             <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
               Tu identidad nunca se comparte con el organismo receptor.
             </span>

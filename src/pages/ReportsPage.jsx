@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
+import { ImagePlus, MapPin } from 'lucide-react';
 
 export const ReportsPage = () => {
   const navigate = useNavigate();
@@ -162,9 +163,7 @@ export const ReportsPage = () => {
                     type="button"
                     className="w-full md:w-auto bg-[#1E6FCB] text-white rounded-[11px] py-2.5 px-4 md:px-[18px] flex items-center justify-center gap-1.5 font-extrabold text-[12.5px] cursor-pointer border-0 transition-colors hover:bg-[#15539E]"
                   >
-                    <span className="material-symbols-rounded text-[17px]">
-                      add_a_photo
-                    </span>
+                    <ImagePlus className="w-[17px] h-[17px]" strokeWidth={2.25} />
                     Hacer mi primer reporte
                   </motion.button>
                   
@@ -212,9 +211,7 @@ export const ReportsPage = () => {
 
                   <div className="flex items-center justify-between text-[11.5px] text-[#64748B] pt-3 border-t border-[#EEF1F5] mt-1">
                     <div className="flex items-center gap-1 min-w-0">
-                      <span className="material-symbols-rounded text-[14px] text-[#1E6FCB] shrink-0">
-                        location_on
-                      </span>
+                      <MapPin className="w-[14px] h-[14px] text-[#1E6FCB] shrink-0" strokeWidth={2.25} />
                       <span className="truncate">{report.address}</span>
                     </div>
                     <span className="font-bold text-[#1E6FCB] shrink-0 ml-2">
