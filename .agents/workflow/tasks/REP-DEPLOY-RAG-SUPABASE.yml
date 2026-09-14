@@ -1,0 +1,95 @@
+id: REP-DEPLOY-RAG-SUPABASE
+external_ref: >-
+  sin ticket Jira dedicado — puntos 1/2/3 pendientes del informe tecnico
+  REP-2908/2909 (docs/REP-2908_2909_informe-tecnico-rag-productivo.md)
+title: Desplegar RAG productivo (REP-2908/2909) contra Supabase real
+type: feat
+status: PLANNED
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
+tags:
+  - rag
+  - supabase
+  - deploy
+  - infra
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/
+    - docs/
+  environments:
+    - staging
+    - supabase-real
+requirements:
+  - >-
+    El RAG productivo (REP-2908: embeddings/generacion reales con Gemini,
+    cascada jurisdiccional en SQL, validacion anti-alucinacion; REP-2909:
+    pipeline asincrono, persistencia, RLS, panel del ciudadano) esta validado
+    localmente (144 tests, 6 casos A-F reales contra Postgres local + Gemini
+    real) pero NUNCA se ejecuto contra el proyecto Supabase real. Sin esto,
+    Hernan no puede probar nada: la base real esta vacia de contenido RAG y
+    todo caeria en sin_normativa por falta de datos, no por un bug.
+  - >-
+    Cargar el contenido real de conocimiento juridico en Supabase ejecutando
+    el seed (docs/REP-3769_seed_y_RAG.sql), siguiendo la guia
+    docs/REP-3769_guia_ejecucion_seeds_y_RAG.md.
+  - >-
+    Desplegar en Supabase: la Edge Function analizar-reporte
+    (supabase/functions/analizar-reporte/index.ts), las politicas RLS
+    (supabase/rag_rls_policies.sql), y el pipeline asincrono trigger + pgmq +
+    pg_cron + pg_net (supabase/rag_async_pipeline.sql).
+  - >-
+    Configurar el secret GEMINI_API_KEY en Supabase Vault (nunca en .env
+    local ni committeado) y las variables de entorno que la Edge Function
+    necesite para llamar a la API de Gemini.
+  - >-
+    Volver a correr los 6 casos A-F de docs/REP-3764_casos_esperados.md, esta
+    vez apuntando al Supabase real, para confirmar que el comportamiento
+    validado localmente (cascada jurisdiccional correcta, citas literales,
+    fail-closed a indeterminado/sin_normativa) se sostiene en el entorno real
+    antes de habilitar pruebas de Hernan.
+  - >-
+    Nada se ejecuta contra el Supabase real sin autorizacion explicita de
+    Matias en cada paso (seed, deploy de funciones, RLS, secrets) — esta tarea
+    documenta y prepara los comandos exactos, pero la ejecucion contra
+    produccion/staging real de Supabase requiere OK puntual antes de cada
+    accion irreversible.
+acceptance_criteria:
+  - >-
+    AC-01: docs/REP-3769_seed_y_RAG.sql ejecutado contra el proyecto Supabase
+    real y verificado (conteo de filas en knowledge_sources /
+    knowledge_fragments / fragment_embeddings coincide con lo esperado).
+  - >-
+    AC-02: Edge Function analizar-reporte desplegada y respondiendo en
+    Supabase real (invocacion de prueba exitosa).
+  - >-
+    AC-03: supabase/rag_rls_policies.sql y supabase/rag_async_pipeline.sql
+    aplicados contra Supabase real; pipeline asincrono probado de punta a
+    punta (insert en reports -> encolado -> dispatch por pg_cron -> llamada a
+    la Edge Function -> persistencia en report_ai_analysis).
+  - >-
+    AC-04: GEMINI_API_KEY vive en Supabase Vault, no en el repo ni en
+    variables de entorno del frontend.
+  - >-
+    AC-05: los 6 casos A-F de REP-3764 corridos contra Supabase real dan el
+    mismo resultado esperado que en el entorno local (mismo status por caso:
+    fundamentado / sin_normativa / indeterminado / fuera_de_alcance /
+    asistencia).
+  - >-
+    AC-06: reporte corto de resultados entregado a Matias antes de avisarle a
+    Hernan que puede empezar a probar.
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: false
+  bdd_tests: false
+  integration_tests: true
+  e2e: false
+  build: false
+  security: true
+  smoke_tests: true
+commands:
+  install: pnpm install
+  integration_tests: node scripts/rag-local-dev/run-rep3764-cases-real-gemini.mjs
