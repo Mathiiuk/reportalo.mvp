@@ -8,6 +8,7 @@ import {
   requestNotificationPermission,
   sendLocalNotification,
 } from '../services/notificationService';
+import { ShieldCheck, Camera, MapPin, Bell, Shield } from 'lucide-react';
 
 /**
  * Pantalla de Activación de Permisos (PWA: Cámara, Ubicación y Notificaciones).
@@ -154,12 +155,7 @@ export const PermissionsPage = () => {
             
             {/* 1. Ícono de Escudo Azul de Verificación */}
             <div className="w-[44px] h-[44px] md:w-[48px] md:h-[48px] rounded-[13px] bg-[#E8F1FB] flex items-center justify-center mb-2.5 md:mb-3">
-              <span
-                className="material-symbols-rounded text-[24px] md:text-[26px] filled text-[#1E6FCB]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                verified_user
-              </span>
+              <ShieldCheck className="w-[24px] h-[24px] md:w-[26px] md:h-[26px] text-[#1E6FCB]" strokeWidth={2} />
             </div>
 
             {/* 2. Título Principal */}
@@ -174,11 +170,8 @@ export const PermissionsPage = () => {
 
             {/* 4. Tarjeta 1: Cámara */}
             <div className="mt-3 md:mt-4 bg-white md:bg-[#F8FAFC] border border-[#E6ECF3] rounded-[14px] md:rounded-[16px] p-[11px] md:p-3.5 flex gap-[11px] md:gap-3 items-center shadow-2xs">
-              <span
-                className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center material-symbols-rounded text-[21px] md:text-[23px] text-[#1E6FCB]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                photo_camera
+              <span className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center text-[#1E6FCB]">
+                <Camera className="w-[21px] h-[21px] md:w-[23px] md:h-[23px]" strokeWidth={2} />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[13px] md:text-[14px] text-[#263249]">
@@ -209,11 +202,8 @@ export const PermissionsPage = () => {
 
             {/* 5. Tarjeta 2: Ubicación */}
             <div className="mt-2 md:mt-2.5 bg-white md:bg-[#F8FAFC] border border-[#E6ECF3] rounded-[14px] md:rounded-[16px] p-[11px] md:p-3.5 flex gap-[11px] md:gap-3 items-center shadow-2xs">
-              <span
-                className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center material-symbols-rounded text-[21px] md:text-[23px] text-[#1E6FCB]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                location_on
+              <span className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center text-[#1E6FCB]">
+                <MapPin className="w-[21px] h-[21px] md:w-[23px] md:h-[23px]" strokeWidth={2} />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[13px] md:text-[14px] text-[#263249]">
@@ -244,11 +234,8 @@ export const PermissionsPage = () => {
 
             {/* 6. Tarjeta 3: Notificaciones (Nueva Funcionalidad PWA) */}
             <div className="mt-2 md:mt-2.5 bg-white md:bg-[#F8FAFC] border border-[#E6ECF3] rounded-[14px] md:rounded-[16px] p-[11px] md:p-3.5 flex gap-[11px] md:gap-3 items-center shadow-2xs">
-              <span
-                className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center material-symbols-rounded text-[21px] md:text-[23px] text-[#1E6FCB]"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                notifications
+              <span className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] flex-shrink-0 rounded-[11px] md:rounded-[12px] bg-[#E8F1FB] flex items-center justify-center text-[#1E6FCB]">
+                <Bell className="w-[21px] h-[21px] md:w-[23px] md:h-[23px]" strokeWidth={2} />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[13px] md:text-[14px] text-[#263249]">
@@ -279,12 +266,7 @@ export const PermissionsPage = () => {
 
             {/* 7. Banner Verde Informativo de Privacidad */}
             <div className="flex items-start gap-[9px] md:gap-2.5 bg-[#E3F5EC] border border-[#D0EADB] rounded-[12px] md:rounded-[14px] p-[9px] md:p-3 mt-2.5 md:mt-3 text-left">
-              <span
-                className="material-symbols-rounded text-[17px] md:text-[19px] text-[#2E9E6B] flex-shrink-0 mt-0.5"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                shield
-              </span>
+              <Shield className="w-[17px] h-[17px] md:w-[19px] md:h-[19px] text-[#2E9E6B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
               <span className="font-semibold text-[11px] md:text-[12px] leading-[1.5] text-[#2C7A55]">
                 Tu foto se procesa de forma segura: los rostros y patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.
               </span>

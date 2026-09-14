@@ -7,6 +7,7 @@ import {
   getTermsRecord,
   CURRENT_TERMS_VERSION,
 } from '../services/termsService';
+import { ShieldCheck, ImagePlus } from 'lucide-react';
 
 export const BlankAppPage = () => {
   const { user, signOut } = useAuth();
@@ -58,9 +59,7 @@ export const BlankAppPage = () => {
         {/* Zona central: Dashboard ciudadano y acción de reporte */}
         <div className="flex-1 flex flex-col items-center justify-center text-center my-6">
           <div className="w-14 h-14 rounded-full bg-[#EEF5FC] flex items-center justify-center text-[#1E6FCB] mb-3.5 shadow-sm">
-            <span className="material-symbols-rounded filled text-3xl">
-              verified_user
-            </span>
+            <ShieldCheck className="w-8 h-8" strokeWidth={2} />
           </div>
           <h2 className="font-extrabold text-xl text-slate-800 m-0">
             Panel Ciudadano
@@ -95,7 +94,7 @@ export const BlankAppPage = () => {
             type="button"
             className="mt-5 w-full py-3.5 px-4 bg-[#1E6FCB] text-white rounded-xl font-extrabold text-sm shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer border-0 transition-colors flex items-center justify-center gap-2"
           >
-            <span className="material-symbols-rounded text-lg">add_a_photo</span>
+            <ImagePlus className="w-[18px] h-[18px]" strokeWidth={2.25} />
             Crear nuevo reporte
           </button>
 

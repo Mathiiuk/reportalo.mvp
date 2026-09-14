@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { AlertCircle, Shield, Sparkles, Map as MapIcon, ShieldCheck } from 'lucide-react';
 
 export const WelcomePage = () => {
   const navigate = useNavigate();
@@ -113,9 +114,7 @@ export const WelcomePage = () => {
                 role="alert"
                 className="mt-4 p-3 rounded-xl bg-red-500/20 md:bg-red-50 border border-white/30 md:border-red-200 text-white md:text-red-700 text-xs font-medium flex items-center gap-2 max-w-[480px] w-full"
               >
-                <span className="material-symbols-rounded filled text-base text-white md:text-red-600 flex-shrink-0">
-                  error
-                </span>
+                <AlertCircle className="w-4 h-4 text-white md:text-red-600 flex-shrink-0" strokeWidth={2.25} />
                 <span className="flex-1">{authError}</span>
                 <button
                   onClick={clearError}
@@ -130,27 +129,21 @@ export const WelcomePage = () => {
             {/* Lista de beneficios diferenciales */}
             <div className="flex flex-col gap-[12px] md:gap-[14px] mt-[26px] md:mt-7 w-full max-w-[300px] md:max-w-none">
               <div className="flex items-center gap-[10px]">
-                <span className="material-symbols-rounded filled text-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0">
-                  shield
-                </span>
+                <Shield className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                 <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
                   Anónimo ante el organismo receptor
                 </span>
               </div>
 
               <div className="flex items-center gap-[10px]">
-                <span className="material-symbols-rounded filled text-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0">
-                  auto_awesome
-                </span>
+                <Sparkles className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                 <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
                   La IA encuentra a quién corresponde
                 </span>
               </div>
 
               <div className="flex items-center gap-[10px]">
-                <span className="material-symbols-rounded filled text-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0">
-                  map
-                </span>
+                <MapIcon className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                 <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
                   Seguimiento hasta resolverse
                 </span>
@@ -268,9 +261,7 @@ export const WelcomePage = () => {
           </div>
 
           <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <span className="material-symbols-rounded filled text-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
-              verified_user
-            </span>
+            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
             <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </span>
