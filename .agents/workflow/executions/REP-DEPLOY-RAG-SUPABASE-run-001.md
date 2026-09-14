@@ -86,10 +86,32 @@ Se insertó un `citizen_report` real (caso B, CABA) directamente en la tabla, si
 
 ---
 
-## 7. Qué queda pendiente (fuera de esta ejecución)
+## 7. Los 2 bugs corregidos + un tercero encontrado y corregido al reintentar (sesión posterior, mismo día)
 
-- **Arreglar `organismo_sugerido_id`** en `analizar-reporte/index.ts` (bug real, bloquea la persistencia de TODO caso donde el LLM sugiera un organismo — que es la mayoría de los casos `fundamentado`). Matías lo va a revisar.
-- **Corregir el schedule del cron** de `rag-analysis-dispatch` — hoy corre cada 10 minutos en vez de cada 10 segundos/1 minuto, por la sintaxis de 6 campos no soportada.
-- Repetir la prueba de punta a punta completa una vez aplicados esos dos fixes.
+Con el OK explícito de Matías ("arreglalo vos y documentalo"), se corrigieron los dos hallazgos del §6:
+
+1. **`organismo_sugerido_id`**: se agregó `toValidAgencyId()` en `analizar-reporte/index.ts` — valida con regex que el valor sea un UUID real antes de usarlo como `suggested_agency_id`; si no lo es (el caso normal hoy, porque el LLM inventa un slug legible), guarda `null` en vez de romper el `INSERT`. Redesplegado (versión 5).
+2. **Cron cada 10 min → cada 1 min**: `cron.alter_job(jobid, schedule := '* * * * *')`, la alternativa ya documentada en el SQL original para cuando el `pg_cron` del proyecto no soporta segundos. Aplicado directamente por MCP (no bloqueado por el clasificador esta vez).
+
+Con los dos fixes, se repitió la prueba de punta a punta (insert directo, sin invocar nada manualmente) y apareció un **tercer bug real**, distinto a los otros dos:
+
+3. **Borrado de cola roto — `Invalid schema: pgmq`**: el análisis se persistió bien (`fundamentado`, `suggested_agency_id: null` correctamente), pero el paso final (`supabaseAdmin.schema('pgmq').rpc('delete', ...)`) falló. **Causa**: el schema `pgmq` no está en la lista de "Exposed schemas" de la API de datos de Supabase (por defecto solo `public` lo está) — PostgREST rechaza cualquier llamada a un schema no expuesto. Sin esto, el mensaje nunca se borra: se reprocesa cada minuto para siempre, con una llamada a Gemini en cada intento, aunque el análisis ya esté guardado.
+
+   **Fix elegido** (de 3 opciones que le presenté a Matías: wrapper en `public`, exponer el schema completo, o parar — eligió el wrapper): se creó `public.pgmq_delete_message(queue_name text, msg_id bigint)`, una función `SECURITY DEFINER` que internamente llama a `pgmq.delete(...)`, sin exponer el resto de las funciones de administración de `pgmq` a la API pública. La Edge Function ahora llama a `supabaseAdmin.rpc('pgmq_delete_message', {...})` en vez de `.schema('pgmq')`. Redesplegado (versión 6).
+
+**Verificación final — prueba de punta a punta 100% automática, sin ninguna invocación manual**: se insertó un `citizen_report` real (caso B), y ~60 segundos después (un tick de cron) quedó solo:
+- `report_ai_analysis`: `fundamentado`, `is_infraccion: true`, `suggested_agency_id: null` (correcto, sin romper), citas correctas.
+- `report_ai_evidence`: 6 fragmentos con similitud real, 3 marcados `was_cited: true` (exactamente los citados por el LLM).
+- `rag_analysis_queue`: mensaje borrado automáticamente (`queue_length: 0`).
+
+**El pipeline asíncrono completo (trigger → cola → cron → Edge Function → persistencia → borrado de cola) funciona de punta a punta, sin intervención manual, contra el proyecto Supabase real.**
+
+Limpieza final: se borraron los 3 `citizen_reports` de prueba de esta sesión (con sus `report_ai_analysis`/`report_ai_evidence` asociados) y no quedan mensajes en la cola. Las tablas reales quedaron sin datos sintéticos.
+
+---
+
+## 8. Qué queda pendiente (fuera de esta ejecución)
+
 - Reportar resultados a Matías/Hernán y decidir cuándo habilitar pruebas del equipo sobre este entorno.
 - Evaluar si vale la pena mejorar la recuperación del caso A (no recuperó el ítem 1) ajustando el umbral o el corpus — no bloqueante, documentado como mejora futura.
+- Portar el mismo fix de `organismo_sugerido_id` (y considerar el patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo bug potencial de `suggested_agency_id` sin validar.

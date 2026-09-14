@@ -4,7 +4,7 @@ external_ref: >-
   REP-2908/2909 (docs/REP-2908_2909_informe-tecnico-rag-productivo.md)
 title: Desplegar RAG productivo (REP-2908/2909) contra Supabase real
 type: feat
-status: IN_PROGRESS
+status: READY_FOR_PR
 priority: high
 owner: Matias Krepchuk
 base_branch: staging
