@@ -110,8 +110,41 @@ Limpieza final: se borraron los 3 `citizen_reports` de prueba de esta sesión (c
 
 ---
 
-## 8. Qué queda pendiente (fuera de esta ejecución)
+## 8. Cierre real de REP-2908 y REP-3772 (Sprint 12) — sesión posterior, mismo día
+
+Matías pidió empezar REP-2908 ("Crear prompt controlado con salida JSON") y su subtarea REP-3772 ("Validar determinísticamente la salida del RAG"), ambas de Sprint 12. Al leer las descripciones completas de los dos tickets contra lo ya hecho, casi todos los criterios de aceptación ya estaban cumplidos por el trabajo de las secciones 1-7 — con una excepción real:
+
+**Criterio de REP-3772 no cumplido hasta este punto**: *"`organismo_sugerido_id`, cuando exista, debe corresponder a un registro válido de organismos/agencies disponible para el flujo"* y *"si falla alguna validación, la respuesta no se acepta como fundamentada: debe fallar cerrado como indeterminado"*. El fix de la sección 7 (`toValidAgencyId`) solo validaba forma de UUID por regex y, si fallaba, nuleaba el campo **sin** hacer fallar cerrado el resto de la respuesta — no verificaba contra la tabla `agencies` real, y `suggested_agency_id` tiene un FK real contra `agencies(id)` (confirmado), así que un UUID con formato válido pero inexistente iba a volver a romper el `INSERT`.
+
+**Fix aplicado**:
+1. Nueva función `validateOrganismoSugerido(supabaseAdmin, organismoSugeridoId)` (async, con lookup real contra `agencies`): si el LLM no sugiere organismo, pasa. Si sugiere algo que no es UUID válido, o es UUID válido pero no existe en `agencies`, la respuesta completa falla cerrado a `indeterminado` — se corre **antes** de aceptar el resultado como `fundamentado`, junto a `validateLlmAnalysis`, no solo antes de persistir.
+2. Reforzado el prompt: instrucción explícita de que el modelo NUNCA invente `organismo_sugerido_id` (ni slug ni UUID) porque no tiene acceso a los IDs reales — debe dejarlo en `null`.
+3. **Bug adicional encontrado al probar el punto 2**: Gemini devolvía el string literal `"null"` (no un `null` JSON real) para `organismo_sugerido_id`, `categoria` y `fundamento_oficial`, porque `LLM_OUTPUT_SCHEMA` los declaraba `{ type: 'string' }` sin `nullable: true` — un campo string no-nullable no puede emitir `null` real bajo structured output, así que el modelo lo stringificaba. Se agregó `nullable: true` a esos tres campos del schema, más una verificación defensiva en `validateOrganismoSugerido` que trata el string `"null"` (case-insensitive) como equivalente a ausencia de valor.
+4. **Corrección de sincronización propia**: al revisar el archivo se encontró que la línea de refuerzo del prompt agregada en la sección 7 ("SIEMPRE incluís todos los campos...") nunca se había aplicado al archivo local `index.ts` — solo se había incluido en el payload del deploy. Quedó sincronizada ahora.
+
+Redesplegado dos veces (versión 7 con el fix de `organismo_sugerido_id` + prompt; versión 8 con `nullable: true`).
+
+**Revalidación final de los 6 casos A-F** (invocación manual, ya con billing y todos los fixes):
+
+| Caso | Resultado | `organismo_sugerido_id` |
+|---|---|---|
+| A | `fundamentado`, LOM arts. 52/59 | `null` (limpio, ya no inventa) |
+| B | `fundamentado`, Ley 2148/451 | `null` |
+| C | `fundamentado`, Ley 24.449 art. 49 | `null` |
+| D (Avellaneda) | `fundamentado`, LOM arts. 52/59 | `null` |
+| D (CABA) | `fundamentado`, Ley 210 art. 2b | `null` |
+| E | 1er intento: `indeterminado` (cita no literal, traspié puntual). 2do intento: `fundamentado`, Ley 24.449 art. 48 | `null` |
+| F | `sin_normativa`, sin citas | `null` |
+
+Los 6 casos siguen dando el resultado esperado, y ahora **REP-3772 está cumplido en su totalidad** (las 4 validaciones mínimas del ticket, incluida la de `organismo_sugerido_id` contra `agencies` real).
+
+**Con esto, REP-2908 y REP-3772 (Sprint 12) están listos para pasar a revisión.** Matías decide cuándo actualizar el estado en Jira (no se modificó Jira desde esta sesión).
+
+---
+
+## 9. Qué queda pendiente (fuera de esta ejecución)
 
 - Reportar resultados a Matías/Hernán y decidir cuándo habilitar pruebas del equipo sobre este entorno.
 - Evaluar si vale la pena mejorar la recuperación del caso A (no recuperó el ítem 1) ajustando el umbral o el corpus — no bloqueante, documentado como mejora futura.
-- Portar el mismo fix de `organismo_sugerido_id` (y considerar el patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo bug potencial de `suggested_agency_id` sin validar.
+- Portar los mismos fixes (`validateOrganismoSugerido` con lookup real, `nullable: true` en el schema, patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js` / `geminiClient.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo gap de `suggested_agency_id` sin validar contra `agencies`.
+- Decidir en Jira (Matías/Leo) si se pasan REP-2908 y REP-3772 a revisión/Hecho ahora, dado que sus criterios de aceptación ya están cumplidos y verificados contra Supabase real.

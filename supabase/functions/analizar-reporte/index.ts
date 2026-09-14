@@ -107,10 +107,10 @@ const LLM_OUTPUT_SCHEMA = {
       enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'],
     },
     es_infraccion: { type: 'boolean' },
-    categoria: { type: 'string' },
-    organismo_sugerido_id: { type: 'string' },
+    categoria: { type: 'string', nullable: true },
+    organismo_sugerido_id: { type: 'string', nullable: true },
     fundamento_ciudadano: { type: 'string' },
-    fundamento_oficial: { type: 'string' },
+    fundamento_oficial: { type: 'string', nullable: true },
     confianza: { type: 'number' },
     citas: {
       type: 'array',
@@ -171,6 +171,8 @@ const generateJustification = async (
     'Regla estricta: SOLO podés fundamentar con el contenido literal de estos fragmentos. Si no alcanza, declará estado "indeterminado" o "sin_normativa" en vez de completar con lo que sabés de memoria.',
     'Cada cita en "citas" tiene que llevar el fragment_id exacto de la lista y una cita_textual que sea un fragmento literal (substring) del contenido de ese fragmento — nunca una paráfrasis.',
     'Nunca mencionés montos ni sanciones al ciudadano; fundamento_ciudadano tiene que ser llano y fundamento_oficial, técnico.',
+    'SIEMPRE incluís todos los campos del esquema (estado, es_infraccion, categoria, organismo_sugerido_id, fundamento_ciudadano, fundamento_oficial, confianza, citas), sin importar el estado que declares. Si un campo no aplica, usá null o un array vacío, pero nunca lo omitas.',
+    'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
   ].join('\n');
 
   const response = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent?key=${apiKey}`, {
@@ -280,18 +282,49 @@ type AnalysisResult = {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * El LLM devuelve organismo_sugerido_id como un slug legible ("caba_transito"),
- * no como un UUID real de la tabla agencies — no hay (todavía) un lookup como
- * el de categoria -> suggestedServiceId. Sin esta validación, cualquier caso
- * "fundamentado" con sugerencia de organismo rompía el INSERT completo con
- * "invalid input syntax for type uuid" (confirmado 2026-09-14 contra el
- * proyecto real, REP-DEPLOY-RAG-SUPABASE run-001 §6). Hasta que exista una
- * tabla de mapeo slug->agencia real, se guarda null en vez de un valor
- * inválido: se pierde la sugerencia de organismo, pero el análisis y sus
- * citas (lo que sí importa) se persisten igual.
+ * REP-3772, validación mínima 3: "organismo_sugerido_id, cuando exista, debe
+ * corresponder a un registro válido de organismos/agencies disponible para
+ * el flujo". El LLM devuelve un slug legible ("caba_transito") o, en el peor
+ * caso, un UUID con formato válido pero que no existe en agencies — ambos
+ * rompían el INSERT con "invalid input syntax for type uuid" o con una
+ * violación de foreign key (suggested_agency_id -> agencies.id), confirmado
+ * 2026-09-14 contra el proyecto real (REP-DEPLOY-RAG-SUPABASE run-001 §6-7).
+ *
+ * Corre ANTES de aceptar el resultado como fundamentado (no solo antes de
+ * persistir): si organismo_sugerido_id no es un UUID real de agencies, la
+ * respuesta completa falla cerrado a indeterminado — mismo criterio que
+ * validateLlmAnalysis para citas inválidas, según pide REP-3772 ("si falla
+ * alguna validación, la respuesta no se acepta como fundamentada").
  */
-const toValidAgencyId = (value: string | null | undefined): string | null =>
-  typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
+const validateOrganismoSugerido = async (
+  supabaseAdmin: ReturnType<typeof createClient>,
+  organismoSugeridoId: string | null | undefined
+): Promise<{ valid: boolean; reason?: string }> => {
+  // Defensa adicional: aunque el schema ya marca este campo como nullable,
+  // algunos modelos igual stringifican "null" en vez de emitir un null real
+  // (confirmado 2026-09-14: Gemini devolvió el string literal "null" para un
+  // caso ambiguo antes de marcar el campo nullable en LLM_OUTPUT_SCHEMA).
+  if (
+    organismoSugeridoId === null ||
+    organismoSugeridoId === undefined ||
+    organismoSugeridoId === '' ||
+    organismoSugeridoId.trim().toLowerCase() === 'null'
+  ) {
+    return { valid: true };
+  }
+  if (!UUID_PATTERN.test(organismoSugeridoId)) {
+    return { valid: false, reason: `organismo_sugerido_id "${organismoSugeridoId}" no es un UUID válido.` };
+  }
+  const { data: agency, error } = await supabaseAdmin
+    .from('agencies')
+    .select('id')
+    .eq('id', organismoSugeridoId)
+    .maybeSingle();
+  if (error || !agency) {
+    return { valid: false, reason: `organismo_sugerido_id "${organismoSugeridoId}" no corresponde a ningún organismo registrado.` };
+  }
+  return { valid: true };
+};
 
 /** Espejo de src/services/reportAiAnalysisPersistence.js#buildAnalysisRow */
 const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedServiceId: string | null) => ({
@@ -299,7 +332,7 @@ const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedSer
   result_status_code: result.estado,
   is_infraction: result.es_infraccion ?? null,
   suggested_service_id: suggestedServiceId,
-  suggested_agency_id: toValidAgencyId(result.organismo_sugerido_id),
+  suggested_agency_id: result.organismo_sugerido_id ?? null,
   citizen_feedback: result.fundamento_ciudadano ?? null,
   official_legal_foundation: result.fundamento_oficial ?? null,
   confidence_score: result.confianza ?? null,
@@ -459,8 +492,14 @@ Deno.serve(async (req: Request) => {
 
           // Paso 9: validar de forma determinística. Fallar cerrado ante cualquier incumplimiento.
           const validation = validateLlmAnalysis(generation.parsed, eligibleFragments);
+          const organismoValidation = validation.valid
+            ? await validateOrganismoSugerido(supabaseAdmin, generation.parsed.organismo_sugerido_id)
+            : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
+
           if (!validation.valid) {
             result = { estado: 'indeterminado', error: validation.reason };
+          } else if (!organismoValidation.valid) {
+            result = { estado: 'indeterminado', error: organismoValidation.reason };
           } else {
             result = {
               ...generation.parsed,
