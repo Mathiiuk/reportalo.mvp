@@ -1,0 +1,16 @@
+[
+  {
+    "id": "34a55230-7488-4a2a-8570-f98e234fc8aa",
+    "agency_id": "0004c0f0-f7bd-4934-bc6d-9894c7028a72",
+    "is_primary": true,
+    "contact_value": "contacto@ag01.reportalo.test",
+    "contact_channel": "email"
+  },
+  {
+    "id": "ab7a7168-83cd-44a0-a311-f11d8f19399f",
+    "agency_id": "4e76e2b0-f2e8-4bfe-b387-1991fcd4fc1a",
+    "is_primary": true,
+    "contact_value": "contacto@ag02.reportalo.test",
+    "contact_channel": "email"
+  }
+]

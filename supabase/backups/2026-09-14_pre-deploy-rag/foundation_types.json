@@ -1,0 +1,18 @@
+[
+  {
+    "code": "obligacion",
+    "description": "Obligación del Estado o del municipio"
+  },
+  {
+    "code": "conducta_prohibida",
+    "description": "Conducta prohibida"
+  },
+  {
+    "code": "sancion",
+    "description": "Sanción (no se muestra al ciudadano)"
+  },
+  {
+    "code": "competencia",
+    "description": "Competencia de un organismo"
+  }
+]

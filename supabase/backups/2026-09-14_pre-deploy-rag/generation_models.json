@@ -1,0 +1,9 @@
+[
+  {
+    "code": "gemini-3.8-flash",
+    "provider": "google",
+    "is_active": true,
+    "model_name": "gemini-3.8-flash",
+    "retired_at": null
+  }
+]
