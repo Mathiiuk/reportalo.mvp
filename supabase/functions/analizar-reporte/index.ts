@@ -86,48 +86,6 @@ type LlmAnalysis = {
 const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'];
 
 /**
- * Esquema JSON obligatorio de salida del LLM (docx sección 6). Espejo de
- * LLM_OUTPUT_SCHEMA en src/services/geminiClient.js — se pasa como
- * `responseSchema` a generateContent para forzar structured output.
- *
- * HALLAZGO (2026-09-14, REP-DEPLOY-RAG-SUPABASE): esta función se copió de
- * geminiClient.js "autocontenida" pero sin este esquema, y sin él Gemini
- * omitía sistemáticamente el campo es_infraccion en la respuesta (confirmado
- * contra el proyecto Supabase real, casos B y F de REP-3764 — 2/2 y 2/2
- * respectivamente), lo que hacía fallar cerrado TODO caso a "indeterminado"
- * por un problema de forma, no de contenido. Sin este esquema, la validación
- * anti-alucinación (validateLlmAnalysis) nunca deja pasar nada — pero tampoco
- * deja llegar nunca a "fundamentado".
- */
-const LLM_OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    estado: {
-      type: 'string',
-      enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'],
-    },
-    es_infraccion: { type: 'boolean' },
-    categoria: { type: 'string' },
-    organismo_sugerido_id: { type: 'string' },
-    fundamento_ciudadano: { type: 'string' },
-    fundamento_oficial: { type: 'string' },
-    confianza: { type: 'number' },
-    citas: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          fragment_id: { type: 'string' },
-          cita_textual: { type: 'string' },
-        },
-        required: ['fragment_id', 'cita_textual'],
-      },
-    },
-  },
-  required: ['estado', 'es_infraccion', 'fundamento_ciudadano', 'fundamento_oficial', 'confianza', 'citas'],
-};
-
-/**
  * Vectoriza un texto con gemini-embedding-2. Nunca cae a un embedding local
  * de reemplazo: si falla, el llamador debe tratarlo como error (fallar cerrado).
  */
@@ -190,7 +148,6 @@ const generateJustification = async (
       ],
       generationConfig: {
         responseMimeType: 'application/json',
-        responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
       },
     }),
@@ -277,29 +234,13 @@ type AnalysisResult = {
   error?: string;
 };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * El LLM devuelve organismo_sugerido_id como un slug legible ("caba_transito"),
- * no como un UUID real de la tabla agencies — no hay (todavía) un lookup como
- * el de categoria -> suggestedServiceId. Sin esta validación, cualquier caso
- * "fundamentado" con sugerencia de organismo rompía el INSERT completo con
- * "invalid input syntax for type uuid" (confirmado 2026-09-14 contra el
- * proyecto real, REP-DEPLOY-RAG-SUPABASE run-001 §6). Hasta que exista una
- * tabla de mapeo slug->agencia real, se guarda null en vez de un valor
- * inválido: se pierde la sugerencia de organismo, pero el análisis y sus
- * citas (lo que sí importa) se persisten igual.
- */
-const toValidAgencyId = (value: string | null | undefined): string | null =>
-  typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
-
 /** Espejo de src/services/reportAiAnalysisPersistence.js#buildAnalysisRow */
 const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedServiceId: string | null) => ({
   report_id: reportId,
   result_status_code: result.estado,
   is_infraction: result.es_infraccion ?? null,
   suggested_service_id: suggestedServiceId,
-  suggested_agency_id: toValidAgencyId(result.organismo_sugerido_id),
+  suggested_agency_id: result.organismo_sugerido_id ?? null,
   citizen_feedback: result.fundamento_ciudadano ?? null,
   official_legal_foundation: result.fundamento_oficial ?? null,
   confidence_score: result.confianza ?? null,
@@ -369,17 +310,11 @@ const persistAnalysis = async (
     }
 
     if (queueMessageId !== undefined && queueMessageId !== null) {
-      // pgmq no esta expuesto en la API de datos de Supabase (solo "public"
-      // lo esta por defecto) — .schema('pgmq').rpc('delete', ...) falla con
-      // "Invalid schema: pgmq" (confirmado 2026-09-14, REP-DEPLOY-RAG-SUPABASE
-      // run-001 §6: el analisis se guardaba pero el mensaje nunca se borraba
-      // de la cola, reprocesando cada minuto para siempre). Se usa un wrapper
-      // SQL en public (pgmq_delete_message, SECURITY DEFINER) en vez de exponer
-      // todo el schema pgmq a la API.
-      const { error: deleteError } = await supabaseAdmin.rpc('pgmq_delete_message', {
-        queue_name: 'rag_analysis_queue',
-        msg_id: queueMessageId,
-      });
+      // pgmq expone sus funciones en su propio schema; supabase-js >= 2.x permite
+      // apuntar a un schema distinto de "public" con .schema(...).
+      const { error: deleteError } = await supabaseAdmin
+        .schema('pgmq')
+        .rpc('delete', { queue_name: 'rag_analysis_queue', msg_id: queueMessageId });
       if (deleteError) {
         console.error('[analizar-reporte] Análisis guardado pero no se pudo borrar el mensaje de la cola:', deleteError.message);
       }

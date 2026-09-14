@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Unlink, Map as MapIcon } from 'lucide-react';
 
 export const NotFoundReportPage = () => {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ export const NotFoundReportPage = () => {
           onClick={() => navigate(-1)}
           className="bg-transparent border-none p-0 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
         >
-          <span className="material-symbols-rounded text-[22px] text-[#5B6A7A]">
-            arrow_back
-          </span>
+          <ArrowLeft className="w-[22px] h-[22px] text-[#5B6A7A]" strokeWidth={2.25} />
         </button>
         <span className="font-extrabold text-[16px] text-[#263249]">
           Reporte
@@ -52,9 +51,7 @@ export const NotFoundReportPage = () => {
         </div>
         
         <div className="w-full md:w-auto mt-4 md:mt-3.5 bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[11px] px-3 md:px-3.5 py-2.5 md:py-2.5 flex items-center justify-center md:justify-start gap-2 text-left">
-          <span className="material-symbols-rounded text-[16px] text-[#9AA7B5] flex-none">
-            link_off
-          </span>
+          <Unlink className="w-[16px] h-[16px] text-[#9AA7B5] flex-none" strokeWidth={2.25} />
           <span className="font-semibold text-[9.5px] md:text-[11px] leading-[1.35] font-mono text-[#8593A2] truncate">
             reportalo.ar/r/{displayId}
           </span>
@@ -65,9 +62,7 @@ export const NotFoundReportPage = () => {
             to="/mapa"
             className="bg-[#1E6FCB] hover:bg-[#195CA8] active:scale-95 transition-all rounded-[13px] md:rounded-[11px] px-[22px] md:px-5 py-[12px] md:py-[11px] flex items-center justify-center gap-[7px] shadow-[0_8px_18px_rgba(30,111,203,0.28)] md:shadow-none no-underline"
           >
-            <span className="material-symbols-rounded text-[18px] md:text-[17px] text-white">
-              map
-            </span>
+            <MapIcon className="w-[18px] h-[18px] md:w-[17px] md:h-[17px] text-white" strokeWidth={2.25} />
             <span className="font-extrabold text-[13px] md:text-[12.5px] text-white">
               Ver el mapa de la zona
             </span>

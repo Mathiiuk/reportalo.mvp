@@ -1,6 +1,13 @@
 -- =====================================================================
 -- Spike RAG: Infraestructura y Corpus Normativo con pgvector (REP-2907)
 -- Corpus oficial verificado REP-2906 con URLs de fuente consolidada
+--
+-- OBSOLETO (REP-2908, Sprint 12): reemplazado por supabase/rag_knowledge_schema.sql
+-- (knowledge_sources / knowledge_fragments / fragment_embeddings + RPC
+-- match_knowledge_fragments). Las 8 filas de `normativas` no se migran porque su
+-- texto no es literal (informe REP-2907 §5.2): se recargan desde los archivos
+-- verificados de docs/fuentes/normativas/. Este archivo se deja intacto por ahora;
+-- su DROP es la PARTE 9 de docs/REP-3769_seed_y_RAG.sql, decisión explícita de Matías.
 -- =====================================================================
 
 -- 1. Asegurar extensión pgvector

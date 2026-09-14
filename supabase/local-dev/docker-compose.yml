@@ -1,0 +1,33 @@
+# ==============================================================================
+# supabase/local-dev/docker-compose.yml — Postgres + pgvector LOCAL para desarrollo
+# ==============================================================================
+#
+# Esto NO es Supabase local (no levanta Auth, Storage ni PostgREST) y NO toca el
+# proyecto Supabase real (cloud). Es solo el motor Postgres con pgvector, para
+# desarrollar y probar el esquema RAG (REP-2908) y el RPC match_knowledge_fragments
+# con psql, sin depender de credenciales ni de infraestructura de Supabase.
+#
+# Puerto 5433 (no 5432) para no chocar con un Postgres nativo que ya tengas corriendo.
+#
+# Uso:
+#   docker compose -f supabase/local-dev/docker-compose.yml up -d
+#   docker compose -f supabase/local-dev/docker-compose.yml down        # detener
+#   docker compose -f supabase/local-dev/docker-compose.yml down -v     # detener y borrar los datos
+# ==============================================================================
+
+services:
+  reportalo_rag_db:
+    image: pgvector/pgvector:pg16
+    container_name: reportalo_rag_local_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: reportalo_rag_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_local
+    ports:
+      - "5433:5432"
+    volumes:
+      - reportalo_rag_dev_data:/var/lib/postgresql/data
+
+volumes:
+  reportalo_rag_dev_data:
