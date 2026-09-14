@@ -86,6 +86,48 @@ type LlmAnalysis = {
 const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'];
 
 /**
+ * Esquema JSON obligatorio de salida del LLM (docx sección 6). Espejo de
+ * LLM_OUTPUT_SCHEMA en src/services/geminiClient.js — se pasa como
+ * `responseSchema` a generateContent para forzar structured output.
+ *
+ * HALLAZGO (2026-09-14, REP-DEPLOY-RAG-SUPABASE): esta función se copió de
+ * geminiClient.js "autocontenida" pero sin este esquema, y sin él Gemini
+ * omitía sistemáticamente el campo es_infraccion en la respuesta (confirmado
+ * contra el proyecto Supabase real, casos B y F de REP-3764 — 2/2 y 2/2
+ * respectivamente), lo que hacía fallar cerrado TODO caso a "indeterminado"
+ * por un problema de forma, no de contenido. Sin este esquema, la validación
+ * anti-alucinación (validateLlmAnalysis) nunca deja pasar nada — pero tampoco
+ * deja llegar nunca a "fundamentado".
+ */
+const LLM_OUTPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    estado: {
+      type: 'string',
+      enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'],
+    },
+    es_infraccion: { type: 'boolean' },
+    categoria: { type: 'string' },
+    organismo_sugerido_id: { type: 'string' },
+    fundamento_ciudadano: { type: 'string' },
+    fundamento_oficial: { type: 'string' },
+    confianza: { type: 'number' },
+    citas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          fragment_id: { type: 'string' },
+          cita_textual: { type: 'string' },
+        },
+        required: ['fragment_id', 'cita_textual'],
+      },
+    },
+  },
+  required: ['estado', 'es_infraccion', 'fundamento_ciudadano', 'fundamento_oficial', 'confianza', 'citas'],
+};
+
+/**
  * Vectoriza un texto con gemini-embedding-2. Nunca cae a un embedding local
  * de reemplazo: si falla, el llamador debe tratarlo como error (fallar cerrado).
  */
@@ -148,6 +190,7 @@ const generateJustification = async (
       ],
       generationConfig: {
         responseMimeType: 'application/json',
+        responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
       },
     }),
