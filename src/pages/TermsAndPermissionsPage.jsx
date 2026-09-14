@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Share2, Info } from 'lucide-react';
 
 /**
  * Pantalla informativa de Términos y Privacidad en Solo Lectura (User Journey v2).
@@ -44,7 +45,7 @@ export const TermsAndPermissionsPage = ({ onBackOverride }) => {
           aria-label="Volver"
           className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
         >
-          <span className="material-symbols-rounded text-[22px]">arrow_back</span>
+          <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
         </button>
 
         <div className="flex-1 min-w-0">
@@ -62,7 +63,7 @@ export const TermsAndPermissionsPage = ({ onBackOverride }) => {
           aria-label="Compartir términos"
           className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#8593A2] transition-colors cursor-pointer border-0 bg-transparent p-0"
         >
-          <span className="material-symbols-rounded text-[20px]">ios_share</span>
+          <Share2 className="w-[20px] h-[20px]" strokeWidth={2.25} />
         </button>
       </header>
 
@@ -121,9 +122,7 @@ export const TermsAndPermissionsPage = ({ onBackOverride }) => {
 
       {/* 3. Footer Informativo */}
       <footer className="flex-0 bg-[#F7F9FC] border-t border-[#EEF1F5] px-4 py-3 flex items-start gap-2 max-w-lg mx-auto w-full">
-        <span className="material-symbols-rounded text-[15px] text-[#8593A2] flex-shrink-0 mt-0.5">
-          info
-        </span>
+        <Info className="w-[15px] h-[15px] text-[#8593A2] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
         <span className="font-medium text-[10.5px] leading-snug text-[#7A8696]">
           Leer esta página no implica aceptación. Se te va a pedir al enviar.
         </span>

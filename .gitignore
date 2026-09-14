@@ -7,3 +7,6 @@ dist-ssr
 /build
 .DS_Store
 Thumbs.db
+
+# Postgres local de desarrollo (REP-2908) — datos binarios, nunca se versionan
+.pgdata-local-dev

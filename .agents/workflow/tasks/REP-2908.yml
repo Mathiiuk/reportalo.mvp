@@ -1,0 +1,97 @@
+id: REP-2908
+external_ref: https://unlz2026.atlassian.net/browse/REP-2908
+title: >-
+  RAG juridico de produccion: knowledge_fragments, embeddings Gemini y Edge
+  Function analizar-reporte
+type: feat
+status: READY_FOR_PR
+priority: highest
+owner: Matias Krepchuk
+base_branch: staging
+sprint: 12
+tags:
+  - rag
+  - gemini
+  - pgvector
+  - anti-alucinacion
+  - sprint12
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/services/legalRagService.js
+    - supabase/functions/analizar-reporte/index.ts
+    - supabase/rag_knowledge_schema.sql
+    - src/test/LegalRagService.test.js
+  environments:
+    - local
+requirements:
+  - >-
+    Reemplazar el spike REP-2907 (corpus hardcodeado en INITIAL_LEGAL_CORPUS +
+    embedding lexico local generateDeterministicEmbedding) por un RAG real: nada
+    hardcodeado en el codigo de aplicacion, nada resuelto por internet en tiempo
+    de consulta, todo el fundamento sale exclusivamente del corpus verificado
+    precargado (knowledge_sources / knowledge_fragments) y del LLM que redacta
+    citando solo lo recuperado.
+  - >-
+    Vectorizar fragmentos y reportes con gemini-embedding-2 a 768 dimensiones
+    (nunca con el emulador lexico de 64 dims del spike).
+  - >-
+    Resolver la cascada jurisdiccional (municipio -> provincia/CABA -> nacion,
+    con adhesiones) en SQL server-side via RPC match_knowledge_fragments, nunca
+    por matching de texto de jurisdiccion en JS.
+  - >-
+    Generar fundamento_ciudadano/fundamento_oficial con gemini-3.8-flash citando
+    textualmente solo los fragmentos recuperados; si nada supera el umbral de
+    similitud, no se llama al LLM (estado sin_normativa).
+  - >-
+    Validar en codigo (sin confiar en el LLM) que cada fragment_id citado esta
+    entre los recuperados y que cada cita_textual aparece literalmente en el
+    content de ese fragmento; si falla, el resultado es indeterminado.
+  - >-
+    Dejar los cambios de esquema (knowledge_sources, knowledge_fragments,
+    source_adhesions, fragment_embeddings, RPC) como migracion SQL versionada en
+    el repo, sin ejecutarla contra Supabase desde esta tarea (sin credenciales
+    de servicio ni CLI de Supabase disponibles en este entorno).
+acceptance_criteria:
+  - >-
+    AC-01: legalRagService.js no contiene INITIAL_LEGAL_CORPUS ni
+    generateDeterministicEmbedding; toda recuperacion pasa por una funcion que
+    llama al RPC match_knowledge_fragments (con fallback mockeable para tests,
+    nunca con corpus hardcodeado en JS).
+  - >-
+    AC-02: existe una migracion SQL (o se reutiliza REP-3769_seed_y_RAG.sql) que
+    define knowledge_sources, knowledge_fragments, source_adhesions,
+    fragment_embeddings y el RPC match_knowledge_fragments segun el contrato de
+    docs/REP-1009_RAG_de_punta_a_punta.docx seccion 5 y 4.3.
+  - >-
+    AC-03: la Edge Function analizar-reporte vectoriza el reporte, invoca el
+    RPC, y solo llama al LLM si hay fragmentos sobre el umbral; el cliente
+    Gemini vive detras de una interfaz inyectable para poder testear sin
+    llamadas reales a la API.
+  - >-
+    AC-04: existe validacion determinística de la respuesta del LLM (esquema,
+    fragment_id recuperado, cita_textual literal, organismo existente) que
+    fuerza `indeterminado` ante cualquier incumplimiento.
+  - >-
+    AC-05: los tests (Vitest) cubren casos A-F de REP-3764 contra el nuevo
+    pipeline con un cliente Gemini/embeddings mockeado deterministico, sin
+    depender de red ni de claves reales.
+  - >-
+    AC-06: pnpm test pasa en verde; no se ejecuta ninguna migracion ni llamada
+    real contra Supabase/Gemini desde esta tarea (eso queda para Matias/Hernan
+    en un paso posterior, fuera de esta sesion).
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm run build

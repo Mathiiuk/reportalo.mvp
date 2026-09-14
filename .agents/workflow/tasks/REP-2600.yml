@@ -1,5 +1,6 @@
 id: "REP-2600"
 title: "Visualizar /mapa como pantalla principal ciudadana"
+type: "feat"
 epic: "REP-2600"
 assignee: "Matias Krepchuk"
 status: "READY_FOR_PR"

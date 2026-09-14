@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { motion } from 'framer-motion';
+import { ArrowLeft, Move, MapPin, LocateFixed, MapPinned } from 'lucide-react';
 import {
   resolveAddressDetails,
   DEFAULT_CITY_COORDINATES,
@@ -130,7 +131,7 @@ export const AdjustLocationModal = ({
           aria-label="Volver a la revisión"
           className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
         >
-          <span className="material-symbols-rounded text-[22px]">arrow_back</span>
+          <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
         </button>
         <span className="font-extrabold text-[16px] text-[#263249]">
           ¿Dónde ocurrió?
@@ -148,9 +149,7 @@ export const AdjustLocationModal = ({
 
         {/* Banner flotante superior */}
         <div className="absolute left-3 right-3 top-3 z-10 bg-white rounded-xl py-2.5 px-3 flex items-center gap-2 shadow-[0_5px_16px_rgba(20,40,80,0.14)] pointer-events-none">
-          <span className="material-symbols-rounded text-[18px] text-[#8593A2]">
-            drag_pan
-          </span>
+          <Move className="w-[18px] h-[18px] text-[#8593A2]" strokeWidth={2.25} />
           <span className="font-semibold text-[11px] leading-tight text-[#46566B]">
             Arrastrá el mapa para corregir el punto exacto.
           </span>
@@ -158,12 +157,12 @@ export const AdjustLocationModal = ({
 
         {/* Pin central de fijación en el mapa */}
         <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-full flex flex-col items-center pointer-events-none z-10">
-          <span
-            className="material-symbols-rounded text-[44px] text-[#1E6FCB] drop-shadow-[0_4px_8px_rgba(20,40,80,0.3)]"
-            style={{ fontVariationSettings: '"FILL" 1' }}
-          >
-            location_on
-          </span>
+          <MapPin
+            className="w-[44px] h-[44px] text-[#1E6FCB] drop-shadow-[0_4px_8px_rgba(20,40,80,0.3)]"
+            strokeWidth={1.75}
+            fill="#1E6FCB"
+            fillOpacity={0.15}
+          />
         </div>
 
         {/* Círculo indicador de radio de precisión */}
@@ -176,16 +175,14 @@ export const AdjustLocationModal = ({
           aria-label="Mi ubicación actual"
           className="absolute right-3 bottom-3 z-10 w-9.5 h-9.5 rounded-xl bg-white flex items-center justify-center shadow-[0_5px_16px_rgba(20,40,80,0.14)] text-[#1E6FCB] cursor-pointer border-0 hover:bg-slate-50 transition-colors"
         >
-          <span className="material-symbols-rounded text-[20px]">my_location</span>
+          <LocateFixed className="w-[20px] h-[20px]" strokeWidth={2.25} />
         </button>
       </div>
 
       {/* 3. Panel inferior de confirmación */}
       <footer className="flex-0 bg-white border-t border-[#EEF1F5] p-3.5 sm:px-4 z-20">
         <div className="flex gap-2.5 items-start mb-3">
-          <span className="material-symbols-rounded text-[19px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
-            pin_drop
-          </span>
+          <MapPinned className="w-[19px] h-[19px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
           <div>
             <div
               data-testid="adjust-street-address"
