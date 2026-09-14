@@ -86,6 +86,48 @@ type LlmAnalysis = {
 const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'];
 
 /**
+ * Esquema JSON obligatorio de salida del LLM (docx sección 6). Espejo de
+ * LLM_OUTPUT_SCHEMA en src/services/geminiClient.js — se pasa como
+ * `responseSchema` a generateContent para forzar structured output.
+ *
+ * HALLAZGO (2026-09-14, REP-DEPLOY-RAG-SUPABASE): esta función se copió de
+ * geminiClient.js "autocontenida" pero sin este esquema, y sin él Gemini
+ * omitía sistemáticamente el campo es_infraccion en la respuesta (confirmado
+ * contra el proyecto Supabase real, casos B y F de REP-3764 — 2/2 y 2/2
+ * respectivamente), lo que hacía fallar cerrado TODO caso a "indeterminado"
+ * por un problema de forma, no de contenido. Sin este esquema, la validación
+ * anti-alucinación (validateLlmAnalysis) nunca deja pasar nada — pero tampoco
+ * deja llegar nunca a "fundamentado".
+ */
+const LLM_OUTPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    estado: {
+      type: 'string',
+      enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'],
+    },
+    es_infraccion: { type: 'boolean' },
+    categoria: { type: 'string', nullable: true },
+    organismo_sugerido_id: { type: 'string', nullable: true },
+    fundamento_ciudadano: { type: 'string' },
+    fundamento_oficial: { type: 'string', nullable: true },
+    confianza: { type: 'number' },
+    citas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          fragment_id: { type: 'string' },
+          cita_textual: { type: 'string' },
+        },
+        required: ['fragment_id', 'cita_textual'],
+      },
+    },
+  },
+  required: ['estado', 'es_infraccion', 'fundamento_ciudadano', 'fundamento_oficial', 'confianza', 'citas'],
+};
+
+/**
  * Vectoriza un texto con gemini-embedding-2. Nunca cae a un embedding local
  * de reemplazo: si falla, el llamador debe tratarlo como error (fallar cerrado).
  */
@@ -129,6 +171,8 @@ const generateJustification = async (
     'Regla estricta: SOLO podés fundamentar con el contenido literal de estos fragmentos. Si no alcanza, declará estado "indeterminado" o "sin_normativa" en vez de completar con lo que sabés de memoria.',
     'Cada cita en "citas" tiene que llevar el fragment_id exacto de la lista y una cita_textual que sea un fragmento literal (substring) del contenido de ese fragmento — nunca una paráfrasis.',
     'Nunca mencionés montos ni sanciones al ciudadano; fundamento_ciudadano tiene que ser llano y fundamento_oficial, técnico.',
+    'SIEMPRE incluís todos los campos del esquema (estado, es_infraccion, categoria, organismo_sugerido_id, fundamento_ciudadano, fundamento_oficial, confianza, citas), sin importar el estado que declares. Si un campo no aplica, usá null o un array vacío, pero nunca lo omitas.',
+    'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
   ].join('\n');
 
   const response = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent?key=${apiKey}`, {
@@ -148,6 +192,7 @@ const generateJustification = async (
       ],
       generationConfig: {
         responseMimeType: 'application/json',
+        responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
       },
     }),
@@ -234,6 +279,53 @@ type AnalysisResult = {
   error?: string;
 };
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * REP-3772, validación mínima 3: "organismo_sugerido_id, cuando exista, debe
+ * corresponder a un registro válido de organismos/agencies disponible para
+ * el flujo". El LLM devuelve un slug legible ("caba_transito") o, en el peor
+ * caso, un UUID con formato válido pero que no existe en agencies — ambos
+ * rompían el INSERT con "invalid input syntax for type uuid" o con una
+ * violación de foreign key (suggested_agency_id -> agencies.id), confirmado
+ * 2026-09-14 contra el proyecto real (REP-DEPLOY-RAG-SUPABASE run-001 §6-7).
+ *
+ * Corre ANTES de aceptar el resultado como fundamentado (no solo antes de
+ * persistir): si organismo_sugerido_id no es un UUID real de agencies, la
+ * respuesta completa falla cerrado a indeterminado — mismo criterio que
+ * validateLlmAnalysis para citas inválidas, según pide REP-3772 ("si falla
+ * alguna validación, la respuesta no se acepta como fundamentada").
+ */
+const validateOrganismoSugerido = async (
+  supabaseAdmin: ReturnType<typeof createClient>,
+  organismoSugeridoId: string | null | undefined
+): Promise<{ valid: boolean; reason?: string }> => {
+  // Defensa adicional: aunque el schema ya marca este campo como nullable,
+  // algunos modelos igual stringifican "null" en vez de emitir un null real
+  // (confirmado 2026-09-14: Gemini devolvió el string literal "null" para un
+  // caso ambiguo antes de marcar el campo nullable en LLM_OUTPUT_SCHEMA).
+  if (
+    organismoSugeridoId === null ||
+    organismoSugeridoId === undefined ||
+    organismoSugeridoId === '' ||
+    organismoSugeridoId.trim().toLowerCase() === 'null'
+  ) {
+    return { valid: true };
+  }
+  if (!UUID_PATTERN.test(organismoSugeridoId)) {
+    return { valid: false, reason: `organismo_sugerido_id "${organismoSugeridoId}" no es un UUID válido.` };
+  }
+  const { data: agency, error } = await supabaseAdmin
+    .from('agencies')
+    .select('id')
+    .eq('id', organismoSugeridoId)
+    .maybeSingle();
+  if (error || !agency) {
+    return { valid: false, reason: `organismo_sugerido_id "${organismoSugeridoId}" no corresponde a ningún organismo registrado.` };
+  }
+  return { valid: true };
+};
+
 /** Espejo de src/services/reportAiAnalysisPersistence.js#buildAnalysisRow */
 const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedServiceId: string | null) => ({
   report_id: reportId,
@@ -310,11 +402,17 @@ const persistAnalysis = async (
     }
 
     if (queueMessageId !== undefined && queueMessageId !== null) {
-      // pgmq expone sus funciones en su propio schema; supabase-js >= 2.x permite
-      // apuntar a un schema distinto de "public" con .schema(...).
-      const { error: deleteError } = await supabaseAdmin
-        .schema('pgmq')
-        .rpc('delete', { queue_name: 'rag_analysis_queue', msg_id: queueMessageId });
+      // pgmq no esta expuesto en la API de datos de Supabase (solo "public"
+      // lo esta por defecto) — .schema('pgmq').rpc('delete', ...) falla con
+      // "Invalid schema: pgmq" (confirmado 2026-09-14, REP-DEPLOY-RAG-SUPABASE
+      // run-001 §6: el analisis se guardaba pero el mensaje nunca se borraba
+      // de la cola, reprocesando cada minuto para siempre). Se usa un wrapper
+      // SQL en public (pgmq_delete_message, SECURITY DEFINER) en vez de exponer
+      // todo el schema pgmq a la API.
+      const { error: deleteError } = await supabaseAdmin.rpc('pgmq_delete_message', {
+        queue_name: 'rag_analysis_queue',
+        msg_id: queueMessageId,
+      });
       if (deleteError) {
         console.error('[analizar-reporte] Análisis guardado pero no se pudo borrar el mensaje de la cola:', deleteError.message);
       }
@@ -394,8 +492,14 @@ Deno.serve(async (req: Request) => {
 
           // Paso 9: validar de forma determinística. Fallar cerrado ante cualquier incumplimiento.
           const validation = validateLlmAnalysis(generation.parsed, eligibleFragments);
+          const organismoValidation = validation.valid
+            ? await validateOrganismoSugerido(supabaseAdmin, generation.parsed.organismo_sugerido_id)
+            : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
+
           if (!validation.valid) {
             result = { estado: 'indeterminado', error: validation.reason };
+          } else if (!organismoValidation.valid) {
+            result = { estado: 'indeterminado', error: organismoValidation.reason };
           } else {
             result = {
               ...generation.parsed,
