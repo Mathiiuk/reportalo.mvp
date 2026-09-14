@@ -165,9 +165,46 @@ Sources: [Gemini API Pricing (BenchLM, sept. 2026)](https://benchlm.ai/google/ap
 
 ---
 
-## 10. Qué queda pendiente (fuera de esta ejecución)
+## 10. Incidente: "Update branch" de GitHub perdió los fixes de `analizar-reporte`
+
+Al pushear los commits de la sección 8, el push fue rechazado: el remoto tenía un commit nuevo (`51c0f90`, "Merge branch 'staging' into feat/REP-DEPLOY-RAG-SUPABASE...") que no estaba en local — alguien usó el botón "Update branch" de GitHub para traer `staging` (que mientras tanto ya había recibido los merges de ICONS-SWEEP/REP-2908/REP-2909, PRs #56-#58) hacia esta rama.
+
+Al mergear ese commit localmente para poder pushear, apareció un conflicto real en `supabase/functions/analizar-reporte/index.ts`, y se detectó que **la resolución de ese conflicto en GitHub había descartado por completo los 3 fixes del archivo** (`LLM_OUTPUT_SCHEMA`/`responseSchema`, `validateOrganismoSugerido`, el wrapper `pgmq_delete_message`) — el lado `origin` del conflicto no tenía ninguno de los tres, ni siquiera el primero (`responseSchema`), que ya estaba pusheado desde antes. La causa más probable: al resolver el conflicto en la UI de GitHub se eligió por error la versión de `staging` (la copia original del archivo, heredada de la rama REP-2909, sin ninguno de los fixes de hoy) para toda la sección conflictiva.
+
+**Resuelto**: se mergeó localmente conservando la versión completa y probada (`git checkout --ours` sobre ese archivo), se verificó que los 3 fixes seguían presentes, y se repusheó (`29c08d3`). Se confirmó además que la Edge Function **desplegada en Supabase nunca estuvo afectada** (el deploy es independiente de git) con una invocación de prueba post-fix.
+
+**Lección para la próxima**: si se usa el botón "Update branch" de GitHub y aparece un conflicto en un archivo tocado en esta sesión, resolverlo manualmente revisando con cuidado cuál lado tiene el código probado — no asumir que la resolución automática/asistida de GitHub eligió bien.
+
+---
+
+## 11. Verificación de Sprint 12 completa (a pedido de Matías, sin tocar otras sprints)
+
+Matías pidió confirmar el estado de **todo** Sprint 12 del RAG, no solo REP-2908/REP-3772. Se leyeron las descripciones completas de los 2 ítems restantes:
+
+| Ticket | Criterio de ejecución (tal cual Jira) | Evaluación |
+|---|---|---|
+| [REP-2900](https://unlz2026.atlassian.net/browse/REP-2900) — Sugerir norma aplicable | Reusar corpus/retrieval/grounding de REP-2908; no sugerir por conocimiento general si no hay sustento; trazabilidad a fragmentos | ✅ Cumplido — es literalmente lo que devuelve `fundamento_oficial` + `citas` de `analizar-reporte` |
+| [REP-2901](https://unlz2026.atlassian.net/browse/REP-2901) — Clasificar jurídicamente reporte | Mismo motor de REP-2908; clasificación sustentada en el corpus; ante evidencia insuficiente, `indeterminado`/abstención; trazabilidad | ✅ Cumplido — es lo que devuelve `estado` + `es_infraccion` |
+
+Ambos tickets están marcados en su propia descripción como *"última prioridad para Matías... no integra el Sprint Goal comprometido"* — se diseñaron explícitamente para reutilizar el motor de REP-2908 sin alcance adicional, así que no había nada nuevo que construir.
+
+**Estado final de Sprint 12 (RAG), verificado contra Supabase real, sin tocar Jira:**
+
+| Ticket | Estado |
+|---|---|
+| REP-2908 | ✅ Completo |
+| └─ REP-3772 (subtarea) | ✅ Completo |
+| REP-2900 | ✅ Completo (reusa REP-2908) |
+| REP-2901 | ✅ Completo (reusa REP-2908) |
+| └─ REP-3741 (subtarea) | ✅ Completo (persistencia ya construida y verificada, sección 6) |
+
+No se investigó ni se tocó nada de Sprint 13, 14 o 15 en esta verificación, a pedido explícito.
+
+---
+
+## 12. Qué queda pendiente (fuera de esta ejecución)
 
 - Reportar resultados a Matías/Hernán y decidir cuándo habilitar pruebas del equipo sobre este entorno.
 - Evaluar si vale la pena mejorar la recuperación del caso A (no recuperó el ítem 1) ajustando el umbral o el corpus — no bloqueante, documentado como mejora futura.
-- Portar los mismos fixes (`validateOrganismoSugerido` con lookup real, `nullable: true` en el schema, patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js` / `geminiClient.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo gap de `suggested_agency_id` sin validar contra `agencies`.
-- Decidir en Jira (Matías/Leo) si se pasan REP-2908 y REP-3772 a revisión/Hecho ahora, dado que sus criterios de aceptación ya están cumplidos y verificados contra Supabase real.
+- Portar los mismos fixes (`validateOrganismoSugerido` con lookup real, `nullable: true` en el schema, patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js` / `geminiClient.js`, ya en `staging` vía REP-2909) — tiene el mismo gap de `suggested_agency_id` sin validar contra `agencies`.
+- Decidir en Jira (Matías/Leo) si se pasan REP-2908, REP-3772, REP-2900, REP-2901 y REP-3741 a revisión/Hecho ahora, dado que sus criterios de aceptación ya están cumplidos y verificados contra Supabase real.
