@@ -1,5 +1,6 @@
 ﻿id: "REP-2201"
 title: "Sacar foto desde la app"
+type: "feat"
 epic: "REP-1002"
 assignee: "Matias Krepchuk"
 status: "READY_FOR_PR"
