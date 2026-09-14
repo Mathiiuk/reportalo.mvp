@@ -3,6 +3,7 @@ import {
   Check,
   MapPin,
   Send,
+  Save,
   Shield,
   Trash2,
   Gavel,
@@ -11,6 +12,11 @@ import {
   Share2,
   X,
   Camera,
+  CloudOff,
+  Clock,
+  Info,
+  EyeOff,
+  ScanFace,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -74,7 +80,7 @@ export const ReportReviewStep = ({
             aria-label="Volver al detalle"
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
           >
-            <span className="material-symbols-rounded text-[22px]">arrow_back</span>
+            <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
           </button>
           <span className="font-extrabold text-[16px] text-[#263249] tracking-tight">
             Nuevo reporte
@@ -169,7 +175,7 @@ export const ReportReviewStep = ({
               {!isOnline || draftStatus === 'PENDING_SYNC' ? (
                 <>
                   <div className="inline-flex items-center gap-1 text-[#D97706]">
-                    <span className="material-symbols-rounded text-[14px]">cloud_off</span>
+                    <CloudOff className="w-[14px] h-[14px]" strokeWidth={2.25} />
                     <span className="font-bold text-[9.5px]">
                       Guardado en tu teléfono
                     </span>
@@ -181,7 +187,7 @@ export const ReportReviewStep = ({
               ) : (
                 <>
                   <div className="inline-flex items-center gap-1 text-[#8593A2]">
-                    <span className="material-symbols-rounded text-[14px]">schedule</span>
+                    <Clock className="w-[14px] h-[14px]" strokeWidth={2.25} />
                     <span className="font-bold text-[9.5px]">
                       Todavía en tu teléfono
                     </span>
@@ -230,9 +236,7 @@ export const ReportReviewStep = ({
 
           {/* Fila Ubicación */}
           <div className="flex items-center gap-2">
-            <span className="material-symbols-rounded text-[17px] text-[#1E6FCB] flex-shrink-0">
-              location_on
-            </span>
+            <MapPin className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-[10px] text-[#8593A2]">
                 Ubicación
@@ -254,12 +258,7 @@ export const ReportReviewStep = ({
 
         {/* Tarjeta 3: Banner de Identidad Anónima */}
         <div className="flex items-start gap-2 bg-[#FFF7EE] border border-[#F7E2C8] rounded-xl p-2.5">
-          <span
-            className="material-symbols-rounded text-[17px] text-[#E07C1A] flex-shrink-0 mt-0.5"
-            style={{ fontVariationSettings: '"FILL" 1' }}
-          >
-            info
-          </span>
+          <Info className="w-[17px] h-[17px] text-[#E07C1A] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
           <span className="font-medium text-[10.5px] leading-relaxed text-[#8A6A3E]">
             Tu identidad permanece anónima para el organismo receptor.
           </span>
@@ -275,9 +274,7 @@ export const ReportReviewStep = ({
           className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
         >
           <span>{!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}</span>
-          <span className="material-symbols-rounded text-[18px]">
-            {!isOnline ? 'save' : 'send'}
-          </span>
+          {!isOnline ? <Save className="w-[18px] h-[18px]" strokeWidth={2.25} /> : <Send className="w-[18px] h-[18px]" strokeWidth={2.25} />}
         </button>
 
 
@@ -383,48 +380,28 @@ export const ReportReviewStep = ({
               {/* Puntos clave de consentimiento */}
               <div className="flex flex-col gap-2.5 my-1">
                 <div className="flex gap-2.5 items-start">
-                  <span
-                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    visibility_off
-                  </span>
+                  <EyeOff className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                   <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
                     El organismo receptor nunca ve tus datos personales.
                   </span>
                 </div>
 
                 <div className="flex gap-2.5 items-start">
-                  <span
-                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    blur_on
-                  </span>
+                  <ScanFace className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                   <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
                     Rostros y patentes se difuminan antes de guardarse.
                   </span>
                 </div>
 
                 <div className="flex gap-2.5 items-start">
-                  <span
-                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    delete_forever
-                  </span>
+                  <Trash2 className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                   <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
                     Guardamos solo la versión anonimizada. El original se descarta.
                   </span>
                 </div>
 
                 <div className="flex gap-2.5 items-start">
-                  <span
-                    className="material-symbols-rounded text-[18px] text-[#1E6FCB] flex-shrink-0"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    gavel
-                  </span>
+                  <Gavel className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
                   <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
                     Podés pedir acceso, rectificación y supresión (Ley 25.326).
                   </span>
@@ -438,7 +415,7 @@ export const ReportReviewStep = ({
                 className="inline-flex items-center gap-1.5 font-bold text-[11.5px] text-[#1E6FCB] bg-transparent border-0 p-0 cursor-pointer my-3 text-left hover:underline"
               >
                 <span>Leer términos y privacidad · v1.2</span>
-                <span className="material-symbols-rounded text-[15px]">arrow_forward</span>
+                <ArrowRight className="w-[15px] h-[15px]" strokeWidth={2.25} />
               </button>
 
               {/* Botón Principal: "Acepto y envío" */}
@@ -449,7 +426,7 @@ export const ReportReviewStep = ({
                 className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
               >
                 <span>Acepto y envío</span>
-                <span className="material-symbols-rounded text-[18px]">send</span>
+                <Send className="w-[18px] h-[18px]" strokeWidth={2.25} />
               </button>
 
               {/* Botón Secundario: "Ahora no" (vuelve al Paso 3 intacto sin bloquear) */}

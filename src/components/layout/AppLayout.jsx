@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell, Map as MapIcon, FileText, Camera, User, Newspaper } from 'lucide-react';
+import { Bell, Map as MapIcon, FileText, Camera, User, Newspaper, ImagePlus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserInitials } from '../../utils/userUtils';
 
@@ -106,7 +106,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
             onClick={handleCameraClick}
             className="flex items-center gap-[7px] bg-[#1E6FCB] text-white px-[16px] py-[9px] rounded-[10px] cursor-pointer hover:bg-[#15539E] transition-colors border-none shadow-xs font-bold text-[12.5px]"
           >
-            <span className="material-symbols-rounded text-[17px]">add_a_photo</span>
+            <ImagePlus className="w-[17px] h-[17px]" strokeWidth={2.25} />
             <span>Reportar</span>
           </button>
           
