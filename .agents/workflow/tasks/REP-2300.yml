@@ -1,5 +1,6 @@
 id: "REP-2300"
 title: "Detectar ubicación del ciudadano"
+type: "feat"
 epic: "REP-2300"
 assignee: "Matias Krepchuk"
 status: "READY_FOR_PR"
