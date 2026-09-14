@@ -68,8 +68,28 @@ Los 6 casos dan el resultado esperado documentado en `docs/REP-3764_casos_espera
 
 ---
 
-## 6. Qué queda pendiente (fuera de esta ejecución)
+## 6. Prueba de punta a punta con el cron real (2026-09-14, sesión posterior)
 
-- Probar el pipeline de punta a punta vía el **cron real** (insert en `citizen_reports` → cola → cron cada 10s → Edge Function → persistencia) — todo lo de arriba se probó por invocación manual directa a la función, no a través del flujo asíncrono completo.
+Se insertó un `citizen_report` real (caso B, CABA) directamente en la tabla, sin invocar la Edge Function — para confirmar que el disparo automático completo funciona solo: trigger → cola → cron → HTTP → función → persistencia.
+
+**Resultado: 2 de 3 pasos funcionan solos. El tercero (persistencia) tiene un bug real.**
+
+1. ✅ **Trigger**: al insertar, el mensaje apareció en `rag_analysis_queue` (`pgmq.metrics`) en menos de 10 segundos.
+2. ⚠️ **Cron**: el job `rag-analysis-dispatch` está corriendo, pero **cada 10 minutos, no cada 10 segundos** como se pretendía. `cron.job_run_details` muestra corridas exactas en :X0 (17:20:00, 17:10:00, etc.). Causa: la sintaxis de 6 campos con segundos (`*/10 * * * * *`) de `supabase/rag_async_pipeline.sql` no es soportada por este `pg_cron` — se interpretó como cron estándar de 5 campos, corriendo el minuto `*/10`. Esto ya estaba anotado como riesgo conocido en el comentario original del SQL, con la alternativa documentada de usar `'* * * * *'` (cada 1 minuto). **Pendiente: cambiar el schedule.**
+3. ❌ **Persistencia — bug real, no solo timing**: se disparó `dispatch_rag_analysis_queue()` manualmente (exactamente la misma llamada que haría el cron) para no esperar 10 minutos. La Edge Function respondió `200` con un análisis correcto (`fundamentado`, mismas citas válidas que en la prueba manual anterior), pero el `INSERT` a `report_ai_analysis` **falló**: `invalid input syntax for type uuid: "caba_transito"`.
+
+   **Causa raíz**: el LLM devuelve `organismo_sugerido_id` como un slug legible (`"caba_transito"`), no como un UUID real de la tabla `agencies`. A diferencia de `categoria` (que SÍ se resuelve contra `services.service_code` antes de insertarse — ver `suggestedServiceId` en `persistAnalysis`), `organismo_sugerido_id` se pasa directo del LLM a una columna `uuid` sin ninguna resolución/validación intermedia. El `INSERT` completo aborta por ese único campo mal tipado — la falla es silenciosa por diseño (para no perder el mensaje de la cola; queda para reintentar), pero **reintenta indefinidamente con el mismo error** hasta que se corrija, gastando una llamada a Gemini en cada intento.
+
+   **Le pregunté a Matías si quería que lo arreglara** (fix acotado: si `organismo_sugerido_id` no es un UUID válido, guardar `null` en vez de romper el insert) — decidió revisarlo él mismo, así que quedó **sin tocar, documentado acá**.
+
+**Limpieza hecha tras el diagnóstico**: se borró el mensaje trabado de la cola (llevaba 9 reintentos en ~70 minutos, uno por cada corrida del cron cada 10 min, todos fallando igual) y el `citizen_report` de prueba (`PRUEBA PIPELINE E2E`, id `72c91a64-...`). No quedó nada de esta prueba en las tablas reales.
+
+---
+
+## 7. Qué queda pendiente (fuera de esta ejecución)
+
+- **Arreglar `organismo_sugerido_id`** en `analizar-reporte/index.ts` (bug real, bloquea la persistencia de TODO caso donde el LLM sugiera un organismo — que es la mayoría de los casos `fundamentado`). Matías lo va a revisar.
+- **Corregir el schedule del cron** de `rag-analysis-dispatch` — hoy corre cada 10 minutos en vez de cada 10 segundos/1 minuto, por la sintaxis de 6 campos no soportada.
+- Repetir la prueba de punta a punta completa una vez aplicados esos dos fixes.
 - Reportar resultados a Matías/Hernán y decidir cuándo habilitar pruebas del equipo sobre este entorno.
 - Evaluar si vale la pena mejorar la recuperación del caso A (no recuperó el ítem 1) ajustando el umbral o el corpus — no bloqueante, documentado como mejora futura.
