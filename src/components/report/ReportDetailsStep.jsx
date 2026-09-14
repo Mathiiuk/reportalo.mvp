@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import {
+  ArrowLeft,
   Check,
   Info,
   Sparkles,
@@ -47,7 +48,7 @@ export const ReportDetailsStep = ({
             aria-label="Volver a la cámara"
             className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
           >
-            <span className="material-symbols-rounded text-[22px]">arrow_back</span>
+            <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
           </button>
           <span className="font-extrabold text-[16px] text-[#263249] tracking-tight">
             Nuevo reporte
@@ -119,16 +120,12 @@ export const ReportDetailsStep = ({
                 }`}
                 style={{ minHeight: '68px' }}
               >
-                {/* Icono de Material Symbols con color de categoría */}
-                <span
-                  className="material-symbols-rounded text-[21px]"
-                  style={{
-                    color: cat.color,
-                    fontVariationSettings: '"FILL" 1',
-                  }}
-                >
-                  {cat.icon}
-                </span>
+                {/* Ícono Lucide (bundleado, no depende de que cargue una fuente externa) */}
+                <IconComponent
+                  className="w-[21px] h-[21px]"
+                  style={{ color: cat.color }}
+                  strokeWidth={2.25}
+                />
 
                 <div className="font-bold text-[11px] leading-tight text-[#34435A] mt-1.5">
                   {cat.name}
@@ -199,9 +196,7 @@ export const ReportDetailsStep = ({
 
         {/* Banner Informativo de Análisis Legal Posterior */}
         <div className="flex items-start gap-2 bg-white border border-dashed border-[#D4DDE7] rounded-xl p-2.5">
-          <span className="material-symbols-rounded text-[17px] text-[#8593A2] flex-shrink-0 mt-0.5">
-            auto_awesome
-          </span>
+          <Sparkles className="w-[17px] h-[17px] text-[#8593A2] flex-shrink-0 mt-0.5" strokeWidth={2} />
           <span className="font-medium text-[10.5px] leading-relaxed text-[#7A8696]">
             El análisis legal se hace después de guardar el reporte. Lo vas a ver en el detalle.
           </span>
