@@ -1,0 +1,47 @@
+[
+  {
+    "type": "realtime",
+    "group": "Vía pública",
+    "keywords": null,
+    "metadata": true,
+    "description": null,
+    "service_code": "TRANSITO",
+    "service_name": "Tránsito"
+  },
+  {
+    "type": "realtime",
+    "group": "Vía pública",
+    "keywords": null,
+    "metadata": false,
+    "description": null,
+    "service_code": "INFRAESTRUCTURA",
+    "service_name": "Infraestructura"
+  },
+  {
+    "type": "realtime",
+    "group": "Vía pública",
+    "keywords": null,
+    "metadata": false,
+    "description": null,
+    "service_code": "AMBIENTE",
+    "service_name": "Ambiente"
+  },
+  {
+    "type": "realtime",
+    "group": "Vía pública",
+    "keywords": null,
+    "metadata": false,
+    "description": null,
+    "service_code": "COMERCIO_IRREGULAR",
+    "service_name": "Comercio irregular"
+  },
+  {
+    "type": "realtime",
+    "group": "Asistencia social",
+    "keywords": null,
+    "metadata": false,
+    "description": null,
+    "service_code": "VULNERABILIDAD_SOCIAL",
+    "service_name": "Vulnerabilidad social"
+  }
+]

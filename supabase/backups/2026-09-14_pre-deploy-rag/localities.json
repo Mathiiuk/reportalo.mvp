@@ -1,0 +1,344 @@
+[
+  {
+    "id": "d8438ecf-daad-4ae1-9439-f5da9bdc298c",
+    "name": "Chacarita",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "e333cd05-2134-43e6-8967-d9c866d0031f",
+    "name": "Villa Crespo",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "35fde5e5-71aa-40be-ae1b-74359af78330",
+    "name": "La Paternal",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "35fa658d-3992-47bd-b5e8-3db6139c1289",
+    "name": "Villa Ortúzar",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "c9e2f2d5-9fde-4610-9a21-746b3075f73c",
+    "name": "Agronomía",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "e0bdde4a-a87a-48e6-9c90-fcf18c1912ad",
+    "name": "Parque Chas",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "03ec259a-cde9-4e1e-a363-869b20921286"
+  },
+  {
+    "id": "efb5ca1b-c3e6-49e7-adf0-978f2bab54c4",
+    "name": "Palermo",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "44ca2b7e-a0b5-4f95-8525-d89f647b17c6"
+  },
+  {
+    "id": "b8ee7b11-ff7b-498b-9e94-2c4f9639e058",
+    "name": "Núñez",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e7948ad6-7f7e-4b8b-9b4f-bf207f4a81e7"
+  },
+  {
+    "id": "2889479e-c294-4377-840d-2556347af75c",
+    "name": "Belgrano",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e7948ad6-7f7e-4b8b-9b4f-bf207f4a81e7"
+  },
+  {
+    "id": "7ae2c645-492b-41ee-9a8d-b604e1cfaa78",
+    "name": "Colegiales",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e7948ad6-7f7e-4b8b-9b4f-bf207f4a81e7"
+  },
+  {
+    "id": "a0d8068f-c5f5-436f-9968-dd656b8b6d93",
+    "name": "Coghlan",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e5f9a87a-a7ab-4581-b3bb-608c21010928"
+  },
+  {
+    "id": "bfd2b111-fdd3-410c-afda-a9cba455b6ec",
+    "name": "Saavedra",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e5f9a87a-a7ab-4581-b3bb-608c21010928"
+  },
+  {
+    "id": "8e41fd95-82e6-4f57-8c0c-f8b67917e67d",
+    "name": "Villa Urquiza",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e5f9a87a-a7ab-4581-b3bb-608c21010928"
+  },
+  {
+    "id": "c5a0529f-7fc6-47df-87e4-91fc8966c075",
+    "name": "Villa Pueyrredón",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "e5f9a87a-a7ab-4581-b3bb-608c21010928"
+  },
+  {
+    "id": "f6b3c490-4965-4278-b4a8-d2410508ff69",
+    "name": "Villa General Mitre",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "bf3916e4-93a6-4c9a-9d05-703bf16962b8"
+  },
+  {
+    "id": "8fd9179c-d1b4-41e5-a1dd-3cf027637d6e",
+    "name": "Villa Devoto",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "bf3916e4-93a6-4c9a-9d05-703bf16962b8"
+  },
+  {
+    "id": "937e9213-6a15-41e4-913d-17f3bb2a697a",
+    "name": "Villa del Parque",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "bf3916e4-93a6-4c9a-9d05-703bf16962b8"
+  },
+  {
+    "id": "2b9fab5e-be6a-42cf-a2a3-3fd1ade65e20",
+    "name": "Villa Santa Rita",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "bf3916e4-93a6-4c9a-9d05-703bf16962b8"
+  },
+  {
+    "id": "f8b6e837-9342-45dd-a5c9-4bb385b72d57",
+    "name": "Villa Real",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "515204c3-ab4a-471e-88a8-22a2570997f7",
+    "name": "Monte Castro",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "1b10c2bd-ad26-4aec-b635-94e988fbf09c",
+    "name": "Versalles",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "694680bb-104f-4f2e-bd30-1b732cbf0923",
+    "name": "Floresta",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "b9936a46-1c40-4aba-9a66-064c7e89c595",
+    "name": "Vélez Sarsfield",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "53d2d44d-fc61-4940-ab54-bf32f28b716e",
+    "name": "Villa Luro",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "27d30372-4747-4feb-90c6-3b559b8ab0c3"
+  },
+  {
+    "id": "41e02555-8677-4d6d-a096-93d049fc9ef1",
+    "name": "Liniers",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "a50ac29b-4ebb-4705-8c45-76aed7280603"
+  },
+  {
+    "id": "d956453a-1fcf-4e57-a3d2-be542f526fde",
+    "name": "Mataderos",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "a50ac29b-4ebb-4705-8c45-76aed7280603"
+  },
+  {
+    "id": "3599a067-a40f-4b5b-85d8-1442e489c497",
+    "name": "Parque Avellaneda",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "a50ac29b-4ebb-4705-8c45-76aed7280603"
+  },
+  {
+    "id": "925fa4e6-6fab-4eff-8643-6e31d6285c6b",
+    "name": "Villa Soldati",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "965fc884-c00e-4dd8-8cd1-09bff6b09ec6"
+  },
+  {
+    "id": "d33c64f8-871d-4129-a087-ddcc5d9ceae2",
+    "name": "Villa Riachuelo",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "965fc884-c00e-4dd8-8cd1-09bff6b09ec6"
+  },
+  {
+    "id": "f5a7e6a1-ab88-4b06-a903-585e174a889a",
+    "name": "Villa Lugano",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "965fc884-c00e-4dd8-8cd1-09bff6b09ec6"
+  },
+  {
+    "id": "41c88642-689a-4346-897d-0ae6f92bdba3",
+    "name": "Flores",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "3f0a1d27-531b-4342-aec6-5ed52a01f484"
+  },
+  {
+    "id": "9b7d37ea-1471-4bea-90ab-2c172577b218",
+    "name": "Parque Chacabuco",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "3f0a1d27-531b-4342-aec6-5ed52a01f484"
+  },
+  {
+    "id": "412dcfbc-2cd3-4fbf-be30-433a1ef89ddd",
+    "name": "Caballito",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "48f65f91-1a6c-43fa-8901-dea2a7a0cf12"
+  },
+  {
+    "id": "497d8317-44a9-473b-95dc-56836c35199b",
+    "name": "Almagro",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "aad89e66-66ef-44e3-bbde-e01b23b8e790"
+  },
+  {
+    "id": "8d1ecd70-f692-4af2-85e5-2a4530542d90",
+    "name": "Boedo",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "aad89e66-66ef-44e3-bbde-e01b23b8e790"
+  },
+  {
+    "id": "8bde166a-3aea-4f7c-ad55-90fd3fa11f23",
+    "name": "La Boca",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "0898ab64-d6d2-40e6-84c3-eab428333393"
+  },
+  {
+    "id": "cbb20774-387a-4619-aa59-39d9711b21c1",
+    "name": "Barracas",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "0898ab64-d6d2-40e6-84c3-eab428333393"
+  },
+  {
+    "id": "f998553d-8dcb-4218-856c-303091c49591",
+    "name": "Parque Patricios",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "0898ab64-d6d2-40e6-84c3-eab428333393"
+  },
+  {
+    "id": "9746f173-6e16-4cf2-86a5-1f1b844a9c90",
+    "name": "Nueva Pompeya",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "0898ab64-d6d2-40e6-84c3-eab428333393"
+  },
+  {
+    "id": "ffa721a3-f9a9-4c88-9861-bf907727e4e9",
+    "name": "Balvanera",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "20ee551e-c1fc-4bf0-979e-4dccc907e8db"
+  },
+  {
+    "id": "a1fb368f-059d-4ab1-842a-5ecdd572a400",
+    "name": "San Cristóbal",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "20ee551e-c1fc-4bf0-979e-4dccc907e8db"
+  },
+  {
+    "id": "70a5acfa-58fe-40c8-8322-b4830cf41d04",
+    "name": "Recoleta",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "29a3e2e4-eba6-49c4-994f-70d1165707c8"
+  },
+  {
+    "id": "5cf0be29-55ce-452c-892b-d37fb6e669f2",
+    "name": "Retiro",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "c388ab04-9fd1-465c-a109-65c7b1d528c3",
+    "name": "San Nicolás",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "e025128c-3ec9-46d7-987a-1eaf0cffebb4",
+    "name": "Puerto Madero",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "f7b80337-4fae-4c2e-a548-8c5c27f5b393",
+    "name": "San Telmo",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "366ea621-38d6-4e7b-8ba6-d3caf0ad3239",
+    "name": "Monserrat",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "44a8f9ca-3240-4f4f-9662-3b6096da6989",
+    "name": "Constitución",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "f7874d5c-d4a3-4e4e-9fdf-9e2460d517d9"
+  },
+  {
+    "id": "2fe4cf09-c3d9-4514-ae99-cac0256494e4",
+    "name": "Avellaneda",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "1bc88f76-a31e-4071-b0a2-11b2c08a60b8",
+    "name": "Crucecita",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "731e44ac-491e-4a95-93e7-7c3b1ad3a9d0",
+    "name": "Dock Sud",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+    "name": "Gerli",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "90079a38-1e7e-45d6-8fbf-60140bee9b8d",
+    "name": "Piñeyro",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "c1580602-abfc-40ed-83e5-d80b38126f5e",
+    "name": "Sarandí",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "c8d6ab33-9049-4baf-ae4a-cbefdc52199d",
+    "name": "Villa Domínico",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "094a78f5-ce7b-4e76-8d54-5bb95419fe93",
+    "name": "Wilde",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "09e839cc-7690-40d5-a732-efe1e16594de"
+  },
+  {
+    "id": "69a358ff-64c0-436b-9cf8-c9ea346b394c",
+    "name": "Avellaneda",
+    "created_at": "2026-09-14T13:29:22.426339+00:00",
+    "subdivision_id": "d5e35294-2d22-4888-b9b7-7715f00717a8"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {"name":"pgcrypto","schema":"extensions","installed_version":"1.3"},
+  {"name":"uuid-ossp","schema":"extensions","installed_version":"1.1"},
+  {"name":"supabase_vault","schema":"vault","installed_version":"0.3.1"},
+  {"name":"postgis","schema":"extensions","installed_version":"3.3.7"},
+  {"name":"pg_stat_statements","schema":"extensions","installed_version":"1.11"},
+  {"name":"plpgsql","schema":"pg_catalog","installed_version":"1.0"},
+  {"name":"pg_net","schema":"extensions","installed_version":"0.20.0"},
+  {"name":"vector","schema":"public","installed_version":"0.8.0"}
+]

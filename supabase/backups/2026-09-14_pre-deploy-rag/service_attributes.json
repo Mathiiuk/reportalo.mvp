@@ -1,0 +1,12 @@
+[
+  {
+    "id": "4ab3e6bd-dc72-4b73-a684-3f287185c9be",
+    "required": false,
+    "data_type": "string",
+    "service_id": "aedc05f4-e748-4f81-97ca-0b9e0aed430b",
+    "sort_order": null,
+    "description": null,
+    "attribute_code": "patente",
+    "datatype_description": null
+  }
+]

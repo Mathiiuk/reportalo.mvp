@@ -1,0 +1,6 @@
+[
+  {"event_object_table":"infractions","trigger_name":"audit_ia","action_timing":"AFTER","event_manipulation":"INSERT","action_statement":"EXECUTE FUNCTION supabase_functions.http_request('https://yryuhyiujyignkdhiyua.supabase.co/functions/v1/analyze-infraction', 'POST', '{\"Content-type\":\"application/json\",\"Authorization\":\"Bearer <REDACTED_SERVICE_ROLE_JWT_SEE_README>\"}', '{}', '5000')"},
+  {"event_object_table":"infractions","trigger_name":"set_infractions_updated_at","action_timing":"BEFORE","event_manipulation":"UPDATE","action_statement":"EXECUTE FUNCTION handle_updated_at()"},
+  {"event_object_table":"infractions","trigger_name":"trigger_high_priority","action_timing":"AFTER","event_manipulation":"INSERT","action_statement":"EXECUTE FUNCTION check_high_priority_zone()"},
+  {"event_object_table":"infractions","trigger_name":"trigger_infraction_status_notification","action_timing":"AFTER","event_manipulation":"UPDATE","action_statement":"EXECUTE FUNCTION handle_infraction_status_change()"}
+]

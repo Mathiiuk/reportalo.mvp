@@ -1,0 +1,14 @@
+[
+  {
+    "code": "constitucion",
+    "description": "Constitución"
+  },
+  {
+    "code": "ley",
+    "description": "Ley"
+  },
+  {
+    "code": "decreto_ley",
+    "description": "Decreto-Ley"
+  }
+]

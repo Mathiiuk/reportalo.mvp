@@ -1,0 +1,10 @@
+[
+  {
+    "code": "corpus_legal",
+    "description": "Normativa jurídica"
+  },
+  {
+    "code": "informacion",
+    "description": "Información no normativa: trámites, guías del organismo"
+  }
+]

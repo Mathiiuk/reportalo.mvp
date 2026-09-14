@@ -1,0 +1,10 @@
+[
+  {
+    "code": "gemini-embedding-2@768",
+    "provider": "google",
+    "is_active": true,
+    "dimensions": 768,
+    "model_name": "gemini-embedding-2",
+    "retired_at": null
+  }
+]
