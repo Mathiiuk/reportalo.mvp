@@ -110,8 +110,64 @@ Limpieza final: se borraron los 3 `citizen_reports` de prueba de esta sesión (c
 
 ---
 
-## 8. Qué queda pendiente (fuera de esta ejecución)
+## 8. Cierre real de REP-2908 y REP-3772 (Sprint 12) — sesión posterior, mismo día
+
+Matías pidió empezar REP-2908 ("Crear prompt controlado con salida JSON") y su subtarea REP-3772 ("Validar determinísticamente la salida del RAG"), ambas de Sprint 12. Al leer las descripciones completas de los dos tickets contra lo ya hecho, casi todos los criterios de aceptación ya estaban cumplidos por el trabajo de las secciones 1-7 — con una excepción real:
+
+**Criterio de REP-3772 no cumplido hasta este punto**: *"`organismo_sugerido_id`, cuando exista, debe corresponder a un registro válido de organismos/agencies disponible para el flujo"* y *"si falla alguna validación, la respuesta no se acepta como fundamentada: debe fallar cerrado como indeterminado"*. El fix de la sección 7 (`toValidAgencyId`) solo validaba forma de UUID por regex y, si fallaba, nuleaba el campo **sin** hacer fallar cerrado el resto de la respuesta — no verificaba contra la tabla `agencies` real, y `suggested_agency_id` tiene un FK real contra `agencies(id)` (confirmado), así que un UUID con formato válido pero inexistente iba a volver a romper el `INSERT`.
+
+**Fix aplicado**:
+1. Nueva función `validateOrganismoSugerido(supabaseAdmin, organismoSugeridoId)` (async, con lookup real contra `agencies`): si el LLM no sugiere organismo, pasa. Si sugiere algo que no es UUID válido, o es UUID válido pero no existe en `agencies`, la respuesta completa falla cerrado a `indeterminado` — se corre **antes** de aceptar el resultado como `fundamentado`, junto a `validateLlmAnalysis`, no solo antes de persistir.
+2. Reforzado el prompt: instrucción explícita de que el modelo NUNCA invente `organismo_sugerido_id` (ni slug ni UUID) porque no tiene acceso a los IDs reales — debe dejarlo en `null`.
+3. **Bug adicional encontrado al probar el punto 2**: Gemini devolvía el string literal `"null"` (no un `null` JSON real) para `organismo_sugerido_id`, `categoria` y `fundamento_oficial`, porque `LLM_OUTPUT_SCHEMA` los declaraba `{ type: 'string' }` sin `nullable: true` — un campo string no-nullable no puede emitir `null` real bajo structured output, así que el modelo lo stringificaba. Se agregó `nullable: true` a esos tres campos del schema, más una verificación defensiva en `validateOrganismoSugerido` que trata el string `"null"` (case-insensitive) como equivalente a ausencia de valor.
+4. **Corrección de sincronización propia**: al revisar el archivo se encontró que la línea de refuerzo del prompt agregada en la sección 7 ("SIEMPRE incluís todos los campos...") nunca se había aplicado al archivo local `index.ts` — solo se había incluido en el payload del deploy. Quedó sincronizada ahora.
+
+Redesplegado dos veces (versión 7 con el fix de `organismo_sugerido_id` + prompt; versión 8 con `nullable: true`).
+
+**Revalidación final de los 6 casos A-F** (invocación manual, ya con billing y todos los fixes):
+
+| Caso | Resultado | `organismo_sugerido_id` |
+|---|---|---|
+| A | `fundamentado`, LOM arts. 52/59 | `null` (limpio, ya no inventa) |
+| B | `fundamentado`, Ley 2148/451 | `null` |
+| C | `fundamentado`, Ley 24.449 art. 49 | `null` |
+| D (Avellaneda) | `fundamentado`, LOM arts. 52/59 | `null` |
+| D (CABA) | `fundamentado`, Ley 210 art. 2b | `null` |
+| E | 1er intento: `indeterminado` (cita no literal, traspié puntual). 2do intento: `fundamentado`, Ley 24.449 art. 48 | `null` |
+| F | `sin_normativa`, sin citas | `null` |
+
+Los 6 casos siguen dando el resultado esperado, y ahora **REP-3772 está cumplido en su totalidad** (las 4 validaciones mínimas del ticket, incluida la de `organismo_sugerido_id` contra `agencies` real).
+
+**Con esto, REP-2908 y REP-3772 (Sprint 12) están listos para pasar a revisión.** Matías decide cuándo actualizar el estado en Jira (no se modificó Jira desde esta sesión).
+
+Se redactaron y le entregaron a Matías dos comentarios listos para pegar en REP-2908 y REP-3772 respectivamente, resumiendo lo de arriba contra los criterios de aceptación exactos de cada ticket — no se publicaron en Jira desde acá.
+
+---
+
+## 9. Insumo para REP-3773 (R-3, decisión del modelo exacto) — comparación de modelos Gemini
+
+Matías preguntó por qué se usa `gemini-3.8-flash` (originalmente se había hablado de "Flash 2.1" en algún momento no documentado) y si es el modelo más rentable, incluyendo la futura tarea de análisis de imagen (REP-2902, Sprint 15: imagen → descripción → RAG). No hay registro de esa decisión de "2.1" en la memoria de esta sesión ni en los docs del repo — el nombre `gemini-3.8-flash` sale directamente del `docx REP-1009_RAG_de_punta_a_punta.docx`, sin que su elección esté ratificada formalmente (ese es justo el punto R-3 de REP-3773, asignado a Hernán).
+
+Comparación de precio (por 1M tokens, input/output) contra el resto de la familia Gemini vigente a sept. 2026:
+
+| Modelo | Precio | Visión | Notas |
+|---|---|---|---|
+| Gemini 3.1 Pro (Preview) | ~$2 / $12 | Sí, mejor razonamiento | 2.7-3x más caro que Flash; estado Preview, no GA — más riesgo para producción. |
+| **Gemini 3.8 Flash** (en uso) | $0.75 / $3.75 | Sí — #3 de 36 en evals de visión de Roboflow, con "Agentic Vision" (zoom/inspección progresiva de la imagen) | Sube a $1.50/$7.50 el 1° de enero 2027. |
+| Gemini 3.7 / 3.6 Flash | $0.75 / $3.75 (igual que 3.8) | Sí | Generación anterior al mismo precio — sin motivo de costo para preferirlos. |
+| Gemini 3.5 Flash-Lite | ~$0.30 / $2.50 | Sí | 60% más barato, pero generación más vieja — mayor riesgo de que ignore instrucciones (ya observado hoy con `gemini-3.8-flash`, el modelo más capaz, en el caso de `organismo_sugerido_id`). |
+
+**Hallazgo importante para la seguridad del diseño**: el "grounding nativo" que Google promociona en la familia 3.8 Flash es integración con **Google Search/Maps**, no con el corpus RAG — hay que asegurarse de **nunca habilitar esa herramienta** en las llamadas a `generateContent`, porque rompería la regla central del proyecto ("nada resuelto por internet en tiempo de consulta"). Hoy no está habilitada (no se pasa ningún `tools` con grounding en `analizar-reporte`), pero vale dejarlo como restricción explícita para cuando se toque este código de nuevo.
+
+**Recomendación** (no aplicada, es insumo para que Hernán decida en REP-3773): mantener `gemini-3.8-flash` para texto e imagen — mismo precio que 3.6/3.7, mejor visión, y ya validado hoy contra los 6 casos reales. Considerar `gemini-3.5-flash-lite` solo si REP-2910 mide que da resultados igual de confiables a 60% menos costo — no asumirlo sin medir, dado el hallazgo de hoy sobre incumplimiento de instrucciones incluso en el modelo más capaz. No evaluar Pro todavía (muy caro, no GA) salvo que Flash resulte insuficiente en precisión.
+
+Sources: [Gemini API Pricing (BenchLM, sept. 2026)](https://benchlm.ai/google/api-pricing), [Gemini 3.8 Flash Vision Evals (Roboflow)](https://playground.roboflow.com/models/google/gemini-3-8-flash), [Agentic Vision in Gemini 3 Flash (Google Blog)](https://blog.google/innovation-and-ai/technology/developers-tools/agentic-vision-gemini-3-flash/), [Gemini 3.8 Flash — DeepMind](https://deepmind.google/models/gemini/flash/)
+
+---
+
+## 10. Qué queda pendiente (fuera de esta ejecución)
 
 - Reportar resultados a Matías/Hernán y decidir cuándo habilitar pruebas del equipo sobre este entorno.
 - Evaluar si vale la pena mejorar la recuperación del caso A (no recuperó el ítem 1) ajustando el umbral o el corpus — no bloqueante, documentado como mejora futura.
-- Portar el mismo fix de `organismo_sugerido_id` (y considerar el patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo bug potencial de `suggested_agency_id` sin validar.
+- Portar los mismos fixes (`validateOrganismoSugerido` con lookup real, `nullable: true` en el schema, patrón `pgmq_delete_message`) al cliente Node espejo (`src/services/reportAiAnalysisPersistence.js` / `geminiClient.js`, rama `feat/REP-2909-...`, no mergeada) cuando se revise ese PR — tiene el mismo gap de `suggested_agency_id` sin validar contra `agencies`.
+- Decidir en Jira (Matías/Leo) si se pasan REP-2908 y REP-3772 a revisión/Hecho ahora, dado que sus criterios de aceptación ya están cumplidos y verificados contra Supabase real.
