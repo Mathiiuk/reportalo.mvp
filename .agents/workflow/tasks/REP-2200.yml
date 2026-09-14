@@ -1,5 +1,6 @@
 ﻿id: "REP-2200"
 title: "Iniciar un nuevo reporte ciudadano"
+type: "feat"
 epic: "REP-1002"
 assignee: "Matias Krepchuk"
 status: "READY_FOR_PR"

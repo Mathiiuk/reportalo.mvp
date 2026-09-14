@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
+import { ArrowLeft, MailCheck, Clock, Info, ShieldCheck } from 'lucide-react';
 
 export const CheckEmailPage = () => {
   const navigate = useNavigate();
@@ -96,9 +97,7 @@ export const CheckEmailPage = () => {
             type="button"
             className="flex items-center gap-1.5 font-bold text-[13px] text-[#5B6A7A] hover:text-[#1E6FCB] px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
           >
-            <span className="material-symbols-rounded text-[18px]">
-              arrow_back
-            </span>
+            <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
             Volver a opciones de acceso
           </button>
         </div>
@@ -118,9 +117,7 @@ export const CheckEmailPage = () => {
               aria-label="Volver a la pantalla de login"
               className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-[#5B6A7A] hover:bg-slate-200/60 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
             >
-              <span className="material-symbols-rounded text-[22px]">
-                arrow_back
-              </span>
+              <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </button>
           </div>
 
@@ -133,9 +130,7 @@ export const CheckEmailPage = () => {
           >
             {/* Icono central de buzón / email enviado */}
             <div className="w-[82px] h-[82px] rounded-[26px] bg-[#E8F1FB] flex items-center justify-center mb-[22px] shadow-sm">
-              <span className="material-symbols-rounded filled text-[42px] text-[#1E6FCB]">
-                forward_to_inbox
-              </span>
+              <MailCheck className="w-[42px] h-[42px] text-[#1E6FCB]" strokeWidth={1.75} />
             </div>
 
             {/* Título */}
@@ -170,9 +165,7 @@ export const CheckEmailPage = () => {
             <div className="mt-3.5 flex items-center justify-center gap-1.5 min-h-[28px]">
               {countdown > 0 ? (
                 <>
-                  <span className="material-symbols-rounded text-[15px] text-[#AAB4BF]">
-                    schedule
-                  </span>
+                  <Clock className="w-[15px] h-[15px] text-[#AAB4BF]" strokeWidth={2.25} />
                   <span className="font-bold text-[12.5px] text-[#9AA7B5]">
                     Reenviar en {formattedTime}
                   </span>
@@ -192,9 +185,7 @@ export const CheckEmailPage = () => {
 
           {/* Tarjeta inferior informativa: Vencimiento en 15 min */}
           <div className="w-full max-w-[340px] md:max-w-[420px] mx-auto mb-2 flex items-start gap-2 bg-white border border-[#E6ECF3] rounded-[12px] p-[11px_12px] shadow-sm text-left">
-            <span className="material-symbols-rounded text-[17px] text-[#8593A2] flex-shrink-0 mt-[1px]">
-              info
-            </span>
+            <Info className="w-[17px] h-[17px] text-[#8593A2] flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
             <span className="font-medium text-[11px] leading-[1.45] text-[#6A7888]">
               El enlace vence en 15 minutos y sirve una sola vez.
             </span>
@@ -264,9 +255,7 @@ export const CheckEmailPage = () => {
           </div>
 
           <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <span className="material-symbols-rounded filled text-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
-              verified_user
-            </span>
+            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
             <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
               Tu identidad se mantiene resguardada ante el municipio al reportar.
             </span>

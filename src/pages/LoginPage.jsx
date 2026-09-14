@@ -7,6 +7,7 @@ import {
   getTermsRejectionRecord,
   formatRejectionDate,
 } from '../services/termsService';
+import { ArrowLeft, Gavel, AlertCircle, Shield, ShieldCheck } from 'lucide-react';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -97,9 +98,7 @@ export const LoginPage = () => {
             type="button"
             className="flex items-center gap-1.5 font-bold text-[13px] text-[#5B6A7A] hover:text-[#1E6FCB] px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
           >
-            <span className="material-symbols-rounded text-[18px]">
-              arrow_back
-            </span>
+            <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
             Volver al inicio
           </button>
         </div>
@@ -120,9 +119,7 @@ export const LoginPage = () => {
             {/* Si proviene de rechazo de términos, mostrar el banner de alerta */}
             {isRejected && (
               <div className="bg-[#FDECEA] border border-[#F7D2CC] rounded-[14px] p-[13px_14px] flex gap-[9px] mb-4 shadow-2xs text-left">
-                <span className="material-symbols-rounded text-[18px] text-[#C0392B] flex-shrink-0 mt-0.5">
-                  gavel
-                </span>
+                <Gavel className="w-[18px] h-[18px] text-[#C0392B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
                 <div>
                   <div className="font-extrabold text-[11.5px] text-[#8A3B30]">
                     Rechazaste los términos
@@ -160,9 +157,7 @@ export const LoginPage = () => {
                   aria-label="Volver a la pantalla de bienvenida"
                   className="md:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-[#5B6A7A] hover:bg-slate-100 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
                 >
-                  <span className="material-symbols-rounded text-[22px]">
-                    arrow_back
-                  </span>
+                  <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
                 </button>
 
                 {/* Logo en móvil (< md) */}
@@ -193,9 +188,7 @@ export const LoginPage = () => {
                 role="alert"
                 className="mt-3.5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2"
               >
-                <span className="material-symbols-rounded filled text-base text-red-600 flex-shrink-0">
-                  error
-                </span>
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" strokeWidth={2.25} />
                 <span className="flex-1">{authError}</span>
                 <button
                   onClick={clearError}
@@ -313,9 +306,7 @@ export const LoginPage = () => {
 
           {/* Tarjeta de resguardo de identidad en móvil (< md) */}
           <div className="md:hidden mt-8 mb-2 flex items-start gap-2 bg-[#EEF5FC] border border-[#D4E6F8] rounded-[12px] p-[12px] max-w-[420px] w-full mx-auto">
-            <span className="material-symbols-rounded filled text-[17px] text-[#1E6FCB] flex-shrink-0 mt-[1px]">
-              shield
-            </span>
+            <Shield className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
             <p className="font-medium text-[11.5px] leading-[1.45] text-[#46566B] m-0">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </p>
@@ -384,9 +375,7 @@ export const LoginPage = () => {
           </div>
 
           <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <span className="material-symbols-rounded filled text-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5">
-              verified_user
-            </span>
+            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
             <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </span>
