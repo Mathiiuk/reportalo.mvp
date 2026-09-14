@@ -1,5 +1,6 @@
 id: "REP-3471"
 title: "Implementar script SQL/seed del MVP en Supabase"
+type: "feat"
 epic: "REP-1005"
 assignee: "Matias Krepchuk"
 status: "READY_FOR_PR"

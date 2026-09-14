@@ -1,8 +1,40 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { Map, Marker, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { SlidersHorizontal, Navigation, X, MapPin, AlertCircle, RefreshCw } from 'lucide-react';
+import {
+  SlidersHorizontal,
+  Navigation,
+  X,
+  MapPin,
+  MapPinOff,
+  AlertCircle,
+  RefreshCw,
+  CarFront,
+  Lightbulb,
+  Trash2,
+  TrafficCone,
+  Trees,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Mapeo de iconos de categoría (mockReports.js) para los marcadores del mapa.
+// Se renderizan a HTML estático porque el marcador de MapLibre es un nodo DOM
+// plano (Marker({ element })), no un componente React.
+const MARKER_ICON_MAP = {
+  car_crash: CarFront,
+  lightbulb: Lightbulb,
+  delete: Trash2,
+  traffic: TrafficCone,
+  park: Trees,
+};
+
+const renderMarkerIcon = (categoryIcon) => {
+  const IconComponent = MARKER_ICON_MAP[categoryIcon] || MapPin;
+  return renderToStaticMarkup(
+    createElement(IconComponent, { size: 20, color: '#ffffff', strokeWidth: 2.25 })
+  );
+};
 import { MOCK_REPORTS } from '../../data/mockReports';
 import {
   getUserCoordinates,
@@ -262,11 +294,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
           outline: none;
         `;
 
-        el.innerHTML = `
-          <span class="material-symbols-rounded" style="font-size: 20px; line-height: 1; pointer-events: none;">
-            ${report.categoryIcon || 'location_on'}
-          </span>
-        `;
+        el.innerHTML = `<span style="display: flex; pointer-events: none;">${renderMarkerIcon(report.categoryIcon)}</span>`;
 
         el.onclick = (e) => {
           e.stopPropagation();
@@ -319,7 +347,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
               {activeFilter !== 'todos' && (
                 <span className="font-bold text-[10px] text-[#1E6FCB] bg-[#E8F1FB] border border-[#D4E6F8] rounded-[9px] px-2 py-1 inline-flex items-center gap-1">
                   {activeFilter}
-                  <span className="material-symbols-rounded text-[13px] cursor-pointer" onClick={() => setActiveFilter('todos')}>close</span>
+                  <X className="w-[13px] h-[13px] cursor-pointer" strokeWidth={2.5} onClick={() => setActiveFilter('todos')} />
                 </span>
               )}
             </div>
@@ -371,7 +399,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
         {filteredReports.length === 0 && (
           <div className="hidden md:flex absolute inset-0 bg-[#F4F7FB]/60 z-10 pointer-events-none items-center justify-center">
             <div className="bg-white border border-[#E6ECF3] rounded-[12px] px-4 py-2.5 flex items-center gap-2 shadow-[0_8px_22px_rgba(20,40,80,0.12)]">
-              <span className="material-symbols-rounded text-[18px] text-[#9AA7B5]">layers_clear</span>
+              <MapPinOff className="w-[18px] h-[18px] text-[#9AA7B5]" strokeWidth={2.25} />
               <span className="font-semibold text-[11.5px] text-[#56657A]">Sin marcadores para mostrar</span>
             </div>
           </div>

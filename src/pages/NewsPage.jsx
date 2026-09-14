@@ -2,6 +2,7 @@ import React from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Map as MapIcon } from 'lucide-react';
 
 export const NewsPage = () => {
   const newsItems = [];
@@ -80,7 +81,7 @@ export const NewsPage = () => {
                 to="/mapa"
                 className="mt-5 inline-flex items-center gap-1.5 bg-[#EEF5FC] text-[#1E6FCB] hover:bg-[#E1EFFD] px-4 py-2 rounded-xl font-bold text-[12.5px] cursor-pointer no-underline transition-colors"
               >
-                <span className="material-symbols-rounded text-[16px]">map</span>
+                <MapIcon className="w-[16px] h-[16px]" strokeWidth={2.25} />
                 <span>Explorar el mapa</span>
               </Link>
             </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Check, Minus, Receipt } from 'lucide-react';
 
 export const PlanPage = () => {
   return (
@@ -15,7 +16,7 @@ export const PlanPage = () => {
         
         <div className="flex items-center gap-[9px] overflow-x-auto pb-1 md:pb-0 scrollbar-hide shrink-0 ml-4">
           <div className="w-5 h-5 rounded-full bg-[#1E6FCB] text-white flex items-center justify-center">
-            <span className="material-symbols-rounded text-[14px]">check</span>
+            <Check className="w-[14px] h-[14px]" strokeWidth={3} />
           </div>
           <span className="font-bold text-[11.5px] text-[#1E6FCB]">Plan</span>
           <div className="w-[26px] h-[1.5px] bg-[#DDE4EC]"></div>
@@ -59,15 +60,15 @@ export const PlanPage = () => {
             <div className="h-[1px] bg-[#F2F5F9] mb-[11px]"></div>
             <div className="flex flex-col gap-[7px]">
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">1 jurisdicción</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Las 4 categorías</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#C3CED9]">remove</span>
+                <Minus className="w-[14px] h-[14px] text-[#C3CED9]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#9AA7B5]">Sin exportación de datos</span>
               </div>
             </div>
@@ -87,15 +88,15 @@ export const PlanPage = () => {
             <div className="h-[1px] bg-[#F2F5F9] mb-[11px]"></div>
             <div className="flex flex-col gap-[7px]">
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Hasta 5 jurisdicciones</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Categorías configurables</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Exportación de datos</span>
               </div>
             </div>
@@ -111,15 +112,15 @@ export const PlanPage = () => {
             <div className="h-[1px] bg-[#F2F5F9] mb-[11px]"></div>
             <div className="flex flex-col gap-[7px]">
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Jurisdicciones ilimitadas</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Integración con expedientes</span>
               </div>
               <div className="flex gap-[7px] items-center">
-                <span className="material-symbols-rounded text-[14px] text-[#2E9E6B]">check</span>
+                <Check className="w-[14px] h-[14px] text-[#2E9E6B]" strokeWidth={2.5} />
                 <span className="font-semibold text-[11px] text-[#46566B]">Soporte dedicado</span>
               </div>
             </div>
@@ -130,7 +131,7 @@ export const PlanPage = () => {
         {/* Footer (Info & Button) */}
         <div className="mt-8 md:mt-auto flex flex-col md:flex-row items-stretch md:items-center gap-[14px] pb-6 md:pb-0">
           <div className="flex-1 flex flex-col md:flex-row items-start md:items-center gap-3 bg-white border border-[#E6ECF3] rounded-[12px] p-3 md:px-[13px] md:py-[11px]">
-            <span className="material-symbols-rounded text-[20px] md:text-[17px] text-[#8593A2] shrink-0 mt-0.5 md:mt-0">receipt_long</span>
+            <Receipt className="w-[20px] h-[20px] md:w-[17px] md:h-[17px] text-[#8593A2] shrink-0 mt-0.5 md:mt-0" strokeWidth={2} />
             <span className="font-medium text-[12px] md:text-[11px] leading-[1.45] text-[#6A7888]">
               La facturación a organismos públicos se cierra por orden de compra. El precio no se muestra en pantalla: se emite presupuesto.
             </span>

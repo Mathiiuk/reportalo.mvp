@@ -18,6 +18,7 @@ import {
   isNotificationsEnabled,
   setNotificationPreference,
 } from '../services/notificationService';
+import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2 } from 'lucide-react';
 
 /**
  * Pantalla de Perfil de Usuario Ciudadano.
@@ -230,12 +231,7 @@ export const ProfilePage = () => {
               {/* Términos aceptados */}
               <div className="bg-white border border-[#E6ECF3] rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="material-symbols-rounded text-[18px] text-[#2E9E6B] select-none"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    task_alt
-                  </span>
+                  <BadgeCheck className="w-[18px] h-[18px] text-[#2E9E6B] select-none" strokeWidth={2} />
                   <span className="font-bold text-[11.5px] md:text-[12.5px] text-[#263249]">
                     Términos aceptados
                   </span>
@@ -263,12 +259,7 @@ export const ProfilePage = () => {
                 
                 {/* Control Propio: Notificaciones con Toggle */}
                 <div className="flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9]">
-                  <span
-                    className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    notifications
-                  </span>
+                  <Bell className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
                       Notificaciones
@@ -304,15 +295,11 @@ export const ProfilePage = () => {
                   onClick={() => navigate('/alertas')}
                   className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
                 >
-                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
-                    newspaper
-                  </span>
+                  <Newspaper className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
                   <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
                     Novedades
                   </span>
-                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                    chevron_right
-                  </span>
+                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
                 </button>
 
                 {/* Permisos de la app */}
@@ -322,15 +309,11 @@ export const ProfilePage = () => {
                   onClick={() => navigate('/permisos')}
                   className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
                 >
-                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
-                    verified_user
-                  </span>
+                  <ShieldCheck className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
                   <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
                     Permisos de la app
                   </span>
-                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                    chevron_right
-                  </span>
+                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
                 </button>
 
                 {/* Descargar mis datos */}
@@ -340,17 +323,13 @@ export const ProfilePage = () => {
                   onClick={handleDownloadData}
                   className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
                 >
-                  <span className="material-symbols-rounded text-[19px] md:text-[21px] text-[#1E6FCB] select-none">
-                    download_for_offline
-                  </span>
+                  <Download className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
                       Descargar mis datos
                     </div>
                   </div>
-                  <span className="material-symbols-rounded text-[18px] text-[#C3CED9] select-none">
-                    chevron_right
-                  </span>
+                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
                 </button>
               </div>
 
@@ -388,7 +367,7 @@ export const ProfilePage = () => {
         >
           <div className="bg-white rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
             <div className="w-10 h-10 rounded-full bg-[#FFF1F0] text-[#E74C3C] flex items-center justify-center">
-              <span className="material-symbols-rounded text-[22px]">notifications_off</span>
+              <BellOff className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </div>
             <h3 id="modal-notif-blocked-title" className="font-extrabold text-[15px] text-[#243447] m-0">
               Notificaciones bloqueadas en tu dispositivo
@@ -434,7 +413,7 @@ export const ProfilePage = () => {
         >
           <div className="bg-white rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
             <div className="w-10 h-10 rounded-full bg-[#FFF1F0] text-[#E74C3C] flex items-center justify-center">
-              <span className="material-symbols-rounded text-[22px]">delete_forever</span>
+              <Trash2 className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </div>
             <h3 id="modal-delete-title" className="font-extrabold text-[15px] text-[#243447] m-0">
               ¿Eliminar cuenta y datos?
