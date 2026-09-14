@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ShieldCheck, Check, Minus, Receipt } from 'lucide-react';
 
 export const MunicipiosPage = () => {
   const navigate = useNavigate();
@@ -213,9 +214,7 @@ export const MunicipiosPage = () => {
 
           {/* Nota de validación institucional al pie */}
           <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <span className="material-symbols-rounded text-[17px] text-[#2E9E6B] flex-shrink-0 mt-0.5">
-              verified_user
-            </span>
+            <ShieldCheck className="w-[17px] h-[17px] text-[#2E9E6B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
             <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
               Solo se habilitan cuentas con correo oficial del municipio.
             </span>
@@ -255,15 +254,15 @@ export const MunicipiosPage = () => {
                 <div className="h-[1px] bg-[#F2F5F9] mb-4"></div>
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">1 jurisdicción</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Las 4 categorías</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#C3CED9]">remove</span>
+                    <Minus className="w-[18px] h-[18px] text-[#C3CED9]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#9AA7B5]">Sin exportación de datos</span>
                   </div>
                 </div>
@@ -293,15 +292,15 @@ export const MunicipiosPage = () => {
                 <div className="h-[1px] bg-[#F2F5F9] mb-4"></div>
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Hasta 5 jurisdicciones</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Categorías configurables</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Exportación de datos</span>
                   </div>
                 </div>
@@ -327,15 +326,15 @@ export const MunicipiosPage = () => {
                 <div className="h-[1px] bg-[#F2F5F9] mb-4"></div>
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Jurisdicciones ilimitadas</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Integración con expedientes</span>
                   </div>
                   <div className="flex gap-2.5 items-center">
-                    <span className="material-symbols-rounded text-[18px] text-[#2E9E6B]">check</span>
+                    <Check className="w-[18px] h-[18px] text-[#2E9E6B]" strokeWidth={2.5} />
                     <span className="font-semibold text-[12.5px] text-[#46566B]">Soporte dedicado</span>
                   </div>
                 </div>
@@ -354,9 +353,7 @@ export const MunicipiosPage = () => {
 
           {/* Aviso Legal / Facturación por orden de compra */}
           <div className="mt-8 flex flex-col md:flex-row items-start md:items-center gap-3 bg-white border border-[#E6ECF3] rounded-[16px] p-4 md:p-5 shadow-xs">
-            <span className="material-symbols-rounded text-[22px] text-[#8593A2] shrink-0">
-              receipt_long
-            </span>
+            <Receipt className="w-[22px] h-[22px] text-[#8593A2] shrink-0" strokeWidth={2} />
             <span className="font-medium text-[12.5px] leading-[1.5] text-[#6A7888]">
               La facturación a organismos públicos se cierra por orden de compra. El precio no se muestra en pantalla: se emite presupuesto institucional a medida según cantidad de oficiales.
             </span>
