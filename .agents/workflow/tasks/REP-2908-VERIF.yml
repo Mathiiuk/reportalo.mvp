@@ -1,0 +1,49 @@
+id: REP-2908-VERIF
+external_ref: 'D:/Proyectos/reportalo.mvp/docs/REP-DEPLOY-RAG-SUPABASE_devolucion_y_verificacion.md'
+title: 'Devolucion RAG: verificacion y remediacion de seguridad (V-01 a V-13)'
+type: fix
+status: IN_PROGRESS
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
+tags:
+  - rag
+  - seguridad
+  - supabase
+  - sprint12
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/
+  environments:
+    - supabase-real
+requirements:
+  - >-
+    Documento de devolucion de Hernan Gregorini (PO/DBA) sobre el despliegue
+    del RAG contra Supabase real: 13 puntos de verificacion (V-01 a V-13),
+    agrupados en seguridad, reproducibilidad, trazabilidad y evidencia de
+    calidad, con prioridad P1/P2/P3. Referencias Jira: REP-2908, REP-3772,
+    REP-3773, REP-3775, REP-3776, REP-3777, REP-2909, REP-2910, REP-3764,
+    REP-3769.
+acceptance_criteria:
+  - 'V-01: ninguna funcion/trigger/cron con una clave escrita en texto plano.'
+  - 'V-02: el backup con datos reales no vuelve a entrar en un commit; se documenta donde quedo el que ya se pusheo.'
+  - 'V-03: cada hallazgo critico del Security Advisor esta corregido o tiene ticket y responsable.'
+  - 'V-04: la PARTE 8 de REP-3769_seed_y_RAG.sql da OK en todo lo verificable sin escribir; las 15 huellas del corpus coinciden.'
+  - 'V-05: los cambios aplicados a mano contra Supabase real quedan como migraciones versionadas en el repositorio, con PR.'
+  - 'V-07: prueba de punta a punta por el proceso automatico (insert -> cola -> cron -> Edge Function -> report_ai_analysis/report_ai_evidence).'
+  - 'V-12: ninguna clave de Gemini en el frontend ni en el build de produccion.'
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: false
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: true
+  smoke_tests: true
+commands:
+  install: pnpm install
+  build: pnpm run build
