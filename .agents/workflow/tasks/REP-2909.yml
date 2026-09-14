@@ -1,0 +1,99 @@
+id: REP-2909
+external_ref: >-
+  https://unlz2026.atlassian.net/jira/software/projects/REP/boards/1/backlog (ID
+  provisorio — confirmar numero real con Matias)
+title: >-
+  Cerrar RAG productivo: pipeline asincrono, persistencia del analisis, RLS y
+  pantalla del ciudadano
+type: feat
+status: READY_FOR_PR
+priority: highest
+owner: Matias Krepchuk
+base_branch: staging
+sprint: 12
+tags:
+  - rag
+  - pgmq
+  - pg_cron
+  - rls
+  - frontend
+  - sprint12
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/rag_async_pipeline.sql
+    - supabase/functions/analizar-reporte/index.ts
+    - supabase/rag_rls_policies.sql
+    - src/pages/ReportsPage.jsx
+    - src/components/report/
+    - src/services/legalRagService.js
+  environments:
+    - local
+requirements:
+  - >-
+    [BLOQUE 1] Pipeline asincrono: trigger en citizen_reports que encola un
+    mensaje pgmq al insertar un reporte, y un job de pg_cron que lee la cola
+    cada pocos segundos y llama a la Edge Function analizar-reporte via pg_net,
+    con reintento automatico si falla (patron "Automatic embeddings" de
+    Supabase, docx REP-1009 seccion 5, pasos 2-3).
+  - >-
+    [BLOQUE 2] Persistencia: la Edge Function analizar-reporte deja de solo
+    devolver el JSON del analisis y pasa a guardarlo en una transaccion:
+    report_ai_analysis (con result_status_code, embedding_model_code,
+    generation_model_code, prompt_version, input_tokens, output_tokens,
+    latency_ms) + report_ai_evidence (una fila por fragmento recuperado, con
+    rank, similarity, was_cited, quoted_text) + borrado del mensaje de la cola
+    al terminar (paso 10 del flujo).
+  - >-
+    [BLOQUE 3] RLS: politicas de lectura para report_ai_analysis y
+    report_ai_evidence con el mismo criterio de visibilidad que citizen_reports
+    (el ciudadano ve el analisis de sus propios reportes, el organismo el de los
+    que atiende), aplicando el mismo criterio que la PARTE 13 de
+    docs/REP-3769_seed_y_RAG.sql (Q-6 de la guia).
+  - >-
+    [BLOQUE 4] Pantalla del ciudadano: mostrar fundamento_ciudadano, estado del
+    analisis y las normas citadas (ruta jerarquica, sin mostrar sanciones) en el
+    detalle de un reporte ya enviado. Estado "sin_normativa"/"indeterminado" se
+    muestra de forma transparente, nunca oculto ni reemplazado por texto
+    inventado.
+  - >-
+    Nada de esto se ejecuta contra el Supabase real desde esta tarea salvo que
+    Matias lo autorice explicitamente en el momento: se entrega como SQL y
+    codigo versionado, listo para que Matias/Hernan lo corran.
+acceptance_criteria:
+  - >-
+    AC-01: existe una migracion SQL que crea el trigger + la cola pgmq + el job
+    de pg_cron, documentada con exactamente que hace y en que orden se aplica
+    respecto de docs/REP-3769_seed_y_RAG.sql.
+  - >-
+    AC-02: analizar-reporte persiste el analisis y su evidencia en una unica
+    transaccion, borra el mensaje de la cola solo si la escritura tuvo exito, y
+    sigue fallando cerrado (indeterminado) ante cualquier error, igual que en
+    REP-2908.
+  - >-
+    AC-03: existen politicas RLS de lectura para report_ai_analysis y
+    report_ai_evidence, con tests o verificacion documentada de que un ciudadano
+    no puede leer el analisis de un reporte ajeno.
+  - >-
+    AC-04: la pantalla del ciudadano muestra el fundamento y las citas cuando
+    estado=fundamentado, y un mensaje transparente (no un error generico) cuando
+    estado es sin_normativa/indeterminado/fuera_de_alcance/asistencia.
+  - >-
+    AC-05: pnpm test y pnpm run build pasan en verde; ninguna ejecucion real
+    contra Supabase se hace sin autorizacion explicita de Matias en el momento
+    de correrla.
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm run build
