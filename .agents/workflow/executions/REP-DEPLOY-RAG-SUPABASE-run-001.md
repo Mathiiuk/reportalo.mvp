@@ -5,7 +5,7 @@
 - **Rama**: `feat/REP-DEPLOY-RAG-SUPABASE-desplegar-rag-productivo-rep-2908-2909-contra-supabase-real`
 - **Proyecto Supabase real**: CiudadAR (`yryuhyiujyignkdhiyua`), Postgres 17, us-east-2
 - **Fecha**: 2026-09-14
-- **Estado**: En progreso — punto 1 (backfill de embeddings) completado y verificado. Puntos 2-4 pendientes (deploy Edge Function, pipeline asíncrono, revalidación de los 6 casos A-F contra el entorno real).
+- **Estado**: En progreso — puntos 1 y 2 completados y verificados (backfill de embeddings, secrets de Vault y pipeline asíncrono). Pendiente: deploy de la Edge Function `analizar-reporte` y revalidación de los 6 casos A-F contra el entorno real.
 
 ---
 
@@ -24,6 +24,8 @@ Con el OK explícito de Matías en cada punto, se ejecutó:
 1. Habilitación de `pgmq` y `pg_cron` (extensiones, sin efecto en datos).
 2. Reemplazo de las políticas RLS públicas de `report_ai_analysis`/`report_ai_evidence` por las restrictivas de `rag_rls_policies.sql` (ciudadano ve su reporte, organismo ve lo que atiende, nadie inserta desde el cliente).
 3. **Backfill de embeddings reales**: se generaron los 15 embeddings (`gemini-embedding-2@768`, 768 dimensiones) con la API real de Gemini para los 15 `knowledge_fragments` ya cargados, y se insertaron en `fragment_embeddings` vía `INSERT ... ON CONFLICT DO UPDATE` (idempotente).
+4. **Secrets de Vault**: `rag_analizar_reporte_url` (creado vía MCP, apunta a `https://yryuhyiujyignkdhiyua.supabase.co/functions/v1/analizar-reporte`) y `rag_service_role_key` (cargado manualmente por Matías desde el SQL Editor, sin pasar por la conversación — es un secret con bypass total de RLS, más sensible que la API key de Gemini).
+5. **Resto del pipeline asíncrono** (`scripts/rag-local-dev/apply-async-pipeline.sql`): cola `rag_analysis_queue`, trigger `trg_enqueue_rag_analysis` sobre `citizen_reports`, función `dispatch_rag_analysis_queue`, cron job `rag-analysis-dispatch` (cada 10s). Este paso lo aplicó Matías manualmente porque el clasificador de permisos del entorno bloqueó el `apply_migration` automático (razón: "Protected-Scope IaC Apply" — crear un trigger sobre una tabla de producción + un cron job se trata como cambio de infraestructura de mayor alcance que habilitar extensiones o ajustar RLS).
 
 ---
 
@@ -33,15 +35,14 @@ Con el OK explícito de Matías en cada punto, se ejecutó:
 - **RLS verificado**: `report_ai_analysis` y `report_ai_evidence` ahora solo tienen políticas `SELECT` restringidas a `authenticated` con `profile_attends_report`/ownership — confirmado vía `pg_policies` y `get_advisors(type: security)` (sin nuevos hallazgos críticos introducidos por el cambio).
 - **Embeddings**: `select count(*), count(distinct fragment_id) from fragment_embeddings` → `15, 15`.
 - **Prueba de humo end-to-end de `match_knowledge_fragments`**: usando el embedding del fragmento "Ley 2148 art. 7.1.9 (rampas discapacitados)" como consulta contra la localidad Chacarita (CABA), el segundo resultado más similar (0.6884) es exactamente la sanción correspondiente — Ley 451 art. 6.1.52 ("...rampas para discapacitados... trescientas unidades fijas") — confirmando que la cascada jurisdiccional y la similitud semántica real funcionan correctamente sobre datos reales, replicando el comportamiento ya validado localmente para el caso B de REP-3764.
-- **Scripts usados** (no committeados a `staging`, viven en esta rama): `scripts/rag-local-dev/generate-fragment-embeddings.mjs`, `scripts/rag-local-dev/fragments-to-embed.json`, y los `insert_batch_*.sql` generados a partir de la salida (aplicados manualmente por Matías vía `psql`/SQL Editor para los batches 4 y 5, por los últimos 6 fragmentos, tras límite de uso de la sesión).
+- **Scripts usados** (no committeados a `staging`, viven en esta rama): `scripts/rag-local-dev/generate-fragment-embeddings.mjs`, `scripts/rag-local-dev/fragments-to-embed.json`, y los `insert_batch_*.sql` generados a partir de la salida (aplicados manualmente por Matías vía `psql`/SQL Editor para los batches 4 y 5, por los últimos 6 fragmentos, tras límite de uso de la sesión). `scripts/rag-local-dev/apply-async-pipeline.sql` para el pipeline asíncrono.
+- **Pipeline asíncrono verificado**: `pgmq.list_queues()` muestra `rag_analysis_queue`; `pg_proc` confirma `enqueue_rag_analysis` y `dispatch_rag_analysis_queue`; `information_schema.triggers` confirma `trg_enqueue_rag_analysis` sobre `citizen_reports`; `cron.job` confirma `rag-analysis-dispatch`.
 
 ---
 
-## 3. Qué queda pendiente (puntos 2-4 de la tarea)
+## 3. Qué queda pendiente (puntos 3-4 de la tarea)
 
-- Crear en Supabase Vault los secrets `rag_analizar_reporte_url` y `rag_service_role_key` (requeridos por `dispatch_rag_analysis_queue()`).
-- Aplicar el resto de `rag_async_pipeline.sql`: cola `rag_analysis_queue`, trigger `trg_enqueue_rag_analysis`, función `dispatch_rag_analysis_queue`, cron job.
-- Desplegar la Edge Function `analizar-reporte` (no existe aún en el proyecto real).
+- Desplegar la Edge Function `analizar-reporte` (no existe aún en el proyecto real). Hasta que esto pase, `dispatch_rag_analysis_queue()` corre cada 10s sin efecto real (la URL en Vault no responde todavía).
 - Probar el pipeline de punta a punta (insert → cola → cron → Edge Function → persistencia).
 - Revalidar los 6 casos A-F de REP-3764 contra el Supabase real y comparar con los resultados ya documentados del entorno local.
 - Reportar resultados a Matías antes de habilitar pruebas de Hernán.
