@@ -135,8 +135,45 @@
   discapacidad, coincidentes con el texto del reporte de prueba.
 - **V-07 CERRADO**, corrido integramente con la clave `service_role` nueva (post-rotacion).
 
+**14/09/2026 — V-05 (migraciones y PR):**
+- Se leyo el historial interno real de Supabase (`supabase_migrations.schema_migrations`,
+  visible via MCP `list_migrations` + `execute_sql`) en vez de reconstruir de memoria: tiene
+  el SQL exacto de cada cambio aplicado a mano durante el despliegue original, con su
+  timestamp real. Se versionaron como archivos en `supabase/migrations/` con esos mismos
+  timestamps y nombres, para que coincidan exactamente:
+  - `20260914150658_enable_pgmq_and_pg_cron_extensions.sql`
+  - `20260914150751_restrict_report_ai_analysis_rls_rep2909.sql`
+  - `20260914164131_create_vault_secret_rag_function_url.sql` (solo la URL, no es secreto)
+  - `20260914170000_rag_async_pipeline.sql` (cola + trigger + dispatch + cron; **no** esta en
+    el ledger de Supabase porque se aplico a mano en el SQL Editor, bloqueada la via MCP por
+    el clasificador de permisos — ver `scripts/rag-local-dev/apply-async-pipeline.sql`;
+    corregido el schedule inicial a `* * * * *`, igual al real, no el `*/10 segundos` que
+    tenia ese script de desarrollo local)
+  - `20260914184913_fix_rag_dispatch_cron_schedule.sql`
+  - `20260914185641_create_pgmq_delete_wrapper.sql` — **hallazgo nuevo no documentado en
+    ningun lado hasta ahora**: el schema `pgmq` no esta expuesto en la API de datos de
+    Supabase, asi que el borrado de mensajes procesados desde la Edge Function fallaba
+    silenciosamente ("Invalid schema: pgmq") y los reprocesaba cada minuto para siempre. Ya
+    resuelto con un wrapper `SECURITY DEFINER` en `public`, exclusivo de `service_role`.
+  - `20260914205949_add_rls_policies_report_images.sql`
+  - Los 4 archivos de V-01/V-03 (231225, 232828, 233035, 233251) ya commiteados antes.
+- **Excluido a proposito** (regla del documento de Hernan, punto 2 y 3 de "Que hacer" en
+  V-05): los 3 backfills de embeddings (`backfill_fragment_embeddings_batch_1/2/3`, con los
+  vectores completos) no se versionan como migracion — se documenta que existen en el
+  ledger de Supabase y que el comando para regenerarlos es
+  `node scripts/rag-local-dev/generate-fragment-embeddings.mjs`. La creacion del secreto de
+  Vault `rag_service_role_key` (con el valor de la clave) tampoco se versiona; solo se
+  documenta el nombre.
+- Se eliminaron del working tree los archivos sueltos que quedaban redundantes con las
+  migraciones formales (`supabase/report_images_rls_policies.sql`, ya cargado como
+  migracion 205949) — `supabase/rag_rls_policies.sql` y
+  `scripts/rag-local-dev/apply-async-pipeline.sql` se dejan como estaban (documentan el
+  contexto original) pese a la redundancia, para no perder historia ya commiteada sin
+  pedirlo.
+- Pendiente: abrir el Pull Request contra `staging` (la base real de este branch; el
+  documento de Hernan dice `develop`, que no existe en este repositorio) una vez que Matias
+  confirme que se puede pushear la rama.
+
 **Pendiente:** V-02 (decision sobre historial de git del backup), V-04 (decidir si se
-recargan los seeds demo — ya no bloquea V-07, que se resolvio con un perfil real), V-05
-(migrar el resto de cambios ad-hoc a `supabase/migrations/` + PR), V-06, V-08, V-09, V-10,
-V-11, V-13.
+recargan los seeds demo), V-06, V-08, V-09, V-10, V-11, V-13.
 
