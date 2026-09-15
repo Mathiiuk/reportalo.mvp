@@ -20,6 +20,8 @@
 
 export const EMBEDDING_MODEL_CODE = 'gemini-embedding-2@768';
 export const GENERATION_MODEL_CODE = 'gemini-3.8-flash';
+// V-11 (REP-2908-VERIF): espejo de PROMPT_VERSION en supabase/functions/analizar-reporte/index.ts.
+export const PROMPT_VERSION = 'v1';
 
 /**
  * Cantidad de fragmentos a recuperar por consulta. Valor provisorio del Sprint 12
@@ -311,6 +313,7 @@ export const analyzeReport = async ({
     citedFragments: eligibleFragments.filter((f) => citedFragmentIds.has(f.fragment_id)),
     embeddingModelCode: EMBEDDING_MODEL_CODE,
     generationModelCode: GENERATION_MODEL_CODE,
+    promptVersion: PROMPT_VERSION,
     inputTokens: generation.inputTokens,
     outputTokens: generation.outputTokens,
     latencyMs: Number((performance.now() - startTime).toFixed(2)),
