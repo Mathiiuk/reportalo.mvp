@@ -10,3 +10,8 @@ Thumbs.db
 
 # Postgres local de desarrollo (REP-2908) — datos binarios, nunca se versionan
 .pgdata-local-dev
+
+# Backups de Supabase real (REP-2908-VERIF, V-02) — datos de produccion,
+# nunca se versionan. El backup previo (2026-09-14_pre-deploy-rag) ya habia
+# entrado en un commit antes de esta regla; ver notas de ejecucion.
+supabase/backups/

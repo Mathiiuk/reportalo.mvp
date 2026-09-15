@@ -48,6 +48,7 @@ export const buildAnalysisRow = ({ reportId, result, suggestedServiceId = null }
     confidence_score: result.confianza ?? null,
     embedding_model_code: result.embeddingModelCode ?? null,
     generation_model_code: result.generationModelCode ?? null,
+    prompt_version: result.promptVersion ?? null,
     input_tokens: result.inputTokens ?? null,
     output_tokens: result.outputTokens ?? null,
     latency_ms: result.latencyMs !== undefined ? Math.round(result.latencyMs) : null,
