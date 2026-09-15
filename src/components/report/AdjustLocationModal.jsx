@@ -9,6 +9,7 @@ import {
   CABA_AVELLANEDA_BOUNDS,
   isCoordinatesInBounds,
 } from '../../services/locationService';
+import { LocalitySelector } from './LocalitySelector';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // Configurar URL del Web Worker de MapLibre para Vite
@@ -31,11 +32,21 @@ const MAX_ZOOM = 19;
  */
 export const AdjustLocationModal = ({
   initialCoordinates,
+  initialLocalityId,
   onConfirm,
   onClose,
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
+
+  // R-1 a R-5: localidad real elegida por el ciudadano (no inferida por GPS)
+  const [localityId, setLocalityId] = useState(initialLocalityId ?? null);
+  const [localityLabel, setLocalityLabel] = useState(null);
+
+  const handleLocalityChange = (id, label) => {
+    setLocalityId(id);
+    setLocalityLabel(label);
+  };
 
   // Coordenadas activas actuales [lng, lat] (verificando que estén en el bounding box de CABA/Avellaneda)
   const [currentCoords, setCurrentCoords] = useState(() => {
@@ -105,17 +116,16 @@ export const AdjustLocationModal = ({
     setCurrentCoords(target);
   }, [initialCoordinates]);
 
-  // Confirmar ubicación
+  // Confirmar ubicación — R-1/R-2: requiere localidad elegida del selector
   const handleConfirmLocation = () => {
-    if (onConfirm) {
-      onConfirm({
-        coordinates: { lng: currentCoords[0], lat: currentCoords[1] },
-        street: addressDetails.street,
-        locality: addressDetails.locality,
-        fullAddress: `${addressDetails.street}, ${addressDetails.locality.split(',')[0]}`,
-        accuracy: addressDetails.accuracy,
-      });
-    }
+    if (!localityId || !onConfirm) return;
+    onConfirm({
+      coordinates: { lng: currentCoords[0], lat: currentCoords[1] },
+      localityId,
+      localityLabel,
+      street: addressDetails.street,
+      accuracy: addressDetails.accuracy,
+    });
   };
 
   return (
@@ -183,27 +193,22 @@ export const AdjustLocationModal = ({
       <footer className="flex-0 bg-white border-t border-[#EEF1F5] p-3.5 sm:px-4 z-20">
         <div className="flex gap-2.5 items-start mb-3">
           <MapPinned className="w-[19px] h-[19px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-          <div>
-            <div
-              data-testid="adjust-street-address"
-              className="font-bold text-[13px] text-[#263249]"
-            >
-              {addressDetails.street}
-            </div>
-            <div
-              data-testid="adjust-locality-address"
-              className="font-medium text-[11px] text-[#8593A2] mt-0.5"
-            >
-              {addressDetails.locality} · precisión ±{addressDetails.accuracy} m
-            </div>
+          <div data-testid="adjust-street-address" className="font-bold text-[13px] text-[#263249]">
+            {addressDetails.street}
           </div>
+        </div>
+
+        {/* R-4: selector de localidad junto al pin GPS */}
+        <div className="mb-3">
+          <LocalitySelector value={localityId} onChange={handleLocalityChange} />
         </div>
 
         <button
           type="button"
           onClick={handleConfirmLocation}
+          disabled={!localityId}
           aria-label="Confirmar ubicación"
-          className="w-full bg-[#1E6FCB] rounded-[13px] py-3.5 px-4 text-center shadow-[0_8px_18px_rgba(30,111,203,0.3)] border-0 cursor-pointer text-white font-extrabold text-[14px] hover:brightness-105 active:scale-98 transition-all"
+          className="w-full bg-[#1E6FCB] rounded-[13px] py-3.5 px-4 text-center shadow-[0_8px_18px_rgba(30,111,203,0.3)] border-0 cursor-pointer text-white font-extrabold text-[14px] hover:brightness-105 active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
         >
           Confirmar ubicación
         </button>

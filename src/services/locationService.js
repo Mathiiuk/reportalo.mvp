@@ -222,7 +222,11 @@ export const getFriendlyLocationLabel = (coords) => {
 };
 
 /**
- * Resuelve los detalles desglosados de dirección, localidad y precisión a partir de coordenadas.
+ * Describe el punto marcado en el mapa a partir de coordenadas, sin inventar
+ * una dirección postal (E-1, REP-2500): Reportalo no hace geocodificación
+ * inversa, así que no puede saber la calle real de ese punto. La localidad
+ * real la elige el ciudadano mediante el selector manual (LocalitySelector,
+ * R-1 a R-5) — este helper solo describe el pin del mapa.
  * @param {[number, number] | { lat: number, lng: number } | null} coords
  * @returns {{ street: string, locality: string, accuracy: number, fullLabel: string }}
  */
@@ -237,47 +241,18 @@ export const resolveAddressDetails = (coords) => {
 
   if (typeof lat !== 'number' || typeof lng !== 'number') {
     return {
-      street: 'Av. Mitre 1240',
-      locality: 'Avellaneda, Buenos Aires',
-      accuracy: 8,
-      fullLabel: 'Av. Mitre 1240, Avellaneda',
+      street: 'Punto marcado en el mapa',
+      locality: 'Seleccioná la localidad debajo',
+      accuracy: 10,
+      fullLabel: 'Punto marcado en el mapa',
     };
   }
 
-  const isAvellaneda = lat < -34.645 && lat > -34.730 && lng > -58.410 && lng < -58.330;
-  if (isAvellaneda) {
-    return {
-      street: 'Av. Mitre 1240',
-      locality: 'Avellaneda, Buenos Aires',
-      accuracy: 8,
-      fullLabel: 'Av. Mitre 1240, Avellaneda',
-    };
-  }
-
-  const isPalermo = lat >= -34.590 && lat <= -34.560 && lng >= -58.440 && lng <= -58.400;
-  if (isPalermo) {
-    return {
-      street: 'Av. Santa Fe 3400',
-      locality: 'Palermo, CABA',
-      accuracy: 5,
-      fullLabel: 'Av. Santa Fe 3400, Palermo',
-    };
-  }
-
-  const isCaba = lat >= -34.710 && lat <= -34.530 && lng >= -58.530 && lng <= -58.350;
-  if (isCaba) {
-    return {
-      street: 'Av. Corrientes 1500',
-      locality: 'San Nicolás, CABA',
-      accuracy: 6,
-      fullLabel: 'Av. Corrientes 1500, CABA',
-    };
-  }
-
+  const label = `Punto marcado en el mapa (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
   return {
-    street: `Punto GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-    locality: 'Área Metropolitana de Buenos Aires',
+    street: label,
+    locality: 'Seleccioná la localidad debajo',
     accuracy: 10,
-    fullLabel: `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+    fullLabel: label,
   };
 };

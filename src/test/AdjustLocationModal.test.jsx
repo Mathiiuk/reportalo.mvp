@@ -4,6 +4,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 
+// R-1 a R-5: LocalitySelector consulta Supabase — se mockea con dos localidades de la zona piloto
+vi.mock('../lib/supabaseClient', () => ({
+  isSupabaseConfigured: true,
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockResolvedValue({
+        data: [
+          { id: 'loc-1', name: 'Retiro', subdivisions: { name: 'Comuna 1', states_provinces: { name: 'Ciudad Autónoma de Buenos Aires' } } },
+          { id: 'loc-2', name: 'Piñeyro', subdivisions: { name: 'Avellaneda', states_provinces: { name: 'Buenos Aires' } } },
+        ],
+        error: null,
+      }),
+    })),
+  },
+}));
+
 // Mock de maplibre-gl para entorno JSDOM
 vi.mock('maplibre-gl', () => {
   return {
@@ -58,7 +74,7 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
     expect(handleOpenAdjustLocation).toHaveBeenCalledTimes(1);
   });
 
-  it('UT-LOC-02: AdjustLocationModal renderiza la pantalla "¿Dónde ocurrió?", instrucciones y datos de dirección', () => {
+  it('UT-LOC-02: AdjustLocationModal renderiza la pantalla "¿Dónde ocurrió?", instrucciones y el selector de localidad (R-1 a R-5, E-1)', async () => {
     const handleConfirm = vi.fn();
     const handleClose = vi.fn();
 
@@ -80,20 +96,25 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
     // Botón GPS
     expect(screen.getByRole('button', { name: /mi ubicación actual/i })).toBeInTheDocument();
 
-    // Dirección resuelta y botón de confirmación
-    expect(screen.getByTestId('adjust-street-address')).toHaveTextContent('Av. Mitre 1240');
-    expect(screen.getByTestId('adjust-locality-address')).toHaveTextContent('Avellaneda, Buenos Aires · precisión ±8 m');
+    // E-1: ya no se inventa una dirección postal, solo se describe el punto del mapa
+    expect(screen.getByTestId('adjust-street-address')).toHaveTextContent('Punto marcado en el mapa');
 
+    // R-2/R-5: sin localidad elegida, el botón de confirmar está deshabilitado
     const confirmBtn = screen.getByRole('button', { name: /confirmar ubicación/i });
-    expect(confirmBtn).toBeInTheDocument();
+    expect(confirmBtn).toBeDisabled();
 
+    // R-1/R-5: se elige una localidad de la zona piloto vía el selector con autocompletado
+    // (esperamos a que termine de cargar; mientras carga el disparador está deshabilitado)
+    await waitFor(() => expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId('locality-selector-trigger'));
+    const localityOption = await screen.findByTestId('locality-option-loc-2');
+    fireEvent.click(localityOption);
+
+    expect(confirmBtn).not.toBeDisabled();
     fireEvent.click(confirmBtn);
     expect(handleConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        street: 'Av. Mitre 1240',
-        locality: 'Avellaneda, Buenos Aires',
-        fullAddress: 'Av. Mitre 1240, Avellaneda',
-        accuracy: 8,
+        localityId: 'loc-2',
       })
     );
   });
