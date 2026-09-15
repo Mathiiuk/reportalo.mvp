@@ -196,9 +196,13 @@
   confirma esto (`prompt_version: null` en la fila creada). El criterio de cierre de V-11
   ("cada analisis guarda generation_model_code y prompt_version") no se cumple del todo:
   `generation_model_code` si se guarda, `prompt_version` no.
-- **V-11 PARCIAL** — falta que se decida un esquema de versionado de prompt (podria ser un
-  string fijo por ahora, ej. `'v1'`, incrementado a mano cuando cambien las instrucciones) y
-  agregarlo a `buildAnalysisRow`.
+- **V-11 CERRADO (15/09/2026).** Se agrego la constante `PROMPT_VERSION = 'v1'` en
+  `supabase/functions/analizar-reporte/index.ts` (y su espejo del lado cliente,
+  `legalRagService.js`/`reportAiAnalysisPersistence.js`), incrementada a mano cuando cambien
+  las instrucciones fijas de `generateJustification`. Desplegada la version 11 de la Edge
+  Function. Tests actualizados (`ReportAiAnalysisPersistence.test.js`, 30 tests OK). Smoke
+  test contra Supabase real: `prompt_version: "v1"` guardado correctamente en un analisis
+  `fundamentado` nuevo.
 
 **14/09/2026 — V-08 (limite de reintentos y alerta de presupuesto):**
 - Confirmado el hallazgo: `dispatch_rag_analysis_queue` no revisaba `read_ct` en ningun
