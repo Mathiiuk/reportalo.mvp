@@ -462,16 +462,25 @@ Deno.serve(async (req: Request) => {
       const queryText = category ? `${description.trim()} (categoría: ${category})` : description.trim();
       const queryEmbedding = await embedText(queryText, geminiApiKey);
 
-      // Paso 6: recuperar con cascada jurisdiccional resuelta en SQL.
+      // Paso 6: recuperar con cascada jurisdiccional resuelta en SQL, y
+      // filtrado por la categoria elegida por el ciudadano (V-09: sin esto,
+      // un reclamo podia matchear por pura similitud lexica con una norma
+      // de otra categoria sin ningun fragmento cargado para la suya -- ver
+      // Caso F, REP-3764).
       const { data: fragments, error: rpcError } = await supabaseAdmin.rpc('match_knowledge_fragments', {
         query_embedding: queryEmbedding,
         p_locality_id: localityId,
         p_model_code: EMBEDDING_MODEL_CODE,
         match_count: DEFAULT_MATCH_COUNT,
+        p_service_code: category ? category.toUpperCase() : null,
       });
 
       if (rpcError) {
-        result = { estado: 'indeterminado', error: `match_knowledge_fragments falló: ${rpcError.message}` };
+        // embeddingModelCode: la vectorizacion ya se hizo antes de este RPC.
+        // Mismo hallazgo que en sin_normativa: sin esto el insert fallaba
+        // siempre (columna NOT NULL), perdiendo cualquier indeterminado
+        // por este motivo sin dejar rastro.
+        result = { estado: 'indeterminado', error: `match_knowledge_fragments falló: ${rpcError.message}`, embeddingModelCode: EMBEDDING_MODEL_CODE };
       } else {
         const eligibleFragments: RetrievedFragment[] = (fragments ?? []).filter(
           (f: RetrievedFragment) => f.similarity >= DEFAULT_SIMILARITY_THRESHOLD
@@ -480,6 +489,9 @@ Deno.serve(async (req: Request) => {
 
         // Paso 7: sin fragmentos sobre el umbral, no se llama al LLM. Cero riesgo de invención.
         if (eligibleFragments.length === 0) {
+          // embeddingModelCode se completa igual: la vectorizacion si se hizo,
+          // solo no encontro nada elegible. La columna es NOT NULL -- sin esto
+          // el insert fallaba siempre en este branch (hallazgo 15/09, V-09).
           result = {
             estado: 'sin_normativa',
             es_infraccion: false,
@@ -487,6 +499,7 @@ Deno.serve(async (req: Request) => {
             fundamento_oficial: null,
             confianza: 0,
             citas: [],
+            embeddingModelCode: EMBEDDING_MODEL_CODE,
           };
         } else {
           // Paso 8: generar citando solo lo recuperado.
@@ -502,9 +515,9 @@ Deno.serve(async (req: Request) => {
             : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
 
           if (!validation.valid) {
-            result = { estado: 'indeterminado', error: validation.reason };
+            result = { estado: 'indeterminado', error: validation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
           } else if (!organismoValidation.valid) {
-            result = { estado: 'indeterminado', error: organismoValidation.reason };
+            result = { estado: 'indeterminado', error: organismoValidation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
           } else {
             result = {
               ...generation.parsed,
