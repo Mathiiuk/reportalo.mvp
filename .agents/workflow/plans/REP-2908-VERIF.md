@@ -221,11 +221,41 @@
   alcance de las herramientas disponibles en esta sesion.
 - **V-08 PARCIAL** (la parte de base de datos cerrada; falta la alerta de presupuesto).
 
-**14/09/2026 — V-09 (35 corridas de los casos A-F):**
-- No iniciado. Implica ~35 llamadas reales a Gemini (costo real, aunque bajo) y requiere
-  tiempo de ejecucion considerable (los casos ya definidos en
-  `docs/REP-3764_casos_esperados.md`). Se deja pendiente de autorizacion explicita antes de
-  lanzar las corridas, dado el volumen de llamadas reales a un servicio pago.
+**15/09/2026 — V-09 (35 corridas de los casos A-F):** CORRIDO, con OK explicito de Matias.
+
+Se insertaron 35 `citizen_reports` reales (7 casos x 5 corridas, IDs deterministicos
+`51000000-0000-4000-8000-0N0000RRRRRR`), se dejo procesar por el pipeline automatico
+completo (cron -> Edge Function -> Gemini real) y se leyo `report_ai_analysis` +
+`report_ai_evidence`. No se borra nada (regla del documento).
+
+| Caso | Resultado | Consistencia |
+|---|---|---|
+| A | 1/5 `fundamentado`, 4/5 `sin_normativa` | Inconsistente (coincide con V-10 — FR01 no matchea bien; pero LOM 52/59 tambien fallan la mayoria de las veces) |
+| B | 5/5 `fundamentado`, cita Ley 2148 + Ley 451 (CABA) | Consistente y correcto — nunca cito Ley 24.449 |
+| C (control negativo) | 5/5 `fundamentado`, cita Ley 24.449 art. 49 | Consistente y correcto — nunca cito normas de CABA, confirma el filtro de jurisdiccion |
+| D-Avellaneda | 2/5 `fundamentado`, 3/5 `asistencia`, siempre cita LOM art. 52 | Cita consistente, estado declarado inconsistente |
+| D-CABA | 5/5 `asistencia`, cita Ley 210 art. 2/3 | Consistente; nunca `fundamentado` (posible decision de producto, no bug — ver nota) |
+| E | 5/5 `fundamentado`, cita Ley 24.449 art. 48 | Consistente y correcto — nunca confundio con Codigo de Faltas |
+| **F** | **5/5 `fundamentado`** (esperado: `sin_normativa`) | **Consistente pero incorrecto — ver hallazgo critico** |
+
+**HALLAZGO CRITICO:** el Caso F (comercio irregular, sin corpus cargado — el caso que el
+documento de Hernan marca como el mas importante del set) fallo 5 de 5. El sistema cito
+literalmente Ley 24.449 art. 48 inc. t) ("instalarse o realizar venta de productos en zona
+alguna del camino") para fundamentar un reclamo de venta ambulante sin habilitacion en la
+vereda. La cita es literal (pasa la validacion de literalidad) pero es una norma de
+**transito vehicular** aplicada incorrectamente a un caso de **habilitacion comercial** — es
+exactamente el patron de falso positivo por similitud lexica que el documento advertia como
+el riesgo central a evitar (parrafo "si Reportalo inventa una cita... seria peor que una app
+de quejas"). No es una cita inventada, pero es una cita mal aplicada con el mismo efecto
+practico: el ciudadano recibe un fundamento normativo que no corresponde.
+
+**Criterio de cierre de V-09 (documento original, parrafo "Queda cerrado cuando"):** el
+punto (excluyente) "no hay ninguna cita aceptada que no este entre los recuperados o que no
+sea literal" se cumple tecnicamente (la cita es literal y esta entre los recuperados), pero
+el espiritu del criterio (no fundamentar con normativa que no aplica) no se cumple en el
+Caso F. **V-09 NO se da por cerrado** — requiere decision de Hernan/Leonel sobre como tratar
+la categoria "comercio irregular" (opciones: bloquear category=COMERCIO_IRREGULAR hasta que
+haya corpus real, o afinar el prompt/threshold para casos sin categoria clara en el corpus).
 
 **Pendiente:** V-02 (decision sobre historial de git del backup), V-04 (decidir si se
 recargan los seeds demo), V-09 (autorizacion para las 35 corridas), V-11 (decidir esquema de
