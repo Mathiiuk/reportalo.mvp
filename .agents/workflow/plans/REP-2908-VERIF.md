@@ -174,6 +174,60 @@
   documento de Hernan dice `develop`, que no existe en este repositorio) una vez que Matias
   confirme que se puede pushear la rama.
 
+**14/09/2026 — V-06 (mismo embedding en script y Edge Function):**
+- Comparados los parametros de `scripts/rag-local-dev/generate-fragment-embeddings.mjs`
+  contra `supabase/functions/analizar-reporte/index.ts` (fuente real desplegada, leida via
+  MCP `get_edge_function`): mismo modelo (`gemini-embedding-2`), mismas 768 dimensiones,
+  mismo formato de request, sin `taskType` en ninguno de los dos.
+- Se genero el embedding de FR12 con el mismo codigo exacto de la Edge Function (script
+  aislado, usando el `GEMINI_API_KEY` local) y se comparo contra el guardado en
+  `fragment_embeddings` via coseno (`1 - (a <=> b)`). **Similitud: 1.0** (identico) — muy por
+  encima del umbral de 0.99 pedido.
+- **V-06 CERRADO.**
+
+**14/09/2026 — V-11 (modelo de generacion y parametros):**
+- `generation_models` activo: `gemini-3.8-flash`, coincide con `GENERATION_MODEL` en la
+  Edge Function.
+- Parametros de la llamada de generacion (leidos del codigo real): sin `temperature`
+  explicito (usa el default de la API), `thinkingConfig: { thinkingLevel: 'low' }`,
+  `responseSchema` presente (`LLM_OUTPUT_SCHEMA`), sin limite explicito de tokens de salida.
+- **Hallazgo:** `prompt_version` nunca se popula — no aparece en ningun lado del codigo de
+  `analizar-reporte/index.ts` (`buildAnalysisRow` no lo incluye). El resultado de V-07
+  confirma esto (`prompt_version: null` en la fila creada). El criterio de cierre de V-11
+  ("cada analisis guarda generation_model_code y prompt_version") no se cumple del todo:
+  `generation_model_code` si se guarda, `prompt_version` no.
+- **V-11 PARCIAL** — falta que se decida un esquema de versionado de prompt (podria ser un
+  string fijo por ahora, ej. `'v1'`, incrementado a mano cuando cambien las instrucciones) y
+  agregarlo a `buildAnalysisRow`.
+
+**14/09/2026 — V-08 (limite de reintentos y alerta de presupuesto):**
+- Confirmado el hallazgo: `dispatch_rag_analysis_queue` no revisaba `read_ct` en ningun
+  lado — un mensaje que falla siempre queda reintentandose cada minuto para siempre, con
+  costo real de Gemini en cada intento.
+- Confirmado el crecimiento de `cron.job_run_details`: 350 filas en ~7.5 horas (~1100/dia
+  con el schedule actual de 1 minuto — mucho menor que las ~8640/dia que hubiera dado el
+  schedule original de 10 segundos, pero sigue sin limite).
+- Con OK explicito de Matias, aplicado contra Supabase real:
+  - `dispatch_rag_analysis_queue` ahora archiva (`pgmq.archive`, nunca borra) el mensaje
+    cuando `read_ct > 5` y guarda un `report_ai_analysis` con `estado: 'indeterminado'` y el
+    motivo, en vez de seguir reintentando.
+  - Nueva tarea programada `rag-cleanup-job-run-details` (diaria, 3am) que borra filas de
+    `cron.job_run_details` de mas de 7 dias.
+  - Verificado que los privilegios revocados de V-03 (`anon`/`authenticated` sin `EXECUTE`)
+    se mantuvieron despues del `create or replace function`.
+  - Versionado como migracion: `supabase/migrations/20260915003000_add_rag_dispatch_retry_limit_and_cleanup.sql`.
+- **Pendiente (no se puede hacer via MCP/SQL):** alerta de presupuesto en Google Cloud para
+  la clave de Gemini — accion manual de Matias en la consola de Google Cloud, fuera del
+  alcance de las herramientas disponibles en esta sesion.
+- **V-08 PARCIAL** (la parte de base de datos cerrada; falta la alerta de presupuesto).
+
+**14/09/2026 — V-09 (35 corridas de los casos A-F):**
+- No iniciado. Implica ~35 llamadas reales a Gemini (costo real, aunque bajo) y requiere
+  tiempo de ejecucion considerable (los casos ya definidos en
+  `docs/REP-3764_casos_esperados.md`). Se deja pendiente de autorizacion explicita antes de
+  lanzar las corridas, dado el volumen de llamadas reales a un servicio pago.
+
 **Pendiente:** V-02 (decision sobre historial de git del backup), V-04 (decidir si se
-recargan los seeds demo), V-06, V-08, V-09, V-10, V-11, V-13.
+recargan los seeds demo), V-09 (autorizacion para las 35 corridas), V-11 (decidir esquema de
+prompt_version), alerta de presupuesto de V-08 (accion manual de Matias), V-13.
 
