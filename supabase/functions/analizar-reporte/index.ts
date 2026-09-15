@@ -45,6 +45,9 @@ const EMBEDDING_MODEL = 'gemini-embedding-2';
 const EMBEDDING_MODEL_CODE = 'gemini-embedding-2@768';
 const EMBEDDING_DIMENSIONS = 768;
 const GENERATION_MODEL = 'gemini-3.8-flash';
+// V-11 (REP-2908-VERIF): version de las instrucciones fijas de generateJustification.
+// Incrementar a mano cada vez que cambie el texto de `instructions` ahi abajo.
+const PROMPT_VERSION = 'v1';
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
 const DEFAULT_MATCH_COUNT = 6;
@@ -273,6 +276,7 @@ type AnalysisResult = {
   citas?: LlmCita[];
   embeddingModelCode?: string | null;
   generationModelCode?: string | null;
+  promptVersion?: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
   latencyMs?: number | null;
@@ -338,6 +342,7 @@ const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedSer
   confidence_score: result.confianza ?? null,
   embedding_model_code: result.embeddingModelCode ?? null,
   generation_model_code: result.generationModelCode ?? null,
+  prompt_version: result.promptVersion ?? null,
   input_tokens: result.inputTokens ?? null,
   output_tokens: result.outputTokens ?? null,
   latency_ms: result.latencyMs !== undefined && result.latencyMs !== null ? Math.round(result.latencyMs) : null,
@@ -505,6 +510,7 @@ Deno.serve(async (req: Request) => {
               ...generation.parsed,
               embeddingModelCode: EMBEDDING_MODEL_CODE,
               generationModelCode: GENERATION_MODEL,
+              promptVersion: PROMPT_VERSION,
               inputTokens: generation.inputTokens,
               outputTokens: generation.outputTokens,
             };
