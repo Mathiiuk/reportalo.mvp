@@ -59,9 +59,20 @@
   una funcion — hallazgo nuevo a sumar a V-01.
 - Se desactivo el trigger sin borrarlo (`alter table infractions disable trigger audit_ia`),
   con OK explicito de Matias. Verificado `tgenabled = 'D'`.
-- Pendiente: rotar la clave `service_role` desde el panel de Supabase (no hay tool de MCP
-  para eso) y actualizar Vault/Edge Functions/Vercel si corresponde. Bloquea el cierre
-  formal de V-01.
+- **V-01 CERRADO.** Matias creo una `secret key` nueva (`sb_secret_...`, formato moderno) en
+  Supabase (Settings > API Keys > Publishable and secret API keys) y actualizo el secreto
+  de Vault `rag_service_role_key` via `vault.update_secret` desde el SQL Editor del
+  dashboard (nunca paso el valor por este chat). Verificado `updated_at` posterior a
+  `created_at` en `vault.secrets`.
+  Se corrio V-07 (ver abajo) con la clave nueva antes de invalidar la vieja: el pipeline
+  funciono sin cambios pese a que `analizar-reporte` tiene `verify_jwt: true` (riesgo que se
+  habia anticipado: las `secret key` no son JWT; en la practica Supabase las acepto igual).
+  Recien despues Matias deshabilito las "Legacy anon, service_role API keys" (JWT-based)
+  desde el dashboard, invalidando la `service_role` filtrada. Confirmado que el sitio en
+  produccion sigue funcionando (la `anon`/publishable ya estaba actualizada en Vercel).
+  El texto de la clave vieja sigue escrito en la definicion del trigger `audit_ia`
+  (desactivado, sin borrar — regla 4 del documento) pero ya no es una clave valida: inerte,
+  no un riesgo activo.
 
 **14/09/2026 — V-02 (backup en git):**
 - Confirmado: `supabase/backups/2026-09-14_pre-deploy-rag/` (commit `f17e512`) ya esta
@@ -108,6 +119,24 @@
   o codigo de `geminiClient` — eliminados por tree-shaking al no ser alcanzables desde el
   entrypoint. V-12 cerrado.
 
-**Pendiente:** V-05 (migraciones + PR), V-06, V-07 (bloqueado por seeds demo), V-08, V-09,
+**14/09/2026 — V-07 (prueba de punta a punta):**
+- El script exacto del documento no corre tal cual: no existe el perfil `ciudadano.demo`
+  (confirmado en V-04). El servicio `TRANSITO` si existe. Se adapto usando el perfil real
+  `krepchukmatias@gmail.com` en su lugar, con OK explicito de Matias antes del insert.
+- Insert a las 23:51:48 (report id `40000000-0000-4000-8000-000000000101`, client_side_id
+  `30000000-0000-4000-8000-000000000101`, Retiro/CABA, categoria TRANSITO). No se borra
+  (queda como evidencia, regla del documento).
+- `report_ai_analysis` creado a las 23:52:03 (~15s despues del insert): `fundamentado`,
+  `is_infraction: true`, `confidence_score: 0.98`, `generation_model_code: gemini-3.8-flash`.
+- Cola `pgmq.q_rag_analysis_queue` vacia para ese mensaje (procesado y removido).
+- `report_ai_evidence`: 6 fragmentos recuperados, todos de jurisdiccion CABA (cero
+  resultados de la Ley 24.449, que es de alcance nacional/PBA) — confirma el filtro
+  jurisdiccional funcionando. 2 citas literales, ambas sobre rampas para personas con
+  discapacidad, coincidentes con el texto del reporte de prueba.
+- **V-07 CERRADO**, corrido integramente con la clave `service_role` nueva (post-rotacion).
+
+**Pendiente:** V-02 (decision sobre historial de git del backup), V-04 (decidir si se
+recargan los seeds demo — ya no bloquea V-07, que se resolvio con un perfil real), V-05
+(migrar el resto de cambios ad-hoc a `supabase/migrations/` + PR), V-06, V-08, V-09, V-10,
 V-11, V-13.
 
