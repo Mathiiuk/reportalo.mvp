@@ -22,6 +22,7 @@ export const EvidencePreviewScreen = ({
   categoryName = 'Infracción de tránsito',
   onConfirm,
   onRetake,
+  isSubmitting = false,
 }) => {
   // Índice de la fotografía actualmente seleccionada para previsualizar
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -198,12 +199,15 @@ export const EvidencePreviewScreen = ({
             type="button"
             data-testid="confirm-preview-btn"
             onClick={onConfirm}
-            className="w-full h-12 bg-[#2E9FE5] hover:bg-[#258AC8] active:scale-[0.98] transition-all rounded-xl font-bold text-[14px] text-white flex items-center justify-center gap-2 shadow-lg shadow-[#2E9FE5]/25"
+            disabled={isSubmitting}
+            className="w-full h-12 bg-[#2E9FE5] hover:bg-[#258AC8] active:scale-[0.98] transition-all rounded-xl font-bold text-[14px] text-white flex items-center justify-center gap-2 shadow-lg shadow-[#2E9FE5]/25 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span>Confirmar y enviar reporte</span>
-            <span className="font-['Material_Symbols_Rounded'] text-[18px]">
-              arrow_forward
-            </span>
+            <span>{isSubmitting ? 'Enviando…' : 'Confirmar y enviar reporte'}</span>
+            {!isSubmitting && (
+              <span className="font-['Material_Symbols_Rounded'] text-[18px]">
+                arrow_forward
+              </span>
+            )}
           </button>
 
           {/* Botón secundario: Volver a sacar la foto */}

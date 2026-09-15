@@ -28,6 +28,8 @@ import {
   deleteDraftReport,
   DRAFT_STATUS,
 } from '../services/offlineStorageService';
+// Persistencia real del reporte (REP-2500)
+import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { WifiOff } from 'lucide-react';
@@ -67,6 +69,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   // Lista de evidencias anonimizadas devueltas por el pipeline de cuarentena (REP-2402)
   const [processedEvidenceList, setProcessedEvidenceList] = useState([]);
+
+  // Reporte ya persistido en Supabase (REP-2500) — id real y código para mostrar en éxito (E-4)
+  const [persistedReport, setPersistedReport] = useState(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const {
     evidenceList,
@@ -172,7 +178,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
   const activeCoords = customLocation?.coordinates || coordinates;
-  const activeAddressLabel = customLocation?.fullAddress || getFriendlyLocationLabel(coordinates);
+  const activeAddressLabel = customLocation?.localityLabel || getFriendlyLocationLabel(coordinates);
 
   // Auto-guardado reactivo en IndexedDB ante cambios en fotos o datos del reporte (REP-2703)
   useEffect(() => {
@@ -287,12 +293,63 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     goToStep(4);
   };
 
-  // Purgado de la imagen original local una vez confirmada la sincronización exitosa (REP-2703 / REP-2402)
+  // E-2: el borrador local solo se purga una vez que el servidor confirmó el guardado real (paso 6)
   useEffect(() => {
     if (currentStep === 6 && clientSideId) {
       deleteDraftReport(clientSideId).catch(() => {});
     }
   }, [currentStep, clientSideId]);
+
+  // Extrae {lat, lng} de las dos formas en que puede venir la coordenada activa (array o {lat,lng})
+  const extractLatLng = (coords) => {
+    if (Array.isArray(coords)) {
+      return { lng: coords[0], lat: coords[1] };
+    }
+    if (coords && typeof coords === 'object') {
+      return { lat: coords.lat ?? coords.latitude, lng: coords.lng ?? coords.longitude };
+    }
+    return { lat: null, lng: null };
+  };
+
+  // Persistencia real del reporte al confirmar la evidencia (REP-2500): crea la fila real,
+  // adjunta cada evidencia ya sanitizada, y solo avanza a la pantalla de éxito si todo se guardó (AC-05).
+  const handleConfirmEvidenceAndPersist = async () => {
+    setIsSubmittingReport(true);
+    const { lat, lng } = extractLatLng(activeCoords);
+
+    const creationResult = await createCitizenReport({
+      clientSideId,
+      userId: user?.id,
+      serviceId: selectedCategory?.dbId ?? null,
+      localityId: customLocation?.localityId ?? null,
+      description,
+      latitud: lat,
+      longitud: lng,
+    });
+
+    if (!creationResult.success) {
+      setIsSubmittingReport(false);
+      toast.error('No pudimos enviar tu reporte', {
+        description: creationResult.error || 'Probá de nuevo en unos segundos.',
+      });
+      return;
+    }
+
+    const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
+    for (const evidence of evidencesToAttach) {
+      const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
+      if (!sanitizedUrl) continue;
+      // eslint-disable-next-line no-await-in-loop
+      await attachReportEvidence({ reportId: creationResult.data.id, sanitizedUrl });
+    }
+
+    setPersistedReport({
+      id: creationResult.data.id,
+      reportCode: `#RP-${creationResult.data.id.slice(0, 8).toUpperCase()}`,
+    });
+    setIsSubmittingReport(false);
+    goToStep(6);
+  };
 
   // Determinar agencia receptora según ubicación
   const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
@@ -386,6 +443,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               description={description}
               geolocation={activeCoords}
               address={activeAddressLabel}
+              hasConfirmedLocality={Boolean(customLocation?.localityId)}
               hasAcceptedTerms={userHasAccepted}
               isOnline={isOnline}
               draftStatus={draftStatus}
@@ -439,7 +497,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             <EvidencePreviewScreen
               evidenceList={processedEvidenceList.length > 0 ? processedEvidenceList : activeList}
               categoryName={selectedCategory?.name || 'Infracción de tránsito'}
-              onConfirm={() => goToStep(6)}
+              onConfirm={handleConfirmEvidenceAndPersist}
+              isSubmitting={isSubmittingReport}
               onRetake={() => {
                 clearEvidence();
                 goToStep(1);
@@ -459,7 +518,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportSuccessScreen
-              reportCode="#RP-2048"
+              reportCode={persistedReport?.reportCode || '#RP-2048'}
               category={selectedCategory}
               agencyName={determinedAgency}
               onViewReport={() => {
@@ -488,13 +547,12 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           >
             <AdjustLocationModal
               initialCoordinates={activeCoords}
+              initialLocalityId={customLocation?.localityId}
               onClose={() => setShowAdjustLocationModal(false)}
               onConfirm={(adjustedData) => {
                 setCustomLocation(adjustedData);
                 setShowAdjustLocationModal(false);
-                toast.success('Ubicación actualizada', {
-                  description: adjustedData.fullAddress,
-                });
+                toast.success('Ubicación actualizada');
               }}
             />
           </motion.div>
