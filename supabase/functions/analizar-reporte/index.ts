@@ -48,6 +48,9 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // V-11 (REP-2908-VERIF): version de las instrucciones fijas de generateJustification.
 // Incrementar a mano cada vez que cambie el texto de `instructions` ahi abajo.
 const PROMPT_VERSION = 'v1';
+// P-06 (ronda 4): temperature queda en el default de la API (no se fija acá a
+// propósito). Documentado junto a PROMPT_VERSION porque cualquier cambio de
+// temperature necesita volver a correr P-01 antes de tocarse.
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
 const DEFAULT_MATCH_COUNT = 6;
@@ -197,6 +200,12 @@ const generateJustification = async (
         responseMimeType: 'application/json',
         responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
+        // P-06 (REP-2908-VERIF ronda 4): tope de salida como control de costo.
+        // 2048 es holgado para el esquema actual (fundamento + hasta ~6 citas);
+        // si algún día lo corta, generateContent devuelve MAX_TOKENS y el JSON
+        // queda incompleto -- JSON.parse tira abajo y el catch de más arriba
+        // marca `indeterminado` con el motivo, nunca un resultado a medias.
+        maxOutputTokens: 2048,
       },
     }),
   });
@@ -206,16 +215,26 @@ const generateJustification = async (
   }
 
   const data = await response.json();
-  const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const candidate = data?.candidates?.[0];
+  const jsonText = candidate?.content?.parts?.[0]?.text;
   if (!jsonText) {
-    throw new Error('generateContent no devolvió contenido JSON.');
+    const reason = candidate?.finishReason ? ` (finishReason: ${candidate.finishReason})` : '';
+    throw new Error(`generateContent no devolvió contenido JSON${reason}.`);
   }
 
   const usage = data?.usageMetadata ?? {};
+  // P-06: Gemini factura los tokens de razonamiento (thoughtsTokenCount) como
+  // salida, aparte de los de la respuesta (candidatesTokenCount). Si solo se
+  // guarda candidatesTokenCount, el costo por reporte queda subestimado.
+  const candidatesTokens = usage.candidatesTokenCount ?? 0;
+  const thoughtsTokens = usage.thoughtsTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount === undefined && usage.thoughtsTokenCount === undefined
+    ? null
+    : candidatesTokens + thoughtsTokens;
   return {
     parsed: JSON.parse(jsonText),
     inputTokens: usage.promptTokenCount ?? null,
-    outputTokens: usage.candidatesTokenCount ?? null,
+    outputTokens,
   };
 };
 
@@ -443,6 +462,11 @@ Deno.serve(async (req: Request) => {
   let payload: AnalyzeRequestPayload | null = null;
   let retrievedFragments: RetrievedFragment[] = [];
   let result: AnalysisResult;
+  // P-06: si generateJustification tira (p.ej. maxOutputTokens cortó el JSON),
+  // el catch de más abajo tiene que poder marcar embeddingModelCode si la
+  // vectorización ya se hizo -- si no, mismo bug que V-09 (insert NOT NULL
+  // fallando en silencio y perdiendo el registro de un indeterminado real).
+  let embeddingComputed = false;
 
   try {
     payload = await req.json();
@@ -463,6 +487,7 @@ Deno.serve(async (req: Request) => {
       // Paso 4-5: armar el texto de consulta (sin jurisdicción: se resuelve por locality_id) y vectorizar.
       const queryText = category ? `${description.trim()} (categoría: ${category})` : description.trim();
       const queryEmbedding = await embedText(queryText, geminiApiKey);
+      embeddingComputed = true;
 
       // Paso 6: recuperar con cascada jurisdiccional resuelta en SQL, y
       // filtrado por la categoria elegida por el ciudadano (V-09: sin esto,
@@ -535,7 +560,11 @@ Deno.serve(async (req: Request) => {
     }
   } catch (error) {
     // Cualquier error no previsto también falla cerrado: nunca un resultado inventado.
-    result = { estado: 'indeterminado', error: error instanceof Error ? error.message : String(error) };
+    result = {
+      estado: 'indeterminado',
+      error: error instanceof Error ? error.message : String(error),
+      embeddingModelCode: embeddingComputed ? EMBEDDING_MODEL_CODE : null,
+    };
   }
 
   // Paso 10: persistir SIEMPRE (cualquier estado), y borrar el mensaje de la
