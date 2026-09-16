@@ -1,0 +1,609 @@
+[
+  {
+    "case": "A",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000001",
+        "cita_textual": "Tener a su cargo el ornato y salubridad, los establecimientos de beneficencia que no estén a cargo de sociedades particulares, asilos de inmigrantes que sostenga la Provincia, las cárceles locales de detenidos y la vialidad pública."
+      }
+    ],
+    "fundamento_oficial": "Conforme al Artículo 52 del Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), compete a la autoridad municipal la prestación del servicio de desagües pluviales para satisfacer las necesidades colectivas locales. Asimismo, el Artículo 59 califica como obras públicas municipales aquellas vinculadas al saneamiento e infraestructura urbana, concordante con el Artículo 192 inciso 4 de la Constitución de la Provincia de Buenos Aires respecto de las facultades municipales sobre salubridad y vialidad pública."
+  },
+  {
+    "case": "A",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000001",
+        "cita_textual": "Tener a su cargo el ornato y salubridad, los establecimientos de beneficencia que no estén a cargo de sociedades particulares, asilos de inmigrantes que sostenga la Provincia, las cárceles locales de detenidos y la vialidad pública."
+      }
+    ],
+    "fundamento_oficial": "Conforme al Artículo 52 del Decreto-Ley 6769/58, corresponde al régimen municipal la prestación de los servicios públicos de 'obras sanitarias y desagües pluviales' para satisfacer necesidades colectivas locales. Asimismo, el Artículo 59 califica como obras públicas municipales aquellas 'atinentes a servicios públicos de competencia municipal' y las 'de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento', en consonancia con las atribuciones en salubridad y vialidad pública fijadas por el Artículo 192 inc. 4 de la Constitución de la Provincia de Buenos Aires."
+  },
+  {
+    "case": "A",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000001",
+        "cita_textual": "Tener a su cargo el ornato y salubridad"
+      }
+    ],
+    "fundamento_oficial": "Conforme al artículo 52 del Decreto-Ley 6769/58, corresponde al régimen municipal la prestación y atención de servicios esenciales como las obras sanitarias y los desagües pluviales. Asimismo, el artículo 59 califica como obras públicas municipales las de infraestructura urbana y saneamiento, complementado con las atribuciones en materia de salubridad y vialidad pública consagradas en el artículo 192 inciso 4 de la Constitución de la Provincia de Buenos Aires."
+  },
+  {
+    "case": "A",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000001",
+        "cita_textual": "Tener a su cargo el ornato y salubridad"
+      }
+    ],
+    "fundamento_oficial": "Conforme al Artículo 52 del Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), es competencia municipal la prestación de los servicios públicos de obras sanitarias y desagües pluviales. Asimismo, el Artículo 59 califica como obras públicas municipales las de infraestructura urbana y saneamiento, complementado por el Artículo 192 inciso 4 de la Constitución de la Provincia de Buenos Aires que asigna al régimen municipal el resguardo de la salubridad y la vialidad pública."
+  },
+  {
+    "case": "A",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000001",
+        "cita_textual": "Tener a su cargo el ornato y salubridad, los establecimientos de beneficencia que no estén a cargo de sociedades particulares, asilos de inmigrantes que sostenga la Provincia, las cárceles locales de detenidos y la vialidad pública."
+      }
+    ],
+    "fundamento_oficial": "Conforme al art. 52 del Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), es competencia municipal la prestación de los servicios públicos de obras sanitarias y desagües pluviales. Asimismo, el art. 59 de la citada norma califica como obras públicas municipales aquellas vinculadas a la infraestructura urbana y saneamiento, en concordancia con el art. 192 inc. 4 de la Constitución de la Provincia de Buenos Aires, que atribuye al régimen municipal el cuidado de la salubridad y la vialidad pública."
+  },
+  {
+    "case": "B",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000012",
+        "cita_textual": "Frente a los vados o rampas para personas con discapacidad."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000014",
+        "cita_textual": "Cuando la obstrucción se produzca en rampas para discapacitados o en lugares reservados para vehículos de personas con discapacidad"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000013",
+        "cita_textual": "Cuando el estacionamiento se realice en lugares reservados para vehículos de personas con discapacidad o rampas para discapacitados"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al Código de Tránsito y Transporte (Ley 2148, Art. 7.1.9) por estacionar frente a vados o rampas para personas con discapacidad, pasible de sanción bajo el Régimen de Faltas (Ley 451, Arts. 6.1.37 y 6.1.52) por obstrucción y estacionamiento indebido en rampas para personas con discapacidad."
+  },
+  {
+    "case": "B",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000012",
+        "cita_textual": "Frente a los vados o rampas para personas con discapacidad."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000014",
+        "cita_textual": "Cuando la obstrucción se produzca en rampas para discapacitados o en lugares reservados para vehículos de personas con discapacidad"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000013",
+        "cita_textual": "Cuando el estacionamiento se realice en lugares reservados para vehículos de personas con discapacidad o rampas para discapacitados"
+      }
+    ],
+    "fundamento_oficial": "La conducta infringe la prohibición general de estacionamiento establecida en el artículo 7.1.9 de la Ley 2148 de la CABA ('Frente a los vados o rampas para personas con discapacidad'), constituyendo una infracción tipificada en los artículos 6.1.37 y 6.1.52 de la Ley 451 de la CABA relativa a la obstrucción o estacionamiento indebido en rampas para discapacitados."
+  },
+  {
+    "case": "B",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000012",
+        "cita_textual": "Frente a los vados o rampas para personas con discapacidad."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000014",
+        "cita_textual": "Cuando la obstrucción se produzca en rampas para discapacitados"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000013",
+        "cita_textual": "Cuando el estacionamiento se realice en lugares reservados para vehículos de personas con discapacidad o rampas para discapacitados"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción conforme a la Ley 2148 (Código de Tránsito y Transporte), Art. 7.1.9, que prohíbe el estacionamiento 'Frente a los vados o rampas para personas con discapacidad'. Asimismo, encuadra en el régimen sancionatorio de la Ley 451, Arts. 6.1.37 y 6.1.52, por obstrucción y estacionamiento prohibido en rampas para discapacitados."
+  },
+  {
+    "case": "B",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000012",
+        "cita_textual": "Frente a los vados o rampas para personas con discapacidad."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000013",
+        "cita_textual": "Cuando el estacionamiento se realice en lugares reservados para vehículos de personas con discapacidad o rampas para discapacitados"
+      }
+    ],
+    "fundamento_oficial": "La conducta infringe la prohibición general de estacionar frente a vados o rampas para personas con discapacidad establecida en el Art. 7.1.9 de la Ley 2148 (Código de Tránsito y Transporte de CABA), configurando además la infracción tipificada en el Art. 6.1.52 de la Ley 451 por estacionamiento en rampas para discapacitados."
+  },
+  {
+    "case": "B",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000012",
+        "cita_textual": "Frente a los vados o rampas para personas con discapacidad."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000014",
+        "cita_textual": "Cuando la obstrucción se produzca en rampas para discapacitados o en lugares reservados para vehículos de personas con discapacidad"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000013",
+        "cita_textual": "Cuando el estacionamiento se realice en lugares reservados para vehículos de personas con discapacidad o rampas para discapacitados"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción conforme a la Ley 2148 de la Ciudad Autónoma de Buenos Aires, Artículo 7.1.9, que prohíbe el estacionamiento frente a vados o rampas para personas con discapacidad. Asimismo, la Ley 451 de la Ciudad Autónoma de Buenos Aires tipifica y sanciona esta conducta en sus Artículos 6.1.37 (obstrucción de vía en rampas para personas con discapacidad) y 6.1.52 (estacionamiento indebido en rampas destinadas a personas con discapacidad)."
+  },
+  {
+    "case": "C",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000010",
+        "cita_textual": "Sobre la senda para peatones o bicicletas, aceras, rieles, sobre la calzada"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000009",
+        "cita_textual": "En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito"
+      }
+    ],
+    "fundamento_oficial": "La conducta vulnera el artículo 49 inciso b) apartado 3 de la Ley Nacional de Tránsito N° 24.449, el cual prohíbe el estacionamiento sobre la senda para peatones y aceras, así como el apartado 1 del mismo inciso, al comprometer la seguridad y fluidez peatonal."
+  },
+  {
+    "case": "C",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000010",
+        "cita_textual": "Sobre la senda para peatones o bicicletas, aceras, rieles, sobre la calzada"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000009",
+        "cita_textual": "En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito"
+      }
+    ],
+    "fundamento_oficial": "La conducta vulnera lo dispuesto en el art. 49 inc. b) ap. 3 de la Ley Nacional de Tránsito N° 24.449, el cual prohíbe el estacionamiento sobre la senda para peatones y aceras en zona urbana, configurando además un factor que afecta la fluidez y seguridad conforme al ap. 1 del mismo inciso."
+  },
+  {
+    "case": "C",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000010",
+        "cita_textual": "Sobre la senda para peatones o bicicletas, aceras, rieles, sobre la calzada"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000009",
+        "cita_textual": "En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al artículo 49, inciso b), apartados 1 y 3 de la Ley Nacional de Tránsito N.º 24.449, los cuales prohíben expresamente el estacionamiento sobre la senda para peatones o aceras, así como en cualquier lugar donde se afecte la seguridad o fluidez del tránsito."
+  },
+  {
+    "case": "C",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000010",
+        "cita_textual": "Sobre la senda para peatones o bicicletas, aceras, rieles, sobre la calzada, y en los diez metros anteriores y posteriores a la parada del transporte de pasajeros."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000009",
+        "cita_textual": "En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito o se oculte la señalización;"
+      }
+    ],
+    "fundamento_oficial": "La conducta denunciada configura una infracción al artículo 49, inciso b), apartados 1 y 3 de la Ley 24.449, los cuales prohíben expresamente el estacionamiento en zonas urbanas 'Sobre la senda para peatones o bicicletas, aceras' y 'En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito'."
+  },
+  {
+    "case": "C",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000010",
+        "cita_textual": "Sobre la senda para peatones o bicicletas, aceras, rieles, sobre la calzada, y en los diez metros anteriores y posteriores a la parada del transporte de pasajeros."
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000009",
+        "cita_textual": "En todo lugar donde se pueda afectar la seguridad, visibilidad o fluidez del tránsito o se oculte la señalización;"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al artículo 49, inciso b), apartados 1 y 3 de la Ley 24.449, que prohíbe el estacionamiento sobre la senda para peatones o aceras, así como en cualquier lugar donde se comprometa la seguridad, visibilidad o fluidez del tránsito."
+  },
+  {
+    "case": "D-Av",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas."
+      }
+    ],
+    "fundamento_oficial": "Conforme al Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), en su artículo 52, corresponde a la competencia municipal disponer la prestación del servicio público de alumbrado. Asimismo, el artículo 59 califica a las obras de infraestructura urbana en materia de iluminación como obras públicas municipales."
+  },
+  {
+    "case": "D-Av",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales, inspecciones, registro de guías, transporte y todo otro tendiente a satisfacer necesidades colectivas de carácter local"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas."
+      }
+    ],
+    "fundamento_oficial": "Conforme al Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), artículo 52, corresponde a la competencia municipal disponer la prestación de los servicios públicos de alumbrado tendientes a satisfacer necesidades colectivas locales. Asimismo, el artículo 59 califica como obras públicas municipales aquellas vinculadas a la infraestructura urbana de iluminación."
+  },
+  {
+    "case": "D-Av",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales, inspecciones, registro de guías, transporte y todo otro tendiente a satisfacer necesidades colectivas de carácter local"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas."
+      }
+    ],
+    "fundamento_oficial": "El reclamo versa sobre deficiencias en el alumbrado público. De acuerdo con el Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), en su artículo 52, corresponde al ámbito municipal 'disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado' para 'satisfacer necesidades colectivas de carácter local'. Asimismo, el artículo 59 inciso d) califica como obras públicas municipales las de infraestructura urbana atinentes a 'iluminación'."
+  },
+  {
+    "case": "D-Av",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas."
+      }
+    ],
+    "fundamento_oficial": "De acuerdo con el artículo 52 del Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), es competencia municipal disponer la prestación de servicios públicos esenciales como el de alumbrado. Asimismo, el artículo 59 califica a las tareas de infraestructura urbana de iluminación como obras y servicios de competencia municipal."
+  },
+  {
+    "case": "D-Av",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000002",
+        "cita_textual": "Corresponde al Concejo disponer la prestación de los servicios públicos de barrido, riego, limpieza, alumbrado, provisión de agua, obras sanitarias y desagües pluviales"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000003",
+        "cita_textual": "Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación"
+      }
+    ],
+    "fundamento_oficial": "Conforme al Artículo 52 del Decreto-Ley 6769/58 (Ley Orgánica de las Municipalidades), corresponde al ámbito municipal la prestación de los servicios públicos locales, disponiéndose expresamente el servicio de alumbrado. Asimismo, el Artículo 59 inciso d) del citado cuerpo legal califica como obras públicas municipales de infraestructura urbana las relativas a la iluminación y electrificación, atribuyendo la competencia sobre estos servicios al gobierno local."
+  },
+  {
+    "case": "D-CABA",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000005",
+        "cita_textual": "Alumbrado público y señalamiento luminoso"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000004",
+        "cita_textual": "Recibir y tramitar las quejas y reclamos que efectúen los usuarios en sede administrativa tendiente a resolver el conflicto planteado con el prestador."
+      }
+    ],
+    "fundamento_oficial": "Conforme a la Ley 210 de la Ciudad Autónoma de Buenos Aires, el servicio de alumbrado público y señalamiento luminoso se encuentra comprendido dentro de las competencias regulatorias locales (art. 2, inc. b). Asimismo, se establece como función la recepción y tramitación de quejas y reclamos formulados por los usuarios en sede administrativa para resolver los conflictos con el prestador (art. 3, inc. j)."
+  },
+  {
+    "case": "D-CABA",
+    "run": 2,
+    "estado": "asistencia",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000005",
+        "cita_textual": "Alumbrado público y señalamiento luminoso"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000004",
+        "cita_textual": "Recibir y tramitar las quejas y reclamos que efectúen los usuarios en sede administrativa tendiente a resolver el conflicto planteado con el prestador."
+      }
+    ],
+    "fundamento_oficial": "Conforme a la Ley 210 de la Ciudad Autónoma de Buenos Aires, el alumbrado público se encuentra dentro de los servicios comprendidos sujetos a control, previéndose la recepción y tramitación de quejas y reclamos de los usuarios respecto del servicio."
+  },
+  {
+    "case": "D-CABA",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000005",
+        "cita_textual": "Alumbrado público y señalamiento luminoso"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000004",
+        "cita_textual": "Recibir y tramitar las quejas y reclamos que efectúen los usuarios en sede administrativa tendiente a resolver el conflicto planteado con el prestador."
+      }
+    ],
+    "fundamento_oficial": "Conforme a la Ley 210 (CABA), el alumbrado público y señalamiento luminoso se encuentra dentro de los servicios comprendidos sujetos a control (art. 2, inc. b), correspondiendo tramitar los reclamos de los usuarios respecto del servicio brindado (art. 3, inc. j)."
+  },
+  {
+    "case": "D-CABA",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000005",
+        "cita_textual": "Alumbrado público y señalamiento luminoso"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000004",
+        "cita_textual": "Recibir y tramitar las quejas y reclamos que efectúen los usuarios en sede administrativa tendiente a resolver el conflicto planteado con el prestador."
+      }
+    ],
+    "fundamento_oficial": "Conforme a la Ley 210 de la Ciudad Autónoma de Buenos Aires, el alumbrado público se encuentra comprendido dentro de los servicios regulados (art. 2, inc. b), estableciéndose la función de recibir y tramitar las quejas y reclamos de los usuarios para resolver conflictos con el prestador (art. 3, inc. j)."
+  },
+  {
+    "case": "D-CABA",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": false,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000005",
+        "cita_textual": "Alumbrado público y señalamiento luminoso"
+      },
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000004",
+        "cita_textual": "Recibir y tramitar las quejas y reclamos que efectúen los usuarios en sede administrativa tendiente a resolver el conflicto planteado con el prestador."
+      }
+    ],
+    "fundamento_oficial": "Conforme a la Ley 210 de la Ciudad Autónoma de Buenos Aires, el servicio de alumbrado público y señalamiento luminoso se encuentra comprendido dentro del marco regulatorio correspondiente (art. 2, inc. b). Asimismo, el artículo 3, inciso j) faculta la recepción y tramitación de quejas y reclamos que presenten los usuarios tendientes a resolver el conflicto con el prestador."
+  },
+  {
+    "case": "E",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a la Ley Nacional de Tránsito N° 24.449, la cual prohíbe de forma expresa estorbar u obstaculizar la calzada de cualquier manera."
+  },
+  {
+    "case": "E",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al artículo 48 inciso t) de la Ley 24.449, que prohíbe expresamente estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "E",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a las prohibiciones en la vía pública conforme al artículo 48 inciso t) de la Ley N° 24.449, el cual prohíbe de manera expresa estorbar u obstaculizar la calzada."
+  },
+  {
+    "case": "E",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a las prohibiciones en la vía pública contempladas en el artículo 48, inciso t), de la Ley Nacional de Tránsito N° 24.449, que veda expresamente estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "E",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a las prohibiciones en la vía pública establecidas en el artículo 48 inciso t) de la Ley 24.449, en cuanto prohíbe de forma expresa estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "E-sin-categoria",
+    "run": 1,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina y hacer construcciones;"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al artículo 48 inciso t) de la Ley Nacional de Tránsito N° 24.449, el cual prohíbe de manera expresa en la vía pública estorbar u obstaculizar de cualquier forma la calzada o la banquina."
+  },
+  {
+    "case": "E-sin-categoria",
+    "run": 2,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a la Ley Nacional de Tránsito N° 24.449, en tanto su artículo 48 inciso t) prohíbe de forma expresa estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "E-sin-categoria",
+    "run": 3,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción a la Ley Nacional de Tránsito N° 24.449, cuyo artículo 48, inciso t), prohíbe expresamente en la vía pública estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "E-sin-categoria",
+    "run": 4,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina y hacer construcciones;"
+      }
+    ],
+    "fundamento_oficial": "La conducta reportada constituye una contravención a las normas de tránsito vehicular vigentes, al configurarse la conducta prevista en el art. 48 inc. t) de la Ley 24.449, el cual prohíbe de forma taxativa estorbar u obstaculizar la calzada por cualquier medio afectando la libre circulación."
+  },
+  {
+    "case": "E-sin-categoria",
+    "run": 5,
+    "estado": "fundamentado",
+    "es_infraccion": true,
+    "citas": [
+      {
+        "fragment_id": "20000000-0000-4000-8000-000000000008",
+        "cita_textual": "Estorbar u obstaculizar de cualquier forma la calzada o la banquina y hacer construcciones;"
+      }
+    ],
+    "fundamento_oficial": "La conducta descripta configura una infracción al artículo 48, inciso t) de la Ley Nacional de Tránsito N° 24.449, el cual prohíbe expresamente estorbar u obstaculizar de cualquier forma la calzada."
+  },
+  {
+    "case": "Prueba1",
+    "run": 1,
+    "estado": "sin_normativa",
+    "es_infraccion": false,
+    "citas": [],
+    "fundamento_oficial": null
+  },
+  {
+    "case": "Prueba2",
+    "run": 1,
+    "estado": "sin_normativa",
+    "es_infraccion": false,
+    "citas": [],
+    "fundamento_oficial": "Los fragmentos recuperados de la Ley 24.449 regulan cuestiones de tránsito vehicular, prohibiciones sobre calzada o banquina (art. 48 inc. t e i) y estacionamiento en aceras (art. 49 inc. b). No se cuenta con normativa contravencional, administrativa o de espacio público relativa a la actividad comercial no autorizada o venta ambulante en aceras."
+  }
+]

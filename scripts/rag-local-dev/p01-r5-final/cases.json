@@ -1,0 +1,11 @@
+[
+  {"name":"A","desc":"Boca de tormenta rota, el agua no drena y se acumula en la calle","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":"INFRAESTRUCTURA","runs":5},
+  {"name":"B","desc":"Auto estacionado sobre la rampa de acceso peatonal, bloquea el paso a personas con movilidad reducida","locality":"efb5ca1b-c3e6-49e7-adf0-978f2bab54c4","cat":"TRANSITO","runs":5},
+  {"name":"C","desc":"Auto estacionado sobre la rampa de acceso peatonal, bloquea el paso a personas con movilidad reducida","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":"TRANSITO","runs":5},
+  {"name":"D-Av","desc":"No anda la luminaria de la calle hace varios dias, queda todo oscuro de noche","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":"INFRAESTRUCTURA","runs":5},
+  {"name":"D-CABA","desc":"No anda la luminaria de la calle hace varios dias, queda todo oscuro de noche","locality":"efb5ca1b-c3e6-49e7-adf0-978f2bab54c4","cat":"INFRAESTRUCTURA","runs":5},
+  {"name":"E","desc":"Dos personas discuten en plena calle y frenan el transito, hay bocinazos y quejas de vecinos","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":"TRANSITO","runs":5},
+  {"name":"E-sin-categoria","desc":"Dos personas discuten en plena calle y frenan el transito, hay bocinazos y quejas de vecinos","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":null,"runs":5},
+  {"name":"Prueba1","desc":"Auto estacionado sobre la rampa de acceso peatonal, bloquea el paso a personas con movilidad reducida","locality":"efb5ca1b-c3e6-49e7-adf0-978f2bab54c4","cat":"INFRAESTRUCTURA","runs":1},
+  {"name":"Prueba2","desc":"Venta ambulante sin habilitacion ocupando la vereda","locality":"2fe4cf09-c3d9-4514-ae99-cac0256494e4","cat":"TRANSITO","runs":1}
+]

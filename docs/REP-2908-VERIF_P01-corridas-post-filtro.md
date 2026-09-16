@@ -97,3 +97,29 @@ Resultado crudo de esta corrida: `scripts/rag-local-dev/p01-r5-resultados.ndjson
 **Incidente durante la aplicación (detectado y corregido en el momento):** la primera versión de la migración reusó un id ya existente (`20000000-0000-4000-8000-000000000015`, el índice del Código de Faltas de la Provincia de Buenos Aires) para el fragmento nuevo. El `insert` no entró por el conflicto de PK, pero el `upsert` de `fragment_embeddings` sí sobrescribió el embedding real de ese fragmento. Se detectó en la verificación posterior a la aplicación (antes de dar el hallazgo por cerrado), se restauró el embedding real de `...015` a partir de su contenido real, y el fragmento de venta se recreó con un UUID generado que no colisiona. Ver la nota completa en la cabecera de `20260916040000_r5_08_split_ley24449_art48_t_venta_de_transito.sql`.
 
 **R5-08 queda cerrado**, sujeto a volver a correr las 35 corridas de A-E/E-sin-categoría completas contra la función real (con el token de despacho) como confirmación final antes de mover REP-2908/REP-3772/REP-2900 a Finalizada — la verificación de arriba es a nivel de recuperación (RPC), no repite el ciclo completo LLM + validación determinística de punta a punta.
+
+---
+
+## Cierre definitivo — 37 corridas completas de punta a punta (16/09, mismo día)
+
+Corridas las 37 (Gemini real: embeddings + `match_knowledge_fragments` real por SQL + `generateContent` real + `validateLlmAnalysis` real, misma lógica exacta que `analizar-reporte/index.ts`, reproducida local porque la función desplegada ya exige el token de despacho de R5-05 y no lo tengo). Método y script: `scripts/rag-local-dev/p01-r5-final/` (`compute-embeddings.mjs` → `run-generation.mjs`, resultado crudo en `final-results.json`, no versionado).
+
+| Caso | Corridas | Resultado | Fragmentos citados |
+|---|---|---|---|
+| A | 5/5 `fundamentado` | Const.PBA 192.4 + LOM 52/59 |
+| B | 5/5 `fundamentado` | Solo Ley 2148/451 (CABA) |
+| C | 5/5 `fundamentado` | Solo Ley 24.449 art. 49 (nacional) |
+| D-Av | 5/5 `fundamentado` | LOM 52/59 |
+| D-CABA | 4/5 `fundamentado` + 1/5 `asistencia` | Solo Ley 210 (CABA) |
+| E | 5/5 `fundamentado` | Solo art. 48 inc. i) (obstrucción) |
+| E-sin-categoría | 5/5 `fundamentado` | Solo art. 48 inc. i) — **nunca el Código de Faltas ni la cláusula de venta**, pese a que ambos estaban en la lista recuperada |
+| Prueba 1 | 1/1 `sin_normativa` | Ninguna cita |
+| **Prueba 2** | 1/1 **`sin_normativa`** | **Ninguna cita** — el LLM no encontró fundamento aplicable y no inventó nada |
+
+**Los 4 criterios de cierre de Hernán, verificados sobre las 37 corridas:**
+1. **(Excluyente) Ninguna cita fuera de lo recuperado ni no literal.** ✅ 0 de 37 corridas dio `indeterminado` por validación fallida — cero citas inválidas.
+2. **C nunca recupera/cita normas de CABA.** ✅
+3. **B y D-CABA nunca recuperan/citan la Ley 24.449.** ✅
+4. **La prueba 2 no cita el art. 48 inc. t).** ✅ **Cumple** — ni siquiera se recupera bajo TRANSITO tras el split del fragmento.
+
+**R5-08 cerrado sin condiciones.** REP-2908, REP-3772 y REP-2900 quedan listos para pasar a Control de Calidad / QA con esta evidencia.
