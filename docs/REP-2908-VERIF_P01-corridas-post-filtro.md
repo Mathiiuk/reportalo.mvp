@@ -78,3 +78,22 @@ El inciso t) es un chunk compuesto que mezcla dos conductas distintas ("obstacul
 **No toqué el corpus.** Partir el fragmento en dos (obstrucción / venta) es un cambio de contenido jurídico, no de código — corresponde a Hernán como dueño del corpus (regla 2). Con eso resuelto, recién se puede volver a correr P-01 completo y cerrar REP-2908/REP-3772/REP-2900.
 
 Resultado crudo de esta corrida: `scripts/rag-local-dev/p01-r5-resultados.ndjson` (no versionado, corrida directa vía `curl` contra la Edge Function con la clave `anon`).
+
+---
+
+## Cierre — decisión de Hernán aplicada (16/09, misma tarde)
+
+**Hernán, en el comentario de REP-2908**: *"Mati, yo sacaria la clausula venta de transito"*.
+
+**Aplicado** (migraciones `20260916040000_r5_08_split_ley24449_art48_t_venta_de_transito.sql` y `20260916040100_r5_08_split_fragment_embeddings.sql`, ya en CiudadAR):
+- El fragmento `...008` (Ley 24.449 art. 48 inc. t)) queda solo con la cláusula de obstrucción de calzada. Sigue tageado a TRANSITO.
+- Se creó un fragmento nuevo (`b6717f77-c30e-4cca-985a-6346d741fe38`) con la cláusula de venta de productos, **sin tagear a ninguna categoría** — no hay corpus de COMERCIO_IRREGULAR hoy.
+- Embeddings reales regenerados para ambos con `gemini-embedding-2@768`.
+
+**Verificación funcional** (embeddings reales de las mismas consultas de Prueba 2 y Caso E, `match_knowledge_fragments` llamado directo por SQL — no vía la Edge Function, que ya exige el token de despacho de R5-05):
+- **Prueba 2** ("venta ambulante", categoría TRANSITO mal elegida): el fragmento de venta **ya no aparece** entre los recuperados — solo fragmentos de obstrucción/estacionamiento (Ley 24.449 arts. 48-i, 49). Corregido.
+- **Caso E** ("discuten y frenan el tránsito", TRANSITO): sigue recuperando `...008` (cláusula de obstrucción) como primer resultado, similitud 0.92. Sin regresión.
+
+**Incidente durante la aplicación (detectado y corregido en el momento):** la primera versión de la migración reusó un id ya existente (`20000000-0000-4000-8000-000000000015`, el índice del Código de Faltas de la Provincia de Buenos Aires) para el fragmento nuevo. El `insert` no entró por el conflicto de PK, pero el `upsert` de `fragment_embeddings` sí sobrescribió el embedding real de ese fragmento. Se detectó en la verificación posterior a la aplicación (antes de dar el hallazgo por cerrado), se restauró el embedding real de `...015` a partir de su contenido real, y el fragmento de venta se recreó con un UUID generado que no colisiona. Ver la nota completa en la cabecera de `20260916040000_r5_08_split_ley24449_art48_t_venta_de_transito.sql`.
+
+**R5-08 queda cerrado**, sujeto a volver a correr las 35 corridas de A-E/E-sin-categoría completas contra la función real (con el token de despacho) como confirmación final antes de mover REP-2908/REP-3772/REP-2900 a Finalizada — la verificación de arriba es a nivel de recuperación (RPC), no repite el ciclo completo LLM + validación determinística de punta a punta.
