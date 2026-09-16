@@ -38,6 +38,7 @@ describe('REP-2909: buildAnalysisRow', () => {
       input_tokens: 100,
       output_tokens: 50,
       latency_ms: 1235,
+      status_reason: null,
     });
   });
 
@@ -48,6 +49,22 @@ describe('REP-2909: buildAnalysisRow', () => {
     });
     expect(row.result_status_code).toBe('sin_normativa');
     expect(row.is_infraction).toBe(false);
+  });
+
+  it('P-02: guarda result.error en status_reason cuando el codigo rechaza antes del LLM', () => {
+    const row = buildAnalysisRow({
+      reportId: 'report-1',
+      result: { estado: 'indeterminado', error: 'La cita de "X" no aparece literal en el fragmento.' },
+    });
+    expect(row.status_reason).toBe('La cita de "X" no aparece literal en el fragmento.');
+  });
+
+  it('P-02: status_reason es null cuando el LLM declara indeterminado por su cuenta (sin result.error)', () => {
+    const row = buildAnalysisRow({
+      reportId: 'report-1',
+      result: { estado: 'indeterminado', fundamento_ciudadano: 'texto', fundamento_oficial: 'texto', confianza: 0.3 },
+    });
+    expect(row.status_reason).toBeNull();
   });
 
   it('rechaza si falta reportId o result.estado', () => {

@@ -1,0 +1,15 @@
+-- Backfill de embeddings de knowledge_fragments (lote 1 de 3), aplicado a
+-- mano contra CiudadAR el 14/09 junto con la carga inicial del corpus.
+-- Son literales de vectores (~29 KB cada lote): no se versionan letra por
+-- letra en el repositorio para no inflarlo con datos, siguiendo el mismo
+-- criterio que R5-09 aplica a la reconstruccion (P-08): una base nueva no
+-- replica estos INSERT/UPDATE de vectores, genera los embeddings de nuevo
+-- con el script de embeddings (ver guia de replicacion, seccion 4, paso
+-- "script de embeddings"). Este archivo solo deja constancia de que la
+-- version 20260914152746 existe en supabase_migrations.schema_migrations
+-- de CiudadAR, para que R5-09/`supabase migration list` no reporte una fila
+-- sin archivo.
+--
+-- select statements from supabase_migrations.schema_migrations
+-- where version = '20260914152746'; -- backfill_fragment_embeddings_batch_1
+select 1;

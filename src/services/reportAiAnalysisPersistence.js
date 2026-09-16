@@ -52,6 +52,14 @@ export const buildAnalysisRow = ({ reportId, result, suggestedServiceId = null }
     input_tokens: result.inputTokens ?? null,
     output_tokens: result.outputTokens ?? null,
     latency_ms: result.latencyMs !== undefined ? Math.round(result.latencyMs) : null,
+    // P-02 (REP-2908-VERIF ronda 4): motivo de los indeterminado/sin_normativa
+    // que el codigo rechaza antes de llegar al LLM (error de RPC, cita no
+    // literal, organismo_sugerido_id invalido, etc.). Antes result.error se
+    // descartaba por completo al persistir -- quedaba solo en la respuesta
+    // HTTP, nunca en la base. Cuando el LLM declara indeterminado por su
+    // propia cuenta, el motivo ya queda en citizen_feedback/official_legal_foundation
+    // y result.error viene undefined -> status_reason null (no se duplica).
+    status_reason: result.error ?? null,
   };
 };
 

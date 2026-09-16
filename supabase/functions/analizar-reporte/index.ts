@@ -19,6 +19,17 @@
  * toda normativa sale de knowledge_fragments (cargada por docs/REP-3769_seed_y_RAG.sql)
  * y todo el texto de fundamento lo redacta el LLM a partir de lo recuperado.
  *
+ * R5-05 (REP-2908-VERIF ronda 5, REP-3775): esta función solo aceptaba un
+ * token de sesión válido y tomaba reportId/description/category/localityId
+ * del cuerpo del pedido tal cual venían — cualquier usuario con sesión podía
+ * invocarla con un texto inventado (costo de Gemini) y, si el reporte no
+ * tenía análisis todavía, dejaba guardado un resultado con un fundamento
+ * armado por él. Ahora: (a) exige el header x-rag-dispatch-token, que solo
+ * conoce dispatch_rag_analysis_queue (el secret rag_dispatch_token en Vault
+ * y RAG_DISPATCH_TOKEN acá, mismo valor, nunca en el repo); (b) lee
+ * description/category/localityId del reporte en la base con la clave de
+ * servicio — lo que venga en el cuerpo para esos campos se ignora.
+ *
  * Paso 10 (REP-2909, bloque 2): persiste el resultado — CUALQUIER resultado,
  * incluidos indeterminado/sin_normativa, no solo fundamentado — en
  * report_ai_analysis + report_ai_evidence, dentro de una transacción, y solo
@@ -48,6 +59,9 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // V-11 (REP-2908-VERIF): version de las instrucciones fijas de generateJustification.
 // Incrementar a mano cada vez que cambie el texto de `instructions` ahi abajo.
 const PROMPT_VERSION = 'v1';
+// P-06 (ronda 4): temperature queda en el default de la API (no se fija acá a
+// propósito). Documentado junto a PROMPT_VERSION porque cualquier cambio de
+// temperature necesita volver a correr P-01 antes de tocarse.
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
 const DEFAULT_MATCH_COUNT = 6;
@@ -57,9 +71,6 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 type AnalyzeRequestPayload = {
   reportId: string;
-  description: string;
-  category?: string | null;
-  localityId: string;
   /** msg_id de pgmq (bloque 1, rag_async_pipeline.sql). Si viene, se borra el mensaje al persistir con éxito. */
   queueMessageId?: number | null;
 };
@@ -197,6 +208,12 @@ const generateJustification = async (
         responseMimeType: 'application/json',
         responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
+        // P-06 (REP-2908-VERIF ronda 4): tope de salida como control de costo.
+        // 2048 es holgado para el esquema actual (fundamento + hasta ~6 citas);
+        // si algún día lo corta, generateContent devuelve MAX_TOKENS y el JSON
+        // queda incompleto -- JSON.parse tira abajo y el catch de más arriba
+        // marca `indeterminado` con el motivo, nunca un resultado a medias.
+        maxOutputTokens: 2048,
       },
     }),
   });
@@ -206,16 +223,26 @@ const generateJustification = async (
   }
 
   const data = await response.json();
-  const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const candidate = data?.candidates?.[0];
+  const jsonText = candidate?.content?.parts?.[0]?.text;
   if (!jsonText) {
-    throw new Error('generateContent no devolvió contenido JSON.');
+    const reason = candidate?.finishReason ? ` (finishReason: ${candidate.finishReason})` : '';
+    throw new Error(`generateContent no devolvió contenido JSON${reason}.`);
   }
 
   const usage = data?.usageMetadata ?? {};
+  // P-06: Gemini factura los tokens de razonamiento (thoughtsTokenCount) como
+  // salida, aparte de los de la respuesta (candidatesTokenCount). Si solo se
+  // guarda candidatesTokenCount, el costo por reporte queda subestimado.
+  const candidatesTokens = usage.candidatesTokenCount ?? 0;
+  const thoughtsTokens = usage.thoughtsTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount === undefined && usage.thoughtsTokenCount === undefined
+    ? null
+    : candidatesTokens + thoughtsTokens;
   return {
     parsed: JSON.parse(jsonText),
     inputTokens: usage.promptTokenCount ?? null,
-    outputTokens: usage.candidatesTokenCount ?? null,
+    outputTokens,
   };
 };
 
@@ -346,6 +373,8 @@ const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedSer
   input_tokens: result.inputTokens ?? null,
   output_tokens: result.outputTokens ?? null,
   latency_ms: result.latencyMs !== undefined && result.latencyMs !== null ? Math.round(result.latencyMs) : null,
+  // P-02: ver nota en src/services/reportAiAnalysisPersistence.js#buildAnalysisRow.
+  status_reason: result.error ?? null,
 });
 
 /** Espejo de src/services/reportAiAnalysisPersistence.js#buildEvidenceRows */
@@ -385,25 +414,28 @@ const persistAnalysis = async (
       suggestedServiceId = service?.id ?? null;
     }
 
+    // R5-06 (REP-3776/REP-3777): antes eran dos inserts separados (análisis y
+    // evidencia) pese a que el comentario decía "en una transacción" — si
+    // fallaba el segundo, el primero quedaba guardado y, como report_id es
+    // UNIQUE, cada reintento del mensaje volvía a chocar y nunca se borraba
+    // de la cola. El RPC persist_rag_analysis hace ambos inserts en una sola
+    // transacción del lado de la base (on conflict do nothing si ya existía).
     const analysisRow = buildAnalysisRow(reportId, result, suggestedServiceId);
-    const { data: inserted, error: insertError } = await supabaseAdmin
-      .from('report_ai_analysis')
-      .insert(analysisRow)
-      .select('id')
-      .single();
+    // analysis_id se ignora del lado del RPC (se asigna adentro, jsonb_to_recordset
+    // solo lee las columnas de report_ai_evidence): se reusa buildEvidenceRows
+    // tal cual está probado en src/services/reportAiAnalysisPersistence.js.
+    const evidenceRows = retrievedFragments.length > 0
+      ? buildEvidenceRows('pending', retrievedFragments, result.citas ?? [])
+      : [];
 
-    if (insertError || !inserted) {
-      console.error('[analizar-reporte] No se pudo persistir report_ai_analysis:', insertError?.message);
+    const { data: analysisId, error: persistError } = await supabaseAdmin.rpc('persist_rag_analysis', {
+      p_analysis: analysisRow,
+      p_evidence: evidenceRows,
+    });
+
+    if (persistError || !analysisId) {
+      console.error('[analizar-reporte] No se pudo persistir el análisis:', persistError?.message);
       return; // no se borra el mensaje de la cola: se reintenta
-    }
-
-    if (retrievedFragments.length > 0) {
-      const evidenceRows = buildEvidenceRows(inserted.id, retrievedFragments, result.citas ?? []);
-      const { error: evidenceError } = await supabaseAdmin.from('report_ai_evidence').insert(evidenceRows);
-      if (evidenceError) {
-        console.error('[analizar-reporte] No se pudo persistir report_ai_evidence:', evidenceError.message);
-        return; // análisis quedó guardado pero sin evidencia: se reintenta el mensaje igual
-      }
     }
 
     if (queueMessageId !== undefined && queueMessageId !== null) {
@@ -436,19 +468,61 @@ Deno.serve(async (req: Request) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || '';
 
+  // R5-05: solo el despacho de la cola (dispatch_rag_analysis_queue) conoce
+  // este token. Cualquier otro llamador, aunque tenga una sesión válida de
+  // ciudadano, es rechazado antes de tocar Gemini o la base.
+  const dispatchToken = Deno.env.get('RAG_DISPATCH_TOKEN') || '';
+  if (!dispatchToken || req.headers.get('x-rag-dispatch-token') !== dispatchToken) {
+    return new Response(JSON.stringify({ error: 'No autorizado.' }), {
+      status: 403,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    });
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
   let payload: AnalyzeRequestPayload | null = null;
   let retrievedFragments: RetrievedFragment[] = [];
   let result: AnalysisResult;
+  // P-06: si generateJustification tira (p.ej. maxOutputTokens cortó el JSON),
+  // el catch de más abajo tiene que poder marcar embeddingModelCode si la
+  // vectorización ya se hizo -- si no, mismo bug que V-09 (insert NOT NULL
+  // fallando en silencio y perdiendo el registro de un indeterminado real).
+  let embeddingComputed = false;
 
   try {
     payload = await req.json();
-    const { description, category, localityId } = payload!;
+
+    if (!payload?.reportId) {
+      return new Response(
+        JSON.stringify({ error: 'Falta el parámetro requerido: reportId.' }),
+        { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // R5-05: el reporte se lee de la base con la clave de servicio —
+    // description/category/localityId del cuerpo del pedido se ignoran, así
+    // no hay forma de invocar esta función con un texto inventado.
+    const { data: report, error: reportError } = await supabaseAdmin
+      .from('citizen_reports')
+      .select('description, locality_id, services(service_code)')
+      .eq('id', payload.reportId)
+      .single();
+
+    if (reportError || !report) {
+      return new Response(
+        JSON.stringify({ error: `No se encontró el reporte "${payload.reportId}".` }),
+        { status: 404, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const description = report.description;
+    const localityId = report.locality_id;
+    const category = (report as unknown as { services?: { service_code?: string } | null }).services?.service_code ?? null;
 
     if (!description || !localityId) {
       return new Response(
-        JSON.stringify({ error: 'Faltan parámetros requeridos: description o localityId.' }),
+        JSON.stringify({ error: 'El reporte no tiene description o locality_id.' }),
         { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
       );
     }
@@ -461,6 +535,7 @@ Deno.serve(async (req: Request) => {
       // Paso 4-5: armar el texto de consulta (sin jurisdicción: se resuelve por locality_id) y vectorizar.
       const queryText = category ? `${description.trim()} (categoría: ${category})` : description.trim();
       const queryEmbedding = await embedText(queryText, geminiApiKey);
+      embeddingComputed = true;
 
       // Paso 6: recuperar con cascada jurisdiccional resuelta en SQL, y
       // filtrado por la categoria elegida por el ciudadano (V-09: sin esto,
@@ -533,7 +608,11 @@ Deno.serve(async (req: Request) => {
     }
   } catch (error) {
     // Cualquier error no previsto también falla cerrado: nunca un resultado inventado.
-    result = { estado: 'indeterminado', error: error instanceof Error ? error.message : String(error) };
+    result = {
+      estado: 'indeterminado',
+      error: error instanceof Error ? error.message : String(error),
+      embeddingModelCode: embeddingComputed ? EMBEDDING_MODEL_CODE : null,
+    };
   }
 
   // Paso 10: persistir SIEMPRE (cualquier estado), y borrar el mensaje de la
