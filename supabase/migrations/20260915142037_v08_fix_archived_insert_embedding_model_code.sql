@@ -1,9 +1,8 @@
--- V-08 (ronda 2 de Hernan, REP-2908-VERIF_ronda2_hernan.md): ajusta el
--- limite de reintentos de 5 a 3 (propuesta explicita de Hernan) y corrige
--- el insert de archivado, que tenia el mismo bug encontrado en V-09
--- (embedding_model_code es NOT NULL y este insert nunca lo completaba --
--- un mensaje archivado por exceso de reintentos habria fallado el insert
--- tambien, perdiendo el registro sin dejar rastro).
+-- El insert de archivado (V-08) tenia el mismo bug que se encontro y
+-- corrigio en analizar-reporte (V-09, 15/09): embedding_model_code es
+-- NOT NULL y este insert nunca lo completaba, asi que un mensaje archivado
+-- por exceso de reintentos habria fallado el insert tambien, perdiendo el
+-- registro por completo.
 create or replace function public.dispatch_rag_analysis_queue()
 returns void
 language plpgsql

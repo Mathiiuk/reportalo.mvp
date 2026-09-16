@@ -129,11 +129,14 @@ export const uploadToQuarantine = async (file, clientSideId) => {
   // Si Supabase está configurado con credenciales reales o mockeado en tests
   if (shouldInvokeSupabaseBackend()) {
     try {
+      // R5-02 (REP-2908-VERIF ronda 5): sin upsert. quarantinePath ya es
+      // único por clientSideId + timestamp, nunca debería colisionar, y la
+      // política de Storage de cuarentena (migración r5_02) solo permite
+      // INSERT con sesión — con upsert:true hubiera hecho falta también UPDATE.
       const { data, error } = await supabase.storage
         .from(BUCKET_QUARANTINE)
         .upload(quarantinePath, file, {
           contentType: file.type || 'image/jpeg',
-          upsert: true,
         });
 
       if (error) {
