@@ -52,6 +52,12 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// R5-13 (REP-2908-VERIF ronda 5, pendiente menor): el modelo de embeddings
+// queda como constante única acá (a diferencia de dispatch_rag_analysis_queue,
+// que ya lo lee de embedding_models.is_active) porque esta función corre en
+// Deno con su propio ciclo de despliegue, autocontenida. Cuando haya rotación
+// de modelos real, pasar a resolverlo con una consulta a embedding_models
+// igual que hace la función de despacho.
 const EMBEDDING_MODEL = 'gemini-embedding-2';
 const EMBEDDING_MODEL_CODE = 'gemini-embedding-2@768';
 const EMBEDDING_DIMENSIONS = 768;
