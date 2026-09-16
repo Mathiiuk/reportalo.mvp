@@ -99,8 +99,11 @@ export const LocalitySelector = ({ value, onChange }) => {
       )}
 
       {isOpen && !loading && !error && (
-        <div className="absolute z-30 mt-1.5 w-full bg-white border border-[#DDE3EA] rounded-[13px] shadow-[0_10px_24px_rgba(20,40,80,0.16)] overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#EEF1F5]">
+        // Se abre hacia arriba (bottom-full): este selector vive en el pie del modal de
+        // ajuste de ubicación, con poco espacio debajo y el botón "Confirmar ubicación"
+        // inmediatamente después — abrir hacia abajo lo tapaba y lo dejaba fuera de pantalla.
+        <div className="absolute z-30 bottom-full mb-1.5 w-full bg-white border border-[#DDE3EA] rounded-[13px] shadow-[0_-10px_24px_rgba(20,40,80,0.16)] overflow-hidden max-h-[min(55vh,20rem)] flex flex-col">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#EEF1F5] flex-shrink-0">
             <Search className="w-[15px] h-[15px] text-[#8593A2] flex-shrink-0" strokeWidth={2.25} />
             <input
               type="text"
@@ -113,7 +116,7 @@ export const LocalitySelector = ({ value, onChange }) => {
               className="flex-1 text-[13px] font-medium text-[#263249] outline-none border-0 bg-transparent placeholder:text-[#B3BDC9]"
             />
           </div>
-          <ul role="listbox" className="max-h-56 overflow-y-auto">
+          <ul role="listbox" className="flex-1 min-h-0 overflow-y-auto">
             {filteredLocalities.length === 0 && (
               <li className="px-3.5 py-3 text-[12px] font-medium text-[#8593A2]">
                 Sin resultados para "{query}".
