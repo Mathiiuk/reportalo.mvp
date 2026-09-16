@@ -346,6 +346,8 @@ const buildAnalysisRow = (reportId: string, result: AnalysisResult, suggestedSer
   input_tokens: result.inputTokens ?? null,
   output_tokens: result.outputTokens ?? null,
   latency_ms: result.latencyMs !== undefined && result.latencyMs !== null ? Math.round(result.latencyMs) : null,
+  // P-02: ver nota en src/services/reportAiAnalysisPersistence.js#buildAnalysisRow.
+  status_reason: result.error ?? null,
 });
 
 /** Espejo de src/services/reportAiAnalysisPersistence.js#buildEvidenceRows */
