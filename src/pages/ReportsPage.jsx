@@ -1,13 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
 import { ImagePlus, MapPin } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { getMyReports } from '../services/reportSubmissionService';
+
+// Traduce el estado real de la DB a la insignia visual ya existente en el diseño
+const STATE_BADGES = {
+  RESUELTO: { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' },
+  DESCARTADO: { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' },
+};
+const DEFAULT_STATE_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
+
+const formatReportDate = (isoDate) => {
+  if (!isoDate) return '';
+  const date = new Date(isoDate);
+  const formatted = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return formatted.replace('.', '').replace(/^\w/, (c) => c.toUpperCase());
+};
+
+// Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500)
+const mapReportRow = (row) => {
+  const badge = STATE_BADGES[row.current_state_code] || DEFAULT_STATE_BADGE;
+  return {
+    id: row.id,
+    title: row.description,
+    category: row.services?.service_name || 'Sin categoría',
+    status: badge.status,
+    statusColor: badge.statusColor,
+    date: formatReportDate(row.created_at),
+    address: row.localities?.name || 'Localidad sin especificar',
+  };
+};
 
 export const ReportsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [isDemoActive, setIsDemoActive] = useState(false);
+  const [myReports, setMyReports] = useState([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!user?.id) {
+      setIsLoadingReports(false);
+      return undefined;
+    }
+    getMyReports(user.id).then((result) => {
+      if (!isMounted) return;
+      if (result.success) {
+        setMyReports(result.reports.map(mapReportRow));
+      }
+      setIsLoadingReports(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   // Reportes demo para exploración
   const demoReports = [
@@ -40,7 +91,7 @@ export const ReportsPage = () => {
     },
   ];
 
-  const currentReports = isDemoActive ? demoReports : [];
+  const currentReports = isDemoActive ? demoReports : myReports;
 
   const filteredReports = currentReports.filter((r) => {
     if (activeFilter === 'todos') return true;
@@ -121,8 +172,12 @@ export const ReportsPage = () => {
             </button>
           </div>
 
-          {/* Cuerpo: Empty State o Listado de Reportes */}
-          {filteredReports.length === 0 ? (
+          {/* Cuerpo: Cargando, Empty State o Listado de Reportes */}
+          {isLoadingReports && !isDemoActive ? (
+            <div className="text-center text-[13px] font-semibold text-[#7A8696] py-10">
+              Cargando tus reportes…
+            </div>
+          ) : filteredReports.length === 0 ? (
             
             /* Tarjeta de Empty State (Responsiva) */
             <div className="bg-white md:bg-white rounded-[28px] md:rounded-[16px] border border-[#E8EEF5] md:border-[#E6ECF3] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] md:shadow-[0_2px_12px_rgba(20,40,80,0.05)] p-6 sm:p-7 md:p-7 flex flex-col md:flex-row items-center md:items-start text-center md:text-left mt-2 md:mt-10 md:max-w-[620px] md:mx-auto md:gap-[30px]">

@@ -8,6 +8,89 @@ import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { NewReportPage } from '../pages/NewReportPage';
 
+// REP-2500: createCitizenReport exige un usuario autenticado (user_id NOT NULL)
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'user-test-123', email: 'ciudadano@reportalo.ar' },
+    isAuthenticated: true,
+  }),
+}));
+
+// REP-2500: persistencia real — se mockea Supabase para que la selección de
+// localidad (R-1 a R-5) y la creación del reporte (E-3) resuelvan en memoria.
+vi.mock('../lib/supabaseClient', () => ({
+  isSupabaseConfigured: true,
+  supabase: {
+    from: vi.fn((table) => {
+      if (table === 'localities') {
+        return {
+          select: vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: 'loc-avellaneda',
+                name: 'Piñeyro',
+                subdivisions: { name: 'Avellaneda', states_provinces: { name: 'Buenos Aires' } },
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      if (table === 'citizen_reports') {
+        return {
+          upsert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'report-e2e-1', client_side_id: 'csid-e2e-1' },
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
+      if (table === 'report_images') {
+        return {
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'image-e2e-1', image_url: 'https://cdn/report-evidences/report-e2e-1/img.jpg' },
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
+      // Otras tablas (ej. services): sin datos, así categoriesService cae al fallback local
+      return {
+        select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [], error: null }) })),
+      };
+    }),
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn().mockResolvedValue({ error: null }),
+        remove: vi.fn().mockResolvedValue({ error: null }),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://cdn/report-evidences/report-e2e-1/img.jpg' } })),
+      })),
+    },
+    // El pipeline de cuarentena (REP-2404) invoca esta Edge Function al detectar Supabase mockeado/configurado
+    functions: {
+      invoke: vi.fn().mockResolvedValue({
+        data: {
+          success: true,
+          sanitizedUrl: 'https://cdn/report-evidences/sanitized_e2e.jpg',
+          clientSideId: 'csid-e2e-1',
+          entitiesDetectedCount: 2,
+          detectedZones: [
+            { x: 120, y: 80, width: 90, height: 90, type: 'face' },
+            { x: 300, y: 410, width: 140, height: 50, type: 'license_plate' },
+          ],
+        },
+        error: null,
+      }),
+    },
+  },
+}));
+
 describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -17,6 +100,12 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
     if (typeof URL.revokeObjectURL !== 'function') {
       URL.revokeObjectURL = vi.fn();
     }
+    // REP-2500: attachReportEvidence hace fetch(sanitizedUrl) antes de re-subir — jsdom no tiene
+    // acceso de red real, así que se mockea para resolver en memoria en vez de colgarse.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(['sanitized-bytes'], { type: 'image/jpeg' })),
+    });
   });
 
   describe('Modelo / Factory: createEvidenceItem', () => {
@@ -182,7 +271,21 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       });
       fireEvent.click(screen.getByRole('button', { name: /^Continuar$/i }));
 
-      // 3. Paso 3: Revisión y presionar "Enviar reporte"
+      // 3. Paso 3: Revisión — como aún no se confirmó la localidad (R-1/R-2), "Enviar reporte" abre el ajuste de ubicación
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /enviar reporte/i }));
+
+      // Se elige la localidad de la zona piloto en el selector con autocompletado
+      await waitFor(() => {
+        expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled();
+      });
+      fireEvent.click(screen.getByTestId('locality-selector-trigger'));
+      fireEvent.click(await screen.findByTestId('locality-option-loc-avellaneda'));
+      fireEvent.click(screen.getByRole('button', { name: /confirmar ubicación/i }));
+
+      // Con la localidad ya confirmada, "Enviar reporte" ahora sí avanza
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
       });

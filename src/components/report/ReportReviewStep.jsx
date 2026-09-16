@@ -30,6 +30,7 @@ export const ReportReviewStep = ({
   description,
   geolocation,
   address,
+  hasConfirmedLocality = false,
   hasAcceptedTerms = false,
   isOnline = true,
   draftStatus = 'DRAFT_LOCAL',
@@ -49,9 +50,14 @@ export const ReportReviewStep = ({
     address ||
     (geolocation?.lat
       ? `Lat: ${geolocation.lat.toFixed(4)}, Lng: ${geolocation.lng.toFixed(4)}`
-      : 'Av. Mitre 1240, Avellaneda');
+      : 'Punto marcado en el mapa');
 
   const handleSendClick = () => {
+    // R-1/R-2: no se puede enviar sin que el ciudadano confirme la localidad real
+    if (!hasConfirmedLocality) {
+      onOpenAdjustLocation?.();
+      return;
+    }
     if (hasAcceptedTerms) {
       // Quien ya aceptó pasa derecho al envío
       onSubmitReport();
@@ -254,6 +260,18 @@ export const ReportReviewStep = ({
               Ajustar
             </button>
           </div>
+
+          {!hasConfirmedLocality && (
+            <div
+              data-testid="missing-locality-hint"
+              className="flex items-start gap-1.5 text-[#B25E00] bg-[#FFF7EE] border border-[#F7E2C8] rounded-lg px-2.5 py-1.5"
+            >
+              <Info className="w-[13px] h-[13px] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+              <span className="font-semibold text-[10px] leading-snug">
+                Confirmá la localidad exacta tocando "Ajustar" antes de enviar.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Tarjeta 3: Banner de Identidad Anónima */}
