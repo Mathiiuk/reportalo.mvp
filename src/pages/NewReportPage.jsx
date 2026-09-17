@@ -443,6 +443,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               description={description}
               geolocation={activeCoords}
               address={activeAddressLabel}
+              hasConfirmedLocality={Boolean(customLocation?.localityId)}
               hasAcceptedTerms={userHasAccepted}
               isOnline={isOnline}
               draftStatus={draftStatus}
