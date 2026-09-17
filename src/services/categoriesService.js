@@ -44,6 +44,41 @@ export const DEFAULT_REPORT_CATEGORIES = [
 ];
 
 /**
+ * Estilo (ícono/color) por categoría, buscado por coincidencia parcial contra el
+ * `service_code`/id normalizado. Existen dos esquemas de nombres en distintos seeds
+ * (p.ej. "infraestructura_vial" vs "INFRAESTRUCTURA") — el match por substring cubre
+ * ambos sin tener que sincronizar el código exacto con cada seed. Incluye
+ * "vulnerabilidad_social" (5ta categoría real en producción, REP-2900/2901) aunque no
+ * está en DEFAULT_REPORT_CATEGORIES: ese array es el fallback offline validado 1:1
+ * contra supabase/seed.sql (ver SupabaseSeedValidation.test.js), no el catálogo visual.
+ */
+const CATEGORY_STYLE_BY_KEY = {
+  infraestructura: DEFAULT_REPORT_CATEGORIES[0],
+  transito: DEFAULT_REPORT_CATEGORIES[1],
+  ambiente: DEFAULT_REPORT_CATEGORIES[2],
+  comercioirregular: DEFAULT_REPORT_CATEGORIES[3],
+  vulnerabilidadsocial: {
+    icon: 'heart_handshake',
+    color: '#D6336C',
+    bgLight: '#FDEFF3',
+    borderColor: '#F5C9D8',
+    example: 'Ej.: persona en situación de calle, familia en riesgo, necesidad de asistencia social urgente.',
+  },
+};
+
+const normalizeForMatch = (text) => (text ?? '').toLowerCase().replace(/[^a-z]/g, '');
+
+const resolveCategoryStyle = (...candidates) => {
+  for (const candidate of candidates) {
+    const normalized = normalizeForMatch(candidate);
+    if (!normalized) continue;
+    const key = Object.keys(CATEGORY_STYLE_BY_KEY).find((k) => normalized.includes(k));
+    if (key) return CATEGORY_STYLE_BY_KEY[key];
+  }
+  return null;
+};
+
+/**
  * Obtiene las categorías de reportes desde la tabla `services` de Supabase
  * con fallback instantáneo a las categorías locales del Journey v2.
  * @returns {Promise<Array>} Lista de categorías
@@ -64,9 +99,7 @@ export const getReportCategories = async () => {
     }
 
     return data.map((srv) => {
-      const fallback = DEFAULT_REPORT_CATEGORIES.find(
-        (c) => c.id === srv.service_code || c.id === srv.id
-      );
+      const fallback = resolveCategoryStyle(srv.service_code, srv.id, srv.service_name || srv.name);
 
       return {
         id: srv.service_code || srv.id,

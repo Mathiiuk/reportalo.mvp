@@ -8,6 +8,7 @@ import {
   Truck,
   Leaf,
   Store,
+  HeartHandshake,
   HelpCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -18,6 +19,7 @@ const ICON_MAP = {
   local_shipping: Truck,
   eco: Leaf,
   storefront: Store,
+  heart_handshake: HeartHandshake,
 };
 
 /**
