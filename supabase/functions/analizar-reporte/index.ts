@@ -258,7 +258,8 @@ const generateJustification = async (
  */
 export const validateLlmAnalysis = (
   llmResponse: unknown,
-  retrievedFragments: RetrievedFragment[]
+  retrievedFragments: RetrievedFragment[],
+  reportCategory?: string | null
 ): { valid: boolean; reason?: string } => {
   if (!llmResponse || typeof llmResponse !== 'object') {
     return { valid: false, reason: 'La respuesta del LLM no es un objeto.' };
@@ -274,6 +275,15 @@ export const validateLlmAnalysis = (
 
   if (!RAG_RESULT_STATUSES.includes(analysis.estado)) {
     return { valid: false, reason: `estado "${analysis.estado}" no es un valor reconocido.` };
+  }
+
+  // C-2 (REP-2908-VERIF ronda 6): "asistencia" solo tiene sentido para
+  // reclamos de VULNERABILIDAD_SOCIAL -- el LLM lo devolvió una vez para
+  // "no anda la luz" (D-CABA), y un ciudadano que reporta un poste de luz
+  // no puede leer que su caso es de asistencia social. Falla cerrado igual
+  // que cualquier otra violación determinística.
+  if (analysis.estado === 'asistencia' && reportCategory !== 'VULNERABILIDAD_SOCIAL') {
+    return { valid: false, reason: `estado "asistencia" no es válido para la categoría "${reportCategory ?? 'sin categoría'}" (solo aplica a VULNERABILIDAD_SOCIAL).` };
   }
 
   if (!Array.isArray(analysis.citas)) {
@@ -590,7 +600,7 @@ Deno.serve(async (req: Request) => {
           );
 
           // Paso 9: validar de forma determinística. Fallar cerrado ante cualquier incumplimiento.
-          const validation = validateLlmAnalysis(generation.parsed, eligibleFragments);
+          const validation = validateLlmAnalysis(generation.parsed, eligibleFragments, category);
           const organismoValidation = validation.valid
             ? await validateOrganismoSugerido(supabaseAdmin, generation.parsed.organismo_sugerido_id)
             : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
