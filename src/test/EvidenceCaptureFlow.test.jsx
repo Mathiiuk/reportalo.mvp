@@ -271,21 +271,8 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       });
       fireEvent.click(screen.getByRole('button', { name: /^Continuar$/i }));
 
-      // 3. Paso 3: Revisión — como aún no se confirmó la localidad (R-1/R-2), "Enviar reporte" abre el ajuste de ubicación
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
-      });
-      fireEvent.click(screen.getByRole('button', { name: /enviar reporte/i }));
-
-      // Se elige la localidad de la zona piloto en el selector con autocompletado
-      await waitFor(() => {
-        expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled();
-      });
-      fireEvent.click(screen.getByTestId('locality-selector-trigger'));
-      fireEvent.click(await screen.findByTestId('locality-option-loc-avellaneda'));
-      fireEvent.click(screen.getByRole('button', { name: /confirmar ubicación/i }));
-
-      // Con la localidad ya confirmada, "Enviar reporte" ahora sí avanza
+      // 3. Paso 3: Revisión — la localidad manual es opcional, alcanza con el GPS,
+      // así que "Enviar reporte" avanza directo sin pasar por el ajuste de ubicación.
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
       });
