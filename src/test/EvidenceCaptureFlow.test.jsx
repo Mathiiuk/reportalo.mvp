@@ -26,10 +26,13 @@ vi.mock('../lib/supabaseClient', () => ({
         return {
           select: vi.fn().mockResolvedValue({
             data: [
+              // Cerca de DEFAULT_CITY_COORDINATES (locationService.js) a propósito: el pin
+              // en este test nunca se mueve, así que la localidad elegida tiene que quedar
+              // dentro del umbral de checkLocalityPinMismatch para no bloquear "Confirmar".
               {
-                id: 'loc-avellaneda',
-                name: 'Piñeyro',
-                subdivisions: { name: 'Avellaneda', states_provinces: { name: 'Buenos Aires' } },
+                id: 'loc-almagro',
+                name: 'Almagro',
+                subdivisions: { name: 'Comuna 5', states_provinces: { name: 'Ciudad Autónoma de Buenos Aires' } },
               },
             ],
             error: null,
@@ -282,7 +285,7 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled();
       });
       fireEvent.click(screen.getByTestId('locality-selector-trigger'));
-      fireEvent.click(await screen.findByTestId('locality-option-loc-avellaneda'));
+      fireEvent.click(await screen.findByTestId('locality-option-loc-almagro'));
       fireEvent.click(screen.getByRole('button', { name: /confirmar ubicación/i }));
 
       // Con la localidad ya confirmada, "Enviar reporte" ahora sí avanza

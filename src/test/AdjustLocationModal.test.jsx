@@ -136,6 +136,32 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
+  it('UT-LOC-05: Si el barrio elegido queda lejos del pin, muestra el aviso y bloquea "Confirmar ubicación"', async () => {
+    const handleConfirm = vi.fn();
+
+    render(
+      <AdjustLocationModal
+        // Punto en San Telmo (~5km de Retiro)
+        initialCoordinates={{ lat: -34.6212, lng: -58.3731 }}
+        onConfirm={handleConfirm}
+        onClose={vi.fn()}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId('locality-selector-trigger'));
+    // loc-1 = "Retiro", geográficamente lejos del pin en San Telmo
+    fireEvent.click(await screen.findByTestId('locality-option-loc-1'));
+
+    expect(screen.getByTestId('locality-pin-mismatch-warning')).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole('button', { name: /confirmar ubicación/i });
+    expect(confirmBtn).toBeDisabled();
+
+    fireEvent.click(confirmBtn);
+    expect(handleConfirm).not.toHaveBeenCalled();
+  });
+
   it('UT-LOC-04: Si las coordenadas iniciales están fuera del Bounding Box de CABA/Avellaneda, utiliza el centro por defecto de la zona', () => {
     // Coordenadas en Córdoba / fuera de CABA y Avellaneda
     const outOfBoundsCoords = { lat: -31.4201, lng: -64.1888 };
