@@ -26,7 +26,7 @@ const INITIAL_STATE_CODE = 'RECIBIDO';
  * @param {string} params.clientSideId UUID generado en el dispositivo (offlineStorageService)
  * @param {string} params.userId auth.uid() del ciudadano
  * @param {string} params.serviceId UUID de services (categoría elegida)
- * @param {string} [params.localityId] UUID de localities (selector manual opcional, R-1 a R-5 — el GPS alcanza por sí solo)
+ * @param {string} params.localityId UUID de localities (selector manual, R-1 a R-5)
  * @param {string} params.description
  * @param {number} params.latitud
  * @param {number} params.longitud
@@ -44,9 +44,7 @@ export const createCitizenReport = async ({
   if (!isSupabaseConfigured) {
     return { success: false, error: 'Supabase no está configurado.' };
   }
-  // La localidad manual es opcional (R-1/R-2 revertida): el reporte se ubica con las
-  // coordenadas GPS del dispositivo salvo que el ciudadano la haya ajustado a mano.
-  if (!clientSideId || !userId || !description) {
+  if (!clientSideId || !userId || !localityId || !description) {
     return { success: false, error: 'Faltan datos obligatorios para crear el reporte.' };
   }
 

@@ -33,7 +33,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
     expect(screen.getByText('Enviar')).toBeInTheDocument();
   });
 
-  it('UT-RV-00: La localidad manual es opcional — sin confirmarla, "Enviar reporte" igual envía (alcanza con el GPS)', () => {
+  it('UT-RV-00: Si no se confirmó la localidad (R-1/R-2), "Enviar reporte" abre el ajuste de ubicación en vez del modal de consentimiento', () => {
     const onOpenAdjustLocationMock = vi.fn();
     const onSubmitMock = vi.fn();
 
@@ -44,6 +44,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
         description="Camión de gran porte"
         geolocation={null}
         address="Av. Mitre 1240, Avellaneda"
+        hasConfirmedLocality={false}
         hasAcceptedTerms={true}
         onBack={vi.fn()}
         onSubmitReport={onSubmitMock}
@@ -54,37 +55,12 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
       />
     );
 
-    expect(screen.queryByTestId('missing-locality-hint')).not.toBeInTheDocument();
+    expect(screen.getByTestId('missing-locality-hint')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Enviar reporte/i }));
 
-    expect(onOpenAdjustLocationMock).not.toHaveBeenCalled();
-    expect(onSubmitMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('UT-RV-00b: El botón "Ajustar" sigue disponible para elegir la localidad a mano de forma opcional', () => {
-    const onOpenAdjustLocationMock = vi.fn();
-
-    render(
-      <ReportReviewStep
-        evidenceList={mockEvidenceList}
-        selectedCategory={mockCategory}
-        description="Camión de gran porte"
-        geolocation={null}
-        address="Av. Mitre 1240, Avellaneda"
-        hasAcceptedTerms={true}
-        onBack={vi.fn()}
-        onSubmitReport={vi.fn()}
-        onAcceptTermsAndSubmit={vi.fn()}
-        onViewAllPhotos={vi.fn()}
-        onOpenTerms={vi.fn()}
-        onOpenAdjustLocation={onOpenAdjustLocationMock}
-      />
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /Ajustar ubicación/i }));
-
     expect(onOpenAdjustLocationMock).toHaveBeenCalledTimes(1);
+    expect(onSubmitMock).not.toHaveBeenCalled();
   });
 
   it('UT-RV-02: Si el usuario NO aceptó términos previamente, hacer clic en "Enviar reporte" abre el modal "Antes de enviar"', async () => {
@@ -95,6 +71,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
         description="Camión de gran porte"
         geolocation={null}
         address="Av. Mitre 1240, Avellaneda"
+        hasConfirmedLocality={true}
         hasAcceptedTerms={false}
         onBack={vi.fn()}
         onSubmitReport={vi.fn()}
@@ -123,6 +100,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
         description="Camión de gran porte"
         geolocation={null}
         address="Av. Mitre 1240, Avellaneda"
+        hasConfirmedLocality={true}
         hasAcceptedTerms={false}
         onBack={vi.fn()}
         onSubmitReport={vi.fn()}
@@ -149,6 +127,7 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
         description="Camión de gran porte"
         geolocation={null}
         address="Av. Mitre 1240, Avellaneda"
+        hasConfirmedLocality={true}
         hasAcceptedTerms={false}
         onBack={vi.fn()}
         onSubmitReport={onSubmitMock}
