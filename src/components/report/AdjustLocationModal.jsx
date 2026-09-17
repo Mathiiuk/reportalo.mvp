@@ -59,6 +59,29 @@ export const AdjustLocationModal = ({
     return isCoordinatesInBounds(parsedCoords) ? parsedCoords : DEFAULT_CITY_COORDINATES;
   });
 
+  // No hay geocodificación inversa ni polígonos de barrio: el pin y la localidad son dos
+  // estados independientes. Para evitar que queden desincronizados (ej. pin en Palermo con
+  // "Balvanera" seleccionado), si el usuario mueve el pin de forma significativa después de
+  // haber elegido una localidad, limpiamos esa selección para forzar que la reconfirme.
+  // Se ignora ruido de reposicionamiento inicial del mapa comparando contra la última
+  // posición "asentada" con un umbral (~10-15m), no contra cada evento 'move' en bruto.
+  const lastSettledCoordsRef = useRef(currentCoords);
+  useEffect(() => {
+    const [prevLng, prevLat] = lastSettledCoordsRef.current;
+    const [lng, lat] = currentCoords;
+    const MOVE_THRESHOLD_DEGREES = 0.00015; // ~15m en latitudes de CABA
+    const movedSignificantly =
+      Math.abs(lng - prevLng) > MOVE_THRESHOLD_DEGREES ||
+      Math.abs(lat - prevLat) > MOVE_THRESHOLD_DEGREES;
+
+    if (movedSignificantly && localityId) {
+      setLocalityId(null);
+      setLocalityLabel(null);
+    }
+    lastSettledCoordsRef.current = currentCoords;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCoords]);
+
   const addressDetails = resolveAddressDetails(currentCoords);
 
   // Inicializar mapa de ajuste con límites territoriales

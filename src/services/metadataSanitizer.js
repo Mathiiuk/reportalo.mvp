@@ -128,9 +128,136 @@ export const stripExifFromJpeg = (bytes) => {
 };
 
 /**
+ * Lee la etiqueta EXIF "Orientation" (tag 0x0112 del IFD0) desde el segmento APP1 de un JPEG.
+ * Necesario porque `stripExifFromJpeg` descarta APP1 completo (incluyendo Orientation) y, si la
+ * rotación no se aplica antes a los píxeles, la foto queda mostrada de costado/invertida (REP fix).
+ *
+ * @param {Uint8Array} bytes Buffer binario de la imagen JPEG original
+ * @returns {number} Valor de orientación EXIF (1-8), o 1 (normal) si no hay etiqueta o no es válida
+ */
+export const readExifOrientation = (bytes) => {
+  if (!bytes || bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== MARKER_SOI) return 1;
+
+  let offset = 2;
+  while (offset + 3 < bytes.length) {
+    if (bytes[offset] !== 0xff) break;
+    const marker = bytes[offset + 1];
+
+    if (marker === MARKER_SOS || marker === MARKER_EOI) break;
+
+    const segmentLength = (bytes[offset + 2] << 8) + bytes[offset + 3];
+
+    if (marker === MARKER_APP1) {
+      const segmentStart = offset + 4;
+      // Firma "Exif\0\0" seguida del header TIFF
+      const isExifSignature =
+        bytes[segmentStart] === 0x45 && // E
+        bytes[segmentStart + 1] === 0x78 && // x
+        bytes[segmentStart + 2] === 0x69 && // i
+        bytes[segmentStart + 3] === 0x66; // f
+
+      if (isExifSignature) {
+        const tiffStart = segmentStart + 6;
+        const isLittleEndian = bytes[tiffStart] === 0x49 && bytes[tiffStart + 1] === 0x49;
+        const isBigEndian = bytes[tiffStart] === 0x4d && bytes[tiffStart + 1] === 0x4d;
+
+        if (isLittleEndian || isBigEndian) {
+          const readUint16 = (pos) =>
+            isLittleEndian ? bytes[pos] | (bytes[pos + 1] << 8) : (bytes[pos] << 8) | bytes[pos + 1];
+          const readUint32 = (pos) =>
+            isLittleEndian
+              ? (bytes[pos] | (bytes[pos + 1] << 8) | (bytes[pos + 2] << 16) | (bytes[pos + 3] << 24)) >>> 0
+              : ((bytes[pos] << 24) | (bytes[pos + 1] << 16) | (bytes[pos + 2] << 8) | bytes[pos + 3]) >>> 0;
+
+          const ifd0Offset = tiffStart + readUint32(tiffStart + 4);
+          if (ifd0Offset + 2 <= bytes.length) {
+            const entryCount = readUint16(ifd0Offset);
+            for (let i = 0; i < entryCount; i++) {
+              const entryOffset = ifd0Offset + 2 + i * 12;
+              if (entryOffset + 12 > bytes.length) break;
+              const tag = readUint16(entryOffset);
+              if (tag === 0x0112) {
+                const value = readUint16(entryOffset + 8);
+                return value >= 1 && value <= 8 ? value : 1;
+              }
+            }
+          }
+        }
+      }
+      // No seguimos buscando: Orientation solo vive en IFD0 del primer APP1 Exif
+      break;
+    }
+
+    offset += 2 + segmentLength;
+  }
+
+  return 1;
+};
+
+/**
+ * Redibuja una imagen en un canvas aplicando la transformación correspondiente a su
+ * orientación EXIF, de forma que el resultado quede visualmente correcto con los píxeles
+ * ya "horneados" en esa posición. El JPEG resultante del canvas no contiene EXIF.
+ *
+ * @param {Blob} blob Imagen original (con su orientación EXIF sin aplicar)
+ * @param {number} orientation Valor EXIF Orientation (1-8)
+ * @returns {Promise<Blob|null>} Blob JPEG ya rotado, o null si no se pudo procesar (entorno sin canvas, imagen inválida, etc.)
+ */
+const bakeExifOrientation = async (blob, orientation) => {
+  if (orientation === 1) return null;
+  if (typeof document === 'undefined' || typeof Image === 'undefined' || typeof URL?.createObjectURL !== 'function') {
+    return null;
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+
+    const { naturalWidth: width, naturalHeight: height } = image;
+    if (!width || !height) return null;
+
+    const swapDimensions = orientation >= 5 && orientation <= 8;
+    const canvas = document.createElement('canvas');
+    canvas.width = swapDimensions ? height : width;
+    canvas.height = swapDimensions ? width : height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Transformaciones estándar por valor de orientación EXIF (1-8)
+    switch (orientation) {
+      case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+      case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
+      case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
+      case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+      case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
+      case 7: ctx.transform(0, -1, -1, 0, height, width); break;
+      case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+      default: break;
+    }
+
+    ctx.drawImage(image, 0, 0);
+
+    return await new Promise((resolve) => {
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.92);
+    });
+  } catch (err) {
+    // Si la decodificación falla (ej. bytes sintéticos de test), seguimos con el stripping binario normal
+    return null;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
+/**
  * Sanitiza metadatos de un objeto File o Blob de forma asíncrona.
  * Compatible con navegadores móviles, Web Workers y entornos de testing (jsdom).
- * 
+ *
  * @param {Blob|File} file Objeto de archivo recibido desde la cámara o selector
  * @returns {Promise<{ cleanFile: Blob, stripped: boolean }>} Archivo sanitizado y bandera de confirmación
  */
@@ -173,6 +300,32 @@ export const sanitizeFileMetadata = async (file) => {
 
     // Verificamos si tiene metadatos EXIF
     const hadExif = hasExifMetadata(originalBytes);
+
+    // Si la foto trae una orientación EXIF distinta de "normal" (1), la horneamos en los
+    // píxeles vía canvas ANTES de descartar el EXIF; si no, quedaría mostrada de costado.
+    const orientation = readExifOrientation(originalBytes);
+    if (orientation !== 1) {
+      const originalBlob = new Blob([originalBytes], { type: file.type || 'image/jpeg' });
+      const rotatedBlob = await bakeExifOrientation(originalBlob, orientation);
+      if (rotatedBlob) {
+        const rotatedBytes = new Uint8Array(await rotatedBlob.arrayBuffer());
+        // El canvas ya no incluye EXIF, pero igualmente corremos el stripping binario
+        // por si el encoder del navegador llegara a insertar algún segmento.
+        const cleanedBytes = stripExifFromJpeg(rotatedBytes);
+        const cleanBlob = new Blob([cleanedBytes], { type: file.type || 'image/jpeg' });
+        if (typeof cleanBlob.arrayBuffer !== 'function') {
+          cleanBlob.arrayBuffer = async () => cleanedBytes.buffer;
+        }
+        return {
+          cleanFile: cleanBlob,
+          stripped: true,
+          originalSize: originalBytes.length,
+          sanitizedSize: cleanedBytes.length,
+        };
+      }
+      // Si el horneado falló (entorno sin canvas, bytes no decodificables, etc.),
+      // seguimos con el stripping binario normal como fallback seguro.
+    }
 
     // Aplicamos el stripping binario
     const cleanedBytes = stripExifFromJpeg(originalBytes);
