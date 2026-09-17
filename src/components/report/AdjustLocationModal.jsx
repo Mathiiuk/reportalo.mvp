@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Move, MapPin, LocateFixed, MapPinned } from 'lucide-react';
+import { ArrowLeft, Move, MapPin, LocateFixed, MapPinned, TriangleAlert } from 'lucide-react';
 import {
   resolveAddressDetails,
   DEFAULT_CITY_COORDINATES,
   CABA_AVELLANEDA_BOUNDS,
   isCoordinatesInBounds,
 } from '../../services/locationService';
+import { checkLocalityPinMismatch } from '../../services/localityCentroids';
 import { LocalitySelector } from './LocalitySelector';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -83,6 +84,13 @@ export const AdjustLocationModal = ({
   }, [currentCoords]);
 
   const addressDetails = resolveAddressDetails(currentCoords);
+
+  // Aviso suave (no bloqueante) cuando el barrio elegido queda geográficamente lejos del pin
+  // actual — ej. pin en Retiro con "Almagro" seleccionado en el desplegable. No usamos esto
+  // para invalidar/bloquear la selección: son centroides aproximados, no polígonos oficiales.
+  const { isFar: localityLooksFar } = localityId
+    ? checkLocalityPinMismatch(currentCoords, localityLabel)
+    : { isFar: false };
 
   // Inicializar mapa de ajuste con límites territoriales
   useEffect(() => {
@@ -225,6 +233,18 @@ export const AdjustLocationModal = ({
         <div className="mb-3">
           <LocalitySelector value={localityId} onChange={handleLocalityChange} />
         </div>
+
+        {localityLooksFar && (
+          <div
+            data-testid="locality-pin-mismatch-warning"
+            className="mb-3 flex items-start gap-2 rounded-[13px] bg-[#FFF6E5] border border-[#F5C453] py-2.5 px-3"
+          >
+            <TriangleAlert className="w-[16px] h-[16px] text-[#B3791B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-tight text-[#8A5A0F]">
+              El barrio elegido parece estar lejos del punto marcado en el mapa. Revisá que ambos correspondan al mismo lugar.
+            </span>
+          </div>
+        )}
 
         <button
           type="button"
