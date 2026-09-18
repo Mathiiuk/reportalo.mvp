@@ -3,22 +3,25 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import { WelcomePage } from './pages/WelcomePage';
-import { LoginPage } from './pages/LoginPage';
-import { CheckEmailPage } from './pages/CheckEmailPage';
-import { OnboardingPage } from './pages/OnboardingPage';
-import { PermissionsPage } from './pages/PermissionsPage';
-import { TermsAndPermissionsPage } from './pages/TermsAndPermissionsPage';
-import { MapPage } from './pages/MapPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { NewsPage } from './pages/NewsPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { BlankAppPage } from './pages/BlankAppPage';
-import { MunicipiosPage } from './pages/MunicipiosPage';
-import { NewReportPage } from './pages/NewReportPage';
 import { AppLoadingScreen } from './components/common/AppLoadingScreen';
-import { NotFoundReportPage } from './pages/NotFoundReportPage';
-import { NotFoundPage } from './pages/NotFoundPage';
+import { PwaUpdater } from './components/common/PwaUpdater';
+
+// Lazy loading de páginas (Code Splitting - FASE 1)
+const WelcomePage = React.lazy(() => import('./pages/WelcomePage').then(m => ({ default: m.WelcomePage })));
+const LoginPage = React.lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const CheckEmailPage = React.lazy(() => import('./pages/CheckEmailPage').then(m => ({ default: m.CheckEmailPage })));
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const PermissionsPage = React.lazy(() => import('./pages/PermissionsPage').then(m => ({ default: m.PermissionsPage })));
+const TermsAndPermissionsPage = React.lazy(() => import('./pages/TermsAndPermissionsPage').then(m => ({ default: m.TermsAndPermissionsPage })));
+const MapPage = React.lazy(() => import('./pages/MapPage').then(m => ({ default: m.MapPage })));
+const ReportsPage = React.lazy(() => import('./pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const NewsPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const BlankAppPage = React.lazy(() => import('./pages/BlankAppPage').then(m => ({ default: m.BlankAppPage })));
+const MunicipiosPage = React.lazy(() => import('./pages/MunicipiosPage').then(m => ({ default: m.MunicipiosPage })));
+const NewReportPage = React.lazy(() => import('./pages/NewReportPage').then(m => ({ default: m.NewReportPage })));
+const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
@@ -98,7 +101,8 @@ const PublicRoute = ({ children }) => {
 
 export const AppRoutes = () => {
   return (
-    <Routes>
+    <React.Suspense fallback={<AppLoadingScreen message="Cargando..." />}>
+      <Routes>
       <Route
         path="/"
         element={
@@ -216,7 +220,8 @@ export const AppRoutes = () => {
         element={<Navigate to="/municipios#planes" replace />}
       />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      </Routes>
+    </React.Suspense>
   );
 };
 
@@ -226,6 +231,7 @@ export const App = () => {
       <BrowserRouter>
         <AppRoutes />
         <Toaster richColors position="top-center" closeButton />
+        <PwaUpdater />
       </BrowserRouter>
     </AuthProvider>
   );

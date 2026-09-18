@@ -1,26 +1,19 @@
-// Service Worker para Reportalo MVP (Soporte PWA, Offline y Notificaciones Push)
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { clientsClaim } from 'workbox-core';
 
-const CACHE_NAME = 'reportalo-v2';
+// Limpiar cachés antiguos (incluyendo los manuales anteriores)
+cleanupOutdatedCaches();
+clientsClaim();
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+// Toma el control inmediato sin esperar
+self.skipWaiting();
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => caches.delete(key)))
-    )
-  );
-  self.clients.claim();
-});
+// Pre-cachar el App Shell y los assets inyectados por VitePWA
+precacheAndRoute(self.__WB_MANIFEST || []);
 
-// En desarrollo o peticiones locales, delegar 100% a la red sin interceptar
-self.addEventListener('fetch', (event) => {
-  return;
-});
-
-// Evento de Notificación Push en segundo plano (Web Push API)
+// =========================================================================
+// Evento de Notificación Push en segundo plano (Web Push API) - Mantenido de Fase 0
+// =========================================================================
 self.addEventListener('push', (event) => {
   let payload = {};
   try {
