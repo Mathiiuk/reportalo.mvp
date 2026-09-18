@@ -234,7 +234,7 @@ export const ReportReviewStep = ({
               Descripción
             </div>
             <div className="font-medium text-[11.5px] leading-relaxed text-[#46566B]">
-              {description || 'Camión de gran porte circulando por calle residencial, a las 14:30.'}
+              {description || 'Sin descripción adicional'}
             </div>
           </div>
 
