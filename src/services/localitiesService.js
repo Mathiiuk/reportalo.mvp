@@ -29,6 +29,20 @@ export const getSelectableLocalities = async () => {
     return { success: false, localities: [], error: 'Supabase no está configurado.' };
   }
 
+  // Si estamos offline, bypass de red inmediato para evitar que fetch se quede colgado (timeout largo)
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    console.warn('[Offline Fallback] Sin conexión a internet, leyendo de caché local...');
+    try {
+      const cached = localStorage.getItem('reportalo_localities_cache');
+      if (cached) {
+        return { success: true, localities: JSON.parse(cached) };
+      }
+    } catch (e) {
+      console.warn('[Offline Fallback] Error parseando caché local:', e);
+    }
+    return { success: false, localities: [], error: 'Sin conexión a internet y sin caché disponible.' };
+  }
+
   // Trae las 57 filas con su jerarquía embebida y filtra en JS (R-2): un
   // filtro `.or()` de PostgREST cruzando dos niveles de tabla embebida
   // (subdivisions -> states_provinces) es frágil, y el dataset es chico.
@@ -69,9 +83,13 @@ export const getSelectableLocalities = async () => {
     return { success: true, localities: rows };
   } catch (error) {
     console.warn('[Offline Fallback] Falló Supabase, intentando usar caché local...', error);
-    const cached = localStorage.getItem('reportalo_localities_cache');
-    if (cached) {
-      return { success: true, localities: JSON.parse(cached) };
+    try {
+      const cached = localStorage.getItem('reportalo_localities_cache');
+      if (cached) {
+        return { success: true, localities: JSON.parse(cached) };
+      }
+    } catch (e) {
+      console.warn('[Offline Fallback] Error parseando caché:', e);
     }
     return { success: false, localities: [], error: error.message || 'Error de red sin caché disponible.' };
   }

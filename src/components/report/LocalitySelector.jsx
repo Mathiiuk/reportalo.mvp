@@ -19,14 +19,19 @@ export const LocalitySelector = ({ value, onChange }) => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const result = await getSelectableLocalities();
-      if (cancelled) return;
-      if (!result.success) {
-        setError(result.error ?? 'No se pudieron cargar las localidades.');
-      } else {
-        setLocalities(result.localities);
+      try {
+        const result = await getSelectableLocalities();
+        if (cancelled) return;
+        if (!result.success) {
+          setError(result.error ?? 'No se pudieron cargar las localidades.');
+        } else {
+          setLocalities(result.localities);
+        }
+      } catch (err) {
+        if (!cancelled) setError('Error inesperado al cargar localidades.');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
