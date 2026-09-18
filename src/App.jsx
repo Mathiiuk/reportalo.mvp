@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { AppLoadingScreen } from './components/common/AppLoadingScreen';
+import { PwaUpdater } from './components/common/PwaUpdater';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage').then(m => ({ default: m.WelcomePage })));
@@ -230,6 +231,7 @@ export const App = () => {
       <BrowserRouter>
         <AppRoutes />
         <Toaster richColors position="top-center" closeButton />
+        <PwaUpdater />
       </BrowserRouter>
     </AuthProvider>
   );
