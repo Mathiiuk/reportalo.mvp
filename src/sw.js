@@ -1,6 +1,7 @@
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { StaleWhileRevalidate } from 'workbox-strategies';
 
 // Limpiar cachés antiguos (incluyendo los manuales anteriores)
 cleanupOutdatedCaches();
@@ -28,6 +29,17 @@ try {
 } catch (error) {
   console.warn('[SW] Error configurando fallback de navegación', error);
 }
+
+// =========================================================================
+// Caché de API (Supabase) para funcionamiento Offline de formularios
+// =========================================================================
+// Permite que el selector de "Localidades" siga funcionando sin internet.
+registerRoute(
+  ({ url }) => url.pathname.includes('/rest/v1/localities'),
+  new StaleWhileRevalidate({
+    cacheName: 'supabase-localities-cache',
+  })
+);
 
 
 // =========================================================================
