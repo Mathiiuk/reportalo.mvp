@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, ZoomIn, Check, ArrowRight, Camera, X } from 'lucide-react';
 
 /**
  * Componente principal de previsualización de evidencia anonimizada.
@@ -56,8 +57,8 @@ export const EvidencePreviewScreen = ({
         <div className="flex items-center justify-between py-1 mb-3">
           <div className="flex items-center gap-2">
             {/* Icono de escudo de seguridad en verde */}
-            <span className="w-6 h-6 rounded-full bg-[#10B981]/20 text-[#10B981] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[15px]">
-              verified_user
+            <span className="w-6 h-6 rounded-full bg-[#10B981]/20 text-[#10B981] flex items-center justify-center">
+              <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} />
             </span>
             <span className="font-bold text-[13px] text-white tracking-[-0.2px]">
               Evidencia protegida
@@ -115,9 +116,7 @@ export const EvidencePreviewScreen = ({
 
           {/* Botón flotante para ampliar imagen */}
           <div className="absolute right-3 bottom-3 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-xl text-white/90 text-[11px] font-medium group-hover:bg-black/80 transition-all">
-            <span className="font-['Material_Symbols_Rounded'] text-[15px]">
-              zoom_in
-            </span>
+            <ZoomIn className="w-[15px] h-[15px]" strokeWidth={2.25} />
             <span>Tocar para ampliar</span>
           </div>
         </div>
@@ -163,8 +162,8 @@ export const EvidencePreviewScreen = ({
         <div className="flex flex-col gap-2 mt-3 bg-white/[0.04] p-3 rounded-2xl border border-white/5">
           {/* Comprobación 1: Rostros y patentes protegidos */}
           <div className="flex items-center gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[13px] flex-shrink-0">
-              check
+            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center flex-shrink-0">
+              <Check className="w-[13px] h-[13px]" strokeWidth={2.5} />
             </span>
             <span className="font-semibold text-[11.5px] text-[#D1D9E2]">
               Rostros y patentes de terceros ofuscados
@@ -173,8 +172,8 @@ export const EvidencePreviewScreen = ({
 
           {/* Comprobación 2: Metadatos EXIF eliminados */}
           <div className="flex items-center gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[13px] flex-shrink-0">
-              check
+            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center flex-shrink-0">
+              <Check className="w-[13px] h-[13px]" strokeWidth={2.5} />
             </span>
             <span className="font-semibold text-[11.5px] text-[#D1D9E2]">
               Metadatos del teléfono y GPS crudo descartados
@@ -183,8 +182,8 @@ export const EvidencePreviewScreen = ({
 
           {/* Comprobación 3: Original destruido */}
           <div className="flex items-center gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[13px] flex-shrink-0">
-              check
+            <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center flex-shrink-0">
+              <Check className="w-[13px] h-[13px]" strokeWidth={2.5} />
             </span>
             <span className="font-semibold text-[11.5px] text-[#D1D9E2]">
               La fotografía original fue eliminada del servidor
@@ -204,9 +203,7 @@ export const EvidencePreviewScreen = ({
           >
             <span>{isSubmitting ? 'Enviando…' : 'Confirmar y enviar reporte'}</span>
             {!isSubmitting && (
-              <span className="font-['Material_Symbols_Rounded'] text-[18px]">
-                arrow_forward
-              </span>
+              <ArrowRight className="w-[18px] h-[18px]" strokeWidth={2.25} />
             )}
           </button>
 
@@ -217,9 +214,7 @@ export const EvidencePreviewScreen = ({
             onClick={onRetake}
             className="w-full h-11 bg-white/10 hover:bg-white/15 active:scale-[0.98] transition-all rounded-xl font-semibold text-[13px] text-[#CBD5E1] flex items-center justify-center gap-2"
           >
-            <span className="font-['Material_Symbols_Rounded'] text-[18px]">
-              photo_camera
-            </span>
+            <Camera className="w-[18px] h-[18px]" strokeWidth={2.25} />
             <span>Volver a sacar la foto</span>
           </button>
         </div>
@@ -246,9 +241,7 @@ export const EvidencePreviewScreen = ({
                 onClick={() => setIsZoomOpen(false)}
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all"
               >
-                <span className="font-['Material_Symbols_Rounded'] text-[20px]">
-                  close
-                </span>
+                <X className="w-5 h-5" strokeWidth={2.25} />
               </button>
             </div>
 

@@ -1,0 +1,640 @@
+[
+  {
+    "caso": "A",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "A",
+    "corrida": 2,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "indeterminado",
+    "error": "La cita de \"20000000-0000-4000-8000-000000000003\" no aparece literal en el fragmento.",
+    "citas": [],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": null
+  },
+  {
+    "caso": "A",
+    "corrida": 3,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "A",
+    "corrida": 4,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "A",
+    "corrida": 5,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "B",
+    "corrida": 1,
+    "jurisdiccion": "CABA",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013",
+      "20000000-0000-4000-8000-000000000014"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000014",
+      "20000000-0000-4000-8000-000000000011",
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "confianza": 0.99
+  },
+  {
+    "caso": "B",
+    "corrida": 2,
+    "jurisdiccion": "CABA",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000014",
+      "20000000-0000-4000-8000-000000000011",
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "confianza": 1
+  },
+  {
+    "caso": "B",
+    "corrida": 3,
+    "jurisdiccion": "CABA",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013",
+      "20000000-0000-4000-8000-000000000014"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000014",
+      "20000000-0000-4000-8000-000000000011",
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "confianza": 0.98
+  },
+  {
+    "caso": "B",
+    "corrida": 4,
+    "jurisdiccion": "CABA",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013",
+      "20000000-0000-4000-8000-000000000014"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000014",
+      "20000000-0000-4000-8000-000000000011",
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "confianza": 0.98
+  },
+  {
+    "caso": "B",
+    "corrida": 5,
+    "jurisdiccion": "CABA",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000014",
+      "20000000-0000-4000-8000-000000000011",
+      "20000000-0000-4000-8000-000000000012",
+      "20000000-0000-4000-8000-000000000013"
+    ],
+    "confianza": 0.98
+  },
+  {
+    "caso": "C (control negativo)",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "C (control negativo)",
+    "corrida": 2,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "C (control negativo)",
+    "corrida": 3,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "C (control negativo)",
+    "corrida": 4,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "C (control negativo)",
+    "corrida": 5,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "D-Av",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "D-Av",
+    "corrida": 2,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "D-Av",
+    "corrida": 3,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "D-Av",
+    "corrida": 4,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "D-Av",
+    "corrida": 5,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000002",
+      "20000000-0000-4000-8000-000000000003",
+      "20000000-0000-4000-8000-000000000001"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "D-CABA",
+    "corrida": 1,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "D-CABA",
+    "corrida": 2,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "asistencia",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "confianza": 0.85
+  },
+  {
+    "caso": "D-CABA",
+    "corrida": 3,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "D-CABA",
+    "corrida": 4,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "D-CABA",
+    "corrida": 5,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "asistencia",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000005",
+      "20000000-0000-4000-8000-000000000004"
+    ],
+    "confianza": 0.85
+  },
+  {
+    "caso": "E",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "E",
+    "corrida": 2,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "E",
+    "corrida": 3,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "E",
+    "corrida": 4,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.9
+  },
+  {
+    "caso": "E",
+    "corrida": 5,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.95
+  },
+  {
+    "caso": "F",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "COMERCIO_IRREGULAR",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [],
+    "confianza": 0
+  },
+  {
+    "caso": "F",
+    "corrida": 2,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "COMERCIO_IRREGULAR",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [],
+    "confianza": 0
+  },
+  {
+    "caso": "F",
+    "corrida": 3,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "COMERCIO_IRREGULAR",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [],
+    "confianza": 0
+  },
+  {
+    "caso": "F",
+    "corrida": 4,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "COMERCIO_IRREGULAR",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [],
+    "confianza": 0
+  },
+  {
+    "caso": "F",
+    "corrida": 5,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "COMERCIO_IRREGULAR",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [],
+    "confianza": 0
+  },
+  {
+    "caso": "Prueba 1 (categoría mal elegida)",
+    "corrida": 1,
+    "jurisdiccion": "CABA",
+    "categoria": "INFRAESTRUCTURA",
+    "estado": "sin_normativa",
+    "error": null,
+    "citas": [],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000004",
+      "20000000-0000-4000-8000-000000000005"
+    ],
+    "confianza": 0
+  },
+  {
+    "caso": "Prueba 2 (categoría mal elegida)",
+    "corrida": 1,
+    "jurisdiccion": "Avellaneda",
+    "categoria": "TRANSITO",
+    "estado": "fundamentado",
+    "error": null,
+    "citas": [
+      "20000000-0000-4000-8000-000000000008"
+    ],
+    "recuperados": [
+      "20000000-0000-4000-8000-000000000008",
+      "20000000-0000-4000-8000-000000000007",
+      "20000000-0000-4000-8000-000000000010",
+      "20000000-0000-4000-8000-000000000009"
+    ],
+    "confianza": 0.9
+  }
+]

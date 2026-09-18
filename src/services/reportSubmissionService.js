@@ -105,7 +105,11 @@ export const attachReportEvidence = async ({ reportId, sanitizedUrl }) => {
     return { success: false, error: `Fallo al leer la evidencia sanitizada: ${err.message}` };
   }
 
-  const storagePath = `${reportId}/${crypto.randomUUID()}.jpg`;
+  // Generar UUID seguro (crypto.randomUUID solo disponible en Secure Contexts / HTTPS)
+  const fileId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const storagePath = `${reportId}/${fileId}.jpg`;
   const { error: uploadError } = await supabase.storage
     .from(BUCKET_PUBLIC_EVIDENCES)
     .upload(storagePath, blob, { contentType: 'image/jpeg', upsert: false });

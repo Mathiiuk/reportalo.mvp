@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Panel de prueba — RAG jurídico (REP-2908)</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2f3a;
+    --text: #e6e9ef;
+    --muted: #93a0b4;
+    --accent: #4f8cff;
+    --ok: #35c98b;
+    --warn: #e0a43a;
+    --bad: #e0546a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    padding: 24px;
+  }
+  h1 { font-size: 1.15rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+  .layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 12px 0 4px; }
+  label:first-child { margin-top: 0; }
+  textarea, select, input {
+    width: 100%;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  button {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .examples { margin-top: 14px; }
+  .examples button {
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 400;
+    text-align: left;
+    margin-top: 6px;
+    font-size: 0.78rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .badge.fundamentado { background: rgba(53,201,139,0.15); color: var(--ok); }
+  .badge.indeterminado { background: rgba(224,84,106,0.15); color: var(--bad); }
+  .badge.sin_normativa { background: rgba(224,164,58,0.15); color: var(--warn); }
+  .badge.fuera_de_alcance,.badge.asistencia { background: rgba(79,140,255,0.15); color: var(--accent); }
+  .badge.pendiente { background: #232733; color: var(--muted); }
+  .field { margin-bottom: 14px; }
+  .field-label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .field-value { font-size: 0.92rem; line-height: 1.5; white-space: pre-wrap; }
+  .frag-list { display: flex; flex-direction: column; gap: 6px; }
+  .frag {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+  }
+  .frag.cited { border-color: var(--ok); background: rgba(53,201,139,0.06); }
+  .frag .path { color: var(--muted); font-size: 0.75rem; }
+  .frag .sim { float: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .meta { color: var(--muted); font-size: 0.75rem; margin-top: 10px; }
+  .placeholder { color: var(--muted); font-size: 0.9rem; }
+  .error-box { background: rgba(224,84,106,0.1); border: 1px solid var(--bad); border-radius: 6px; padding: 10px; color: var(--bad); font-size: 0.85rem; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 0.78rem; }
+  pre { background: #0d0f14; border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow: auto; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<h1>Panel de prueba — RAG jurídico</h1>
+<div class="subtitle">REP-2908 · pipeline real (Postgres local + Gemini real) · solo texto por ahora, análisis de imagen pendiente</div>
+
+<div class="layout">
+  <div class="panel">
+    <label for="description">Descripción del reclamo</label>
+    <textarea id="description" placeholder="Ej: Hay una boca de tormenta rota hace semanas en mi cuadra"></textarea>
+
+    <label for="category">Categoría (opcional, se pasa al LLM sin filtrar la búsqueda)</label>
+    <select id="category">
+      <option value="">— sin categoría —</option>
+      <option value="transito">Tránsito</option>
+      <option value="infraestructura">Infraestructura</option>
+      <option value="ambiente">Ambiente</option>
+      <option value="comercio_irregular">Comercio irregular</option>
+      <option value="vulnerabilidad_social">Vulnerabilidad social</option>
+    </select>
+
+    <label for="locality">Localidad</label>
+    <select id="locality"><option>Cargando…</option></select>
+
+    <button id="submit">Analizar reclamo</button>
+
+    <div class="examples">
+      <div class="field-label">Casos de ejemplo (REP-3764)</div>
+      <button type="button" data-q="Hay una boca de tormenta rota hace semanas en mi cuadra" data-loc="Piñeyro">A · Boca de tormenta (Avellaneda)</button>
+      <button type="button" data-q="Un auto está estacionado sobre la rampa para discapacitados de la esquina" data-loc="Retiro">B · Auto en rampa (CABA)</button>
+      <button type="button" data-q="Un auto está estacionado sobre la rampa para discapacitados de la esquina" data-loc="Piñeyro">C · Mismo texto, control negativo (Avellaneda)</button>
+      <button type="button" data-q="No anda la luz de la calle hace tres días" data-loc="Piñeyro">D · Alumbrado (Avellaneda)</button>
+      <button type="button" data-q="No anda la luz de la calle hace tres días" data-loc="Retiro">D · Alumbrado (CABA)</button>
+      <button type="button" data-q="Hay quilombo en la esquina, discuten y frenan el tránsito todos los días" data-loc="Piñeyro">E · Ambiguo / distractor (Avellaneda)</button>
+      <button type="button" data-q="Un puesto vende bebidas en la vereda sin habilitación" data-loc="Piñeyro">F · Sin evidencia (Avellaneda)</button>
+    </div>
+  </div>
+
+  <div class="panel" id="result">
+    <div class="placeholder">Completá el formulario y hacé click en "Analizar reclamo".</div>
+  </div>
+</div>
+
+<script>
+  const localitySelect = document.getElementById('locality');
+  const descriptionEl = document.getElementById('description');
+  const categoryEl = document.getElementById('category');
+  const submitBtn = document.getElementById('submit');
+  const resultEl = document.getElementById('result');
+
+  let localities = [];
+
+  async function loadLocalities() {
+    const res = await fetch('/api/localities');
+    localities = await res.json();
+    localitySelect.innerHTML = localities
+      .map((l) => `<option value="${l.id}">${l.name} — ${l.subdivision}, ${l.province}</option>`)
+      .join('');
+  }
+
+  function selectLocalityByName(name) {
+    const match = localities.find((l) => l.name === name);
+    if (match) localitySelect.value = match.id;
+  }
+
+  document.querySelectorAll('.examples button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      descriptionEl.value = btn.dataset.q;
+      selectLocalityByName(btn.dataset.loc);
+    });
+  });
+
+  function renderFragment(f, citedIds) {
+    const cited = citedIds.has(f.fragment_id);
+    return `<div class="frag ${cited ? 'cited' : ''}">
+      <span class="sim">${(f.similarity ?? 0).toFixed(4)}</span>
+      ${cited ? '✅ ' : ''}${f.hierarchy_path || f.fragment_id}
+      <div class="path">${f.fragment_id}${cited ? ' · citado en el fundamento' : ''}</div>
+    </div>`;
+  }
+
+  function renderResult(result) {
+    const estado = result.estado || 'pendiente';
+    const citedIds = new Set((result.citedFragments || []).map((f) => f.fragment_id));
+    const retrieved = result.retrievedFragments || [];
+
+    let html = `<span class="badge ${estado}">${estado}</span>`;
+
+    if (result.error) {
+      html += `<div class="field"><div class="error-box">${result.error}</div></div>`;
+    }
+
+    if (result.fundamento_ciudadano) {
+      html += `<div class="field"><div class="field-label">Fundamento ciudadano</div><div class="field-value">${result.fundamento_ciudadano}</div></div>`;
+    }
+    if (result.fundamento_oficial) {
+      html += `<div class="field"><div class="field-label">Fundamento oficial</div><div class="field-value">${result.fundamento_oficial}</div></div>`;
+    }
+    if (result.confianza !== undefined) {
+      html += `<div class="field"><div class="field-label">Confianza</div><div class="field-value">${result.confianza}</div></div>`;
+    }
+
+    html += `<div class="field"><div class="field-label">Fragmentos recuperados (${retrieved.length})</div>
+      <div class="frag-list">${retrieved.map((f) => renderFragment(f, citedIds)).join('') || '<span class="placeholder">Ninguno</span>'}</div>
+    </div>`;
+
+    html += `<div class="meta">latencia: ${result.latencyMs ?? '—'} ms
+      ${result.embeddingModelCode ? ` · embedding: ${result.embeddingModelCode}` : ''}
+      ${result.generationModelCode ? ` · generación: ${result.generationModelCode}` : ''}
+      ${result.inputTokens ? ` · tokens in/out: ${result.inputTokens}/${result.outputTokens}` : ''}
+    </div>`;
+
+    html += `<details><summary>Ver JSON completo</summary><pre>${JSON.stringify(result, null, 2)}</pre></details>`;
+
+    resultEl.innerHTML = html;
+  }
+
+  submitBtn.addEventListener('click', async () => {
+    const description = descriptionEl.value.trim();
+    const localityId = localitySelect.value;
+    const category = categoryEl.value;
+
+    if (!description || !localityId) {
+      resultEl.innerHTML = '<div class="error-box">Completá descripción y localidad.</div>';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Analizando… (puede tardar por reintentos de la API)';
+    resultEl.innerHTML = '<div class="placeholder">Analizando…</div>';
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, category, localityId }),
+      });
+      const result = await res.json();
+      renderResult(result);
+    } catch (err) {
+      resultEl.innerHTML = `<div class="error-box">${err.message}</div>`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Analizar reclamo';
+    }
+  });
+
+  loadLocalities();
+</script>
+
+</body>
+</html>
