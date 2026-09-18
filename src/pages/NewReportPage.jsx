@@ -319,40 +319,47 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // adjunta cada evidencia ya sanitizada, y solo avanza a la pantalla de éxito si todo se guardó (AC-05).
   const handleConfirmEvidenceAndPersist = async () => {
     setIsSubmittingReport(true);
-    const { lat, lng } = extractLatLng(activeCoords);
+    try {
+      const { lat, lng } = extractLatLng(activeCoords);
 
-    const creationResult = await createCitizenReport({
-      clientSideId,
-      userId: user?.id,
-      serviceId: selectedCategory?.dbId ?? null,
-      localityId: customLocation?.localityId ?? null,
-      description,
-      latitud: lat,
-      longitud: lng,
-    });
-
-    if (!creationResult.success) {
-      setIsSubmittingReport(false);
-      toast.error('No pudimos enviar tu reporte', {
-        description: creationResult.error || 'Probá de nuevo en unos segundos.',
+      const creationResult = await createCitizenReport({
+        clientSideId,
+        userId: user?.id,
+        serviceId: selectedCategory?.dbId ?? null,
+        localityId: customLocation?.localityId ?? null,
+        description,
+        latitud: lat,
+        longitud: lng,
       });
-      return;
-    }
 
-    const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
-    for (const evidence of evidencesToAttach) {
-      const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
-      if (!sanitizedUrl) continue;
-      // eslint-disable-next-line no-await-in-loop
-      await attachReportEvidence({ reportId: creationResult.data.id, sanitizedUrl });
-    }
+      if (!creationResult.success) {
+        toast.error('No pudimos enviar tu reporte', {
+          description: creationResult.error || 'Probá de nuevo en unos segundos.',
+        });
+        return;
+      }
 
-    setPersistedReport({
-      id: creationResult.data.id,
-      reportCode: `#RP-${creationResult.data.id.slice(0, 8).toUpperCase()}`,
-    });
-    setIsSubmittingReport(false);
-    goToStep(6);
+      const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
+      for (const evidence of evidencesToAttach) {
+        const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
+        if (!sanitizedUrl) continue;
+        // eslint-disable-next-line no-await-in-loop
+        await attachReportEvidence({ reportId: creationResult.data.id, sanitizedUrl });
+      }
+
+      setPersistedReport({
+        id: creationResult.data.id,
+        reportCode: `#RP-${creationResult.data.id.slice(0, 8).toUpperCase()}`,
+      });
+      goToStep(6);
+    } catch (err) {
+      console.error('[handleConfirmEvidenceAndPersist] Error inesperado:', err);
+      toast.error('Error al enviar el reporte', {
+        description: 'Ocurrió un problema inesperado. Probá de nuevo.',
+      });
+    } finally {
+      setIsSubmittingReport(false);
+    }
   };
 
   // Determinar agencia receptora según ubicación
