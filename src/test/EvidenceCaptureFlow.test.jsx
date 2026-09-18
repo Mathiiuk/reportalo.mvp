@@ -268,10 +268,12 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       });
       fireEvent.click(screen.getByRole('button', { name: /continuar al siguiente paso/i }));
 
-      // 2. Paso 2: Continuar a revisión
+      // 2. Paso 2: Llenar descripción (obligatorio) y continuar a revisión
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /^Continuar$/i })).toBeInTheDocument();
       });
+      const textarea = screen.getByRole('textbox');
+      fireEvent.change(textarea, { target: { value: 'Bache enorme en la calle' } });
       fireEvent.click(screen.getByRole('button', { name: /^Continuar$/i }));
 
       // 3. Paso 3: Revisión — como aún no se confirmó la localidad (R-1/R-2), "Enviar reporte" abre el ajuste de ubicación
