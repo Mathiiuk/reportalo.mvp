@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import { AppLoadingScreen } from './components/common/AppLoadingScreen';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { PwaUpdater } from './components/common/PwaUpdater';
 import { getSelectableLocalities } from './services/localitiesService';
 
@@ -102,8 +103,9 @@ const PublicRoute = ({ children }) => {
 
 export const AppRoutes = () => {
   return (
-    <React.Suspense fallback={<AppLoadingScreen message="Cargando..." />}>
-      <Routes>
+    <ErrorBoundary>
+      <React.Suspense fallback={<AppLoadingScreen message="Cargando..." />}>
+        <Routes>
       <Route
         path="/"
         element={
@@ -222,7 +224,8 @@ export const AppRoutes = () => {
       />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </React.Suspense>
+      </React.Suspense>
+    </ErrorBoundary>
   );
 };
 
