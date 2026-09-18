@@ -15,3 +15,4 @@ Thumbs.db
 # nunca se versionan. El backup previo (2026-09-14_pre-deploy-rag) ya habia
 # entrado en un commit antes de esta regla; ver notas de ejecucion.
 supabase/backups/
+.vercel

@@ -49,7 +49,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [customLocation, setCustomLocation] = useState(null);
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
-  const [description, setDescription] = useState('Camión de gran porte circulando por calle residencial, a las 14:30.');
+  const [description, setDescription] = useState('');
   const { coordinates } = useGeolocation({ autoFetch: true });
 
   // Monitoreo de conectividad a internet en tiempo real (REP-2703)
