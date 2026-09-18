@@ -33,6 +33,7 @@ describe('REP-2500: normalizeForSearch (R-5)', () => {
 
 describe('REP-2500: getSelectableLocalities (R-2)', () => {
   beforeEach(() => {
+    localStorage.clear();
     vi.clearAllMocks();
   });
 
@@ -81,3 +82,4 @@ describe('REP-2500: getSelectableLocalities (R-2)', () => {
     expect(result.localities).toEqual([]);
   });
 });
+

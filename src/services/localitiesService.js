@@ -32,39 +32,49 @@ export const getSelectableLocalities = async () => {
   // Trae las 57 filas con su jerarquía embebida y filtra en JS (R-2): un
   // filtro `.or()` de PostgREST cruzando dos niveles de tabla embebida
   // (subdivisions -> states_provinces) es frágil, y el dataset es chico.
-  const { data, error } = await supabase
-    .from('localities')
-    .select('id, name, subdivisions!inner(name, states_provinces!inner(name))');
+  try {
+    const { data, error } = await supabase
+      .from('localities')
+      .select('id, name, subdivisions!inner(name, states_provinces!inner(name))');
 
-  if (error) {
-    return { success: false, localities: [], error: error.message };
+    if (error) throw error;
+
+    const rows = (data ?? [])
+      .map((row) => {
+        const subdivisionName = row.subdivisions?.name;
+        const provinceName = row.subdivisions?.states_provinces?.name;
+        if (!subdivisionName || !provinceName) return null;
+        // R-2: solo CABA completa, y dentro de Buenos Aires solo el partido de Avellaneda.
+        const isCaba = provinceName === 'Ciudad Autónoma de Buenos Aires';
+        const isAvellanedaBA = provinceName === 'Buenos Aires' && subdivisionName === 'Avellaneda';
+        if (!isCaba && !isAvellanedaBA) return null;
+
+        const label = formatLocalityLabel({
+          localityName: row.name,
+          subdivisionName,
+          provinceName,
+        });
+        return {
+          id: row.id,
+          label,
+          searchKey: normalizeForSearch(label),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+    // Guardar en localStorage como fallback infalible para modo Offline
+    localStorage.setItem('reportalo_localities_cache', JSON.stringify(rows));
+
+    return { success: true, localities: rows };
+  } catch (error) {
+    console.warn('[Offline Fallback] Falló Supabase, intentando usar caché local...', error);
+    const cached = localStorage.getItem('reportalo_localities_cache');
+    if (cached) {
+      return { success: true, localities: JSON.parse(cached) };
+    }
+    return { success: false, localities: [], error: error.message || 'Error de red sin caché disponible.' };
   }
-
-  const rows = (data ?? [])
-    .map((row) => {
-      const subdivisionName = row.subdivisions?.name;
-      const provinceName = row.subdivisions?.states_provinces?.name;
-      if (!subdivisionName || !provinceName) return null;
-      // R-2: solo CABA completa, y dentro de Buenos Aires solo el partido de Avellaneda.
-      const isCaba = provinceName === 'Ciudad Autónoma de Buenos Aires';
-      const isAvellanedaBA = provinceName === 'Buenos Aires' && subdivisionName === 'Avellaneda';
-      if (!isCaba && !isAvellanedaBA) return null;
-
-      const label = formatLocalityLabel({
-        localityName: row.name,
-        subdivisionName,
-        provinceName,
-      });
-      return {
-        id: row.id,
-        label,
-        searchKey: normalizeForSearch(label),
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
-
-  return { success: true, localities: rows };
 };
 
 /**
