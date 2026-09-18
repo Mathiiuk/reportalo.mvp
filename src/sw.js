@@ -1,5 +1,6 @@
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
+import { registerRoute, NavigationRoute } from 'workbox-routing';
 
 // Limpiar cachés antiguos (incluyendo los manuales anteriores)
 cleanupOutdatedCaches();
@@ -8,8 +9,26 @@ clientsClaim();
 // Toma el control inmediato sin esperar
 self.skipWaiting();
 
-// Pre-cachar el App Shell y los assets inyectados por VitePWA
 precacheAndRoute(self.__WB_MANIFEST || []);
+
+
+// =========================================================================
+// Fallback de Navegación para SPA (Single Page Application) Offline
+// =========================================================================
+try {
+  // Redirigir todas las peticiones de navegación al index.html precacheado
+  const handler = createHandlerBoundToURL('/index.html');
+  const navigationRoute = new NavigationRoute(handler, {
+    denylist: [
+      /^\/_\//,
+      /\/[^/?]+\.[^/]+$/,
+    ],
+  });
+  registerRoute(navigationRoute);
+} catch (error) {
+  console.warn('[SW] Error configurando fallback de navegación', error);
+}
+
 
 // =========================================================================
 // Evento de Notificación Push en segundo plano (Web Push API) - Mantenido de Fase 0
@@ -57,3 +76,5 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+
