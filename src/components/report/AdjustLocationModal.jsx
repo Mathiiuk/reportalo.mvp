@@ -85,12 +85,26 @@ export const AdjustLocationModal = ({
 
   const addressDetails = resolveAddressDetails(currentCoords);
 
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // Aviso + bloqueo cuando el barrio elegido queda geográficamente lejos del pin actual —
   // ej. pin en Retiro con "Almagro" seleccionado en el desplegable. Los centroides son
   // aproximados (no polígonos oficiales), así que el umbral es generoso a propósito para
   // no bloquear casos legítimos cerca de un límite; el ciudadano sigue eligiendo el barrio
   // a mano (R-1 a R-5), esto solo evita confirmar una combinación obviamente inconsistente.
-  const { isFar: localityLooksFar } = localityId
+  // IMPORTANTE: Si está offline, el mapa no carga las calles (azulejos), por lo que el 
+  // usuario no puede ajustar el pin. En ese caso, desactivamos la restricción de distancia.
+  const { isFar: localityLooksFar } = localityId && isOnline
     ? checkLocalityPinMismatch(currentCoords, localityLabel)
     : { isFar: false };
 

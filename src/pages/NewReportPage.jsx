@@ -128,7 +128,11 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             if (draft.selectedCategory) {
               setSelectedCategory(draft.selectedCategory);
             }
-            if (typeof draft.description === 'string' && draft.description.trim()) {
+            if (
+              typeof draft.description === 'string' &&
+              draft.description.trim() &&
+              !draft.description.includes('Camión de gran porte circulando por calle residencial')
+            ) {
               setDescription(draft.description);
             }
             if (draft.customLocation) {
