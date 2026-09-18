@@ -30,16 +30,7 @@ try {
   console.warn('[SW] Error configurando fallback de navegación', error);
 }
 
-// =========================================================================
-// Caché de API (Supabase) para funcionamiento Offline de formularios
-// =========================================================================
-// Permite que el selector de "Localidades" siga funcionando sin internet.
-registerRoute(
-  ({ url }) => url.pathname.includes('/rest/v1/localities'),
-  new StaleWhileRevalidate({
-    cacheName: 'supabase-localities-cache',
-  })
-);
+// Removed Workbox API route to avoid no-response fetch errors
 
 
 // =========================================================================
@@ -88,5 +79,6 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
 
 
