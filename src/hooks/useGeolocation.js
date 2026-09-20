@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getUserCoordinates,
   getGeolocationPermissionState,
@@ -20,6 +20,15 @@ export const useGeolocation = ({ autoFetch = true } = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Evita actualizar estado si el refinamiento llega después de desmontar.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Consultar estado de permiso y posición
   const fetchLocation = useCallback(async (customOptions = {}) => {
     setIsLoading(true);
@@ -27,9 +36,12 @@ export const useGeolocation = ({ autoFetch = true } = {}) => {
 
     // Consultar estado proactivo de permisos si está disponible
     const perm = await getGeolocationPermissionState();
-    setPermissionState(perm);
+    if (mountedRef.current) setPermissionState(perm);
 
+    // 1ª etapa: fijación rápida y aproximada. Desbloquea la pantalla enseguida.
     const result = await getUserCoordinates(customOptions);
+    if (!mountedRef.current) return result;
+
     setIsLoading(false);
     setStatus(result.status);
     setCoordinates(result.coordinates);
@@ -37,6 +49,24 @@ export const useGeolocation = ({ autoFetch = true } = {}) => {
     if (result.status === LOCATION_STATUS.GRANTED) {
       setAccuracy(result.accuracy ?? null);
       setError(null);
+
+      // 2ª etapa: refinamiento de alta precisión en segundo plano. No bloquea
+      // nada: si llega, mejora las coordenadas; si falla o tarda, la lectura
+      // aproximada ya sirvió. Solo se pide cuando quien llama no fijó la
+      // precisión a mano, para no duplicar pedidos.
+      if (customOptions.enableHighAccuracy === undefined) {
+        getUserCoordinates({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 })
+          .then((fine) => {
+            if (!mountedRef.current) return;
+            if (fine.status === LOCATION_STATUS.GRANTED) {
+              setCoordinates(fine.coordinates);
+              setAccuracy(fine.accuracy ?? null);
+            }
+          })
+          .catch(() => {
+            // El refinamiento es opcional: su fallo no degrada nada.
+          });
+      }
     } else {
       setError(result.error || 'No se pudo obtener la ubicación.');
     }

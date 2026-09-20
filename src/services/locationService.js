@@ -93,10 +93,20 @@ export const getUserCoordinates = (options = {}) => {
       });
     }
 
+    // Por defecto se pide una fijacion RAPIDA y aproximada, no de alta
+    // precision. Motivo: enableHighAccuracy fuerza al dispositivo a buscar un
+    // fijado GPS fino, que en escritorio suele fallar y en movil puede tardar
+    // varios segundos; mientras tanto la pantalla queda esperando y termina
+    // cayendo a DEFAULT_CITY_COORDINATES, que es peor que una lectura
+    // aproximada. Una fijacion por red/wifi alcanza para ubicar la manzana y
+    // llega en menos de un segundo.
+    //
+    // La precision fina no se pierde: useGeolocation pide despues un
+    // refinamiento de alta precision en segundo plano, sin bloquear la vista.
     const defaultOptions = {
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 60000,
+      enableHighAccuracy: false,
+      timeout: 5000,
+      maximumAge: 300000,
       ...options,
     };
 

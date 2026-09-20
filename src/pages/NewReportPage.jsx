@@ -51,6 +51,11 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAdjustLocationModal, setShowAdjustLocationModal] = useState(false);
   const [customLocation, setCustomLocation] = useState(null);
+  // Marca que la localidad la definio el ciudadano (ajuste manual o borrador
+  // restaurado). Mientras sea false, la preseleccion automatica puede refinarse
+  // sola al llegar mejores coordenadas. Es un ref y no estado porque solo
+  // condiciona un efecto: no necesita provocar renders.
+  const hasManualLocationRef = useRef(false);
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
   const [description, setDescription] = useState('');
@@ -143,6 +148,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               setDescription(draft.description);
             }
             if (draft.customLocation) {
+              // Un borrador guardado ya refleja una decision del ciudadano:
+              // la preseleccion automatica no debe reemplazarla.
+              hasManualLocationRef.current = true;
               setCustomLocation(draft.customLocation);
             }
 
@@ -193,12 +201,17 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // sugerencia, no una imposicion: "Ajustar" sigue disponible y el aviso de
   // "detectada automaticamente" invita a corregirla.
   //
-  // No se pisa una eleccion previa: si ya hay customLocation (elegida a mano o
-  // restaurada de un borrador) esta sugerencia no corre. Si el borrador se
-  // restaura despues, su valor explicito reemplaza a la sugerencia, que es lo
-  // correcto.
+  // No se pisa una eleccion del ciudadano: hasManualLocationRef marca que
+  // eligio a mano o que se restauro un borrador, y en ese caso la sugerencia
+  // no vuelve a correr.
+  //
+  // Si en cambio la localidad todavia es una sugerencia, el efecto se re-evalua
+  // cuando llegan coordenadas mejores: useGeolocation entrega primero una
+  // fijacion rapida y aproximada y despues refina con alta precision, asi que
+  // la sugerencia (y las coordenadas que se envian con el reporte) se
+  // actualizan solas al llegar el dato fino.
   useEffect(() => {
-    if (!isLocationGranted || customLocation) return undefined;
+    if (!isLocationGranted || hasManualLocationRef.current) return undefined;
 
     let cancelled = false;
     getSelectableLocalities()
@@ -221,7 +234,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     return () => {
       cancelled = true;
     };
-  }, [isLocationGranted, coordinates, customLocation]);
+    // customLocation NO va en las dependencias a proposito: el efecto la
+    // escribe, asi que incluirla generaria un ciclo. La guarda de eleccion
+    // manual es el ref, que no dispara renders.
+  }, [isLocationGranted, coordinates]);
 
   const activeCoords = customLocation?.coordinates || coordinates;
   const activeAddressLabel = customLocation?.localityLabel || getFriendlyLocationLabel(coordinates);
@@ -631,7 +647,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onClose={() => setShowAdjustLocationModal(false)}
               onConfirm={(adjustedData) => {
                 // Una eleccion manual deja de ser una sugerencia automatica:
-                // se limpia la marca para que no siga mostrandose el aviso.
+                // se limpia la marca para que no siga mostrandose el aviso y
+                // se bloquea la preseleccion para que no la pise despues.
+                hasManualLocationRef.current = true;
                 setCustomLocation({ ...adjustedData, isAutoSuggested: false });
                 setShowAdjustLocationModal(false);
                 toast.success('Ubicación actualizada');

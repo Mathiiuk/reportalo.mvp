@@ -56,3 +56,44 @@ de envío.
 ## Estado
 
 **READY_FOR_PR**, condicionado a la aprobación del punto O-1.
+
+---
+
+## Seguimiento post-merge (20/09) — la preseleccion no llegaba a dispararse
+
+Al validar en la app, la localidad seguia apareciendo en blanco y el paso tardaba
+mucho. El modal mostraba el punto en `(-34.6200, -58.4200)`, que es exactamente
+`DEFAULT_CITY_COORDINATES`: nunca habia llegado una lectura real de GPS.
+
+**La guarda de la tarea funciono como fue disenada** — no se sugirio ningun barrio
+porque `isGranted` era false. Sin ella, se habria propuesto una localidad del centro
+de CABA a un ciudadano que estaba en otro barrio.
+
+### Causa raiz
+
+`getUserCoordinates` pedia `enableHighAccuracy: true` con `timeout: 8000`. La alta
+precision exige un fijado GPS fino que en escritorio suele fallar y en movil puede
+demorar varios segundos; recien al agotarse el timeout se caia al valor de respaldo.
+
+### Correccion
+
+Estrategia de dos etapas:
+
+1. **Fijacion rapida y aproximada** (`enableHighAccuracy: false`, timeout 5s,
+   `maximumAge` 5 min). Una lectura por red/wifi ubica la manzana y llega en menos
+   de un segundo: alcanza de sobra para resolver el barrio.
+2. **Refinamiento de alta precision en segundo plano** desde `useGeolocation`, sin
+   bloquear la vista. Si llega, mejora las coordenadas; si falla, la aproximada ya
+   cumplio su funcion.
+
+Ademas, mientras la localidad siga siendo una sugerencia se re-evalua al llegar
+coordenadas mejores, de modo que el reporte se envia con la precision fina. Una
+eleccion manual del ciudadano nunca se pisa: la protege `hasManualLocationRef`, un
+ref y no estado, para no provocar renders.
+
+### Verificacion
+
+- 242 tests en verde sobre 35 suites, con 8 nuevos de geolocalizacion
+  (`GeolocationSpeed.test.jsx`). Los 14 preexistentes de ubicacion siguen pasando.
+- Build correcto.
+- Validado en la app por Matias: el pin se posiciona solo y el barrio llega elegido.
