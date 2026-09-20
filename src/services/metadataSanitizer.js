@@ -349,3 +349,64 @@ export const sanitizeFileMetadata = async (file) => {
     throw new Error(`Fallo durante la sanitización de metadatos: ${error.message}`);
   }
 };
+
+/**
+ * Hornea la rotación EXIF en los píxeles de la imagen, dejándola derecha sin
+ * depender de metadatos.
+ *
+ * Por qué hace falta: el pipeline de privacidad elimina el segmento APP1 para
+ * borrar las coordenadas GPS (REP-2401), y ahí vive también la etiqueta
+ * Orientation. Una foto sacada con el teléfono en vertical guarda sus píxeles
+ * en horizontal más un "rotá esto 90°" en el EXIF; al quitar el EXIF, esa
+ * instrucción desaparece y la foto queda acostada.
+ *
+ * La solución es rotar los píxeles ANTES de subir: así la imagen ya está
+ * derecha y borrar el EXIF deja de tener consecuencias visuales. De paso, el
+ * re-encodeado por canvas descarta cualquier metadato residual, lo que refuerza
+ * la privacidad en vez de debilitarla.
+ *
+ * Nunca lanza: ante cualquier fallo devuelve el archivo original, de modo que
+ * una foto mal orientada sigue siendo preferible a perder la evidencia.
+ *
+ * @param {Blob|File} file Imagen original capturada
+ * @returns {Promise<Blob|File>} Imagen con la rotación ya aplicada, o la original
+ */
+export const normalizeImageOrientation = async (file) => {
+  if (!file || typeof file.arrayBuffer !== 'function') return file;
+
+  // Sin canvas ni createImageBitmap (jsdom, navegadores viejos) se devuelve tal
+  // cual: el comportamiento degrada al de antes de esta corrección.
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
+    return file;
+  }
+
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const orientation = readExifOrientation(bytes);
+
+    // 1 = ya está derecha. No se re-encodea para no perder calidad al pedo.
+    if (orientation === 1) return file;
+
+    // imageOrientation 'from-image' hace que el navegador aplique la rotación
+    // EXIF al decodificar, devolviendo un bitmap ya derecho y con el alto y el
+    // ancho intercambiados cuando corresponde.
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0);
+    if (typeof bitmap.close === 'function') bitmap.close();
+
+    const rotated = await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92);
+    });
+
+    return rotated || file;
+  } catch (error) {
+    return file;
+  }
+};
