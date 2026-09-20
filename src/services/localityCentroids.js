@@ -2,9 +2,17 @@
  * @file localityCentroids.js
  * @description Coordenadas aproximadas (centroide) de los barrios de CABA y las
  * localidades del partido de Avellaneda habilitados en REP-2500. Son datos públicos
- * y aproximados (no polígonos oficiales) — se usan solo para una advertencia suave de
- * "el pin parece lejos del barrio elegido", nunca para bloquear ni para inferir el barrio
- * automáticamente (esa sigue siendo una decisión manual del ciudadano, ver locationService.js).
+ * y aproximados (no polígonos oficiales).
+ *
+ * Usos permitidos:
+ *   1. Advertencia suave de "el pin parece lejos del barrio elegido".
+ *   2. SUGERIR la localidad más cercana al armar un reporte (REP-2500-PRESEL),
+ *      para que el ciudadano solo tenga que confirmarla en vez de buscarla.
+ *
+ * Lo que sigue prohibido es tomarlos como verdad: por ser aproximados, nunca
+ * bloquean el envío ni reemplazan la decisión del ciudadano, que siempre puede
+ * corregir la localidad sugerida (ver locationService.js y la nota de REP-2500
+ * sobre geocoding real, diferido como tarea aparte).
  *
  * Formato: [lng, lat], igual que las coordenadas que usa MapLibre en el resto del módulo.
  */
@@ -116,6 +124,46 @@ export const distanceInMeters = ([lngA, latA], [lngB, latB]) => {
 // de un límite sin generar falsos positivos constantes, pero sí detecta casos como
 // "pin en Retiro, barrio Almagro" (~5km).
 export const LOCALITY_MISMATCH_THRESHOLD_METERS = 2500;
+
+/**
+ * Distancia máxima para arriesgar una sugerencia de localidad. Si el ciudadano
+ * está más lejos que esto del centroide más cercano, probablemente esté fuera
+ * de CABA/Avellaneda y no se sugiere nada: es preferible que elija a mano antes
+ * que proponerle una jurisdicción que no corresponde.
+ */
+export const NEAREST_LOCALITY_MAX_METERS = 5000;
+
+/**
+ * Busca la localidad habilitada cuyo centroide está más cerca de unas
+ * coordenadas (REP-2500-PRESEL).
+ *
+ * ATENCIÓN: los centroides son aproximados, no polígonos oficiales, así que
+ * esto es una SUGERENCIA para ahorrarle pasos al ciudadano — nunca un
+ * reemplazo de su confirmación. Cerca de un límite entre barrios el resultado
+ * puede no ser el correcto, y el locality_id define qué organismo recibe el
+ * reclamo. Quien llama debe dejar siempre la posibilidad de corregirlo.
+ *
+ * @param {[number, number]} coords [lng, lat] de una lectura real de GPS
+ * @param {Array<{id: string, label: string}>} localities Localidades habilitadas
+ * @returns {{ locality: object, distanceMeters: number }|null}
+ */
+export const findNearestLocality = (coords, localities = []) => {
+  if (!Array.isArray(coords) || coords.length !== 2) return null;
+  if (!Array.isArray(localities) || localities.length === 0) return null;
+
+  let best = null;
+  for (const locality of localities) {
+    const centroid = getLocalityCentroid(locality?.label);
+    if (!centroid) continue;
+    const distanceMeters = distanceInMeters(coords, centroid);
+    if (!best || distanceMeters < best.distanceMeters) {
+      best = { locality, distanceMeters };
+    }
+  }
+
+  if (!best || best.distanceMeters > NEAREST_LOCALITY_MAX_METERS) return null;
+  return best;
+};
 
 /**
  * Indica si el pin está sospechosamente lejos del centroide del barrio elegido.

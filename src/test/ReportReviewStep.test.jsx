@@ -33,6 +33,47 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
     expect(screen.getByText('Enviar')).toBeInTheDocument();
   });
 
+  it('UT-RV-08 (REP-2500-PRESEL): avisa cuando la localidad fue detectada automáticamente', () => {
+    // La sugerencia por centroide es aproximada, asi que tiene que ser visible
+    // y corregible: el locality_id define que organismo recibe el reclamo.
+    render(
+      <ReportReviewStep
+        evidenceList={mockEvidenceList}
+        selectedCategory={mockCategory}
+        description="Auto sobre la vereda"
+        geolocation={{ lat: -34.6187, lng: -58.4436 }}
+        address="Caballito"
+        hasConfirmedLocality
+        isLocalityAutoSuggested
+        onBack={vi.fn()}
+        onSubmitReport={vi.fn()}
+        onOpenAdjustLocation={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('auto-locality-hint')).toBeInTheDocument();
+    expect(screen.queryByTestId('missing-locality-hint')).not.toBeInTheDocument();
+  });
+
+  it('UT-RV-09 (REP-2500-PRESEL): con localidad elegida a mano no muestra el aviso de detección', () => {
+    render(
+      <ReportReviewStep
+        evidenceList={mockEvidenceList}
+        selectedCategory={mockCategory}
+        description="Auto sobre la vereda"
+        geolocation={{ lat: -34.6187, lng: -58.4436 }}
+        address="Caballito"
+        hasConfirmedLocality
+        isLocalityAutoSuggested={false}
+        onBack={vi.fn()}
+        onSubmitReport={vi.fn()}
+        onOpenAdjustLocation={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('auto-locality-hint')).not.toBeInTheDocument();
+  });
+
   it('UT-RV-00: Si no se confirmó la localidad (R-1/R-2), "Enviar reporte" abre el ajuste de ubicación en vez del modal de consentimiento', () => {
     const onOpenAdjustLocationMock = vi.fn();
     const onSubmitMock = vi.fn();

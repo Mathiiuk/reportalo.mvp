@@ -31,6 +31,7 @@ export const ReportReviewStep = ({
   geolocation,
   address,
   hasConfirmedLocality = false,
+  isLocalityAutoSuggested = false,
   hasAcceptedTerms = false,
   isOnline = true,
   draftStatus = 'DRAFT_LOCAL',
@@ -260,6 +261,22 @@ export const ReportReviewStep = ({
               Ajustar
             </button>
           </div>
+
+          {/* REP-2500-PRESEL: la localidad se preselecciono sola. Se avisa de
+              forma explicita para que el ciudadano pueda corregirla: los
+              centroides son aproximados y el locality_id define que organismo
+              recibe el reclamo. */}
+          {hasConfirmedLocality && isLocalityAutoSuggested && (
+            <div
+              data-testid="auto-locality-hint"
+              className="flex items-start gap-1.5 text-[#1E6FCB] bg-[#EEF5FC] border border-[#D4E6F8] rounded-lg px-2.5 py-1.5"
+            >
+              <Info className="w-[13px] h-[13px] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+              <span className="font-semibold text-[10px] leading-snug">
+                Detectamos esta localidad por tu ubicación. Si no es correcta, tocá "Ajustar".
+              </span>
+            </div>
+          )}
 
           {!hasConfirmedLocality && (
             <div
