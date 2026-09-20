@@ -1,0 +1,68 @@
+id: REP-3789
+external_ref: https://unlz2026.atlassian.net/browse/REP-3789
+title: >-
+  Preservar y visualizar en frontend el fundamento juridico del RAG textual
+  (detalle de reporte + Realtime)
+type: feat
+status: IN_PROGRESS
+priority: medium
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/pages/ReportDetailPage.jsx
+    - src/components/report/ReportAiAnalysisPanel.jsx
+    - src/services/reportAiAnalysisService.js
+    - src/hooks/useReportAnalysisLive.js
+  environments:
+    - local
+    - staging
+requirements:
+  - >-
+    Consumir desde el frontend la salida textual actual del backend RAG
+    (REP-2908/2909)
+  - Integrar el panel de fundamento legal ya construido en REP-2909, hoy sin uso
+  - Exponer una ruta de detalle de reporte navegable desde "Mis reportes"
+  - Contemplar estados de carga y procesamiento del analisis asincrono
+  - Representar el caso sin normativa o sin fundamento sin forzar una respuesta
+  - Actualizar en vivo con Supabase Realtime, con polling de respaldo
+  - Mantener trazabilidad entre lo mostrado y lo devuelto por backend
+acceptance_criteria:
+  - 'CA-01: tocar una tarjeta de Mis reportes abre el detalle correspondiente'
+  - 'CA-02: con analisis fundamentado se ve el fundamento y la normativa citada'
+  - 'CA-03: los fragmentos de tipo sancion nunca se muestran al ciudadano'
+  - >-
+    CA-04: con el analisis pendiente se muestra estado de procesamiento
+    explicito
+  - >-
+    CA-05: sin_normativa e indeterminado tienen mensaje propio, sin inventar
+    fundamento
+  - 'CA-06: al persistirse el analisis la pantalla se actualiza sin recargar'
+  - >-
+    CA-07: si Realtime no conecta, el polling de respaldo actualiza y luego
+    corta
+  - 'CA-08: el detalle solo es accesible para el dueno del reporte (RLS)'
+  - 'CA-09: queda registro trazable del analisis mostrado para QA y Sprint Review'
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  # bdd_tests desactivado a proposito: el proyecto no tiene BDD operativo
+  # (@cucumber/cucumber no esta instalado, no existe tests/bdd/steps/ ni el
+  # script test:bdd en package.json). Es una deuda de infraestructura que
+  # afecta a las 8 tareas con .feature generado, no a REP-3789 en particular.
+  # Derivado al PM para que abra el ticket correspondiente.
+  # Los escenarios Gherkin de features/REP-3789.feature quedan como
+  # documentacion viva para QA y Sprint Review.
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd

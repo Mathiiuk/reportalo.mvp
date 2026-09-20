@@ -74,16 +74,41 @@ export const createCitizenReport = async ({
 };
 
 /**
+ * Indica si la URL ya apunta a un objeto del bucket público de evidencias, es
+ * decir, si la Edge Function quarantine-anonymize ya subió ahí la imagen
+ * sanitizada y solo resta registrarla.
+ *
+ * @param {string} url
+ * @returns {boolean}
+ */
+const isAlreadyInPublicBucket = (url) =>
+  typeof url === 'string' &&
+  /^https?:\/\//i.test(url) &&
+  url.includes(`/${BUCKET_PUBLIC_EVIDENCES}/`);
+
+/**
  * Adjunta la evidencia ya sanitizada (nunca la original ni EXIF) al reporte
- * persistido. `sanitizedUrl` puede ser una URL pública real (ya subida a
- * report-evidences por la Edge Function quarantine-anonymize) o una URL local
- * `blob:` (fallback client-side) — las dos son fetch()-ables, así que se
- * re-sube siempre bajo el report_id real para que el path de storage quede
- * organizado de forma consistente.
+ * persistido.
+ *
+ * IMPORTANTE (corregido el 20/09/2026): el cliente NO puede —ni debe— escribir
+ * en el bucket público `report-evidences`. storage.objects no tiene policy de
+ * INSERT para ese bucket, y eso es deliberado: solo la Edge Function, con
+ * service role, deposita ahí imágenes, y es justamente esa restricción la que
+ * garantiza que al bucket público únicamente llegue material ya anonimizado.
+ *
+ * Antes esta función re-descargaba la URL sanitizada y la volvía a subir bajo
+ * otra ruta, lo que producía un 403 ("new row violates row-level security
+ * policy") y dejaba el reporte sin evidencia registrada. Ahora, cuando la
+ * imagen ya está en el bucket público, se registra directamente esa URL.
+ *
+ * El camino de subida se conserva solo para el fallback client-side (`blob:`),
+ * donde no hubo procesamiento server-side. Ese caso hoy también será rechazado
+ * por RLS; queda pendiente de definición en REP-2404 qué hacer con la evidencia
+ * cuando la Edge Function no está disponible.
  *
  * @param {object} params
  * @param {string} params.reportId UUID de citizen_reports.id ya persistido
- * @param {string} params.sanitizedUrl URL (http o blob:) del resultado sanitizado
+ * @param {string} params.sanitizedUrl URL (http del bucket público, o blob:)
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
 export const attachReportEvidence = async ({ reportId, sanitizedUrl }) => {
@@ -92,6 +117,21 @@ export const attachReportEvidence = async ({ reportId, sanitizedUrl }) => {
   }
   if (!reportId || !sanitizedUrl) {
     return { success: false, error: 'Faltan datos para adjuntar la evidencia.' };
+  }
+
+  // Camino normal: la Edge Function ya subió la imagen anonimizada. Solo se
+  // registra la fila, sin volver a mover bytes.
+  if (isAlreadyInPublicBucket(sanitizedUrl)) {
+    const { data, error } = await supabase
+      .from('report_images')
+      .insert({ report_id: reportId, image_url: sanitizedUrl })
+      .select('id, image_url')
+      .single();
+
+    if (error || !data) {
+      return { success: false, error: error?.message ?? 'No se pudo registrar la evidencia.' };
+    }
+    return { success: true, data };
   }
 
   let blob;

@@ -9,6 +9,14 @@
  * Trae el análisis más reciente de un reporte, con su evidencia y la ruta
  * jerárquica de cada fragmento citado (para mostrar "Ley X > Artículo Y").
  *
+ * REP-3789: se agregan los campos de trazabilidad exigidos por el ticket
+ * (modelo de generación y de embeddings, versión de prompt, status_reason) y el
+ * organismo sugerido, que el mockup muestra como "Organismo competente".
+ *
+ * `official_legal_foundation` queda deliberadamente FUERA del select: es el
+ * fundamento dirigido al organismo, no al ciudadano
+ * (docs/REP-1009_RAG_de_punta_a_punta.docx §6). No se expone en esta pantalla.
+ *
  * @param {object} supabaseClient Cliente Supabase (respeta RLS del usuario logueado)
  * @param {string} reportId UUID de citizen_reports.id
  * @returns {Promise<{ analysis: object|null, error: string|null }>}
@@ -23,6 +31,9 @@ export const fetchReportAiAnalysis = async (supabaseClient, reportId) => {
     .select(
       `
       id, result_status_code, citizen_feedback, confidence_score, created_at,
+      generation_model_code, embedding_model_code, prompt_version, status_reason,
+      suggested_agency_id,
+      agencies:suggested_agency_id ( name ),
       report_ai_evidence (
         fragment_id, was_cited, quoted_text,
         knowledge_fragments ( hierarchy_path, foundation_type_code )

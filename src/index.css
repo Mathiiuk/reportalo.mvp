@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Oculta la barra de scroll sin perder el desplazamiento. La clase ya se usaba
+   en ReportsPage (fila de filtros) pero nunca había sido definida, así que no
+   tenía efecto; REP-3789 la define y la reutiliza en el carrusel de evidencia. */
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);

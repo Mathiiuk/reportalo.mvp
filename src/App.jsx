@@ -17,6 +17,7 @@ const PermissionsPage = React.lazy(() => import('./pages/PermissionsPage').then(
 const TermsAndPermissionsPage = React.lazy(() => import('./pages/TermsAndPermissionsPage').then(m => ({ default: m.TermsAndPermissionsPage })));
 const MapPage = React.lazy(() => import('./pages/MapPage').then(m => ({ default: m.MapPage })));
 const ReportsPage = React.lazy(() => import('./pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const ReportDetailPage = React.lazy(() => import('./pages/ReportDetailPage').then(m => ({ default: m.ReportDetailPage })));
 const NewsPage = React.lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const BlankAppPage = React.lazy(() => import('./pages/BlankAppPage').then(m => ({ default: m.BlankAppPage })));
@@ -175,6 +176,15 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* REP-3789: detalle del reporte con el fundamento juridico del RAG */}
+      <Route
+        path="/reportes/:id"
+        element={
+          <ProtectedRoute>
+            <ReportDetailPage />
           </ProtectedRoute>
         }
       />
