@@ -41,16 +41,25 @@ El agente opera asumiendo los roles especializados según la naturaleza de la ta
 
 ## 2. Ciclo de Ejecución de Tareas y Gestión de Ramas
 
+> [!IMPORTANT]
+> **Regla innegociable: NUNCA se commitea ni se pushea directo sobre `staging` ni `main`.**
+> Todo cambio, sin excepción de tamaño ni de tipo, vive en su propia rama. El agente
+> pushea únicamente esa rama; **el Pull Request lo abre Matías a mano desde GitHub**.
+> `staging` es el ambiente que revisan el Sponsor y el PM, así que nada llega ahí sin
+> haber pasado por un PR revisable.
+
 1. **Nuevas Funcionalidades / Módulos (`feat`, `refactor`):**
    - Crear tarea y conmutar a rama dedicada: `agt task:new <ID> -t "Título" --type feat`.
 2. **Correcciones, Fixes de CI/CD y Ajustes Menores (`fix`, `docs`, `chore`):**
-   - **NO crear una rama nueva.** Mantenerse en la rama activa de trabajo (o en `main`/`staging`) y enviar la corrección mediante commits semánticos directos (`git commit -m "fix(...)"` o `agt task:new <ID> -t "..." --no-branch`).
+   - **También van en su propia rama.** Ser pequeño no exime de la regla: `agt task:new <ID> -t "..." --type fix` cuando amerita tarea formal, o una rama simple (`git checkout -b fix/<slug>`) para un ajuste suelto.
+   - Nunca usar `--no-branch` apuntando a `staging` ni a `main`.
 3. **Implementación TDD / BDD:** Escribir pruebas y código comentado en español línea por línea.
 4. **Quality Gates Obligatorios:**
    - `pnpm test` (Unit Tests con Vitest)
    - `pnpm test:bdd` (Escenarios BDD con Cucumber)
    - `agt task:verify <ID>`
-5. **Cierre de Tarea:** Generar `.agents/workflow/executions/<ID>.md`, actualizar estado a `READY_FOR_PR` / `DONE` y commitear con mensaje semántico explicativo.
+5. **Cierre de Tarea:** Generar `.agents/workflow/executions/<ID>.md`, actualizar estado a `READY_FOR_PR` y commitear con mensaje semántico explicativo.
+6. **Entrega:** Pedir autorización para el push, subir **solo la rama de la tarea** y pasarle a Matías el link de *Create pull request*. El agente no abre el PR, no lo mergea y no marca `DONE` por su cuenta: eso lo decide el equipo.
 
 ---
 

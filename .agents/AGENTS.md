@@ -19,6 +19,8 @@ Ruta local principal: `C:\Users\krepc\Documents\Obsidian Vault`
 - **Gestión Estricta de Ramas Git**:
   - Para CADA nueva tarea, feature o bugfix, se DEBE crear y cambiar a una rama específica (`feat/XXX_nombre_tarea`, `fix/XXX_nombre_tarea`, `hotfix/XXX_nombre_tarea`).
   - No reutilizar la misma rama para requerimientos o tareas distintas.
+  - **NUNCA commitear ni pushear directo sobre `staging` ni `main`**, tampoco para un `fix`, `docs` o `chore` pequeño. Sin excepciones de tamaño.
+  - El **PR lo abre Matías a mano desde GitHub**: el asistente sube la rama y entrega el link, nada más. No crea el PR, no lo mergea y no marca la tarea como `DONE`.
 - **Ejecución Autónoma de Quality Gates y Tests**:
   - Los comandos de validación (lint, typecheck, ejecución de tests de backend y frontend, `npm run build`) se ejecutan de manera 100% autónoma e inmediata sin pedir permiso ni confirmación al usuario.
 - **Control de Push a GitHub**:
