@@ -13,7 +13,7 @@ Ruta local principal: `C:\Users\krepc\Documents\Obsidian Vault`
   - `Skill - Spec to Plan.md`
 
 ## 🚀 Flujo de Desarrollo Autónomo (Software Delivery Workflow & Master Workflow)
-- **Uso Obligatorio y Predeterminado**: Aplicar estrictamente `D:\Proyectos\turnar.app\.agents\rules\master-workflow.md` y `software-delivery-workflow` (ubicada en `.agents/skills/software-delivery-workflow/SKILL.md`).
+- **Uso Obligatorio y Predeterminado**: Aplicar estrictamente `D:\Proyectos\reportalo.mvp\.agents\rules\master-workflow.md` y `software-delivery-workflow` (ubicada en `.agents/skills/software-delivery-workflow/SKILL.md`).
 - **No Suposiciones**: Si hay requerimientos abiertos o decisiones de diseño, PREGUNTAR explícitamente y alinear con el usuario.
 - **Sin Código Suelto / No Romper lo Existente**: Mantener 100% de retrocompatibilidad, no tocar código funcional probado sin motivo, y asegurar integración end-to-end completa por fases.
 - **Gestión Estricta de Ramas Git**:

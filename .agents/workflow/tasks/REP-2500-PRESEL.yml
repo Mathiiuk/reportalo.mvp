@@ -2,7 +2,7 @@ id: REP-2500-PRESEL
 external_ref: https://unlz2026.atlassian.net/browse/REP-2500
 title: Preseleccionar la localidad detectada para agilizar el envio del reporte
 type: feat
-status: READY_FOR_PR
+status: MERGED
 priority: medium
 owner: Matias Krepchuk
 base_branch: >-

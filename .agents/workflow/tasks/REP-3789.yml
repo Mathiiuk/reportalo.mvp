@@ -4,7 +4,7 @@ title: >-
   Preservar y visualizar en frontend el fundamento juridico del RAG textual
   (detalle de reporte + Realtime)
 type: feat
-status: READY_FOR_PR
+status: MERGED
 priority: medium
 owner: Matias Krepchuk
 base_branch: staging
