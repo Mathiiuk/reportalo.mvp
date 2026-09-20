@@ -30,6 +30,7 @@ import {
 } from '../services/offlineStorageService';
 // Persistencia real del reporte (REP-2500)
 import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
+import { buildShortCode } from '../services/reportDetailService';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { WifiOff } from 'lucide-react';
@@ -340,16 +341,39 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       }
 
       const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
+      // attachReportEvidence devuelve { success, error } y no lanza. Antes el
+      // resultado se descartaba, asi que un fallo al adjuntar quedaba mudo: el
+      // reporte se enviaba "bien" y la foto simplemente no existia. Fue asi
+      // como paso inadvertido que report_images no tenia policy de INSERT.
+      const failedAttachments = [];
       for (const evidence of evidencesToAttach) {
         const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
         if (!sanitizedUrl) continue;
         // eslint-disable-next-line no-await-in-loop
-        await attachReportEvidence({ reportId: creationResult.data.id, sanitizedUrl });
+        const attachResult = await attachReportEvidence({
+          reportId: creationResult.data.id,
+          sanitizedUrl,
+        });
+        if (!attachResult?.success) {
+          failedAttachments.push(attachResult?.error ?? 'Error desconocido');
+        }
+      }
+
+      if (failedAttachments.length > 0) {
+        // El reporte ya se creo: no se revierte por la evidencia. Pero el
+        // ciudadano tiene que enterarse de que su foto no quedo adjunta.
+        console.error('[handleConfirmEvidenceAndPersist] Evidencia no adjuntada:', failedAttachments);
+        toast.warning('Tu reporte se envió, pero no pudimos adjuntar la foto', {
+          description: 'Vas a poder verlo igual. Avisanos si el problema se repite.',
+        });
       }
 
       setPersistedReport({
         id: creationResult.data.id,
-        reportCode: `#RP-${creationResult.data.id.slice(0, 8).toUpperCase()}`,
+        // Mismo codigo corto que muestra el detalle (REP-3789): antes la
+        // pantalla de exito usaba 8 caracteres y el detalle 4, de modo que el
+        // mismo reporte se identificaba de dos formas distintas.
+        reportCode: buildShortCode(creationResult.data.id),
       });
       goToStep(6);
     } catch (err) {
@@ -534,7 +558,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               agencyName={determinedAgency}
               onViewReport={() => {
                 clearEvidence();
-                navigate('/reportes');
+                // REP-3789: "Ver el reporte" abre el detalle del reporte recien
+                // creado, no el listado. Si por algun motivo no quedo el id
+                // persistido, se cae al listado en vez de romper la navegacion.
+                navigate(persistedReport?.id ? `/reportes/${persistedReport.id}` : '/reportes');
               }}
               onReturnToMap={() => {
                 clearEvidence();

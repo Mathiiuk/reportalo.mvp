@@ -5,13 +5,14 @@ import { motion } from 'framer-motion';
 import { ImagePlus, MapPin } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
+import { getStateMeta } from '../services/reportDetailService';
 
-// Traduce el estado real de la DB a la insignia visual ya existente en el diseño
-const STATE_BADGES = {
-  RESUELTO: { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' },
-  DESCARTADO: { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' },
-};
-const DEFAULT_STATE_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
+// Insignias del listado. El agrupamiento sale de REPORT_STATE_META (fuente
+// única de verdad, REP-3789): antes este archivo mapeaba un código
+// 'DESCARTADO' que no existe en public.report_states — el real es
+// 'DESESTIMADO' — y por eso un reporte desestimado se mostraba como "En curso".
+const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
+const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
 const formatReportDate = (isoDate) => {
   if (!isoDate) return '';
@@ -22,7 +23,7 @@ const formatReportDate = (isoDate) => {
 
 // Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500)
 const mapReportRow = (row) => {
-  const badge = STATE_BADGES[row.current_state_code] || DEFAULT_STATE_BADGE;
+  const badge = getStateMeta(row.current_state_code).isClosed ? CLOSED_BADGE : OPEN_BADGE;
   return {
     id: row.id,
     title: row.description,
@@ -243,6 +244,22 @@ export const ReportsPage = () => {
                 <motion.div
                   key={report.id}
                   whileHover={{ y: -3 }}
+                  /* REP-3789: la tarjeta abre el detalle con el fundamento juridico.
+                     Los reportes demo tienen ids ficticios (REP-101), asi que no
+                     navegan: no existe fila real que mostrar. */
+                  role={isDemoActive ? undefined : 'link'}
+                  tabIndex={isDemoActive ? undefined : 0}
+                  onClick={isDemoActive ? undefined : () => navigate(`/reportes/${report.id}`)}
+                  onKeyDown={
+                    isDemoActive
+                      ? undefined
+                      : (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            navigate(`/reportes/${report.id}`);
+                          }
+                        }
+                  }
                   className="bg-white border border-[#E6ECF3] rounded-[18px] p-5 flex flex-col justify-between gap-3 shadow-xs hover:shadow-md transition-all cursor-pointer"
                 >
                   <div>

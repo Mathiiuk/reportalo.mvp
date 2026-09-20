@@ -131,6 +131,24 @@ describe('REP-2500: attachReportEvidence', () => {
     expect(mockUpload).not.toHaveBeenCalled();
   });
 
+  it('REP-3789: si la imagen ya está en el bucket público, la registra sin volver a subirla', async () => {
+    // La Edge Function ya dejó ahí la imagen anonimizada. Re-subirla desde el
+    // cliente producía un 403 de RLS, porque solo el service role puede
+    // escribir en report-evidences.
+    const publicUrl = 'https://cdn/report-evidences/39f44532/1789936413007_sanitized.jpg';
+    mockSingle.mockResolvedValue({ data: { id: 'img-1', image_url: publicUrl }, error: null });
+
+    const result = await attachReportEvidence({ reportId: 'report-1', sanitizedUrl: publicUrl });
+
+    expect(result.success).toBe(true);
+    expect(mockUpload).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockInsertReportImages).toHaveBeenCalledWith({
+      report_id: 'report-1',
+      image_url: publicUrl,
+    });
+  });
+
   it('falla si Supabase Storage rechaza el upload', async () => {
     global.fetch.mockResolvedValue({ ok: true, blob: () => Promise.resolve(new Blob(['x'])) });
     mockUpload.mockResolvedValue({ error: { message: 'sin permiso' } });

@@ -73,6 +73,25 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
     expect(panel.textContent).toMatch(expectedText);
   });
 
+  it('REP-3789: informa el fallo de lectura en vez de simular que sigue procesando', () => {
+    render(<ReportAiAnalysisPanel analysis={null} error="network error" />);
+    expect(screen.getByTestId('rag-panel-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('rag-panel-pending')).not.toBeInTheDocument();
+  });
+
+  it('REP-3789: si ya hay análisis, un error posterior no tapa el resultado', () => {
+    // El polling puede fallar despues de haber traido el analisis: lo ya
+    // obtenido no debe desaparecer de la pantalla.
+    render(
+      <ReportAiAnalysisPanel
+        analysis={{ result_status_code: 'fundamentado', citizen_feedback: 'Vigente.', report_ai_evidence: [] }}
+        error="network error"
+      />
+    );
+    expect(screen.getByTestId('rag-panel')).toBeInTheDocument();
+    expect(screen.getByText('Vigente.')).toBeInTheDocument();
+  });
+
   it('no rompe si result_status_code no es un valor reconocido', () => {
     const { container } = render(<ReportAiAnalysisPanel analysis={{ result_status_code: 'valor_futuro_desconocido' }} />);
     expect(container.firstChild).toBeNull();
