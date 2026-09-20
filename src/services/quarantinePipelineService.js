@@ -11,10 +11,11 @@ import {
   sanitizeFileMetadata,
   hasExifMetadata,
   stripExifFromJpeg,
+  normalizeImageOrientation,
 } from './metadataSanitizer';
 
 // Reexportamos las funciones para trazabilidad de la suite de pruebas y auditoría de QA
-export { sanitizeFileMetadata, hasExifMetadata, stripExifFromJpeg };
+export { sanitizeFileMetadata, hasExifMetadata, stripExifFromJpeg, normalizeImageOrientation };
 
 // Nombre del bucket de cuarentena temporal y privada
 export const BUCKET_QUARANTINE = 'evidence-quarantine';
@@ -187,8 +188,15 @@ export const processEvidenceThroughQuarantine = async ({
     };
   }
 
+  // 0. Paso previo: dejar la foto derecha ANTES de que nadie le quite el EXIF.
+  // El borrado de APP1 elimina las coordenadas GPS (que es el objetivo) pero
+  // tambien la etiqueta Orientation, asi que una foto vertical terminaba
+  // mostrandose acostada. Rotando los pixeles aca, la imagen queda derecha para
+  // los dos caminos: el server-side de la Edge Function y el fallback local.
+  const uprightFile = await normalizeImageOrientation(file);
+
   // 1. Paso 1: Subida transitoria al bucket privado de cuarentena
-  const uploadResult = await uploadToQuarantine(file, clientSideId);
+  const uploadResult = await uploadToQuarantine(uprightFile, clientSideId);
 
   if (!uploadResult.success) {
     return {
@@ -263,7 +271,9 @@ export const processEvidenceThroughQuarantine = async ({
   // 4. Entorno de desarrollo / Vitest sin backend activo: Emulador determinístico fail-safe
   try {
     // Sanitizamos los metadatos EXIF utilizando el módulo especializado (REP-2401)
-    const { cleanFile: sanitizedBlob } = await sanitizeFileMetadata(file);
+    // uprightFile, no file: el fallback local tambien debe partir de la imagen
+    // ya rotada, o la foto quedaria acostada igual que antes.
+    const { cleanFile: sanitizedBlob } = await sanitizeFileMetadata(uprightFile);
 
     // Auditoría de seguridad fail-safe: verificamos que el Blob limpio no tenga metadatos remanentes
     if (typeof sanitizedBlob.arrayBuffer === 'function') {
