@@ -20,6 +20,9 @@ import {
 } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
+// REP-2500-PRESEL: sugerencia de localidad a partir de la ubicacion real
+import { findNearestLocality } from '../services/localityCentroids';
+import { getSelectableLocalities } from '../services/localitiesService';
 // Servicios de persistencia local en IndexedDB para modo offline (REP-2703)
 import {
   saveDraftReport,
@@ -51,7 +54,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
   const [description, setDescription] = useState('');
-  const { coordinates } = useGeolocation({ autoFetch: true });
+  // isGranted distingue una lectura real de GPS del valor por defecto
+  // (DEFAULT_CITY_COORDINATES): sugerir una localidad a partir del respaldo
+  // seria inferir jurisdiccion desde una ubicacion inventada.
+  const { coordinates, isGranted: isLocationGranted } = useGeolocation({ autoFetch: true });
 
   // Monitoreo de conectividad a internet en tiempo real (REP-2703)
   const { isOnline } = useNetworkStatus();
@@ -182,6 +188,41 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   const activeList = evidenceList.length > 0 ? evidenceList : initialEvidenceList;
   const userHasAccepted = hasAcceptedCurrentTerms(user?.id);
+  // REP-2500-PRESEL: preselecciona la localidad mas cercana a la ubicacion real
+  // del dispositivo, para que el ciudadano solo tenga que confirmarla. Es una
+  // sugerencia, no una imposicion: "Ajustar" sigue disponible y el aviso de
+  // "detectada automaticamente" invita a corregirla.
+  //
+  // No se pisa una eleccion previa: si ya hay customLocation (elegida a mano o
+  // restaurada de un borrador) esta sugerencia no corre. Si el borrador se
+  // restaura despues, su valor explicito reemplaza a la sugerencia, que es lo
+  // correcto.
+  useEffect(() => {
+    if (!isLocationGranted || customLocation) return undefined;
+
+    let cancelled = false;
+    getSelectableLocalities()
+      .then(({ success, localities }) => {
+        if (cancelled || !success) return;
+        const nearest = findNearestLocality(coordinates, localities);
+        if (!nearest) return; // fuera de CABA/Avellaneda: que elija a mano
+        setCustomLocation({
+          coordinates,
+          localityId: nearest.locality.id,
+          localityLabel: nearest.locality.label,
+          isAutoSuggested: true,
+        });
+      })
+      .catch(() => {
+        // Sin localidades disponibles (offline sin cache) el flujo sigue igual:
+        // el ciudadano confirma a mano, como antes de esta mejora.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLocationGranted, coordinates, customLocation]);
+
   const activeCoords = customLocation?.coordinates || coordinates;
   const activeAddressLabel = customLocation?.localityLabel || getFriendlyLocationLabel(coordinates);
 
@@ -479,6 +520,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               geolocation={activeCoords}
               address={activeAddressLabel}
               hasConfirmedLocality={Boolean(customLocation?.localityId)}
+              isLocalityAutoSuggested={Boolean(customLocation?.isAutoSuggested)}
               hasAcceptedTerms={userHasAccepted}
               isOnline={isOnline}
               draftStatus={draftStatus}
@@ -588,7 +630,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               initialLocalityId={customLocation?.localityId}
               onClose={() => setShowAdjustLocationModal(false)}
               onConfirm={(adjustedData) => {
-                setCustomLocation(adjustedData);
+                // Una eleccion manual deja de ser una sugerencia automatica:
+                // se limpia la marca para que no siga mostrandose el aviso.
+                setCustomLocation({ ...adjustedData, isAutoSuggested: false });
                 setShowAdjustLocationModal(false);
                 toast.success('Ubicación actualizada');
               }}

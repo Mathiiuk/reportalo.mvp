@@ -4,7 +4,7 @@ title: >-
   Preservar y visualizar en frontend el fundamento juridico del RAG textual
   (detalle de reporte + Realtime)
 type: feat
-status: IN_PROGRESS
+status: READY_FOR_PR
 priority: medium
 owner: Matias Krepchuk
 base_branch: staging
@@ -49,13 +49,6 @@ quality_gates:
   lint: false
   typecheck: false
   unit_tests: true
-  # bdd_tests desactivado a proposito: el proyecto no tiene BDD operativo
-  # (@cucumber/cucumber no esta instalado, no existe tests/bdd/steps/ ni el
-  # script test:bdd en package.json). Es una deuda de infraestructura que
-  # afecta a las 8 tareas con .feature generado, no a REP-3789 en particular.
-  # Derivado al PM para que abra el ticket correspondiente.
-  # Los escenarios Gherkin de features/REP-3789.feature quedan como
-  # documentacion viva para QA y Sprint Review.
   bdd_tests: false
   integration_tests: false
   e2e: false
