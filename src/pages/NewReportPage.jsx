@@ -28,7 +28,7 @@ import {
   DRAFT_STATUS,
 } from '../services/offlineStorageService';
 // Persistencia real del reporte (REP-2500)
-import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
+import { createCitizenReport, attachReportEvidence, isServerProtectedUrl } from '../services/reportSubmissionService';
 import { formatReportCode } from '../components/report/reportStatus';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -421,10 +421,20 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // reporte se enviaba "bien" y la foto simplemente no existia. Fue asi
       // como paso inadvertido que report_images no tenia policy de INSERT.
       const failedAttachments = [];
+      const unprotectedEvidences = [];
       for (const evidence of evidencesToAttach) {
         // H-25 (REP-3791 Bloque 4): nunca se usa previewUrl (la foto original sin difuminar) como respaldo
         const sanitizedUrl = evidence.sanitizedUrl;
         if (!sanitizedUrl) continue;
+        // H-30: misma regla de privacidad que aplica la cola offline
+        // (pendingSyncService.isServerUrl). El pipeline tiene un camino "emulador"
+        // que solo limpia EXIF, no difumina, y devuelve exito con una URL blob:
+        // local. Esa foto NO paso por el difuminado del servidor, asi que no se
+        // adjunta: attachReportEvidence la subiria al bucket publico.
+        if (!isServerProtectedUrl(sanitizedUrl)) {
+          unprotectedEvidences.push(sanitizedUrl);
+          continue;
+        }
         // eslint-disable-next-line no-await-in-loop
         const attachResult = await attachReportEvidence({
           reportId: creationResult.data.id,
@@ -433,6 +443,18 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         if (!attachResult?.success) {
           failedAttachments.push(attachResult?.error ?? 'Error desconocido');
         }
+      }
+
+      if (unprotectedEvidences.length > 0) {
+        // El ciudadano tiene que saber que su foto no viajo, y por que. Callarlo
+        // seria peor: creeria que adjunto evidencia que en realidad no existe.
+        console.error(
+          '[handleConfirmEvidenceAndPersist] Evidencia sin proteccion del servidor, no adjuntada:',
+          unprotectedEvidences.length
+        );
+        toast.warning('Tu reporte se envió, pero la foto no se pudo proteger', {
+          description: 'Para cuidar tu privacidad no la adjuntamos. Probá de nuevo más tarde.',
+        });
       }
 
       if (failedAttachments.length > 0) {

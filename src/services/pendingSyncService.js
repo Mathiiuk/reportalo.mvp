@@ -11,9 +11,11 @@
  */
 import { getAllPendingSyncReports, deleteDraftReport } from './offlineStorageService';
 import { processAllEvidencesThroughQuarantine } from './quarantinePipelineService';
-import { createCitizenReport, attachReportEvidence } from './reportSubmissionService';
+import { createCitizenReport, attachReportEvidence, isServerProtectedUrl } from './reportSubmissionService';
 
-const isServerUrl = (url) => /^https?:\/\//i.test(String(url ?? ''));
+// La regla de privacidad vive en reportSubmissionService: una sola definición
+// para las dos vías de envío, la de la cola y la del envío con conexión (H-30).
+const isServerUrl = isServerProtectedUrl;
 
 const extractLatLng = (coords) => {
   if (Array.isArray(coords)) return { lng: coords[0], lat: coords[1] };

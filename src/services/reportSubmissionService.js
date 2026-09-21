@@ -87,6 +87,25 @@ const isAlreadyInPublicBucket = (url) =>
   url.includes(`/${BUCKET_PUBLIC_EVIDENCES}/`);
 
 /**
+ * Regla de privacidad unica para decidir si una evidencia se puede adjuntar (H-30).
+ *
+ * El pipeline de cuarentena tiene un camino "emulador" que se activa cuando
+ * uploadToQuarantine devuelve isFallback, cuando shouldInvokeSupabaseBackend() es
+ * falso, o en DEV si falla la Edge Function. Ese camino SOLO limpia el EXIF: no
+ * difumina nada, informa 2 zonas ficticias y devuelve exito con una URL blob:
+ * local. Adjuntar esa foto significa subir al bucket publico una imagen sin
+ * difuminar, con caras y patentes de gente real.
+ *
+ * Una URL http(s) solo puede haberla generado el servidor, asi que es la senal de
+ * que la foto si paso por el difuminado. La usan las dos vias de envio: el envio
+ * con conexion (NewReportPage) y la cola offline (pendingSyncService).
+ *
+ * @param {string} url URL de la evidencia ya procesada
+ * @returns {boolean} true si la protegio el servidor y se puede adjuntar
+ */
+export const isServerProtectedUrl = (url) => /^https?:\/\//i.test(String(url ?? ''));
+
+/**
  * Adjunta la evidencia ya sanitizada (nunca la original ni EXIF) al reporte
  * persistido.
  *

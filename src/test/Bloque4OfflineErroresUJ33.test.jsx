@@ -48,7 +48,12 @@ vi.mock('../services/offlineStorageService', () => ({
   getActiveDraftReport: vi.fn().mockResolvedValue({ client_side_id: 'draft-1' }),
 }));
 vi.mock('../services/quarantinePipelineService', () => ({ processAllEvidencesThroughQuarantine: vi.fn() }));
-vi.mock('../services/reportSubmissionService', () => ({ createCitizenReport: vi.fn(), attachReportEvidence: vi.fn() }));
+// Solo se mockea el I/O. isServerProtectedUrl se deja real: es la regla de
+// privacidad de H-30 y justamente parte de lo que estos tests verifican.
+vi.mock('../services/reportSubmissionService', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, createCitizenReport: vi.fn(), attachReportEvidence: vi.fn() };
+});
 vi.mock('../hooks/useAuth', () => ({ useAuth: vi.fn() }));
 
 import { getAllPendingSyncReports, deleteDraftReport } from '../services/offlineStorageService';
