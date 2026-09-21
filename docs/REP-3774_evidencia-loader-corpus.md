@@ -94,27 +94,53 @@ vecino una norma ajena. El loader por eso:
 
 Queda cubierto por los tests UT-CRP-17 y UT-CRP-18.
 
-## Qué falta para cerrar, y por qué
+## Corrida contra Supabase real (CiudadAR)
 
-La corrida contra Supabase real —subida del snapshot al bucket y generación de
-embeddings— **no se ejecutó**. Necesita `SUPABASE_SERVICE_ROLE_KEY`, que no está
-en `.env` ni debe estarlo, y que no manejo yo.
+La migración `20260920210000` se aplicó al proyecto CiudadAR el 20/09/2026.
+Verificado después de aplicarla: bucket `corpus-fuentes` con `public = false`,
+y los dos RPC ejecutables por `service_role` y **no** por `anon` ni
+`authenticated`. Los advisors de seguridad no reportaron nada nuevo: las
+funciones son `SECURITY INVOKER`, así que no aparecen entre las que puede
+invocar el navegador.
 
-Lo que quedó verificado sin esa clave es la lógica de carga y versionado, que es
-la parte con riesgo. Lo que falta es mecánico:
+Después Matías corrió el loader con la clave de servicio en su terminal:
 
-```bash
-# con SUPABASE_SERVICE_ROLE_KEY exportada en la shell
-node scripts/corpus-loader/load-corpus.mjs corpus/normativas/ley_210_caba_ente_regulador.md --dry-run
-node scripts/corpus-loader/load-corpus.mjs corpus/normativas/ley_210_caba_ente_regulador.md
+```
+$ node scripts/corpus-loader/load-corpus.mjs corpus/normativas/ley_210_caba_ente_regulador.md --dry-run
+    [dry-run] ambito: {"state_province_id":"eea2d197-f1b7-40e8-826e-b0c6233c935e"}
+    [dry-run] snapshot: corpus-fuentes/ley/ley_210_caba_ente_regulador/2026-09-07--91f9b48cb367.md
+    3 fragmento(s) validados
+
+$ node scripts/corpus-loader/load-corpus.mjs corpus/normativas/ley_210_caba_ente_regulador.md
+    snapshot -> corpus-fuentes/ley/ley_210_caba_ente_regulador/2026-09-07--91f9b48cb367.md
+    fuente updated: 10000000-0000-4000-8000-000000000003
+    fragmento art. 2 inc. b: unchanged
+    fragmento art. 2 inc. c: unchanged
+    fragmento art. 3 inc. j: unchanged
+    → 0 nuevo(s), 0 versionado(s), 3 sin cambios, 0 embedding(s)
 ```
 
-Contra el corpus actual eso tiene que dar `updated` en la fuente y `unchanged`
-en los tres fragmentos: no toca el texto de ninguna norma ya verificada, sólo
-escribe el snapshot en el bucket y deja la ruta en `snapshot_path`.
+Estado antes y después, medido contra la base:
 
-Orden sugerido: aplicar primero la migración `20260920210000` (crea el bucket),
-después la corrida con `--dry-run`, y recién entonces la real.
+| | Antes | Después |
+|---|---|---|
+| Fuentes / fragmentos / vigentes | 8 / 17 / 16 | 8 / 17 / 16 |
+| Embeddings | 17 | 17 |
+| Snapshots en `corpus-fuentes` | 0 | 1 |
+| `snapshot_path` de la Ley 210 | `null` | `ley/ley_210_caba_ente_regulador/2026-09-07--91f9b48cb367.md` |
+
+El snapshot pesa 2156 bytes y su SHA-256 empieza en `91f9b48cb367`, idénticos a
+los del archivo en el repo: el objeto guardado es exactamente el `.md` que se
+cargó, que es lo que permite auditar después contra qué texto se generó cada
+fragmento.
+
+Los cero embeddings son el comportamiento buscado: los tres fragmentos ya tenían
+vector y el texto no cambió, así que no se gastó ninguna llamada a Gemini.
+
+Con esto quedan cubiertos los cuatro criterios de cierre del ticket: carga
+reproducible desde `.md`, snapshot en bucket privado, alimentación de las
+estructuras existentes conservando trazabilidad, y evidencia de una ejecución
+exitosa.
 
 ## Nota sobre el corpus
 
