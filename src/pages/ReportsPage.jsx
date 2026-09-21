@@ -5,12 +5,14 @@ import { motion } from 'framer-motion';
 import { ImagePlus, MapPin } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
-import { getStateMeta } from '../services/reportDetailService';
+import { isClosedState } from '../components/report/reportStatus';
 
-// Insignias del listado. El agrupamiento sale de REPORT_STATE_META (fuente
-// única de verdad, REP-3789): antes este archivo mapeaba un código
-// 'DESCARTADO' que no existe en public.report_states — el real es
-// 'DESESTIMADO' — y por eso un reporte desestimado se mostraba como "En curso".
+// Insignias del listado. El agrupamiento sale de reportStatus (fuente única de
+// verdad, REP-3791 Bloque 3). Antes salía de REPORT_STATE_META, cuyos códigos
+// ('RESUELTO', 'DESESTIMADO') no existen en public.report_states: el catálogo
+// real es borrador / enviado / en_curso / resuelto / rechazado, y
+// current_state_code tiene FK contra él. Con los códigos viejos la comparación
+// nunca acertaba y todo reporte cerrado se mostraba como "En curso" (H-23).
 const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
@@ -23,7 +25,7 @@ const formatReportDate = (isoDate) => {
 
 // Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500)
 const mapReportRow = (row) => {
-  const badge = getStateMeta(row.current_state_code).isClosed ? CLOSED_BADGE : OPEN_BADGE;
+  const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
   return {
     id: row.id,
     title: row.description,

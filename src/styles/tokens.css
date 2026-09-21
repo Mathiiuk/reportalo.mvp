@@ -49,6 +49,8 @@
   --rep-warning-ink: 138 106 62;      /* [mock] Texto sobre alerta suave #8A6A3E */
   --rep-danger: 192 57 43;            /* [§10]  Error / descartado       #C0392B */
   --rep-danger-soft: 253 236 234;     /* [mock]                          #FDECEA */
+  --rep-notice: 124 92 214;           /* [§10]  Estado «Notificado» (violeta) #7C5CD6 — Bloque 3 */
+  --rep-notice-soft: 244 240 253;     /* [mock]                          #F4F0FD */
 
   /* Visor de cámara: oscuro en los dos temas (M09 / D10) */
   --rep-camera: 14 17 22;             /* [mock]                          #0E1116 */
@@ -102,6 +104,8 @@
   --rep-warning-ink: 226 186 124;     /* #E2BA7C */
   --rep-danger: 242 104 93;           /* #F2685D */
   --rep-danger-soft: 52 27 24;        /* #341B18 */
+  --rep-notice: 172 144 242;          /* #AC90F2 */
+  --rep-notice-soft: 42 37 64;        /* #2A2540 */
 
   --rep-camera: 22 25 31;             /* #16191F */
   --rep-camera-accent: 247 142 53;    /* #F78E35 */

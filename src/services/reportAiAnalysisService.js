@@ -7,7 +7,8 @@
 
 /**
  * Trae el análisis más reciente de un reporte, con su evidencia y la ruta
- * jerárquica de cada fragmento citado (para mostrar "Ley X > Artículo Y").
+ * jerárquica de cada fragmento citado (para mostrar "Ley X > Artículo Y") y el nombre del
+ * organismo sugerido (`agencies.name`, vía suggested_agency_id — UJ v3.3 M16 «Organismo competente»).
  *
  * REP-3789: se agregan los campos de trazabilidad exigidos por el ticket
  * (modelo de generación y de embeddings, versión de prompt, status_reason) y el

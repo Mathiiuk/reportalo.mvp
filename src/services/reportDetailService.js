@@ -95,107 +95,31 @@ export const getReportStateHistory = async (reportId) => {
 
   return { success: true, history: data ?? [] };
 };
-
-/**
- * Fuente única de verdad de los estados de un reporte (REP-3789).
+/*
+ * NOTA DE MIGRACIÓN (REP-3791 Bloque 3, 21/09/2026)
  *
- * Los códigos son los de public.report_states en producción (verificado el
- * 20/09/2026); las etiquetas, las aprobadas en el mockup del User Journey v3.2.
+ * Acá vivían REPORT_STATE_META, getStateMeta, TIMELINE_LABELS, buildTimeline y
+ * buildShortCode, agregados por REP-3789. Se retiraron porque sus códigos de
+ * estado ('RECIBIDO', 'EN_ANALISIS', 'DERIVADO', 'RESUELTO', 'DESESTIMADO') no
+ * existen en public.report_states, cuyo catálogo real es:
  *
- * Existía un mapeo por pantalla y eso ya había divergido: ReportsPage esperaba
- * un código 'DESCARTADO' que no existe en la base, de modo que un reporte
- * desestimado se mostraba como "En curso" en la lista y como "Desestimado" en
- * el detalle. Centralizarlo evita que vuelva a pasar.
+ *   borrador · enviado · en_curso · resuelto · rechazado
  *
- *   badge    -> insignia del encabezado del detalle
- *   step     -> paso en la línea de tiempo
- *   isClosed -> si el reporte ya terminó su recorrido (agrupa la lista)
+ * y citizen_reports.current_state_code tiene FK contra esa tabla, así que esos
+ * códigos no pueden aparecer nunca en un reporte real. La consecuencia era que
+ * getStateMeta siempre caía al valor por defecto: la píldora mostraba "EN CURSO"
+ * para todos los reportes, incluidos resueltos y rechazados, y la línea de
+ * tiempo no marcaba bien los pasos alcanzados.
+ *
+ * El origen del desvío es el seed de demostración
+ * 20260915160000_v04_seed_demo_profiles_and_reports.sql, que inserta códigos en
+ * mayúscula en report_state_history, tabla que no tiene FK. Conviene alinear ese
+ * seed también.
+ *
+ * La taxonomía vigente es src/components/report/reportStatus.js, que sigue el
+ * §10 del UJ v3.3 y traduce los códigos de la base (en_curso -> en_revision,
+ * rechazado -> descartado). El formato del número de reporte pasó a
+ * formatReportCode (8 caracteres), como pide el UJ.
+ *
+ * Definir el modelo definitivo de estados es la observación H-23, a cargo del PO.
  */
-export const REPORT_STATE_META = {
-  RECIBIDO: { badge: 'RECIBIDO', step: 'Enviado', isClosed: false },
-  EN_ANALISIS: { badge: 'EN REVISIÓN', step: 'En revisión', isClosed: false },
-  DERIVADO: { badge: 'DERIVADO', step: 'Notificado al responsable', isClosed: false },
-  RESUELTO: { badge: 'RESUELTO', step: 'Resuelto', isClosed: true },
-  DESESTIMADO: { badge: 'DESESTIMADO', step: 'Desestimado', isClosed: true },
-};
-
-/** Un estado desconocido nunca se asume cerrado: se muestra como en curso. */
-export const getStateMeta = (code) =>
-  REPORT_STATE_META[code] ?? { badge: 'EN CURSO', step: code ?? 'Sin estado', isClosed: false };
-
-/** Etiquetas de la línea de tiempo, derivadas del mapa central. */
-export const TIMELINE_LABELS = Object.fromEntries(
-  Object.entries(REPORT_STATE_META).map(([code, meta]) => [code, meta.step])
-);
-
-const HAPPY_PATH = ['RECIBIDO', 'EN_ANALISIS', 'DERIVADO', 'RESUELTO'];
-const REJECTED_PATH = ['RECIBIDO', 'EN_ANALISIS', 'DESESTIMADO'];
-
-/**
- * Arma los pasos de la línea de tiempo combinando el historial real con el
- * estado actual del reporte. Función pura: se prueba sin base de datos.
- *
- * Por qué no basta el historial: hoy la mayoría de los reportes en producción no
- * tiene ninguna fila en report_state_history (solo 18 filas para 65 reportes).
- * Para esos casos el primer paso se deriva de created_at del reporte, y los
- * alcanzados se infieren de la posición de current_state_code en el recorrido.
- * Así la pantalla nunca queda vacía ni inventa fechas.
- *
- * @param {object} params
- * @param {Array<object>} [params.history] Filas de report_state_history
- * @param {string} params.currentStateCode Estado actual del reporte
- * @param {string} [params.createdAt] created_at del reporte (respaldo del primer paso)
- * @returns {Array<{code: string, label: string, reached: boolean, at: string|null, notes: string|null, isCurrent: boolean}>}
- */
-export const buildTimeline = ({ history = [], currentStateCode, createdAt = null }) => {
-  const rows = Array.isArray(history) ? history : [];
-
-  // Último cambio registrado por estado (si hubiera repetidos, gana el más reciente).
-  const byCode = new Map();
-  for (const row of rows) {
-    if (!row?.state_code) continue;
-    const previous = byCode.get(row.state_code);
-    if (!previous || new Date(row.changed_at) >= new Date(previous.changed_at)) {
-      byCode.set(row.state_code, row);
-    }
-  }
-
-  const isRejected = currentStateCode === 'DESESTIMADO' || byCode.has('DESESTIMADO');
-  const path = isRejected ? REJECTED_PATH : HAPPY_PATH;
-
-  const currentIndex = path.indexOf(currentStateCode);
-
-  return path.map((code, index) => {
-    const row = byCode.get(code) || null;
-    // Alcanzado si hay registro explícito o si el estado actual ya lo dejó atrás.
-    const reached = Boolean(row) || (currentIndex >= 0 && index <= currentIndex);
-
-    let at = row?.changed_at ?? null;
-    if (!at && code === 'RECIBIDO' && reached) {
-      at = createdAt; // el envío del reporte es su propia marca temporal
-    }
-
-    return {
-      code,
-      label: TIMELINE_LABELS[code] ?? code,
-      reached,
-      at,
-      notes: row?.notes ?? null,
-      isCurrent: code === currentStateCode,
-    };
-  });
-};
-
-/**
- * Código corto y estable para mostrar en el encabezado (el mockup usa "#RP-2048").
- * Se deriva del UUID real, no de un contador: no hay columna de número
- * correlativo en citizen_reports y no se inventa una acá.
- *
- * @param {string} reportId UUID
- * @returns {string} Por ejemplo "#RP-3F2A"
- */
-export const buildShortCode = (reportId) => {
-  if (!reportId || typeof reportId !== 'string') return '#RP-----';
-  const compact = reportId.replace(/-/g, '').toUpperCase();
-  return `#RP-${compact.slice(0, 4)}`;
-};

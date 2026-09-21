@@ -55,6 +55,8 @@ export default {
           'warning-ink': token('rep-warning-ink'),
           danger: token('rep-danger'),
           'danger-soft': token('rep-danger-soft'),
+          notice: token('rep-notice'),
+          'notice-soft': token('rep-notice-soft'),
           camera: token('rep-camera'),
           'camera-accent': token('rep-camera-accent'),
           'camera-ink-muted': token('rep-camera-ink-muted'),

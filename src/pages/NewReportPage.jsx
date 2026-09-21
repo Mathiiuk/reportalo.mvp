@@ -29,7 +29,7 @@ import {
 } from '../services/offlineStorageService';
 // Persistencia real del reporte (REP-2500)
 import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
-import { buildShortCode } from '../services/reportDetailService';
+import { formatReportCode } from '../components/report/reportStatus';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { WifiOff } from 'lucide-react';
@@ -436,7 +436,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         // Mismo codigo corto que muestra el detalle (REP-3789): antes la
         // pantalla de exito usaba 8 caracteres y el detalle 4, de modo que el
         // mismo reporte se identificaba de dos formas distintas.
-        reportCode: buildShortCode(creationResult.data.id),
+        reportCode: formatReportCode(creationResult.data.id),
       });
       goToStep(6);
     } catch (err) {
