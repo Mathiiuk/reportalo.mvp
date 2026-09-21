@@ -32,9 +32,9 @@ const baseReport = {
   id: REPORT_ID,
   user_id: OWNER_ID,
   description: 'Camión de gran porte estacionado sobre la rampa.',
-  // Codigo real de public.report_states. Antes decia 'EN_ANALISIS', que no existe
-  // en el catalogo y por eso la prueba no reflejaba produccion (H-23).
-  current_state_code: 'en_curso',
+  // Codigo real de produccion (verificado contra la base el 21/09/2026).
+  // El catalogo real es RECIBIDO / EN_ANALISIS / DERIVADO / RESUELTO / DESESTIMADO.
+  current_state_code: 'EN_ANALISIS',
   created_at: '2026-08-14T14:32:00Z',
   services: { service_name: 'Tránsito' },
   localities: { name: 'Avellaneda' },
@@ -148,18 +148,18 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
   });
 
   it('UT-DET-07: expone el estado real del reporte según report_states de producción', async () => {
-    // El catálogo real de public.report_states es borrador / enviado / en_curso /
-    // resuelto / rechazado, y current_state_code tiene FK contra él. La píldora
-    // traduce esos códigos a las etiquetas del §10 del UJ v3.3 (H-23).
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'en_curso' } });
+    // El catálogo real de public.report_states en produccion (CiudadAR) es
+    // RECIBIDO / EN_ANALISIS / DERIVADO / RESUELTO / DESESTIMADO. La píldora
+    // los traduce a las etiquetas del §10 del UJ v3.3 (H-23).
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'EN_ANALISIS' } });
     renderPage();
     expect(await screen.findByTestId('status-pill')).toHaveTextContent('En revisión');
   });
 
-  it('UT-DET-07b: un reporte rechazado se muestra como Descartado, no como en curso', async () => {
-    // Regresión de H-23: con la taxonomía anterior este caso caía al valor por
-    // defecto y el ciudadano veía "EN CURSO" en un reporte ya cerrado.
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'rechazado' } });
+  it('UT-DET-07b: un reporte desestimado se muestra como Descartado, no como en curso', async () => {
+    // El estado DESESTIMADO del catalogo real mapea al cierre alternativo del §10.
+    // Sin la traduccion, el ciudadano veria el codigo crudo en un reporte cerrado.
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'DESESTIMADO' } });
     renderPage();
     expect(await screen.findByTestId('status-pill')).toHaveTextContent('Descartado');
   });
@@ -194,12 +194,12 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
   });
 
   it('UT-DET-10: dibuja la línea de tiempo con el historial real del reporte', async () => {
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'en_curso' } });
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'EN_ANALISIS' } });
     getReportStateHistory.mockResolvedValue({
       success: true,
       history: [
-        { id: 'h1', state_code: 'enviado', changed_at: '2026-08-14T14:32:00Z', notes: null },
-        { id: 'h2', state_code: 'en_curso', changed_at: '2026-08-15T09:10:00Z', notes: 'Derivado a inspección' },
+        { id: 'h1', state_code: 'RECIBIDO', changed_at: '2026-08-14T14:32:00Z', notes: null },
+        { id: 'h2', state_code: 'EN_ANALISIS', changed_at: '2026-08-15T09:10:00Z', notes: 'Derivado a inspección' },
       ],
     });
 
@@ -273,7 +273,7 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
   it('UT-DET-11: sin historial registrado, deriva el primer paso del reporte', async () => {
     // Caso mayoritario hoy en produccion: el reporte no tiene filas en
     // report_state_history, pero la linea de tiempo no puede quedar vacia.
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'enviado' } });
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'RECIBIDO' } });
     getReportStateHistory.mockResolvedValue({ success: true, history: [] });
 
     renderPage();

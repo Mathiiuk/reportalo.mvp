@@ -13,8 +13,26 @@ export const REPORT_STATUS = {
   descartado: { label: 'Descartado', tone: 'neutral' },
 };
 
-// Traducción provisoria de códigos de `report_states` que no coinciden con el §10 (H-23)
+/*
+ * Traducción de los códigos de `report_states` a la taxonomía del §10 (H-23).
+ *
+ * Los códigos REALES de producción (proyecto CiudadAR, verificados el 21/09/2026
+ * contra la base: 17 reportes, todos con estos valores) son los de arriba, en
+ * mayúscula. El `seed.sql` del repositorio declara otro juego en minúscula
+ * (borrador / enviado / en_curso / resuelto / rechazado) que **no existe en la
+ * base**: ese archivo quedó desactualizado y conviene alinearlo.
+ *
+ * Se aceptan los dos juegos: los de producción, que son los que importan hoy, y
+ * los del seed, por si alguna vez se migra el catálogo. `normalizeReportState`
+ * pasa a minúscula antes de buscar acá, así que las claves van en minúscula.
+ */
 const DB_STATE_ALIASES = {
+  // Códigos reales de producción
+  recibido: 'enviado',
+  en_analisis: 'en_revision',
+  derivado: 'notificado',
+  desestimado: 'descartado',
+  // Códigos del seed del repositorio, hoy inexistentes en la base
   en_curso: 'en_revision',
   rechazado: 'descartado',
 };

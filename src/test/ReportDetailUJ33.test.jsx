@@ -48,17 +48,23 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
   });
 
   it('UT-B3-01: traduce los códigos actuales de la base a la taxonomía del §10 (H-23)', () => {
+    // Códigos REALES de producción (CiudadAR), verificados contra la base el 21/09/2026
+    expect(normalizeReportState('RECIBIDO')).toBe('enviado');
+    expect(normalizeReportState('EN_ANALISIS')).toBe('en_revision');
+    expect(normalizeReportState('DERIVADO')).toBe('notificado');
+    expect(normalizeReportState('RESUELTO')).toBe('resuelto');
+    expect(normalizeReportState('DESESTIMADO')).toBe('descartado');
+    // Códigos del seed del repositorio, que hoy no existen en la base
     expect(normalizeReportState('en_curso')).toBe('en_revision');
     expect(normalizeReportState('rechazado')).toBe('descartado');
-    expect(normalizeReportState('resuelto')).toBe('resuelto');
     expect(formatReportCode(REPORT_ID)).toBe('#RP-ABCD1234');
   });
 
   it('UT-B3-02: la línea de tiempo marca los pasos alcanzados y conserva la nota del oficial', () => {
     const steps = buildTimeline({
-      currentState: 'en_curso',
+      currentState: 'EN_ANALISIS',
       createdAt: '2026-08-14T14:32:00Z',
-      history: [{ state_code: 'en_curso', notes: 'Derivado a inspección de tránsito', changed_at: '2026-08-15T09:10:00Z' }],
+      history: [{ state_code: 'EN_ANALISIS', notes: 'Derivado a inspección de tránsito', changed_at: '2026-08-15T09:10:00Z' }],
     });
     expect(steps.map((s) => [s.key, s.done])).toEqual([
       ['enviado', true],
@@ -72,9 +78,9 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
 
   it('UT-B3-03: un reporte descartado agrega el cierre alternativo con su motivo', () => {
     const steps = buildTimeline({
-      currentState: 'rechazado',
+      currentState: 'DESESTIMADO',
       createdAt: '2026-08-14T14:32:00Z',
-      history: [{ state_code: 'rechazado', notes: 'Fuera de jurisdicción', changed_at: '2026-08-16T10:00:00Z' }],
+      history: [{ state_code: 'DESESTIMADO', notes: 'Fuera de jurisdicción', changed_at: '2026-08-16T10:00:00Z' }],
     });
     const last = steps[steps.length - 1];
     expect(last.key).toBe('descartado');
@@ -82,7 +88,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
   });
 
   it('UT-B3-04: StatusPill muestra la etiqueta del §10 aunque la base use otro código', () => {
-    render(<StatusPill state="en_curso" />);
+    render(<StatusPill state="EN_ANALISIS" />);
     expect(screen.getByTestId('status-pill')).toHaveTextContent('En revisión');
     expect(screen.getByTestId('status-pill')).toHaveAttribute('data-state', 'en_revision');
   });
@@ -95,7 +101,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
         id: REPORT_ID,
         user_id: OWNER_ID,
         description: 'Camión en calle residencial',
-        current_state_code: 'en_curso',
+        current_state_code: 'EN_ANALISIS',
         created_at: '2026-08-14T14:32:00Z',
         latitud: -34.66,
         longitud: -58.36,
@@ -105,7 +111,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
     });
     getReportStateHistory.mockResolvedValue({
       success: true,
-      history: [{ state_code: 'en_curso', notes: 'Derivado a inspección de tránsito', changed_at: '2026-08-15T09:10:00Z' }],
+      history: [{ state_code: 'EN_ANALISIS', notes: 'Derivado a inspección de tránsito', changed_at: '2026-08-15T09:10:00Z' }],
     });
     mockAnalysis({
       result_status_code: 'fundamentado',
@@ -135,7 +141,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
       data: {
         id: REPORT_ID,
         user_id: OWNER_ID,
-        current_state_code: 'enviado',
+        current_state_code: 'RECIBIDO',
         created_at: '2026-08-14T14:32:00Z',
         report_images: [],
       },

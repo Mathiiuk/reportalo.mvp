@@ -8,11 +8,11 @@ import { getMyReports } from '../services/reportSubmissionService';
 import { isClosedState } from '../components/report/reportStatus';
 
 // Insignias del listado. El agrupamiento sale de reportStatus (fuente única de
-// verdad, REP-3791 Bloque 3). Antes salía de REPORT_STATE_META, cuyos códigos
-// ('RESUELTO', 'DESESTIMADO') no existen en public.report_states: el catálogo
-// real es borrador / enviado / en_curso / resuelto / rechazado, y
-// current_state_code tiene FK contra él. Con los códigos viejos la comparación
-// nunca acertaba y todo reporte cerrado se mostraba como "En curso" (H-23).
+// verdad, REP-3791 Bloque 3), que traduce los códigos reales de la base
+// (RECIBIDO / EN_ANALISIS / DERIVADO / RESUELTO / DESESTIMADO) a las etiquetas
+// del §10 del UJ v3.3. Antes salía de REPORT_STATE_META, que hacía lo mismo pero
+// en paralelo: mantener dos taxonomías era pedir que divergieran, como ya había
+// pasado antes en este archivo.
 const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 

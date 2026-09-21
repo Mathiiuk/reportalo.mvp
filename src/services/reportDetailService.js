@@ -99,27 +99,25 @@ export const getReportStateHistory = async (reportId) => {
  * NOTA DE MIGRACIÓN (REP-3791 Bloque 3, 21/09/2026)
  *
  * Acá vivían REPORT_STATE_META, getStateMeta, TIMELINE_LABELS, buildTimeline y
- * buildShortCode, agregados por REP-3789. Se retiraron porque sus códigos de
- * estado ('RECIBIDO', 'EN_ANALISIS', 'DERIVADO', 'RESUELTO', 'DESESTIMADO') no
- * existen en public.report_states, cuyo catálogo real es:
+ * buildShortCode, agregados por REP-3789. Se retiraron porque el UJ v3.3 define
+ * su propia taxonomía de estados (§10) y tener dos era pedir que divergieran.
  *
- *   borrador · enviado · en_curso · resuelto · rechazado
+ * La fuente de verdad pasó a ser src/components/report/reportStatus.js, que
+ * traduce los códigos de la base a las etiquetas del §10:
  *
- * y citizen_reports.current_state_code tiene FK contra esa tabla, así que esos
- * códigos no pueden aparecer nunca en un reporte real. La consecuencia era que
- * getStateMeta siempre caía al valor por defecto: la píldora mostraba "EN CURSO"
- * para todos los reportes, incluidos resueltos y rechazados, y la línea de
- * tiempo no marcaba bien los pasos alcanzados.
+ *   RECIBIDO     -> Enviado
+ *   EN_ANALISIS  -> En revisión
+ *   DERIVADO     -> Notificado al responsable
+ *   RESUELTO     -> Resuelto
+ *   DESESTIMADO  -> Descartado (cierre alternativo)
  *
- * El origen del desvío es el seed de demostración
- * 20260915160000_v04_seed_demo_profiles_and_reports.sql, que inserta códigos en
- * mayúscula en report_state_history, tabla que no tiene FK. Conviene alinear ese
- * seed también.
+ * Esos cinco son los códigos REALES de public.report_states en producción
+ * (proyecto CiudadAR), verificados contra la base el 21/09/2026: 17 reportes,
+ * todos con esos valores, y el historial igual. Los que declara `supabase/seed.sql`
+ * (borrador / enviado / en_curso / resuelto / rechazado) **no existen en la base**:
+ * ese archivo quedó desactualizado y conviene alinearlo, porque es lo que hace
+ * pensar que el frontend está equivocado cuando no lo está.
  *
- * La taxonomía vigente es src/components/report/reportStatus.js, que sigue el
- * §10 del UJ v3.3 y traduce los códigos de la base (en_curso -> en_revision,
- * rechazado -> descartado). El formato del número de reporte pasó a
- * formatReportCode (8 caracteres), como pide el UJ.
- *
- * Definir el modelo definitivo de estados es la observación H-23, a cargo del PO.
+ * El formato del número de reporte pasó a formatReportCode (8 caracteres), como
+ * pide el UJ, también en el acuse de envío para que no diverjan.
  */
