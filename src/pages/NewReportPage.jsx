@@ -454,8 +454,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       data-testid="new-report-page"
       className={`relative w-full h-[100dvh] ${
         currentStep === 1 || currentStep === 4 || currentStep === 5
-          ? 'bg-[#0E1116]'
-          : 'bg-[#F4F7FB]'
+          ? 'bg-rep-camera'
+          : 'bg-rep-bg'
       } overflow-hidden flex flex-col font-manrope select-none`}
     >
       {/* Banner informativo de estado sin conexión (REP-2703) */}
@@ -639,7 +639,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed inset-0 z-50 bg-white"
+            className="fixed inset-0 z-50 bg-rep-surface"
           >
             <AdjustLocationModal
               initialCoordinates={activeCoords}

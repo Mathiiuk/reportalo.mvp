@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MapPinned, ChevronDown, Search } from 'lucide-react';
 import { getSelectableLocalities, normalizeForSearch } from '../../services/localitiesService';
 
@@ -15,6 +15,8 @@ export const LocalitySelector = ({ value, onChange }) => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
+  const labelId = useId();
+  const valueId = useId();
 
   useEffect(() => {
     let cancelled = false;
@@ -67,24 +69,24 @@ export const LocalitySelector = ({ value, onChange }) => {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <label className="block font-bold text-[12px] text-[#263249] mb-1.5">
+      <span id={labelId} className="mb-1.5 block text-rep-label font-bold text-rep-ink-label">
         ¿En qué localidad ocurrió el problema?
-      </label>
+      </span>
 
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-labelledby={`${labelId} ${valueId}`}
         data-testid="locality-selector-trigger"
         disabled={loading || Boolean(error)}
-        className="w-full flex items-center gap-2 bg-white border border-[#DDE3EA] rounded-[13px] py-3 px-3.5 text-left cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:border-[#1E6FCB] transition-colors"
+        className="rep-focus flex min-h-[48px] w-full items-center gap-2 rounded-2xl border border-rep-border bg-rep-surface px-3.5 text-left transition-colors duration-120 hover:border-rep-accent disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-rep-border"
       >
-        <MapPinned className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
+        <MapPinned className="h-[18px] w-[18px] shrink-0 text-rep-accent" strokeWidth={2.25} aria-hidden="true" />
         <span
-          className={`flex-1 text-[13px] font-semibold truncate ${
-            selected ? 'text-[#263249]' : 'text-[#8593A2]'
-          }`}
+          id={valueId}
+          className={`flex-1 truncate text-rep-input font-semibold ${selected ? 'text-rep-ink' : 'text-rep-ink-muted'}`}
         >
           {loading
             ? 'Cargando localidades…'
@@ -94,11 +96,11 @@ export const LocalitySelector = ({ value, onChange }) => {
             ? selected.label
             : 'Seleccioná la localidad'}
         </span>
-        <ChevronDown className="w-[16px] h-[16px] text-[#8593A2] flex-shrink-0" strokeWidth={2.25} />
+        <ChevronDown className="h-4 w-4 shrink-0 text-rep-ink-muted" strokeWidth={2.25} aria-hidden="true" />
       </button>
 
       {error && (
-        <p className="mt-1 text-[11px] font-medium text-[#D64545]" role="alert">
+        <p className="m-0 mt-1 text-rep-label font-medium text-rep-danger" role="alert">
           {error}
         </p>
       )}
@@ -107,9 +109,9 @@ export const LocalitySelector = ({ value, onChange }) => {
         // Se abre hacia arriba (bottom-full): este selector vive en el pie del modal de
         // ajuste de ubicación, con poco espacio debajo y el botón "Confirmar ubicación"
         // inmediatamente después — abrir hacia abajo lo tapaba y lo dejaba fuera de pantalla.
-        <div className="absolute z-30 bottom-full mb-1.5 w-full bg-white border border-[#DDE3EA] rounded-[13px] shadow-[0_-10px_24px_rgba(20,40,80,0.16)] overflow-hidden max-h-[min(55vh,20rem)] flex flex-col">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#EEF1F5] flex-shrink-0">
-            <Search className="w-[15px] h-[15px] text-[#8593A2] flex-shrink-0" strokeWidth={2.25} />
+        <div className="absolute bottom-full z-30 mb-1.5 flex max-h-[min(55vh,20rem)] w-full flex-col overflow-hidden rounded-2xl border border-rep-border bg-rep-surface shadow-[0_-10px_24px_rgb(var(--rep-shadow)/0.16)]">
+          <div className="flex shrink-0 items-center gap-2 border-b border-rep-divider px-3.5 py-2">
+            <Search className="h-4 w-4 shrink-0 text-rep-ink-muted" strokeWidth={2.25} aria-hidden="true" />
             <input
               type="text"
               autoFocus
@@ -118,12 +120,12 @@ export const LocalitySelector = ({ value, onChange }) => {
               placeholder="Buscar localidad…"
               aria-label="Buscar localidad"
               data-testid="locality-selector-search"
-              className="flex-1 text-[13px] font-medium text-[#263249] outline-none border-0 bg-transparent placeholder:text-[#B3BDC9]"
+              className="min-h-touch flex-1 select-text border-0 bg-transparent text-rep-input text-rep-ink outline-none placeholder:text-rep-ink-faint"
             />
           </div>
-          <ul role="listbox" className="flex-1 min-h-0 overflow-y-auto">
+          <ul role="listbox" aria-labelledby={labelId} className="m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
             {filteredLocalities.length === 0 && (
-              <li className="px-3.5 py-3 text-[12px] font-medium text-[#8593A2]">
+              <li className="px-3.5 py-3 text-rep-label font-medium text-rep-ink-muted">
                 Sin resultados para "{query}".
               </li>
             )}
@@ -135,8 +137,8 @@ export const LocalitySelector = ({ value, onChange }) => {
                   aria-selected={locality.id === value}
                   onClick={() => handleSelect(locality)}
                   data-testid={`locality-option-${locality.id}`}
-                  className={`w-full text-left px-3.5 py-2.5 text-[13px] font-medium cursor-pointer hover:bg-[#F3F6FA] transition-colors ${
-                    locality.id === value ? 'text-[#1E6FCB] bg-[#EAF2FC]' : 'text-[#263249]'
+                  className={`min-h-touch w-full px-3.5 py-2.5 text-left text-[15px] font-medium outline-none transition-colors duration-120 hover:bg-rep-surface-sunken focus-visible:bg-rep-accent-soft ${
+                    locality.id === value ? 'bg-rep-accent-soft text-rep-accent' : 'text-rep-ink'
                   }`}
                 >
                   {locality.label}
