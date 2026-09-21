@@ -29,7 +29,8 @@ const MAX_ZOOM = 19;
 /**
  * Componente modal/pantalla "¿Dónde ocurrió?" para corregir y ajustar el punto exacto de ubicación.
  * Limitado estrictamente a las zonas operativas de CABA y Avellaneda.
- * UJ v3.3 · M12 «Ajustar ubicación» (REP-3791 Bloque 1 · mobile): solo cambia la capa visual.
+ * UJ v3.3 · M12 «Ajustar ubicación» (teléfono) y D13 (escritorio): solo cambia la capa visual.
+ * REP-3791 Bloques 1 y 1-D.
  */
 export const AdjustLocationModal = ({
   initialCoordinates,
@@ -182,7 +183,7 @@ export const AdjustLocationModal = ({
       className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-rep-surface font-manrope"
     >
       {/* 1. Cabecera */}
-      <header className="z-20 flex shrink-0 items-center gap-1 border-b border-rep-divider bg-rep-surface px-2 pb-2.5 pt-[max(8px,env(safe-area-inset-top,8px))]">
+      <header className="z-20 flex shrink-0 items-center gap-1 border-b border-rep-divider bg-rep-surface px-2 pb-2.5 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:px-6 desktop:py-3">
         <button
           type="button"
           onClick={onClose}
@@ -191,21 +192,22 @@ export const AdjustLocationModal = ({
         >
           <ArrowLeft className="h-6 w-6" strokeWidth={2.25} aria-hidden="true" />
         </button>
-        <h1 className="m-0 text-rep-title text-rep-ink">¿Dónde ocurrió?</h1>
+        <h1 className="m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">¿Dónde ocurrió?</h1>
       </header>
 
       {/* 2. Mapa: el pin queda fijo al centro y se mueve el mapa */}
       <div className="relative flex-1 overflow-hidden bg-rep-surface-sunken">
         <div ref={mapContainerRef} data-testid="adjust-map-container" className="h-full w-full" />
 
-        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-center gap-2.5 rounded-2xl bg-rep-surface px-3.5 py-3 shadow-rep-float">
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-center gap-2.5 rounded-2xl bg-rep-surface px-3.5 py-3 shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:top-6 desktop:-translate-x-1/2">
           <Move className="h-5 w-5 shrink-0 text-rep-ink-muted" strokeWidth={2.25} aria-hidden="true" />
           <span className="text-rep-body font-semibold leading-snug text-rep-ink-body">
             Arrastrá el mapa para corregir el punto exacto.
           </span>
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-[44%] z-10 flex -translate-x-1/2 -translate-y-full flex-col items-center">
+        {/* La punta del pin marca el centro exacto del mapa, que es la coordenada que se confirma */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-full flex-col items-center">
           <MapPin
             className="h-11 w-11 text-rep-accent drop-shadow-[0_4px_8px_rgba(20,40,80,0.3)]"
             strokeWidth={1.75}
@@ -215,20 +217,21 @@ export const AdjustLocationModal = ({
           />
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-[44%] z-[5] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-rep-accent/30 bg-rep-accent/15" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[5] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-rep-accent/30 bg-rep-accent/15" />
 
         <button
           type="button"
           onClick={handleRecenter}
           aria-label="Mi ubicación actual"
-          className="rep-focus absolute bottom-3 right-3 z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 active:scale-[0.98] md:hover:brightness-[.96] dark:md:hover:brightness-[1.06]"
+          className="rep-focus absolute bottom-3 right-3 z-10 flex h-12 w-12 desktop:bottom-auto desktop:right-6 desktop:top-6 items-center justify-center rounded-xl bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 active:scale-[0.98] md:hover:brightness-[.96] dark:md:hover:brightness-[1.06]"
         >
           <LocateFixed className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
         </button>
       </div>
 
       {/* 3. Panel de confirmación */}
-      <footer className="z-20 shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3.5 pb-[max(14px,env(safe-area-inset-bottom,14px))]">
+      {/* Teléfono: panel inferior (M12) · escritorio: tarjeta flotante sobre el mapa (D13) */}
+      <footer className="z-20 shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3.5 pb-[max(14px,env(safe-area-inset-bottom,14px))] desktop:absolute desktop:bottom-6 desktop:right-6 desktop:w-[400px] desktop:rounded-2xl desktop:border desktop:border-rep-border desktop:p-5 desktop:shadow-rep-float">
         <div className="mx-auto w-full max-w-lg">
           <div className="mb-3 flex items-start gap-2.5">
             <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} aria-hidden="true" />

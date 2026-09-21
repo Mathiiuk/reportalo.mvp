@@ -44,10 +44,11 @@ acceptance_criteria:
 baseline:
   note: >-
     Baseline de staging al 21/09/2026 (commit 542ec57, merge del PR #95): 266
-    tests, 266 en verde. El merge de REP-3774 modifico quarantinePipelineService.js
+    tests, 266 en verde. Tras el Bloque 1-D son 270 y 270, por los 4 tests nuevos de
+    EvidenceUploadDesktop. El merge de REP-3774 modifico quarantinePipelineService.js
     y con eso quedaron corregidos UT-QPS-14 y UT-QPS-15: la observacion H-06 ya no aplica.
-  tests_total: 266
-  tests_green: 266
+  tests_total: 270
+  tests_green: 270
   known_failures: []
 requires_approval: false
 quality_gates:

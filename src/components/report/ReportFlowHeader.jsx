@@ -55,10 +55,11 @@ export const ReportStepper = ({ current = 1 }) => (
 );
 
 /**
- * Cabecera de las pantallas del alta de reporte: volver + título + pasos (UJ v3.3 · M10 / M11).
+ * Cabecera de las pantallas del alta de reporte: volver + título + pasos.
+ * Teléfono: pasos debajo del título (M10 / M11) · escritorio: todo en una fila (D10 / D11 / D12).
  */
 export const ReportFlowHeader = ({ title = 'Nuevo reporte', step, onBack, backLabel = 'Volver' }) => (
-  <header className="shrink-0 border-b border-rep-divider bg-rep-surface px-2 pb-3.5 pt-[max(8px,env(safe-area-inset-top,8px))]">
+  <header className="shrink-0 border-b border-rep-divider bg-rep-surface px-2 pb-3.5 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:flex desktop:items-center desktop:gap-10 desktop:px-8 desktop:py-4">
     <div className="flex items-center gap-1">
       <button
         type="button"
@@ -68,10 +69,10 @@ export const ReportFlowHeader = ({ title = 'Nuevo reporte', step, onBack, backLa
       >
         <ArrowLeft className="h-6 w-6" strokeWidth={2.25} aria-hidden="true" />
       </button>
-      <h1 className="m-0 text-rep-title text-rep-ink">{title}</h1>
+      <h1 className="m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">{title}</h1>
     </div>
     {step ? (
-      <div className="mt-2 px-3">
+      <div className="mt-2 px-3 desktop:mt-0 desktop:w-[400px] desktop:px-0">
         <ReportStepper current={step} />
       </div>
     ) : null}

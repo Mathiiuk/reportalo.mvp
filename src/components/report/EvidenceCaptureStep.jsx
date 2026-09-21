@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Shield, X, LocateFixed, Camera, ImagePlus, AlertCircle, ArrowRight, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFriendlyLocationLabel } from '../../services/locationService';
+import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
+import { EvidenceUploadDesktop } from './EvidenceUploadDesktop';
 
 const MAX_PHOTOS = 4;
 
@@ -9,15 +11,15 @@ const MAX_PHOTOS = 4;
 const CAMERA_FOCUS = 'rep-focus focus-visible:ring-offset-rep-camera';
 
 /**
- * Paso 1 del alta de reporte: captura de evidencia a pantalla completa (1 a 4 fotos).
- * UJ v3.3 · M09 «Capturar» (REP-3791 Bloque 1 · mobile). Mismo contrato de props que antes.
+ * Paso 1 del alta de reporte en teléfono y tablet: captura a pantalla completa (1 a 4 fotos).
+ * UJ v3.3 · M09 «Capturar» (REP-3791 Bloque 1 · mobile).
  *
  * Diferencias deliberadas con el mockup (documentadas en el README del bloque):
  * - Flash y cambio de cámara no se dibujan: con <input capture> los maneja la cámara del sistema.
  * - El control de la derecha pasa a «Continuar» cuando hay fotos (el mockup no muestra cómo avanzar).
  * - Sin difuminado en vivo: el badge es una promesa; el difuminado real ocurre en el servidor.
  */
-export const EvidenceCaptureStep = ({
+const EvidenceCaptureMobile = ({
   evidenceList = [],
   error,
   isProcessing = false,
@@ -335,6 +337,15 @@ export const EvidenceCaptureStep = ({
       </AnimatePresence>
     </div>
   );
+};
+
+/**
+ * Paso 1 del alta de reporte. Mismo contrato de props que antes (REP-3791):
+ * teléfono y tablet → cámara (M09) · escritorio ≥ 1025 px → carga de archivos (D10).
+ */
+export const EvidenceCaptureStep = (props) => {
+  const isDesktop = useIsDesktopLayout();
+  return isDesktop ? <EvidenceUploadDesktop {...props} /> : <EvidenceCaptureMobile {...props} />;
 };
 
 export default EvidenceCaptureStep;

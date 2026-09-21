@@ -27,7 +27,8 @@ const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
 /**
  * Paso 2 del alta de reporte: categoría y descripción.
- * UJ v3.3 · M10 «Clasificar» (REP-3791 Bloque 1 · mobile). Mismo contrato de props que antes.
+ * UJ v3.3 · M10 «Clasificar» (teléfono) y D11 (escritorio ≥ 1025 px, dos columnas).
+ * REP-3791 Bloques 1 y 1-D. Mismo contrato de props que antes.
  */
 export const ReportDetailsStep = ({
   categories = [],
@@ -57,14 +58,14 @@ export const ReportDetailsStep = ({
   };
 
   return (
-    <div data-testid="report-details-step" className="flex h-full w-full flex-col bg-rep-bg">
+    <div data-testid="report-details-step" className="flex h-full w-full flex-col bg-rep-bg desktop:overflow-y-auto">
       <ReportFlowHeader step={2} onBack={onBack} backLabel="Volver a la cámara" />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto desktop:flex-none desktop:overflow-visible">
+        <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 py-4 desktop:grid desktop:grid-rows-[auto_1fr_auto] desktop:max-w-[1200px] desktop:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)] desktop:items-start desktop:gap-x-8 desktop:gap-y-4 desktop:px-10 desktop:py-8">
           {/* Categoría */}
-          <section className="flex flex-col gap-2.5" aria-labelledby="report-category-label">
-            <h2 id="report-category-label" className="m-0 text-rep-label font-bold text-rep-ink-label">
+          <section className="flex flex-col gap-2.5 desktop:col-start-1 desktop:row-start-1" aria-labelledby="report-category-label">
+            <h2 id="report-category-label" className="m-0 text-rep-label font-bold text-rep-ink-label desktop:text-rep-label-d">
               Categoría del incumplimiento
             </h2>
 
@@ -91,15 +92,17 @@ export const ReportDetailsStep = ({
                     tabIndex={index === tabbableIndex ? 0 : -1}
                     onClick={() => onSelectCategory(cat)}
                     onKeyDown={(event) => handleRadioKeyDown(event, index)}
-                    className="rep-focus relative flex min-h-[88px] flex-col items-start gap-2 rounded-2xl border border-rep-border bg-rep-surface p-3.5 text-left shadow-rep-card transition-[transform,filter] duration-120 active:scale-[0.98] md:hover:brightness-[.96] dark:md:hover:brightness-[1.06]"
+                    className="rep-focus relative flex min-h-[88px] flex-col items-start gap-2 rounded-2xl border border-rep-border bg-rep-surface p-3.5 text-left shadow-rep-card transition-[transform,filter] duration-120 active:scale-[0.98] md:hover:brightness-[.96] dark:md:hover:brightness-[1.06] desktop:min-h-[76px] desktop:flex-row desktop:items-center desktop:gap-3.5 desktop:p-4"
                   >
-                    <IconComponent
-                      aria-hidden="true"
-                      className="h-6 w-6"
-                      style={{ color: tone.base }}
-                      strokeWidth={2.25}
-                    />
-                    <span className="pr-6 text-rep-body font-bold leading-tight text-rep-ink">
+                    <span className="flex shrink-0 items-center justify-center desktop:h-11 desktop:w-11 desktop:rounded-xl desktop:bg-rep-surface-sunken">
+                      <IconComponent
+                        aria-hidden="true"
+                        className="h-6 w-6"
+                        style={{ color: tone.base }}
+                        strokeWidth={2.25}
+                      />
+                    </span>
+                    <span className="pr-6 text-rep-body font-bold leading-tight text-rep-ink desktop:text-rep-body-d desktop:font-bold">
                       {cat.name}
                     </span>
 
@@ -141,7 +144,7 @@ export const ReportDetailsStep = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.12 }}
-                className="flex items-start gap-2.5 rounded-2xl p-3.5"
+                className="flex items-start gap-2.5 rounded-2xl p-3.5 desktop:col-start-1 desktop:row-start-2 desktop:self-start"
                 style={{ backgroundColor: currentTone.soft }}
               >
                 <Info
@@ -150,7 +153,7 @@ export const ReportDetailsStep = ({
                   style={{ color: currentTone.base }}
                   strokeWidth={2.25}
                 />
-                <p className="m-0 text-rep-label font-medium" style={{ color: currentTone.ink }}>
+                <p className="m-0 text-rep-label font-medium desktop:text-rep-label-d" style={{ color: currentTone.ink }}>
                   {currentCategory.example}
                 </p>
               </motion.div>
@@ -158,8 +161,8 @@ export const ReportDetailsStep = ({
           </AnimatePresence>
 
           {/* Descripción */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="report-description" className="text-rep-label font-bold text-rep-ink-label">
+          <div className="flex flex-col gap-2 desktop:col-start-2 desktop:row-span-2 desktop:row-start-1">
+            <label htmlFor="report-description" className="text-rep-label font-bold text-rep-ink-label desktop:text-rep-label-d">
               Descripción
             </label>
             <textarea
@@ -168,14 +171,14 @@ export const ReportDetailsStep = ({
               onChange={(event) => onChangeDescription(event.target.value)}
               placeholder="Describí brevemente lo que observás (ej.: vehículo obstruyendo rampa, derrame, bache profundo)..."
               rows={3}
-              className="block w-full select-text resize-none rounded-2xl border border-rep-border bg-rep-surface px-3.5 py-3 text-rep-input text-rep-ink-body outline-none transition-colors duration-120 placeholder:text-rep-ink-faint focus:border-rep-accent focus:ring-2 focus:ring-rep-accent/15"
+              className="block w-full select-text resize-none rounded-2xl border border-rep-border bg-rep-surface px-3.5 py-3 text-rep-input text-rep-ink-body outline-none transition-colors duration-120 placeholder:text-rep-ink-faint focus:border-rep-accent focus:ring-2 focus:ring-rep-accent/15 desktop:h-[320px]"
             />
           </div>
 
           {/* Anticipa dónde aparece el fundamento legal (el análisis corre después de guardar) */}
-          <div className="flex items-start gap-2.5 rounded-2xl border border-dashed border-rep-border bg-rep-surface p-3.5">
-            <Sparkles aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-rep-ink-muted" strokeWidth={2} />
-            <p className="m-0 text-rep-label font-medium text-rep-ink-muted">
+          <div className="flex items-start gap-2.5 rounded-2xl border border-dashed border-rep-border bg-rep-surface p-3.5 desktop:col-start-2 desktop:row-start-3 desktop:border-solid desktop:border-rep-accent-border desktop:bg-rep-accent-soft">
+            <Sparkles aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-rep-ink-muted desktop:text-rep-accent" strokeWidth={2} />
+            <p className="m-0 text-rep-label font-medium text-rep-ink-muted desktop:text-rep-label-d desktop:text-rep-ink-body">
               El análisis legal se hace después de guardar el reporte. Lo vas a ver en el detalle.
             </p>
           </div>
@@ -183,14 +186,22 @@ export const ReportDetailsStep = ({
       </div>
 
       {/* Acción principal */}
-      <div className="shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom,12px))]">
-        <div className="mx-auto w-full max-w-lg">
+      <div className="shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom,12px))] desktop:border-t-0 desktop:bg-transparent desktop:px-0 desktop:pb-8 desktop:pt-0">
+        <div className="mx-auto w-full max-w-lg desktop:flex desktop:max-w-[1200px] desktop:items-center desktop:justify-end desktop:gap-3 desktop:px-10">
+          {/* D11: «Atrás» explícito en escritorio (en teléfono alcanza la flecha de la cabecera) */}
+          <button
+            type="button"
+            onClick={onBack}
+            className="rep-focus hidden min-h-touch items-center rounded-xl px-4 text-rep-body-d font-bold text-rep-ink-muted transition-colors duration-120 hover:text-rep-ink desktop:inline-flex"
+          >
+            Atrás
+          </button>
           <button
             type="button"
             onClick={onContinue}
             disabled={!selectedCategory}
             aria-describedby={!selectedCategory ? 'report-category-required' : undefined}
-            className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-rep-accent disabled:active:scale-100"
+            className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-rep-accent disabled:active:scale-100 desktop:w-auto desktop:min-w-[180px] desktop:px-8"
           >
             Continuar
           </button>
