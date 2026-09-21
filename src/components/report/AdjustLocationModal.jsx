@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Move, MapPin, LocateFixed, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Move, MapPin, LocateFixed, LocateOff, RotateCw, TriangleAlert } from 'lucide-react';
 import {
   resolveAddressDetails,
   DEFAULT_CITY_COORDINATES,
@@ -37,6 +37,10 @@ export const AdjustLocationModal = ({
   initialLocalityId,
   onConfirm,
   onClose,
+  // UJ v3.3 · M22 (REP-3791 Bloque 4): el GPS no respondió o el permiso está bloqueado
+  isGpsUnavailable = false,
+  isGpsDenied = false,
+  onRetryGps = null,
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -164,6 +168,26 @@ export const AdjustLocationModal = ({
     setCurrentCoords(target);
   }, [initialCoordinates]);
 
+  // M22: reintento de GPS; si vuelve, se recentra el mapa en la nueva posición
+  const [isRetryingGps, setIsRetryingGps] = useState(false);
+  const gpsRetryRequestedRef = useRef(false);
+  const handleRetryGps = async () => {
+    if (!onRetryGps) return;
+    gpsRetryRequestedRef.current = true;
+    setIsRetryingGps(true);
+    try {
+      await onRetryGps();
+    } finally {
+      setIsRetryingGps(false);
+    }
+  };
+  useEffect(() => {
+    if (gpsRetryRequestedRef.current && !isGpsUnavailable) {
+      gpsRetryRequestedRef.current = false;
+      handleRecenter();
+    }
+  }, [isGpsUnavailable, initialCoordinates, handleRecenter]);
+
   // Confirmar ubicación — R-1/R-2: requiere localidad elegida del selector, y que no
   // esté geográficamente lejos del pin (ver checkLocalityPinMismatch más arriba).
   const handleConfirmLocation = () => {
@@ -199,12 +223,41 @@ export const AdjustLocationModal = ({
       <div className="relative flex-1 overflow-hidden bg-rep-surface-sunken">
         <div ref={mapContainerRef} data-testid="adjust-map-container" className="h-full w-full" />
 
+        {isGpsUnavailable ? (
+          <div
+            data-testid="gps-unavailable-card"
+            role="alert"
+            className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 rounded-2xl bg-rep-surface px-4 py-3.5 shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:top-6 desktop:w-[420px] desktop:-translate-x-1/2"
+          >
+            <div className="flex items-center gap-2.5">
+              <LocateOff aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-danger" strokeWidth={2.25} />
+              <span className="text-rep-body font-extrabold text-rep-ink">No encontramos tu ubicación</span>
+            </div>
+            <p className="m-0 text-rep-label text-rep-ink-body">
+              {isGpsDenied
+                ? 'El permiso de ubicación está bloqueado. Podés habilitarlo en los ajustes del navegador, o marcar el punto en el mapa y elegir la localidad para seguir con el reporte.'
+                : 'El GPS no responde. Podés marcar el punto en el mapa y elegir la localidad para seguir con el reporte.'}
+            </p>
+            {!isGpsDenied && onRetryGps && (
+              <button
+                type="button"
+                onClick={handleRetryGps}
+                disabled={isRetryingGps}
+                className="rep-focus inline-flex min-h-touch items-center gap-1.5 self-start rounded-xl px-1 text-rep-label font-bold text-rep-accent disabled:opacity-45"
+              >
+                <RotateCw aria-hidden="true" className={`h-4 w-4 ${isRetryingGps ? 'motion-safe:animate-spin' : ''}`} strokeWidth={2.25} />
+                Volver a intentar con GPS
+              </button>
+            )}
+          </div>
+        ) : (
         <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-center gap-2.5 rounded-2xl bg-rep-surface px-3.5 py-3 shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:top-6 desktop:-translate-x-1/2">
           <Move className="h-5 w-5 shrink-0 text-rep-ink-muted" strokeWidth={2.25} aria-hidden="true" />
           <span className="text-rep-body font-semibold leading-snug text-rep-ink-body">
             Arrastrá el mapa para corregir el punto exacto.
           </span>
         </div>
+        )}
 
         {/* La punta del pin marca el centro exacto del mapa, que es la coordenada que se confirma */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-full flex-col items-center">

@@ -57,8 +57,16 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [description, setDescription] = useState('');
   // isGranted distingue una lectura real de GPS del valor por defecto
   // (DEFAULT_CITY_COORDINATES): sugerir una localidad a partir del respaldo
-  // seria inferir jurisdiccion desde una ubicacion inventada.
-  const { coordinates, isGranted: isLocationGranted } = useGeolocation({ autoFetch: true });
+  // seria inferir jurisdiccion desde una ubicacion inventada (REP-2500-PRESEL).
+  const {
+    coordinates,
+    isGranted: isLocationGranted,
+    status: gpsStatus,
+    isDenied: isGpsDenied,
+    refreshLocation,
+  } = useGeolocation({ autoFetch: true });
+  // UJ v3.3 · M22: el GPS no respondió o el permiso está bloqueado (PENDING no cuenta como error)
+  const isGpsUnavailable = ['DENIED', 'UNAVAILABLE', 'TIMEOUT', 'NOT_SUPPORTED'].includes(gpsStatus);
 
   // Monitoreo de conectividad a internet en tiempo real (REP-2703)
   const { isOnline } = useNetworkStatus();
@@ -329,6 +337,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
+        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
       });
       navigate('/mapa', { replace: true });
       return;
@@ -347,6 +357,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
+        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
       });
       navigate('/mapa', { replace: true });
       return;
@@ -410,7 +422,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // como paso inadvertido que report_images no tenia policy de INSERT.
       const failedAttachments = [];
       for (const evidence of evidencesToAttach) {
-        const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
+        // H-25 (REP-3791 Bloque 4): nunca se usa previewUrl (la foto original sin difuminar) como respaldo
+        const sanitizedUrl = evidence.sanitizedUrl;
         if (!sanitizedUrl) continue;
         // eslint-disable-next-line no-await-in-loop
         const attachResult = await attachReportEvidence({
@@ -584,6 +597,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               clientSideId={clientSideId}
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
+              onDiscard={handleCancel}
               onProcessingComplete={handleProcessingComplete}
             />
           </motion.div>
@@ -638,6 +652,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             <AdjustLocationModal
               initialCoordinates={activeCoords}
               initialLocalityId={customLocation?.localityId}
+              isGpsUnavailable={isGpsUnavailable}
+              isGpsDenied={isGpsDenied}
+              onRetryGps={refreshLocation}
               onClose={() => setShowAdjustLocationModal(false)}
               onConfirm={(adjustedData) => {
                 // Una eleccion manual deja de ser una sugerencia automatica:

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { markSessionActive, clearSessionMarker } from '../lib/sessionMarker';
 import { syncTermsConsentWithRemote } from '../services/termsService';
 
 // Creación del contexto de autenticación
@@ -106,6 +107,8 @@ export const AuthProvider = ({ children }) => {
           if (currentSession) {
             sanitizeUrl();
             setAuthError(null);
+            // UJ v3.3 · M23: recordar que hubo sesión para distinguir «venció» de «la cerré» (REP-3791)
+            markSessionActive(currentSession.user?.email);
             if (currentSession.user?.id) {
               syncTermsConsentWithRemote(currentSession.user.id).catch(() => {});
             }
@@ -253,6 +256,8 @@ export const AuthProvider = ({ children }) => {
 
   // Cerrar sesión
   const signOut = async () => {
+    // Cierre voluntario: no es una sesión vencida (M23)
+    clearSessionMarker();
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {

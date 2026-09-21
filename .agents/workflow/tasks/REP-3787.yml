@@ -44,7 +44,7 @@ acceptance_criteria:
 baseline:
   note: >-
     Baseline de staging al 21/09/2026 (commit 542ec57, merge del PR #95): 266
-    tests, 266 en verde. Tras el Bloque 3 son 270: los bloques sumaron tests nuevos y el
+    tests, 266 en verde. Tras el Bloque 4 son 276: los bloques sumaron tests nuevos y el
     Bloque 3 retiro los 12 de ReportTimeline al unificar la taxonomia de estados. Antes:
     el merge de REP-3774 modifico quarantinePipelineService.js
     y con eso quedaron corregidos UT-QPS-14 y UT-QPS-15: la observacion H-06 ya no aplica.

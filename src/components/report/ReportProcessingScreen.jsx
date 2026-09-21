@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera } from 'lucide-react';
+import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera, Sun, Focus } from 'lucide-react';
 import {
   processAllEvidencesThroughQuarantine,
   PIPELINE_STEPS,
@@ -27,6 +27,7 @@ export const ReportProcessingScreen = ({
   clientSideId = null,
   onProcessingComplete,
   onErrorBack,
+  onDiscard = null,
   processFn = null,
   durationMs = 3200,
   simulateError = false,
@@ -356,32 +357,56 @@ export const ReportProcessingScreen = ({
               </div>
             </>
           ) : (
-            /* Vista fail-safe ante error en cuarentena */
+            /* Vista fail-safe ante error en cuarentena · UJ v3.3 · M21 «No pudimos procesar la foto» (Bloque 4) */
             <div data-testid="quarantine-fail-safe-view" className="mt-6 flex flex-1 flex-col desktop:mt-0">
-              <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos proteger tu foto</h1>
-              <p className="m-0 mt-2 text-rep-body text-white/70 desktop:text-rep-body-d">
-                Por seguridad, la imagen original fue descartada automáticamente de nuestros servidores para cuidar tu privacidad.
+              <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos procesar la foto</h1>
+              <p className="m-0 mt-2 text-rep-body text-white/75 desktop:text-rep-body-d">
+                No podemos garantizar el difuminado de la imagen, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
               </p>
-              <div role="alert" className="mt-4 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label text-white">
-                {errorMessage || 'Ocurrió un inconveniente al anonimizar la imagen.'}
-              </div>
-              <div className="mb-4 mt-auto flex flex-col gap-2.5 desktop:mt-6">
+
+              <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
+                <li className="flex items-center gap-2.5 text-rep-body text-white/85">
+                  <Sun aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
+                  Buscá más luz o acercate un poco
+                </li>
+                <li className="flex items-center gap-2.5 text-rep-body text-white/85">
+                  <Focus aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
+                  Esperá que enfoque antes de disparar
+                </li>
+              </ul>
+
+              {errorMessage && (
+                <p role="alert" className="m-0 mt-4 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label text-white/90">
+                  Detalle: {errorMessage}
+                </p>
+              )}
+
+              <div className="mb-4 mt-auto flex flex-col gap-2 desktop:mt-6">
+                <button
+                  type="button"
+                  onClick={handleBackToCapture}
+                  className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-camera-accent text-rep-button text-rep-camera transition-transform duration-120 active:scale-[0.98] focus-visible:ring-offset-rep-camera"
+                >
+                  <Camera aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                  Sacar otra foto
+                </button>
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-camera-accent text-rep-button text-rep-camera transition-transform duration-120 active:scale-[0.98] focus-visible:ring-offset-rep-camera"
+                  className="rep-focus flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-rep-body font-semibold text-white/85 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
                 >
                   <RefreshCw aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
                   Reintentar protección
                 </button>
-                <button
-                  type="button"
-                  onClick={handleBackToCapture}
-                  className="rep-focus flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-rep-body font-semibold text-white/85 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
-                >
-                  <Camera aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
-                  Volver a sacar la foto
-                </button>
+                {onDiscard && (
+                  <button
+                    type="button"
+                    onClick={onDiscard}
+                    className="rep-focus min-h-touch w-full rounded-xl text-rep-body font-bold text-[#FF8A80] focus-visible:ring-offset-rep-camera"
+                  >
+                    Descartar el reporte
+                  </button>
+                )}
               </div>
             </div>
           )}
