@@ -60,14 +60,28 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- ------------------------------------------------------------------------------
 -- 5. ESTADOS DE REPORTES (report_states)
+--
+-- Estos son los cinco codigos REALES de produccion (proyecto CiudadAR),
+-- verificados contra la base el 21/09/2026. Coinciden con docs/REP-3769_seed_y_RAG.sql,
+-- que es el script que se corrio sobre el proyecto.
+--
+-- Antes este bloque declaraba otro juego en minuscula ('borrador', 'enviado',
+-- 'en_curso', 'resuelto', 'rechazado') que nunca existio en la base. Como
+-- citizen_reports.current_state_code y report_state_history.state_code tienen FK
+-- contra esta tabla, ese seed no podia haber funcionado nunca contra el esquema
+-- real; ademas hizo creer dos veces que el frontend estaba equivocado cuando el
+-- equivocado era este archivo.
+--
+-- NO existe un estado 'borrador': el borrador del reporte vive en IndexedDB, en
+-- el dispositivo, y recien llega a la base cuando se envia (REP-2703).
 -- ------------------------------------------------------------------------------
 INSERT INTO public.report_states (code, description)
-VALUES 
-    ('borrador', 'Borrador inicial guardado localmente'),
-    ('enviado', 'Reporte enviado y recibido por el sistema'),
-    ('en_curso', 'En curso de resolución / Cuadrilla asignada'),
-    ('resuelto', 'Incidente resuelto satisfactoriamente'),
-    ('rechazado', 'Rechazado por no corresponder a la jurisdicción')
+VALUES
+    ('RECIBIDO', 'Recibido'),
+    ('EN_ANALISIS', 'En análisis'),
+    ('DERIVADO', 'Derivado al organismo'),
+    ('RESUELTO', 'Resuelto'),
+    ('DESESTIMADO', 'Desestimado')
 ON CONFLICT (code) DO UPDATE SET
     description = EXCLUDED.description;
 
@@ -186,7 +200,7 @@ VALUES
         -34.6037,
         -58.3816,
         'Bache profundo en calzada principal sobre Av. Corrientes 1050.',
-        'en_curso'
+        'EN_ANALISIS'
     ),
     -- REP-102: Almagro (CABA)
     (
@@ -198,7 +212,7 @@ VALUES
         -34.6158,
         -58.4201,
         'Columna de alumbrado público parpadea constantemente durante la noche en Av. Medrano 420.',
-        'enviado'
+        'RECIBIDO'
     ),
     -- REP-103: Belgrano (CABA)
     (
@@ -210,7 +224,7 @@ VALUES
         -34.5711,
         -58.4452,
         'Contenedor de residuos desbordado en Av. Cabildo 1820.',
-        'resuelto'
+        'RESUELTO'
     ),
     -- REP-104: Avellaneda Centro (Avellaneda)
     (
@@ -222,7 +236,7 @@ VALUES
         -34.6624,
         -58.3662,
         'Semáforo fuera de servicio en Av. Bartolomé Mitre 650.',
-        'en_curso'
+        'EN_ANALISIS'
     ),
     -- REP-105: Palermo (CABA)
     (
@@ -234,7 +248,7 @@ VALUES
         -34.5826,
         -58.4115,
         'Árbol con ramas de gran porte caídas sobre vereda en Av. Coronel Díaz 2100.',
-        'resuelto'
+        'RESUELTO'
     ),
     -- REP-106: Piñeyro (Avellaneda)
     (
@@ -246,7 +260,7 @@ VALUES
         -34.6680,
         -58.3789,
         'Microbasural y escombros acumulados en Hipólito Yrigoyen 350.',
-        'enviado'
+        'RECIBIDO'
     ),
     -- REP-107: Crucecita (Avellaneda)
     (
@@ -258,7 +272,7 @@ VALUES
         -34.6590,
         -58.3580,
         'Bloqueo indebido de rampa de accesibilidad en Av. Belgrano 1100.',
-        'en_curso'
+        'EN_ANALISIS'
     ),
     -- REP-108: Sarandí (Avellaneda)
     (
@@ -270,7 +284,7 @@ VALUES
         -34.6750,
         -58.3490,
         'Venta comercial no autorizada ocupando la vereda en Av. Mitre 2850.',
-        'enviado'
+        'RECIBIDO'
     )
 ON CONFLICT (id) DO UPDATE SET
     client_side_id = EXCLUDED.client_side_id,
