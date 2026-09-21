@@ -1,0 +1,124 @@
+/*
+ * Reportalo · Tokens de diseño (User Journey v3.3, §10 «Especificaciones para Front-End»)
+ * REP-3791 · Bloque 0 — Fundaciones
+ *
+ * Cada token guarda los tres canales RGB (sin rgb()) para que Tailwind pueda aplicar
+ * opacidad: `bg-rep-accent/20`, `border-rep-danger/40`, etc.
+ *
+ * Tema claro = por defecto. El tema oscuro se activa agregando la clase `dark` al <html>
+ * (tailwind.config.js → darkMode: 'class'). Por especificación del UJ v3.3 NO se hereda la
+ * preferencia del sistema operativo: nada en este archivo usa prefers-color-scheme.
+ *
+ * Origen de cada valor:
+ *   [§10]  tabla «Tokens de color» del UJ v3.3 (valor literal claro / oscuro).
+ *   [§10*] valor del §10 ajustado por contraste (ver README del Bloque 0).
+ *   [mock] color usado en los mockups del UJ v3.3, emparejado claro→oscuro elemento por
+ *          elemento entre «User Journey v3.3.dc.html» y «User Journey v3.3 Oscuro.dc.html».
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Superficies */
+  --rep-bg: 244 247 251;              /* [§10]  Fondo de página          #F4F7FB */
+  --rep-surface: 255 255 255;         /* [§10]  Superficie de tarjeta    #FFFFFF */
+  --rep-surface-sunken: 247 249 252;  /* [mock] Fondo hundido / mapa     #F7F9FC */
+  --rep-border: 230 236 243;          /* [§10]  Borde                    #E6ECF3 */
+  --rep-divider: 238 241 245;         /* [§10]  Separador                #EEF1F5 */
+  --rep-track: 221 228 236;           /* [mock] Pista / paso inactivo    #DDE4EC */
+
+  /* Texto */
+  --rep-ink: 36 52 71;                /* [§10]  Texto principal          #243447 */
+  --rep-ink-body: 70 86 107;          /* [mock] Texto de cuerpo          #46566B */
+  --rep-ink-label: 86 101 122;        /* [mock] Etiqueta de campo        #56657A */
+  --rep-ink-muted: 100 115 134;       /* [§10*] Texto secundario         #647386 — ajustado desde #8593A2 para cumplir 4.5:1 (aprobado UX, REP-3791) */
+  --rep-ink-faint: 154 167 181;       /* [mock] Deshabilitado / pendiente #9AA7B5 */
+
+  /* Acento de marca */
+  --rep-accent: 30 111 203;           /* [§10]  Acento de marca          #1E6FCB */
+  --rep-accent-strong: 21 83 158;     /* [mock] Hover / presionado       #15539E */
+  --rep-accent-soft: 238 245 252;     /* [§10]  Acento suave             #EEF5FC */
+  --rep-accent-border: 212 230 248;   /* [mock] Borde de acento suave    #D4E6F8 */
+  --rep-on-accent: 255 255 255;       /* [mock] Texto sobre acento       #FFFFFF */
+
+  /* Estados */
+  --rep-success: 46 158 107;          /* [§10]  Éxito / resuelto         #2E9E6B */
+  --rep-success-soft: 227 245 236;    /* [mock]                          #E3F5EC */
+  --rep-warning: 224 124 26;          /* [§10]  Alerta / pendiente       #E07C1A */
+  --rep-warning-soft: 255 242 224;    /* [mock]                          #FFF2E0 */
+  --rep-warning-ink: 138 106 62;      /* [mock] Texto sobre alerta suave #8A6A3E */
+  --rep-danger: 192 57 43;            /* [§10]  Error / descartado       #C0392B */
+  --rep-danger-soft: 253 236 234;     /* [mock]                          #FDECEA */
+
+  /* Visor de cámara: oscuro en los dos temas (M09 / D10) */
+  --rep-camera: 14 17 22;             /* [mock]                          #0E1116 */
+  --rep-camera-accent: 46 159 229;    /* [mock] Ícono de coordenadas     #2E9FE5 */
+  --rep-camera-ink-muted: 138 149 163;/* [mock] Texto de ayuda en visor  #8A95A3 */
+
+  /* Categorías del MVP (Plan de Alcance v3 · UJ v3.3) — base / suave / texto sobre suave */
+  --rep-cat-infra: 30 111 203;        /* #1E6FCB */
+  --rep-cat-infra-soft: 238 245 252;  /* #EEF5FC */
+  --rep-cat-infra-ink: 21 83 158;     /* #15539E */
+  --rep-cat-transito: 247 142 53;     /* #F78E35 */
+  --rep-cat-transito-soft: 255 246 233; /* #FFF6E9 */
+  --rep-cat-transito-ink: 138 106 62; /* #8A6A3E */
+  --rep-cat-ambiente: 46 158 107;     /* #2E9E6B */
+  --rep-cat-ambiente-soft: 227 245 236; /* #E3F5EC */
+  --rep-cat-ambiente-ink: 44 122 85;  /* #2C7A55 */
+  --rep-cat-comercio: 124 92 214;     /* #7C5CD6 */
+  --rep-cat-comercio-soft: 244 240 253; /* #F4F0FD */
+  --rep-cat-comercio-ink: 91 74 138;  /* #5B4A8A */
+
+  /* Sombras (color base) */
+  --rep-shadow: 20 40 80;             /* [mock] rgba(20,40,80,α)         */
+}
+
+.dark {
+  color-scheme: dark;
+
+  --rep-bg: 22 25 31;                 /* #16191F */
+  --rep-surface: 33 38 46;            /* #21262E */
+  --rep-surface-sunken: 26 31 38;     /* #1A1F26 */
+  --rep-border: 52 60 72;             /* #343C48 */
+  --rep-divider: 46 53 66;            /* #2E3542 */
+  --rep-track: 46 53 64;              /* #2E3540 */
+
+  --rep-ink: 240 243 248;             /* #F0F3F8 */
+  --rep-ink-body: 194 203 215;        /* #C2CBD7 */
+  --rep-ink-label: 166 177 191;       /* #A6B1BF */
+  --rep-ink-muted: 138 150 165;       /* #8A96A5 */
+  --rep-ink-faint: 124 136 150;       /* #7C8896 */
+
+  --rep-accent: 247 142 53;           /* #F78E35 — en oscuro el acento pasa a naranja */
+  --rep-accent-strong: 217 118 31;    /* #D9761F */
+  --rep-accent-soft: 51 38 21;        /* #332615 */
+  --rep-accent-border: 81 58 26;      /* #513A1A */
+  --rep-on-accent: 26 18 6;           /* #1A1206 — texto oscuro sobre naranja */
+
+  --rep-success: 77 203 144;          /* #4DCB90 */
+  --rep-success-soft: 23 51 37;       /* #173325 */
+  --rep-warning: 226 186 124;         /* #E2BA7C */
+  --rep-warning-soft: 51 39 22;       /* #332716 */
+  --rep-warning-ink: 226 186 124;     /* #E2BA7C */
+  --rep-danger: 242 104 93;           /* #F2685D */
+  --rep-danger-soft: 52 27 24;        /* #341B18 */
+
+  --rep-camera: 22 25 31;             /* #16191F */
+  --rep-camera-accent: 247 142 53;    /* #F78E35 */
+  --rep-camera-ink-muted: 138 150 165;/* #8A96A5 */
+
+  --rep-cat-infra: 247 142 53;        /* #F78E35 */
+  --rep-cat-infra-soft: 51 38 21;     /* #332615 */
+  --rep-cat-infra-ink: 247 142 53;    /* #F78E35 */
+  --rep-cat-transito: 242 193 78;     /* #F2C14E */
+  --rep-cat-transito-soft: 51 39 22;  /* #332716 */
+  --rep-cat-transito-ink: 242 193 78; /* #F2C14E */
+  --rep-cat-ambiente: 77 203 144;     /* #4DCB90 */
+  --rep-cat-ambiente-soft: 23 51 37;  /* #173325 */
+  --rep-cat-ambiente-ink: 77 203 144; /* #4DCB90 */
+  --rep-cat-comercio: 172 144 242;    /* #AC90F2 */
+  --rep-cat-comercio-soft: 42 37 64;  /* #2A2540 */
+  --rep-cat-comercio-ink: 172 144 242;/* #AC90F2 */
+
+  --rep-shadow: 0 0 0;
+}
