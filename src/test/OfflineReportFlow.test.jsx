@@ -36,6 +36,7 @@ vi.mock('../hooks/useGeolocation', () => ({
 
 // Mock de termsService para consentimientos
 vi.mock('../services/termsService', () => ({
+  CURRENT_TERMS_VERSION: '1.3',
   hasAcceptedCurrentTerms: () => true,
   recordTermsAcceptance: vi.fn().mockResolvedValue({ success: true }),
 }));

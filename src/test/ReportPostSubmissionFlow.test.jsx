@@ -71,6 +71,9 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
           onViewReport={handleViewReport}
           onReturnToMap={handleReturnToMap}
           onViewTerms={handleViewTerms}
+          // UJ v3.3 · M15: la constancia solo aparece en el envío que originó la aceptación
+          consentVersion="1.3"
+          consentAcceptedAt="2026-09-21T14:32:00.000Z"
         />
       );
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -9,15 +9,11 @@ import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
-import { EvidencePreviewScreen } from '../components/report/EvidencePreviewScreen';
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
-import {
-  hasAcceptedCurrentTerms,
-  recordTermsAcceptance,
-} from '../services/termsService';
+import { hasAcceptedCurrentTerms, recordTermsAcceptance, CURRENT_TERMS_VERSION } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
 // REP-2500-PRESEL: sugerencia de localidad a partir de la ubicacion real
@@ -85,6 +81,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Reporte ya persistido en Supabase (REP-2500) — id real y código para mostrar en éxito (E-4)
   const [persistedReport, setPersistedReport] = useState(null);
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  // REP-3543: constancia de consentimiento del envío que originó la aceptación (se muestra en M15)
+  const [consentRecord, setConsentRecord] = useState(null);
 
   const {
     evidenceList,
@@ -343,6 +341,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Acto de consentimiento + envío (primer reporte)
   const handleAcceptTermsAndSubmit = async () => {
     await recordTermsAcceptance(user?.id, { camera: true, location: true });
+    setConsentRecord({ version: CURRENT_TERMS_VERSION, acceptedAt: new Date().toISOString() });
     if (!isOnline) {
       await markDraftPendingSync(clientSideId);
       // Mensaje coloquial informando que se guardó y enviará solo
@@ -373,9 +372,10 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     return { lat: null, lng: null };
   };
 
-  // Persistencia real del reporte al confirmar la evidencia (REP-2500): crea la fila real,
-  // adjunta cada evidencia ya sanitizada, y solo avanza a la pantalla de éxito si todo se guardó (AC-05).
-  const handleConfirmEvidenceAndPersist = async () => {
+  // Persistencia real del reporte (REP-2500): crea la fila real, adjunta cada evidencia ya sanitizada
+  // y solo avanza al acuse si todo se guardó (AC-05). UJ v3.3: corre sola al terminar la protección
+  // (ya no hay paso de «Confirmar y enviar»); si falla, vuelve a la revisión con el borrador intacto.
+  const handleConfirmEvidenceAndPersist = async (evidencesOverride) => {
     setIsSubmittingReport(true);
     try {
       const { lat, lng } = extractLatLng(activeCoords);
@@ -394,10 +394,16 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         toast.error('No pudimos enviar tu reporte', {
           description: creationResult.error || 'Probá de nuevo en unos segundos.',
         });
+        goToStep(3);
         return;
       }
 
-      const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
+      const evidencesToAttach =
+        evidencesOverride?.length > 0
+          ? evidencesOverride
+          : processedEvidenceList.length > 0
+            ? processedEvidenceList
+            : activeList;
       // attachReportEvidence devuelve { success, error } y no lanza. Antes el
       // resultado se descartaba, asi que un fallo al adjuntar quedaba mudo: el
       // reporte se enviaba "bien" y la foto simplemente no existia. Fue asi
@@ -438,10 +444,20 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       toast.error('Error al enviar el reporte', {
         description: 'Ocurrió un problema inesperado. Probá de nuevo.',
       });
+      goToStep(3);
     } finally {
       setIsSubmittingReport(false);
     }
   };
+
+  // Callback estable para ReportProcessingScreen: su pipeline se reinicia si cambia la referencia
+  // de onProcessingComplete, y la persistencia provoca re-renders mientras la pantalla sigue montada.
+  const persistReportRef = useRef(handleConfirmEvidenceAndPersist);
+  persistReportRef.current = handleConfirmEvidenceAndPersist;
+  const handleProcessingComplete = useCallback((processedEvidences) => {
+    setProcessedEvidenceList(processedEvidences || []);
+    persistReportRef.current(processedEvidences);
+  }, []);
 
   // Determinar agencia receptora según ubicación
   const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
@@ -568,37 +584,13 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               clientSideId={clientSideId}
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
-              onProcessingComplete={(processedEvidences) => {
-                // Al completar la anonimización y sanitización, almacenamos las fotos procesadas y pasamos a previsualizar (REP-2402)
-                setProcessedEvidenceList(processedEvidences || activeList);
-                goToStep(5);
-              }}
+              onProcessingComplete={handleProcessingComplete}
             />
           </motion.div>
         )}
 
-        {/* PASO 5: Previsualización de Evidencia Anonimizada ("Tu foto está lista y protegida" - REP-2402) */}
-        {currentStep === 5 && (
-          <motion.div
-            key="step-5"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
-          >
-            <EvidencePreviewScreen
-              evidenceList={processedEvidenceList.length > 0 ? processedEvidenceList : activeList}
-              categoryName={selectedCategory?.name || 'Infracción de tránsito'}
-              onConfirm={handleConfirmEvidenceAndPersist}
-              isSubmitting={isSubmittingReport}
-              onRetake={() => {
-                clearEvidence();
-                goToStep(1);
-              }}
-            />
-          </motion.div>
-        )}
+        {/* UJ v3.3: ya no hay paso 5 de vista previa — M14 encadena con M15 («Cae Confirmar y enviar»).
+            La foto anonimizada y el conteo de zonas se verán en el detalle del reporte (M16, Bloque 3). */}
 
         {/* PASO 6: Confirmación de Envío Exitoso ("Reporte enviado") */}
         {currentStep === 6 && (
@@ -626,6 +618,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
                 navigate('/mapa');
               }}
               onViewTerms={() => setShowTermsModal(true)}
+              consentVersion={consentRecord?.version}
+              consentAcceptedAt={consentRecord?.acceptedAt}
             />
           </motion.div>
         )}

@@ -126,7 +126,8 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
     fireEvent.click(submitBtn);
 
     expect(screen.getByText('Antes de enviar')).toBeInTheDocument();
-    expect(screen.getByText(/El organismo receptor nunca ve tus datos personales/i)).toBeInTheDocument();
+    // UJ v3.3 · M13: texto de la hoja de consentimiento (REP-3791 Bloque 2)
+    expect(screen.getByText(/Difuminamos rostros y patentes en el servidor, antes de guardar/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Acepto y envío/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ahora no/i })).toBeInTheDocument();
   });
