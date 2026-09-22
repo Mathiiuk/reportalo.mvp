@@ -1,13 +1,31 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 /**
- * Categorías oficiales según User Journey v2.
- * Utilizadas como fallback en caso de operar offline o sin conexión a Supabase.
+ * Categorías del catálogo real de `public.services`, usadas como respaldo cuando
+ * no hay conexión con Supabase.
+ *
+ * Los códigos y nombres son los de producción (proyecto CiudadAR), verificados
+ * contra la base el 22/09/2026, y coinciden con `supabase/seed.sql`.
+ *
+ * Antes este array decía 'infraestructura_vial' / «Infraestructura vial»,
+ * 'infraccion_transito' / «Infracción de tránsito» y 'medio_ambiente' /
+ * «Medio ambiente», que no existen en la base. Como con conexión las categorías
+ * salen de `services`, el ciudadano veía unos nombres online y otros distintos
+ * sin conexión (observación H-03 del handoff del UJ v3.3, confirmada contra la
+ * base: el UJ tenía razón).
+ *
+ * Son CINCO: «Comercio irregular» y «Vulnerabilidad social» conviven en
+ * producción (H-04). Si se decide no mostrarle «Vulnerabilidad social» al
+ * ciudadano, hay que filtrarla también en la lista que llega de `services`, no
+ * solo acá, porque con conexión hoy ya se muestra.
+ *
+ * Ojo: estas entradas no tienen `dbId`, porque el id lo asigna la base. Un
+ * reporte creado por este camino va sin `service_id`.
  */
 export const DEFAULT_REPORT_CATEGORIES = [
   {
-    id: 'infraestructura_vial',
-    name: 'Infraestructura vial',
+    id: 'INFRAESTRUCTURA',
+    name: 'Infraestructura',
     icon: 'construction',
     color: '#1E6FCB',
     bgLight: '#EEF5FC',
@@ -15,8 +33,8 @@ export const DEFAULT_REPORT_CATEGORIES = [
     example: 'Ej.: baches, veredas rotas, calzada hundida o falta de cordón cuneta.',
   },
   {
-    id: 'infraccion_transito',
-    name: 'Infracción de tránsito',
+    id: 'TRANSITO',
+    name: 'Tránsito',
     icon: 'local_shipping',
     color: '#F78E35',
     bgLight: '#FFF6E9',
@@ -24,8 +42,8 @@ export const DEFAULT_REPORT_CATEGORIES = [
     example: 'Ej.: estacionamiento indebido, bloqueo de rampa, camiones fuera de horario.',
   },
   {
-    id: 'medio_ambiente',
-    name: 'Medio ambiente',
+    id: 'AMBIENTE',
+    name: 'Ambiente',
     icon: 'eco',
     color: '#2E9E6B',
     bgLight: '#E3F5EC',
@@ -33,7 +51,7 @@ export const DEFAULT_REPORT_CATEGORIES = [
     example: 'Ej.: microbasurales, podas clandestinas, efluentes o contaminación acústica.',
   },
   {
-    id: 'comercio_irregular',
+    id: 'COMERCIO_IRREGULAR',
     name: 'Comercio irregular',
     icon: 'storefront',
     color: '#7C5CD6',
@@ -41,29 +59,31 @@ export const DEFAULT_REPORT_CATEGORIES = [
     borderColor: '#DED4F5',
     example: 'Ej.: venta ambulante en la vereda, feria sin habilitación, ocupación del espacio público.',
   },
-];
-
-/**
- * Estilo (ícono/color) por categoría, buscado por coincidencia parcial contra el
- * `service_code`/id normalizado. Existen dos esquemas de nombres en distintos seeds
- * (p.ej. "infraestructura_vial" vs "INFRAESTRUCTURA") — el match por substring cubre
- * ambos sin tener que sincronizar el código exacto con cada seed. Incluye
- * "vulnerabilidad_social" (5ta categoría real en producción, REP-2900/2901) aunque no
- * está en DEFAULT_REPORT_CATEGORIES: ese array es el fallback offline validado 1:1
- * contra supabase/seed.sql (ver SupabaseSeedValidation.test.js), no el catálogo visual.
- */
-const CATEGORY_STYLE_BY_KEY = {
-  infraestructura: DEFAULT_REPORT_CATEGORIES[0],
-  transito: DEFAULT_REPORT_CATEGORIES[1],
-  ambiente: DEFAULT_REPORT_CATEGORIES[2],
-  comercioirregular: DEFAULT_REPORT_CATEGORIES[3],
-  vulnerabilidadsocial: {
+  {
+    id: 'VULNERABILIDAD_SOCIAL',
+    name: 'Vulnerabilidad social',
     icon: 'heart_handshake',
     color: '#D6336C',
     bgLight: '#FDEFF3',
     borderColor: '#F5C9D8',
     example: 'Ej.: persona en situación de calle, familia en riesgo, necesidad de asistencia social urgente.',
   },
+];
+
+/**
+ * Estilo (ícono/color) por categoría, buscado por coincidencia parcial contra el
+ * `service_code`/id normalizado. El match por substring tolera que un entorno viejo
+ * todavia tenga los codigos anteriores en minuscula ("infraestructura_vial" vs
+ * "INFRAESTRUCTURA"), sin tener que sincronizar el codigo exacto con cada seed.
+ * Las cinco entradas salen de DEFAULT_REPORT_CATEGORIES, que ahora refleja 1:1 el
+ * catalogo real y supabase/seed.sql (ver SupabaseSeedValidation.test.js).
+ */
+const CATEGORY_STYLE_BY_KEY = {
+  infraestructura: DEFAULT_REPORT_CATEGORIES[0],
+  transito: DEFAULT_REPORT_CATEGORIES[1],
+  ambiente: DEFAULT_REPORT_CATEGORIES[2],
+  comercioirregular: DEFAULT_REPORT_CATEGORIES[3],
+  vulnerabilidadsocial: DEFAULT_REPORT_CATEGORIES[4],
 };
 
 const normalizeForMatch = (text) => (text ?? '').toLowerCase().replace(/[^a-z]/g, '');
