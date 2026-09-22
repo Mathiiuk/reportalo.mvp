@@ -1,11 +1,20 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+// Reloj fijo. El agrupamiento en «Hoy / Esta semana / Antes» se calcula al ejecutar,
+// y los datos de prueba se construían con new Date() al cargar el módulo: si la
+// corrida cruzaba la medianoche entre una cosa y la otra, el aviso «de hoy» caía en
+// otro grupo y el test fallaba sin que nada estuviera mal. Con una fecha fija —un
+// martes a media tarde, lejos de cualquier borde— el resultado no depende de cuándo
+// se corra la suite.
+const AHORA = new Date('2026-09-22T15:00:00.000-03:00');
+const haceDias = (dias) => new Date(AHORA.getTime() - dias * 86400000).toISOString();
+
 const historyRows = [
-  { report_id: 'aaaa1111-0000-4000-8000-000000000000', state_code: 'EN_ANALISIS', notes: 'Derivado a inspección de tránsito', changed_at: new Date().toISOString() },
-  { report_id: 'bbbb2222-0000-4000-8000-000000000000', state_code: 'RESUELTO', notes: null, changed_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { report_id: 'aaaa1111-0000-4000-8000-000000000000', state_code: 'EN_ANALISIS', notes: 'Derivado a inspección de tránsito', changed_at: AHORA.toISOString() },
+  { report_id: 'bbbb2222-0000-4000-8000-000000000000', state_code: 'RESUELTO', notes: null, changed_at: haceDias(3) },
 ];
 
 vi.mock('../lib/supabaseClient', () => ({
@@ -36,14 +45,22 @@ import { ReportsPage } from '../pages/ReportsPage';
 const DRAFT = {
   client_side_id: 'draft-1',
   description: 'Contenedor desbordado',
-  updatedAt: new Date().toISOString(),
+  updatedAt: AHORA.toISOString(),
 };
 
 describe('REP-3791 Bloque 6 · Mis reportes y Notificaciones (UJ v3.3 · M17 / M18)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    // Solo se congela Date: los temporizadores siguen siendo reales, porque
+    // waitFor y los efectos de React los necesitan.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(AHORA);
     getAllPendingSyncReports.mockResolvedValue([DRAFT]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('UT-B6-01: arma los avisos con los cambios de estado de mis reportes y los borradores sin enviar', async () => {

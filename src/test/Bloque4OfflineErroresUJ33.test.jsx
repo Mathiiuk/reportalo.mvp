@@ -66,6 +66,11 @@ import { SessionExpiredPage } from '../pages/SessionExpiredPage';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { markSessionActive, clearSessionMarker } from '../lib/sessionMarker';
 
+// Reloj fijo: PendingReportsPage formatea «hoy HH:mm» y «ayer HH:mm», y el borrador
+// de prueba se construía con new Date() al cargar el módulo. Cruzar la medianoche
+// entre una cosa y la otra cambiaba el texto renderizado sin que nada estuviera mal.
+const AHORA = new Date('2026-09-22T15:00:00.000-03:00');
+
 const DRAFT = {
   client_side_id: 'draft-1',
   status: 'PENDING_SYNC',
@@ -73,17 +78,22 @@ const DRAFT = {
   selectedCategory: { id: 'medio_ambiente', name: 'Medio ambiente', icon: 'eco', dbId: 'srv-1' },
   customLocation: { localityId: 'loc-1', localityLabel: 'Avellaneda', coordinates: { lat: -34.66, lng: -58.36 } },
   evidenceList: [{ id: 'e1', blob: new Blob(['x'], { type: 'image/jpeg' }), name: 'f.jpg', mimeType: 'image/jpeg' }],
-  updatedAt: new Date().toISOString(),
+  updatedAt: AHORA.toISOString(),
 };
 
 describe('REP-3791 Bloque 4 · Sin conexión y errores del reporte (UJ v3.3 · M20–M23)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Solo se congela Date: los temporizadores siguen siendo reales, porque
+    // waitFor y los efectos de React los necesitan.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(AHORA);
     useAuth.mockReturnValue({ user: { id: 'user-1' }, session: null, signInWithGoogle: vi.fn(), signInWithMagicLink: vi.fn().mockResolvedValue({ error: null }) });
     Object.defineProperty(window.navigator, 'onLine', { value: true, configurable: true });
   });
   afterEach(() => {
     clearSessionMarker();
+    vi.useRealTimers();
   });
 
   it('UT-B4-01: envía un pendiente con foto protegida en el servidor y borra el borrador local', async () => {
