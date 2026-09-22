@@ -15,13 +15,29 @@ import {
   Trash2,
   TrafficCone,
   Trees,
+  Store,
+  HeartHandshake,
   Eye,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCategoryTone } from '../report/categoryTone';
+import { getStatusConfig, normalizeReportState } from '../report/reportStatus';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 
-// Mapeo de iconos de categoría (mockReports.js) para los marcadores del mapa.
+// Estados del §10 que pueden aparecer en el mapa. «borrador» no entra: el borrador vive
+// en el dispositivo y nunca llega a la base.
+const MAP_STATE_FILTERS = ['todos', 'enviado', 'en_revision', 'notificado', 'resuelto', 'descartado'];
+
+// «Notificado al responsable» no entra en el panel de filtros, que es angosto.
+const FILTER_SHORT_LABELS = { notificado: 'Notificado' };
+
+const filterLabel = (filter) => {
+  if (filter === 'todos') return 'Todos los reclamos';
+  return FILTER_SHORT_LABELS[filter] || getStatusConfig(filter).label;
+};
+
+// Mapeo de iconos de categoría para los marcadores del mapa. Las claves las resuelve
+// mapReportsService a partir del nombre de la categoría.
 // Se renderizan a HTML estático porque el marcador de MapLibre es un nodo DOM
 // plano (Marker({ element })), no un componente React.
 const MARKER_ICON_MAP = {
@@ -30,6 +46,8 @@ const MARKER_ICON_MAP = {
   delete: Trash2,
   traffic: TrafficCone,
   park: Trees,
+  store: Store,
+  assist: HeartHandshake,
 };
 
 const renderMarkerIcon = (categoryIcon) => {
@@ -38,7 +56,6 @@ const renderMarkerIcon = (categoryIcon) => {
     createElement(IconComponent, { size: 20, color: '#ffffff', strokeWidth: 2.25 })
   );
 };
-import { MOCK_REPORTS } from '../../data/mockReports';
 import {
   getUserCoordinates,
   LOCATION_STATUS,
@@ -72,10 +89,25 @@ const MAX_ZOOM = 19;
 
 /**
  * Mapa colaborativo (UJ v3.3 · M08 en teléfono y D09 en escritorio — REP-3791 Bloque 5).
- * `onOpenReport(id)` es opcional para que el componente siga funcionando fuera de un Router
- * (así lo montan varios tests): sin esa prop no se ofrece «Ver el reporte».
+ *
+ * Es presentacional: los reportes llegan por prop. Antes los leía de
+ * `src/data/mockReports.js`, así que la pantalla principal mostraba reclamos inventados
+ * y «Ver el reporte» abría un detalle inexistente (H-36). Quien los trae ahora es
+ * `MapPage`, con `getPublicMapReports`.
+ *
+ * `onOpenReport(id)` es opcional para que el componente siga funcionando fuera de un
+ * Router (así lo montan varios tests): sin esa prop no se ofrece «Ver el reporte».
+ *
+ * @param {Array} [reports] Reportes ya adaptados por mapReportsService
+ * @param {boolean} [isLoadingReports] Mientras se resuelve la primera carga
  */
-export const CitizenMap = ({ onFilterClick, autoLocate = true, onOpenReport = null }) => {
+export const CitizenMap = ({
+  onFilterClick,
+  autoLocate = true,
+  onOpenReport = null,
+  reports = [],
+  isLoadingReports = false,
+}) => {
   const isDesktop = useIsDesktopLayout();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -91,10 +123,13 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true, onOpenReport = nu
   const [locationStatus, setLocationStatus] = useState(LOCATION_STATUS.PENDING);
   const [showLocationBanner, setShowLocationBanner] = useState(false);
 
-  // Filtrado reactivo de reportes
-  const filteredReports = MOCK_REPORTS.filter((report) => {
+  // Filtrado reactivo por estado. Se compara contra el código normalizado del §10 y
+  // no contra la etiqueta visible: los datos traen los códigos reales de la base
+  // (RECIBIDO, EN_ANALISIS, DERIVADO, RESUELTO, DESESTIMADO) y la traducción vive en
+  // un solo lugar.
+  const filteredReports = reports.filter((report) => {
     if (activeFilter === 'todos') return true;
-    return report.status.toLowerCase() === activeFilter.toLowerCase();
+    return normalizeReportState(report.stateCode) === activeFilter;
   });
 
   // Renderizar o actualizar el marcador de posición del usuario (punto azul GPS con halo)
@@ -362,7 +397,11 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true, onOpenReport = nu
           <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center bg-rep-bg/60 md:flex">
             <div className="flex items-center gap-2 rounded-xl border border-rep-border bg-rep-surface px-4 py-2.5 shadow-rep-float">
               <MapPinOff className="h-[18px] w-[18px] text-rep-ink-faint" strokeWidth={2.25} />
-              <span className="text-rep-label font-semibold text-rep-ink-label">Sin marcadores para mostrar</span>
+              {/* Con datos reales «vacío» y «todavía cargando» no son lo mismo: decir
+                  «no hay reportes» mientras la consulta viaja seria mentir. */}
+              <span className="text-rep-label font-semibold text-rep-ink-label">
+                {isLoadingReports ? 'Cargando reportes…' : 'Sin marcadores para mostrar'}
+              </span>
             </div>
           </div>
         )}
@@ -481,7 +520,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true, onOpenReport = nu
             <div className="mb-1 px-1 text-[11px] font-extrabold uppercase tracking-wider text-rep-ink-muted">
               Filtrar reclamos
             </div>
-            {['todos', 'Enviado', 'En curso', 'Resuelto'].map((filter) => (
+            {MAP_STATE_FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
@@ -489,13 +528,13 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true, onOpenReport = nu
                   setActiveFilter(filter);
                   setShowFiltersModal(false);
                 }}
-                className={`rep-focus min-h-touch rounded-xl border-0 px-3 py-2 text-left text-rep-label font-bold capitalize transition-colors duration-120 ${
+                className={`rep-focus min-h-touch rounded-xl border-0 px-3 py-2 text-left text-rep-label font-bold transition-colors duration-120 ${
                   activeFilter === filter
                     ? 'bg-rep-accent-soft text-rep-accent'
                     : 'bg-transparent text-rep-ink-label hover:bg-rep-surface-sunken'
                 }`}
               >
-                {filter === 'todos' ? 'Todos los reclamos' : filter}
+                {filterLabel(filter)}
               </button>
             ))}
           </div>
