@@ -80,7 +80,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('UT-MP-02: Renderiza los 5 accesos de navegación en la barra inferior flotante (Mapa, Reportes, Cámara, Alertas, Perfil)', () => {
+  it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón flotante de reportar', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -92,7 +92,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     const nav = screen.getByRole('navigation', { name: /navegación principal/i });
     expect(within(nav).getByRole('button', { name: /mapa/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /reportes/i })).toBeInTheDocument();
-    expect(within(nav).getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
+    // UJ v3.3 · M08 (REP-3791 Bloque 5): «Reportar» pasa a ser un botón flotante sobre el mapa,
+    // fuera de la barra de pestañas, que queda con cuatro accesos.
+    expect(screen.getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /alertas/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
   });
