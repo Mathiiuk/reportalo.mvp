@@ -30,6 +30,7 @@ const NewReportPage = React.lazy(() => import('./pages/NewReportPage').then(m =>
 const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const PendingReportsPage = React.lazy(() => import('./pages/PendingReportsPage').then(m => ({ default: m.PendingReportsPage })));
 const SessionExpiredPage = React.lazy(() => import('./pages/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })));
+const NewsDetailPage = React.lazy(() => import('./pages/NewsDetailPage').then(m => ({ default: m.NewsDetailPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
@@ -246,6 +247,15 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* UJ v3.3 · M25 / D32 — nota completa de una novedad (REP-3791 Bloque 8) */}
+      <Route
+        path="/novedades/:id"
+        element={
+          <ProtectedRoute>
+            <NewsDetailPage />
           </ProtectedRoute>
         }
       />
