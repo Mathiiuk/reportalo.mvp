@@ -393,16 +393,52 @@ export const CitizenMap = ({
         />
 
         {/* Overlay central en el mapa para Desktop si no hay resultados */}
+        {/* Sin resultados (UJ v3.3 · M29 / D33 — REP-3791 Bloque 9).
+            Son tres situaciones distintas y decirlas igual sería mentir: todavía
+            cargando, no hay ningún reporte en la zona, o hay pero los filtros los
+            dejaron afuera. Solo la última ofrece limpiar filtros. */}
         {filteredReports.length === 0 && (
-          <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center bg-rep-bg/60 md:flex">
-            <div className="flex items-center gap-2 rounded-xl border border-rep-border bg-rep-surface px-4 py-2.5 shadow-rep-float">
-              <MapPinOff className="h-[18px] w-[18px] text-rep-ink-faint" strokeWidth={2.25} />
-              {/* Con datos reales «vacío» y «todavía cargando» no son lo mismo: decir
-                  «no hay reportes» mientras la consulta viaja seria mentir. */}
-              <span className="text-rep-label font-semibold text-rep-ink-label">
-                {isLoadingReports ? 'Cargando reportes…' : 'Sin marcadores para mostrar'}
-              </span>
-            </div>
+          <div className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-[420px] -translate-y-1/2 rounded-2xl border border-rep-border bg-rep-surface p-5 text-center shadow-rep-float md:left-1/2 md:right-auto md:-translate-x-1/2">
+            {isLoadingReports ? (
+              <p className="m-0 text-rep-body text-rep-ink-muted">Cargando reportes…</p>
+            ) : reports.length === 0 ? (
+              <>
+                <MapPinOff aria-hidden="true" className="mx-auto h-6 w-6 text-rep-ink-faint" strokeWidth={2.25} />
+                <p className="m-0 mt-3 text-rep-section text-rep-ink">Todavía no hay reportes en la zona</p>
+                <p className="m-0 mt-1.5 text-rep-body text-rep-ink-muted">
+                  Cuando alguien reporte algo cerca tuyo, va a aparecer acá.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {activeFilter !== 'todos' && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-rep-accent-soft px-2 py-1 text-rep-pill uppercase tracking-wide text-rep-accent">
+                      {filterLabel(activeFilter)}
+                      <button
+                        type="button"
+                        onClick={() => setActiveFilter('todos')}
+                        aria-label={`Quitar el filtro ${filterLabel(activeFilter)}`}
+                        className="rep-focus rounded"
+                      >
+                        <X className="h-3 w-3" strokeWidth={2.5} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <p className="m-0 mt-3 text-rep-section text-rep-ink">Ningún reporte con estos filtros</p>
+                <p className="m-0 mt-1.5 text-rep-body text-rep-ink-muted">
+                  Hay reportes en la zona, pero ninguno coincide con los filtros activos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('todos')}
+                  className="rep-focus mt-4 flex min-h-touch w-full items-center justify-center rounded-xl border-0 bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong"
+                >
+                  Limpiar filtros
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -540,13 +576,9 @@ export const CitizenMap = ({
           </div>
         )}
 
-        {/* Banner de Estado Vacío si el filtro no tiene resultados (Mobile) */}
-        {filteredReports.length === 0 && (
-          <div className="absolute left-1/2 top-[72px] z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-rep-border bg-rep-surface/95 px-4 py-2 text-rep-label font-bold text-rep-ink-label shadow-rep-float backdrop-blur-md md:hidden">
-            <AlertCircle className="h-4 w-4 text-rep-warning" />
-            <span>No hay reportes con estado "{activeFilter}"</span>
-          </div>
-        )}
+        {/* El banner de vacío de teléfono se retiró en el Bloque 9: había dos avisos
+            distintos para lo mismo, uno acá y otro en escritorio. Ahora es una sola
+            tarjeta, arriba. */}
 
         {/* Tarjeta Flotante de Reporte Seleccionado (Popup Bottom Card) */}
         <AnimatePresence>

@@ -183,8 +183,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getByRole('heading', { name: /novedades/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/sin novedades por ahora/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /explorar el mapa/i })).toBeInTheDocument();
+    // UJ v3.3 · M27 (REP-3791 Bloque 9): el vacío pasa al copy del diseño
+    expect(screen.getByRole('heading', { name: /todavía no hay publicaciones/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ver el mapa/i })).toBeInTheDocument();
   });
 
   it('UT-MP-06: ProfilePage renderiza los datos del usuario, versión vigente y botón de cerrar sesión', () => {

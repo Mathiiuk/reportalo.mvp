@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { ImagePlus, MapPin, CloudOff, ChevronRight } from 'lucide-react';
+import { ImagePlus, MapPin, CloudOff, ChevronRight, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
 import { isClosedState } from '../components/report/reportStatus';
 import { StatusPill } from '../components/report/StatusPill';
+import { EmptyState } from '../components/common/EmptyState';
 import { getAllPendingSyncReports } from '../services/offlineStorageService';
 
 // Insignias del listado. El agrupamiento sale de reportStatus (fuente única de
@@ -206,41 +207,14 @@ export const ReportsPage = () => {
           {isLoadingReports && !isDemoActive ? (
             <div className="py-10 text-center text-rep-body font-semibold text-rep-ink-muted">Cargando tus reportes…</div>
           ) : filteredReports.length === 0 ? (
-            /* Estado vacío */
-            <div className="mt-2 flex flex-col items-center gap-3 rounded-[28px] border border-rep-border bg-rep-surface p-7 text-center shadow-rep-card md:mx-auto md:mt-10 md:max-w-[620px] md:flex-row md:items-start md:gap-7 md:rounded-2xl md:text-left">
-              <div className="flex w-[132px] flex-none items-center justify-center">
-                <svg width="120" height="94" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <rect x="10" y="12" width="112" height="80" rx="9" fill="rgb(var(--rep-surface-sunken))" stroke="rgb(var(--rep-border))" strokeWidth="2" />
-                  <path d="M52 30h46L80 52v22l-10-6V52L52 30Z" fill="rgb(var(--rep-surface))" stroke="rgb(var(--rep-accent))" strokeWidth="2.6" strokeLinejoin="round" />
-                  <circle cx="104" cy="76" r="13" fill="rgb(var(--rep-surface))" stroke="rgb(var(--rep-border))" strokeWidth="2.5" />
-                  <path d="M99 71l10 10M109 71l-10 10" stroke="rgb(var(--rep-ink-faint))" strokeWidth="2.6" strokeLinecap="round" />
-                </svg>
-              </div>
-
-              <div className="flex flex-1 flex-col items-center md:items-start">
-                <h2 className="m-0 text-rep-section text-rep-ink">Todavía no enviaste reportes</h2>
-                <p className="m-0 mt-2 text-rep-body text-rep-ink-muted">
-                  Cuando envíes uno, vas a poder seguir su estado acá: en revisión, notificado al responsable y resuelto.
-                </p>
-                <div className="mt-4 flex w-full flex-col items-center gap-3 md:w-auto md:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/nuevo-reporte')}
-                    className="rep-focus flex min-h-touch w-full items-center justify-center gap-1.5 rounded-xl border-0 bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong md:w-auto"
-                  >
-                    <ImagePlus aria-hidden="true" className="h-[17px] w-[17px]" strokeWidth={2.25} />
-                    Hacer mi primer reporte
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsDemoActive(true)}
-                    className="rep-focus min-h-touch border-0 bg-transparent px-2 text-rep-label font-bold text-rep-ink-muted transition-colors duration-120 hover:text-rep-ink-label"
-                  >
-                    Ver un ejemplo
-                  </button>
-                </div>
-              </div>
-            </div>
+            /* Estado vacío (UJ v3.3 · M26 / D34 — REP-3791 Bloque 9) */
+            <EmptyState
+              icon={Inbox}
+              title="Todavía no enviaste reportes"
+              description="Cuando envíes uno, acá vas a poder seguir su estado paso a paso hasta que se resuelva."
+              primaryAction={{ label: 'Hacer mi primer reporte', icon: ImagePlus, onClick: () => navigate('/nuevo-reporte') }}
+              secondaryAction={{ label: 'Ver el mapa de la zona', onClick: () => navigate('/mapa') }}
+            />
           ) : (
             /* Lista: tarjetas en teléfono, filas en escritorio (D18) */
             <ul className="m-0 flex list-none flex-col gap-3 p-0">

@@ -5,6 +5,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../hooks/useAuth';
 import { getMyNotifications, groupNotifications, markAllNotificationsRead } from '../services/notificationsService';
 import { formatShortDateTime } from '../components/report/reportStatus';
+import { EmptyState } from '../components/common/EmptyState';
 
 const ICONS = {
   estado: ArrowLeftRight,
@@ -102,15 +103,13 @@ export const NotificationsPage = () => {
               <div className="h-20 rounded-2xl bg-rep-track" />
             </div>
           ) : items.length === 0 ? (
-            <div className="mt-12 flex flex-col items-center gap-3 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rep-accent-soft text-rep-accent">
-                <BellOff aria-hidden="true" className="h-7 w-7" strokeWidth={2} />
-              </span>
-              <p className="m-0 text-rep-section text-rep-ink">Todavía no hay avisos</p>
-              <p className="m-0 max-w-[300px] text-rep-body text-rep-ink-muted">
-                Acá vas a ver los cambios de estado de tus reportes y las notas del organismo.
-              </p>
-            </div>
+            /* Estado vacío (UJ v3.3 · M28): es el estado inicial de toda cuenta nueva */
+            <EmptyState
+              icon={BellOff}
+              title="Estás al día"
+              description="Cuando un reporte tuyo cambie de estado o el organismo deje una nota, te avisamos acá."
+              secondaryAction={{ label: 'Ver mis reportes', onClick: () => navigate('/reportes') }}
+            />
           ) : (
             <div className="flex flex-col gap-5">
               {Object.entries(groups)

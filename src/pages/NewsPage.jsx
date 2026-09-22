@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Megaphone } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { NewsCard } from '../components/news/NewsCard';
+import { EmptyState } from '../components/common/EmptyState';
 import { DEMO_NEWS, getPublishedNews } from '../services/newsService';
 
 const FILTERS = [
@@ -96,22 +97,13 @@ export const NewsPage = () => {
               ))}
             </div>
           ) : (
-            <div className="mx-auto mt-6 flex max-w-xl flex-col items-center justify-center rounded-[24px] border border-rep-border bg-rep-surface p-8 text-center shadow-rep-card md:mt-12 md:p-12">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rep-accent-soft text-rep-accent">
-                <Megaphone aria-hidden="true" className="h-7 w-7" strokeWidth={2} />
-              </span>
-              {/* Va como párrafo y no como encabezado: el título de la pantalla ya es «Novedades» */}
-              <p className="m-0 mt-4 text-rep-section text-rep-ink">Sin novedades por ahora</p>
-              <p className="m-0 mt-2 text-rep-body text-rep-ink-muted">
-                Cuando el municipio publique avisos o haya cambios en la app, los vas a ver acá.
-              </p>
-              <Link
-                to="/mapa"
-                className="rep-focus mt-4 inline-flex min-h-touch items-center rounded-xl bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent no-underline transition-colors duration-120 hover:bg-rep-accent-strong"
-              >
-                Explorar el mapa
-              </Link>
-            </div>
+            /* Estado vacío (UJ v3.3 · M27 / D35): tono de espera, salida secundaria al mapa */
+            <EmptyState
+              icon={Megaphone}
+              title="Todavía no hay publicaciones"
+              description="Cuando el municipio publique un aviso de obra u operativo, o salga una versión nueva de la app, lo vas a leer acá."
+              secondaryAction={{ label: 'Ver el mapa', onClick: () => navigate('/mapa') }}
+            />
           )}
         </div>
       </div>

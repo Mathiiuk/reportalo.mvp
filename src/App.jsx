@@ -31,6 +31,7 @@ const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage').t
 const PendingReportsPage = React.lazy(() => import('./pages/PendingReportsPage').then(m => ({ default: m.PendingReportsPage })));
 const SessionExpiredPage = React.lazy(() => import('./pages/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })));
 const NewsDetailPage = React.lazy(() => import('./pages/NewsDetailPage').then(m => ({ default: m.NewsDetailPage })));
+const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
@@ -282,6 +283,8 @@ export const AppRoutes = () => {
         path="/municipalidad/plan"
         element={<Navigate to="/municipios#planes" replace />}
       />
+      {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
+      <Route path="/acceso-restringido" element={<ForbiddenPage />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </React.Suspense>

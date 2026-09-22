@@ -22,8 +22,8 @@ describe('REP-3791 Bloque 8 · Novedades (UJ v3.3 · M24 / M25)', () => {
   it('UT-B8-01: sin origen de datos, muestra el estado vacío con salida al mapa', () => {
     renderNews();
     expect(screen.getByRole('heading', { name: 'Novedades', level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/sin novedades por ahora/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /explorar el mapa/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /todavía no hay publicaciones/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ver el mapa/i })).toBeInTheDocument();
   });
 
   it('UT-B8-02: con contenido, muestra una destacada arriba y el resto compactas, y filtra por origen', () => {
