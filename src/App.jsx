@@ -27,6 +27,7 @@ const MunicipiosPage = React.lazy(() => import('./pages/MunicipiosPage').then(m 
 const NewReportPage = React.lazy(() => import('./pages/NewReportPage').then(m => ({ default: m.NewReportPage })));
 // ReportDetailPage ya se importa arriba (REP-3789): el bloque lo traia porque su
 // base no lo tenia.
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const PendingReportsPage = React.lazy(() => import('./pages/PendingReportsPage').then(m => ({ default: m.PendingReportsPage })));
 const SessionExpiredPage = React.lazy(() => import('./pages/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
@@ -239,6 +240,15 @@ export const AppRoutes = () => {
       {/* El detalle del reporte ya tiene su ruta /reportes/:id (REP-3789). El
           bloque proponia /reporte/:id, en singular, tomada del mockup de D17: se
           descarta para no dejar dos rutas hacia la misma pantalla. */}
+      {/* UJ v3.3 · M18 / D19 — notificaciones del ciudadano (REP-3791 Bloque 6) */}
+      <Route
+        path="/notificaciones"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
       {/* UJ v3.3 · M20 — pendientes de envío (REP-3791 Bloque 4) */}
       <Route
         path="/pendientes"

@@ -86,7 +86,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
             <ThemeToggle />
             <button
               type="button"
-              onClick={() => navigate('/alertas')}
+              onClick={() => navigate('/notificaciones')}
               aria-label="Ver alertas y notificaciones"
               className="rep-focus relative flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-colors duration-120 hover:bg-rep-divider active:scale-[0.98]"
             >

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { ImagePlus, MapPin } from 'lucide-react';
+import { ImagePlus, MapPin, CloudOff, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
 import { isClosedState } from '../components/report/reportStatus';
+import { StatusPill } from '../components/report/StatusPill';
+import { getAllPendingSyncReports } from '../services/offlineStorageService';
 
 // Insignias del listado. El agrupamiento sale de reportStatus (fuente única de
 // verdad, REP-3791 Bloque 3), que traduce los códigos reales de la base
@@ -28,6 +30,7 @@ const mapReportRow = (row) => {
   const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
   return {
     id: row.id,
+    stateCode: row.current_state_code,
     title: row.description,
     category: row.services?.service_name || 'Sin categoría',
     status: badge.status,
@@ -44,6 +47,20 @@ export const ReportsPage = () => {
   const [isDemoActive, setIsDemoActive] = useState(false);
   const [myReports, setMyReports] = useState([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
+  // UJ v3.3 · M17: los borradores sin enviar encabezan la lista (REP-3791 Bloque 6)
+  const [pendingDrafts, setPendingDrafts] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getAllPendingSyncReports()
+      .then((drafts) => {
+        if (isMounted) setPendingDrafts(drafts || []);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,198 +124,165 @@ export const ReportsPage = () => {
   const countEnCurso = currentReports.filter((r) => r.status === 'En curso').length;
   const countResueltos = currentReports.filter((r) => r.status === 'Resueltos').length;
 
+  const draftTitle = (draft) => {
+    const text = String(draft.description || '').trim().split('\n')[0];
+    if (!text) return 'Reporte sin descripción';
+    return text.length > 48 ? `${text.slice(0, 47)}…` : text;
+  };
+
+  const showDrafts = !isDemoActive && pendingDrafts.length > 0 && activeFilter !== 'resueltos';
+
   return (
     <AppLayout activeTab="reportes">
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-10 py-6">
-        <div className="max-w-5xl mx-auto flex flex-col gap-5">
-          
-          {/* Header Superior: Título y Cargar demo */}
-          <div className="flex items-center justify-between">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+          {/* Título y demo */}
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-[#1B365D] tracking-[-0.4px] m-0">
-                Mis reportes
-              </h1>
-              <p className="text-[13px] text-[#7A8696] font-medium mt-1 mb-0">
-                Seguimiento y estado en tiempo real de tus reclamos enviados
+              <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
+              <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
+                Seguimiento de lo que enviaste y de lo que todavía está en este dispositivo.
               </p>
             </div>
-            
             <button
-              onClick={() => setIsDemoActive((prev) => !prev)}
               type="button"
-              className="font-bold text-[13px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-[#EEF5FC] hover:bg-[#E1EFFD] px-3.5 py-1.5 rounded-lg border-0 transition-colors"
+              onClick={() => setIsDemoActive((prev) => !prev)}
+              className="rep-focus min-h-touch shrink-0 rounded-lg border-0 bg-rep-accent-soft px-3.5 text-rep-label font-bold text-rep-accent transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06]"
             >
               {isDemoActive ? 'Limpiar demo' : 'Cargar demo'}
             </button>
           </div>
 
-          {/* Filtros en Píldora */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-            
-            {/* Todos */}
-            <button
-              onClick={() => setActiveFilter('todos')}
-              type="button"
-              className={`px-4 py-1.5 rounded-full font-bold text-[12.5px] cursor-pointer transition-all border ${
-                activeFilter === 'todos'
-                  ? 'bg-[#1E6FCB] text-white border-[#1E6FCB] shadow-xs'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-slate-50'
-              }`}
-            >
-              Todos · {countTodos}
-            </button>
-
-            {/* En curso */}
-            <button
-              onClick={() => setActiveFilter('en curso')}
-              type="button"
-              className={`px-4 py-1.5 rounded-full font-bold text-[12.5px] cursor-pointer transition-all border ${
-                activeFilter === 'en curso'
-                  ? 'bg-[#1E6FCB] text-white border-[#1E6FCB] shadow-xs'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-slate-50'
-              }`}
-            >
-              En curso · {countEnCurso}
-            </button>
-
-            {/* Resueltos */}
-            <button
-              onClick={() => setActiveFilter('resueltos')}
-              type="button"
-              className={`px-4 py-1.5 rounded-full font-bold text-[12.5px] cursor-pointer transition-all border ${
-                activeFilter === 'resueltos'
-                  ? 'bg-[#1E6FCB] text-white border-[#1E6FCB] shadow-xs'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-slate-50'
-              }`}
-            >
-              Resueltos · {countResueltos}
-            </button>
+          {/* Filtros con recuento (M17 · D18) */}
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+            {[
+              { key: 'todos', label: 'Todos', count: countTodos },
+              { key: 'en curso', label: 'En curso', count: countEnCurso },
+              { key: 'resueltos', label: 'Resueltos', count: countResueltos },
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setActiveFilter(filter.key)}
+                aria-pressed={activeFilter === filter.key}
+                className={`rep-focus min-h-touch shrink-0 rounded-xl border px-3.5 text-rep-label font-bold transition-colors duration-120 ${
+                  activeFilter === filter.key
+                    ? 'border-rep-accent bg-rep-accent text-rep-on-accent'
+                    : 'border-rep-border bg-rep-surface text-rep-ink-label'
+                }`}
+              >
+                {filter.label} · {filter.count}
+              </button>
+            ))}
           </div>
 
-          {/* Cuerpo: Cargando, Empty State o Listado de Reportes */}
+          {/* Borradores sin enviar, arriba y con borde ámbar */}
+          {showDrafts && (
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
+              {pendingDrafts.map((draft) => (
+                <li key={draft.client_side_id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/pendientes')}
+                    data-testid="pending-draft-row"
+                    className="rep-focus flex w-full items-center gap-3 rounded-2xl border-2 border-rep-warning/50 bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04]"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rep-warning-soft text-rep-warning-ink">
+                      <CloudOff aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{draftTitle(draft)}</span>
+                      <span className="truncate text-rep-label text-rep-ink-muted">Sin enviar · esperando conexión</span>
+                    </span>
+                    <span className="shrink-0 rounded-lg bg-rep-warning-soft px-2.5 py-1 text-rep-pill uppercase tracking-wide text-rep-warning-ink">
+                      Pendiente
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
           {isLoadingReports && !isDemoActive ? (
-            <div className="text-center text-[13px] font-semibold text-[#7A8696] py-10">
-              Cargando tus reportes…
-            </div>
+            <div className="py-10 text-center text-rep-body font-semibold text-rep-ink-muted">Cargando tus reportes…</div>
           ) : filteredReports.length === 0 ? (
-            
-            /* Tarjeta de Empty State (Responsiva) */
-            <div className="bg-white md:bg-white rounded-[28px] md:rounded-[16px] border border-[#E8EEF5] md:border-[#E6ECF3] shadow-[0px_8px_24px_rgba(20,40,80,0.06)] md:shadow-[0_2px_12px_rgba(20,40,80,0.05)] p-6 sm:p-7 md:p-7 flex flex-col md:flex-row items-center md:items-start text-center md:text-left mt-2 md:mt-10 md:max-w-[620px] md:mx-auto md:gap-[30px]">
-              
-              {/* Ilustración Clipboard */}
-              <div className="flex-none mb-4 md:mb-0 flex items-center justify-center w-[132px] md:mt-1">
-                <svg width="132" height="104" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="30" y="8" width="72" height="88" rx="8" fill="#fff" stroke="#c9d4e0" strokeWidth="2"></rect>
-                  <rect x="52" y="2" width="28" height="12" rx="5" fill="#dde4ec" stroke="#c9d4e0" strokeWidth="2"></rect>
-                  <line x1="42" y1="34" x2="90" y2="34" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
-                  <line x1="42" y1="48" x2="78" y2="48" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
-                  <line x1="42" y1="62" x2="86" y2="62" stroke="#e2e8ef" strokeWidth="4" strokeLinecap="round" strokeDasharray="8 7"></line>
-                  <rect x="16" y="62" width="40" height="30" rx="7" fill="#1E6FCB"></rect>
-                  <rect x="27" y="56" width="14" height="8" rx="3" fill="#1E6FCB"></rect>
-                  <circle cx="36" cy="77" r="9" fill="#fff"></circle>
-                  <circle cx="36" cy="77" r="4.5" fill="#1E6FCB"></circle>
+            /* Estado vacío */
+            <div className="mt-2 flex flex-col items-center gap-3 rounded-[28px] border border-rep-border bg-rep-surface p-7 text-center shadow-rep-card md:mx-auto md:mt-10 md:max-w-[620px] md:flex-row md:items-start md:gap-7 md:rounded-2xl md:text-left">
+              <div className="flex w-[132px] flex-none items-center justify-center">
+                <svg width="120" height="94" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="10" y="12" width="112" height="80" rx="9" fill="rgb(var(--rep-surface-sunken))" stroke="rgb(var(--rep-border))" strokeWidth="2" />
+                  <path d="M52 30h46L80 52v22l-10-6V52L52 30Z" fill="rgb(var(--rep-surface))" stroke="rgb(var(--rep-accent))" strokeWidth="2.6" strokeLinejoin="round" />
+                  <circle cx="104" cy="76" r="13" fill="rgb(var(--rep-surface))" stroke="rgb(var(--rep-border))" strokeWidth="2.5" />
+                  <path d="M99 71l10 10M109 71l-10 10" stroke="rgb(var(--rep-ink-faint))" strokeWidth="2.6" strokeLinecap="round" />
                 </svg>
               </div>
 
-              {/* Contenido */}
-              <div className="flex-1 flex flex-col items-center md:items-start">
-                {/* Título de estado */}
-                <h2 className="font-extrabold text-[17px] text-[#243447] tracking-[-0.2px] m-0">
-                  Todavía no enviaste reportes
-                </h2>
-
-                {/* Mensaje */}
-                <p className="font-medium text-[12.5px] leading-[1.6] text-[#7A8696] mt-[7px] mb-0 text-pretty">
-                  Cuando envíes uno, acá vas a poder seguir su estado paso a paso hasta que se resuelva, y descargar la constancia de cierre.
+              <div className="flex flex-1 flex-col items-center md:items-start">
+                <h2 className="m-0 text-rep-section text-rep-ink">Todavía no enviaste reportes</h2>
+                <p className="m-0 mt-2 text-rep-body text-rep-ink-muted">
+                  Cuando envíes uno, vas a poder seguir su estado acá: en revisión, notificado al responsable y resuelto.
                 </p>
-
-                {/* Botones */}
-                <div className="flex flex-col md:flex-row items-center gap-3 md:gap-3.5 mt-4 md:mt-4 w-full md:w-auto">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/nuevo-reporte')}
-                    type="button"
-                    className="w-full md:w-auto bg-[#1E6FCB] text-white rounded-[11px] py-2.5 px-4 md:px-[18px] flex items-center justify-center gap-1.5 font-extrabold text-[12.5px] cursor-pointer border-0 transition-colors hover:bg-[#15539E]"
-                  >
-                    <ImagePlus className="w-[17px] h-[17px]" strokeWidth={2.25} />
-                    Hacer mi primer reporte
-                  </motion.button>
-                  
+                <div className="mt-4 flex w-full flex-col items-center gap-3 md:w-auto md:flex-row">
                   <button
-                    onClick={() => navigate('/mapa')}
                     type="button"
-                    className="w-full md:w-auto bg-transparent border-none text-[#8593A2] hover:text-[#5B6A7A] font-bold text-[12px] cursor-pointer transition-colors"
+                    onClick={() => navigate('/nuevo-reporte')}
+                    className="rep-focus flex min-h-touch w-full items-center justify-center gap-1.5 rounded-xl border-0 bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong md:w-auto"
                   >
-                    Ver el mapa de la zona
+                    <ImagePlus aria-hidden="true" className="h-[17px] w-[17px]" strokeWidth={2.25} />
+                    Hacer mi primer reporte
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDemoActive(true)}
+                    className="rep-focus min-h-touch border-0 bg-transparent px-2 text-rep-label font-bold text-rep-ink-muted transition-colors duration-120 hover:text-rep-ink-label"
+                  >
+                    Ver un ejemplo
                   </button>
                 </div>
-                
-                {/* Botón oculto para demo */}
-                <button onClick={() => setIsDemoActive(true)} className="opacity-0 w-0 h-0 p-0 m-0 absolute">demo</button>
               </div>
             </div>
           ) : (
-            
-            /* Listado de tarjetas de reportes activos en Grid Responsive */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            /* Lista: tarjetas en teléfono, filas en escritorio (D18) */
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {filteredReports.map((report) => (
-                <motion.div
-                  key={report.id}
-                  whileHover={{ y: -3 }}
-                  /* REP-3789: la tarjeta abre el detalle con el fundamento juridico.
-                     Los reportes demo tienen ids ficticios (REP-101), asi que no
-                     navegan: no existe fila real que mostrar. */
-                  role={isDemoActive ? undefined : 'link'}
-                  tabIndex={isDemoActive ? undefined : 0}
-                  onClick={isDemoActive ? undefined : () => navigate(`/reportes/${report.id}`)}
-                  onKeyDown={
-                    isDemoActive
-                      ? undefined
-                      : (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            navigate(`/reportes/${report.id}`);
-                          }
-                        }
-                  }
-                  className="bg-white border border-[#E6ECF3] rounded-[18px] p-5 flex flex-col justify-between gap-3 shadow-xs hover:shadow-md transition-all cursor-pointer"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider ${report.statusColor}`}>
+                <li key={report.id}>
+                  <motion.button
+                    type="button"
+                    whileHover={{ y: -2 }}
+                    /* Los reportes demo tienen ids ficticios (REP-101): no abren detalle */
+                    onClick={isDemoActive ? undefined : () => navigate(`/reportes/${report.id}`)}
+                    data-testid="report-row"
+                    className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
+                  >
+                    <span className="flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:gap-4">
+                      <span className="min-w-0 md:w-[320px] md:shrink-0">
+                        <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{report.title}</span>
+                        <span className="block truncate text-rep-label text-rep-ink-muted">{report.category}</span>
+                      </span>
+                      <span className="flex min-w-0 flex-1 items-center gap-1 text-rep-label text-rep-ink-muted">
+                        <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-rep-accent" />
+                        <span className="truncate">{report.address}</span>
+                        <span className="shrink-0">· {report.date}</span>
+                      </span>
+                    </span>
+
+                    {report.stateCode ? (
+                      <StatusPill state={report.stateCode} short className="shrink-0" />
+                    ) : (
+                      <span className="shrink-0 rounded-lg bg-rep-accent-soft px-2.5 py-1 text-rep-pill uppercase tracking-wide text-rep-accent">
                         {report.status}
                       </span>
-                      <span className="font-semibold text-[11px] text-[#9AA7B5]">
-                        {report.date}
-                      </span>
-                    </div>
-
-                    <div className="text-[11px] font-bold text-[#1E6FCB] mb-1">
-                      {report.category}
-                    </div>
-
-                    <h3 className="font-bold text-[15px] text-[#1B365D] m-0 line-clamp-2">
-                      {report.title}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11.5px] text-[#64748B] pt-3 border-t border-[#EEF1F5] mt-1">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <MapPin className="w-[14px] h-[14px] text-[#1E6FCB] shrink-0" strokeWidth={2.25} />
-                      <span className="truncate">{report.address}</span>
-                    </div>
-                    <span className="font-bold text-[#1E6FCB] shrink-0 ml-2">
-                      Ver detalle →
-                    </span>
-                  </div>
-                </motion.div>
+                    )}
+                    <ChevronRight aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-rep-ink-faint md:block" />
+                  </motion.button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-
         </div>
       </div>
     </AppLayout>
   );
 };
+
+export default ReportsPage;
