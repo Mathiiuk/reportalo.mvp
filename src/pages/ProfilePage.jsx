@@ -18,7 +18,8 @@ import {
   isNotificationsEnabled,
   setNotificationPreference,
 } from '../services/notificationService';
-import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2 } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast } from 'lucide-react';
+import { THEME_TOGGLE_ENABLED } from '../components/layout/AppLayout';
 
 /**
  * Pantalla de Perfil de Usuario Ciudadano.
@@ -26,6 +27,15 @@ import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellO
  * sincronizado con los permisos del SO/PWA, acceso a novedades, permisos y términos vigentes.
  */
 export const ProfilePage = () => {
+  // Apariencia: por ahora se aplica en el dispositivo; la preferencia por cuenta depende de H-09
+  const [theme, setTheme] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
+  const handleThemeChange = (next) => {
+    setTheme(next);
+    document.documentElement.classList.toggle('dark', next === 'dark');
+  };
+
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
@@ -159,16 +169,16 @@ export const ProfilePage = () => {
 
   return (
     <AppLayout activeTab="perfil">
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-10 py-4 md:py-6">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 sm:px-6 md:px-10 py-4 md:py-6">
         <div className="max-w-5xl mx-auto flex flex-col gap-4 md:gap-6">
           
           {/* Header de Sección */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-[#243447] tracking-[-0.4px] m-0">
+              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-rep-ink tracking-[-0.4px] m-0">
                 Mi perfil
               </h1>
-              <p className="text-[12px] md:text-[13px] text-[#7A8696] font-medium mt-0.5 md:mt-1 mb-0">
+              <p className="text-[12px] md:text-[13px] text-rep-ink-muted font-medium mt-0.5 md:mt-1 mb-0">
                 Gestión de cuenta, notificaciones y consentimientos legales
               </p>
             </div>
@@ -181,18 +191,18 @@ export const ProfilePage = () => {
             <div className="md:col-span-5 flex flex-col gap-3.5 md:gap-4">
               
               {/* Tarjeta de Identidad de Usuario */}
-              <div className="bg-white border border-[#E6ECF3] rounded-[16px] md:rounded-[18px] p-4 md:p-5 flex items-center gap-3.5 md:gap-4 shadow-2xs md:shadow-xs">
-                <div className="w-[52px] h-[52px] md:w-[56px] md:h-[56px] rounded-full bg-[#E8F1FB] flex items-center justify-center font-extrabold text-[19px] md:text-[20px] text-[#1E6FCB] flex-shrink-0 select-none shadow-2xs">
+              <div className="bg-rep-surface border border-rep-border rounded-[16px] md:rounded-[18px] p-4 md:p-5 flex items-center gap-3.5 md:gap-4 shadow-2xs md:shadow-xs">
+                <div className="w-[52px] h-[52px] md:w-[56px] md:h-[56px] rounded-full bg-rep-accent-soft flex items-center justify-center font-extrabold text-[19px] md:text-[20px] text-rep-accent flex-shrink-0 select-none shadow-2xs">
                   {userInitials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-extrabold text-[15.5px] md:text-[16px] text-[#243447] truncate leading-tight">
+                  <div className="font-extrabold text-[15.5px] md:text-[16px] text-rep-ink truncate leading-tight">
                     {userName}
                   </div>
-                  <div className="font-medium text-[11px] text-[#8593A2] mt-0.5 truncate">
+                  <div className="font-medium text-[11px] text-rep-ink-muted mt-0.5 truncate">
                     {userEmail}
                   </div>
-                  <span className="font-extrabold text-[9.5px] md:text-[10px] text-[#2E9E6B] bg-[#E3F5EC] px-2 py-0.5 rounded-[6px] uppercase tracking-wider inline-block mt-1.5">
+                  <span className="font-extrabold text-[9.5px] md:text-[10px] text-rep-success bg-rep-success-soft px-2 py-0.5 rounded-[6px] uppercase tracking-wider inline-block mt-1.5">
                     Cuenta Verificada
                   </span>
                 </div>
@@ -200,50 +210,50 @@ export const ProfilePage = () => {
 
               {/* 3 Métricas de Reportes */}
               <div className="grid grid-cols-3 gap-2 md:gap-2.5">
-                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
-                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#1E6FCB]">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-accent">
                     7
                   </div>
-                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                  <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     REPORTES
                   </div>
                 </div>
 
-                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
-                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#2E9E6B]">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-success">
                     3
                   </div>
-                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                  <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     RESUELTOS
                   </div>
                 </div>
 
-                <div className="bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
                   <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#F78E35]">
                     1
                   </div>
-                  <div className="font-bold text-[8.5px] text-[#8593A2] mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
+                  <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     SIN ENVIAR
                   </div>
                 </div>
               </div>
 
               {/* Términos aceptados */}
-              <div className="bg-white border border-[#E6ECF3] rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
+              <div className="bg-rep-surface border border-rep-border rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  <BadgeCheck className="w-[18px] h-[18px] text-[#2E9E6B] select-none" strokeWidth={2} />
-                  <span className="font-bold text-[11.5px] md:text-[12.5px] text-[#263249]">
+                  <BadgeCheck className="w-[18px] h-[18px] text-rep-success select-none" strokeWidth={2} />
+                  <span className="font-bold text-[11.5px] md:text-[12.5px] text-rep-ink">
                     Términos aceptados
                   </span>
                 </div>
-                <div className="font-medium text-[10.5px] md:text-[11.5px] leading-[1.45] text-[#8593A2] mt-0.5">
+                <div className="font-medium text-[10.5px] md:text-[11.5px] leading-[1.45] text-rep-ink-muted mt-0.5">
                   Versión v{acceptedVersion} · {acceptedDate} a las 14:32, aceptada al enviar el reporte #RP-2048.
                 </div>
                 <button
                   type="button"
                   data-testid="profile-terms-btn"
                   onClick={() => navigate('/terminos', { state: { consultaDesde: 'perfil' } })}
-                  className="font-bold text-[10.5px] md:text-[11.5px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-1 block text-left"
+                  className="font-bold text-[10.5px] md:text-[11.5px] text-rep-accent hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-1 block text-left"
                 >
                   Ver el texto aceptado →
                 </button>
@@ -255,16 +265,16 @@ export const ProfilePage = () => {
             <div className="md:col-span-7 flex flex-col gap-3.5 md:gap-4">
               
               {/* Menú de Configuración y Navegación */}
-              <div className="bg-white border border-[#E6ECF3] rounded-[13px] md:rounded-[18px] overflow-hidden shadow-2xs md:shadow-xs">
+              <div className="bg-rep-surface border border-rep-border rounded-[13px] md:rounded-[18px] overflow-hidden shadow-2xs md:shadow-xs">
                 
                 {/* Control Propio: Notificaciones con Toggle */}
-                <div className="flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9]">
-                  <Bell className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
+                <div className="flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-rep-divider">
+                  <Bell className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
+                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink">
                       Notificaciones
                     </div>
-                    <div className="font-medium text-[9.5px] md:text-[10.5px] text-[#9AA7B5] mt-0.5">
+                    <div className="font-medium text-[9.5px] md:text-[10.5px] text-rep-ink-faint mt-0.5">
                       Avisos del estado de tus reportes
                     </div>
                   </div>
@@ -277,11 +287,11 @@ export const ProfilePage = () => {
                     aria-checked={notificationsActive}
                     onClick={handleToggleNotifications}
                     className={`w-[40px] md:w-[42px] h-[24px] md:h-[25px] rounded-[12px] md:rounded-[13px] flex-shrink-0 relative cursor-pointer border-0 transition-colors p-0 ${
-                      notificationsActive ? 'bg-[#1E6FCB]' : 'bg-[#D1D9E2]'
+                      notificationsActive ? 'bg-rep-accent' : 'bg-[#D1D9E2]'
                     }`}
                   >
                     <span
-                      className={`absolute top-[2.5px] w-[19px] md:w-[20px] h-[19px] md:h-[20px] rounded-full bg-white transition-all shadow-xs ${
+                      className={`absolute top-[2.5px] w-[19px] md:w-[20px] h-[19px] md:h-[20px] rounded-full bg-rep-surface transition-all shadow-xs ${
                         notificationsActive ? 'right-[2.5px]' : 'left-[2.5px]'
                       }`}
                     />
@@ -293,13 +303,13 @@ export const ProfilePage = () => {
                   type="button"
                   data-testid="profile-news-btn"
                   onClick={() => navigate('/alertas')}
-                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-rep-divider cursor-pointer hover:bg-rep-surface-sunken transition-colors text-left bg-transparent border-0"
                 >
-                  <Newspaper className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
-                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
+                  <Newspaper className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink flex-1">
                     Novedades
                   </span>
-                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
+                  <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
                 </button>
 
                 {/* Permisos de la app */}
@@ -307,45 +317,77 @@ export const ProfilePage = () => {
                   type="button"
                   data-testid="profile-permissions-btn"
                   onClick={() => navigate('/permisos')}
-                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-[#F2F5F9] cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-rep-divider cursor-pointer hover:bg-rep-surface-sunken transition-colors text-left bg-transparent border-0"
                 >
-                  <ShieldCheck className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
-                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A] flex-1">
+                  <ShieldCheck className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink flex-1">
                     Permisos de la app
                   </span>
-                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
+                  <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
                 </button>
+
+                {/* Apariencia (UJ v3.3 · M19 / D20 — REP-3791 Bloque 6-B).
+                    Queda oculta mientras THEME_TOGGLE_ENABLED sea false: la preferencia por cuenta
+                    necesita un campo en el perfil (H-09). Al habilitarlo, aparece sola. */}
+                {THEME_TOGGLE_ENABLED && (
+                  <div
+                    data-testid="profile-appearance-row"
+                    className="flex w-full items-center gap-[10px] border-b border-rep-divider p-[11px_13px] md:gap-3 md:p-4"
+                  >
+                    <Contrast className="h-[19px] w-[19px] text-rep-accent md:h-[21px] md:w-[21px]" strokeWidth={2} aria-hidden="true" />
+                    <span className="flex-1 text-[12px] font-semibold text-rep-ink md:text-[13px] md:font-bold">Apariencia</span>
+                    <div role="radiogroup" aria-label="Apariencia" className="flex rounded-lg bg-rep-surface-sunken p-0.5">
+                      {[
+                        { key: 'light', label: 'Claro' },
+                        { key: 'dark', label: 'Oscuro' },
+                      ].map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={theme === option.key}
+                          onClick={() => handleThemeChange(option.key)}
+                          className={`rep-focus min-h-[32px] rounded-md px-3 text-rep-label font-bold transition-colors duration-120 ${
+                            theme === option.key ? 'bg-rep-accent text-rep-on-accent' : 'text-rep-ink-muted'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Descargar mis datos */}
                 <button
                   type="button"
                   data-testid="profile-download-btn"
                   onClick={handleDownloadData}
-                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 cursor-pointer hover:bg-slate-50 transition-colors text-left bg-transparent border-0"
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 cursor-pointer hover:bg-rep-surface-sunken transition-colors text-left bg-transparent border-0"
                 >
-                  <Download className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-[#1E6FCB] select-none" strokeWidth={2} />
+                  <Download className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-[#34435A]">
+                    <div className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink">
                       Descargar mis datos
                     </div>
                   </div>
-                  <ChevronRight className="w-[18px] h-[18px] text-[#C3CED9] select-none" strokeWidth={2.25} />
+                  <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
                 </button>
               </div>
 
               {/* Acciones de Sesión y Cuenta */}
-              <div className="bg-transparent md:bg-white md:border md:border-[#E6ECF3] rounded-[18px] md:p-5 md:shadow-xs flex flex-col gap-2 md:gap-3 mt-auto md:mt-0 pt-1 pb-3 md:py-5">
+              <div className="bg-transparent md:bg-white md:border md:border-rep-border rounded-[18px] md:p-5 md:shadow-xs flex flex-col gap-2 md:gap-3 mt-auto md:mt-0 pt-1 pb-3 md:py-5">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full text-center p-[11px] md:p-3 border-[1.5px] border-[#DDE4EC] rounded-[12px] font-bold text-[12.5px] md:text-[13px] text-[#56657A] hover:bg-slate-50 active:scale-98 transition-all cursor-pointer bg-white"
+                  className="w-full text-center p-[11px] md:p-3 border-[1.5px] border-rep-track rounded-[12px] font-bold text-[12.5px] md:text-[13px] text-rep-ink-label hover:bg-rep-surface-sunken active:scale-98 transition-all cursor-pointer bg-rep-surface"
                 >
                   Cerrar sesión
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
-                  className="w-full text-center font-semibold text-[10.5px] md:text-[11px] text-[#C0392B] hover:underline cursor-pointer bg-transparent border-0 py-1"
+                  className="w-full text-center font-semibold text-[10.5px] md:text-[11px] text-rep-danger hover:underline cursor-pointer bg-transparent border-0 py-1"
                 >
                   Eliminar mi cuenta y mis datos
                 </button>
@@ -365,17 +407,17 @@ export const ProfilePage = () => {
           aria-labelledby="modal-notif-blocked-title"
           className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
+          <div className="bg-rep-surface rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
             <div className="w-10 h-10 rounded-full bg-[#FFF1F0] text-[#E74C3C] flex items-center justify-center">
               <BellOff className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </div>
-            <h3 id="modal-notif-blocked-title" className="font-extrabold text-[15px] text-[#243447] m-0">
+            <h3 id="modal-notif-blocked-title" className="font-extrabold text-[15px] text-rep-ink m-0">
               Notificaciones bloqueadas en tu dispositivo
             </h3>
             <p className="text-[12px] leading-relaxed text-[#64748B] m-0">
               Las notificaciones se encuentran desactivadas a nivel de sistema operativo o navegador.
             </p>
-            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] p-2.5 text-[11px] text-[#475569] space-y-1">
+            <div className="bg-rep-bg border border-[#E2E8F0] rounded-[10px] p-2.5 text-[11px] text-[#475569] space-y-1">
               <p className="m-0 font-bold text-[#1E293B]">Cómo habilitarlas:</p>
               <p className="m-0">1. Tocá <strong>Abrir ajustes del SO</strong> abajo.</p>
               <p className="m-0">2. O tocá el ícono de ajustes/candado en tu navegador y activá <strong>Permitir notificaciones</strong>.</p>
@@ -387,7 +429,7 @@ export const ProfilePage = () => {
                   openSystemNotificationSettings();
                   setShowBlockedModal(false);
                 }}
-                className="flex-1 py-2.5 px-3 bg-[#1E6FCB] text-white rounded-[10px] font-bold text-[12px] hover:bg-[#15539E] cursor-pointer border-0"
+                className="flex-1 py-2.5 px-3 bg-rep-accent text-white rounded-[10px] font-bold text-[12px] hover:bg-rep-accent-strong cursor-pointer border-0"
               >
                 Abrir ajustes del SO
               </button>
@@ -411,11 +453,11 @@ export const ProfilePage = () => {
           aria-labelledby="modal-delete-title"
           className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
+          <div className="bg-rep-surface rounded-[20px] max-w-sm w-full p-5 shadow-xl border border-slate-100 flex flex-col gap-3 font-manrope">
             <div className="w-10 h-10 rounded-full bg-[#FFF1F0] text-[#E74C3C] flex items-center justify-center">
               <Trash2 className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </div>
-            <h3 id="modal-delete-title" className="font-extrabold text-[15px] text-[#243447] m-0">
+            <h3 id="modal-delete-title" className="font-extrabold text-[15px] text-rep-ink m-0">
               ¿Eliminar cuenta y datos?
             </h3>
             <p className="text-[12px] leading-relaxed text-[#64748B] m-0">
