@@ -1,0 +1,42 @@
+id: REP-3786
+external_ref: https://unlz2026.atlassian.net/browse/REP-3786
+title: Experimento de optimizacion del RAG (top-k, umbral, thinking y salida)
+type: chore
+status: IN_PROGRESS
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - scripts/rag-local-dev/rep3786
+    - docs/REP-3786_experimento-optimizacion-rag.md
+  environments:
+    - local
+requirements:
+  - Comparar baseline y variantes A, B y C con corpus, casos y entorno constantes
+  - Medir resultado, abstencion, fragmentos y citas, tokens de entrada y salida, latencia y truncamientos
+  - Probar maxOutputTokens 1024 y la instruccion de concision
+  - No implementar cache semantica; no cambiar de proveedor; no tocar el corpus
+  - La decision sigue la regla fijada ANTES de correr (ver spec)
+  - Si ninguna variante mejora sin afectar calidad, mantener el baseline y documentarlo
+acceptance_criteria:
+  - 'CA-01: tabla comparativa por variante (resultado, abstencion, tokens de entrada y salida, latencia)'
+  - 'CA-02: recomendacion final adoptar, adoptar con ajustes o mantener baseline, aplicando la regla pre-registrada'
+  - 'CA-03: evidencia cruda de las corridas versionada en el repo y reproducible'
+  - 'CA-04: si se adopta un cambio, parametros finales documentados (el cambio en produccion va en otra tarea)'
+  - 'CA-05: el experimento no modifica produccion en ningun punto'
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
