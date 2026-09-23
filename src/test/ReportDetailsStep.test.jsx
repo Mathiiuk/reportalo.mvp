@@ -38,10 +38,16 @@ describe('REP-2200: ReportDetailsStep (Paso 2 del Journey v2)', () => {
       />
     );
 
-    expect(screen.getByText('Infraestructura vial')).toBeInTheDocument();
-    expect(screen.getByText('Infracción de tránsito')).toBeInTheDocument();
-    expect(screen.getByText('Medio ambiente')).toBeInTheDocument();
+    // Nombres del catalogo real de public.services, verificados contra la base el
+    // 22/09/2026. Antes este test esperaba «Infraestructura vial», «Infracción de
+    // tránsito» y «Medio ambiente», que no existen: el respaldo offline decia una
+    // cosa y la lista que llega de la base, otra (H-03).
+    expect(screen.getByText('Infraestructura')).toBeInTheDocument();
+    expect(screen.getByText('Tránsito')).toBeInTheDocument();
+    expect(screen.getByText('Ambiente')).toBeInTheDocument();
     expect(screen.getByText('Comercio irregular')).toBeInTheDocument();
+    // H-04: produccion tiene cinco categorias, no cuatro.
+    expect(screen.getByText('Vulnerabilidad social')).toBeInTheDocument();
   });
 
   it('UT-DT-03: Muestra el banner explicativo con ejemplos de la categoría seleccionada', () => {

@@ -250,7 +250,7 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
     });
 
     it(
-      'UT-EVD-08: Al avanzar al Paso 3 y enviar el reporte, ejecuta la animación de "Protegiendo tus fotos…" (Paso 4) y pasa a "Reporte enviado" (Paso 5)',
+      'UT-EVD-08: Al avanzar al Paso 3 y enviar el reporte, ejecuta la animación de "Protegiendo tus fotos…" (Paso 4) y encadena con "Reporte enviado" sin paso intermedio (UJ v3.3)',
       async () => {
         render(
         <MemoryRouter initialEntries={['/nuevo-reporte']}>
@@ -308,18 +308,8 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         expect(screen.getByText('3 zonas detectadas')).toBeInTheDocument();
       });
 
-      // 5. Paso 5: Al completarse el procesamiento, pasa a "Tu foto está lista y protegida" (REP-2402)
-      await waitFor(
-        () => {
-          expect(screen.getByText('Tu foto está lista y protegida')).toBeInTheDocument();
-          expect(screen.getByRole('button', { name: /confirmar y enviar reporte/i })).toBeInTheDocument();
-        },
-        { timeout: 5000 }
-      );
-
-      // Confirmar la foto anonimizada para avanzar al éxito
-      fireEvent.click(screen.getByRole('button', { name: /confirmar y enviar reporte/i }));
-
+      // UJ v3.3 (REP-3791 Bloque 2): sin paso de vista previa ni «Confirmar y enviar»:
+      // al terminar la protección el reporte se persiste y encadena con «Reporte enviado».
       // 6. Paso 6: Confirmación de reporte enviado
       await waitFor(
         () => {

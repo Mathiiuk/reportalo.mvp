@@ -14,35 +14,35 @@ export const WelcomePage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-white">
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
       
       {/* Navbar visible únicamente en desktop */}
-      <header className="hidden md:flex flex-shrink-0 border-b border-[#EEF1F5] px-8 lg:px-12 py-4 items-center gap-6 bg-white">
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
         <div className="flex items-center gap-2.5">
           <img
             src="/logo-icon.webp"
             alt="Reportalo"
             className="w-[20px] h-[26px] object-contain"
           />
-          <span className="font-extrabold text-[19px] text-[#263249] tracking-[-0.4px]">
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
             Reportalo
           </span>
-          <span className="font-bold text-[9px] text-[#1E6FCB] bg-[#EEF5FC] px-2 py-1 rounded-[7px] ml-1">
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
             CIUDADANOS
           </span>
         </div>
 
         <nav className="flex items-center gap-6 ml-4">
-          <span className="font-semibold text-[13px] text-[#7A8696] hover:text-[#1E6FCB] cursor-pointer transition-colors">
+          <span className="font-semibold text-[13px] text-rep-ink-muted hover:text-rep-accent cursor-pointer transition-colors">
             Cómo funciona
           </span>
-          <span className="font-semibold text-[13px] text-[#7A8696] hover:text-[#1E6FCB] cursor-pointer transition-colors">
+          <span className="font-semibold text-[13px] text-rep-ink-muted hover:text-rep-accent cursor-pointer transition-colors">
             Privacidad y Seguridad
           </span>
           <button
             onClick={() => navigate('/municipios')}
             type="button"
-            className="font-semibold text-[13px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 transition-colors p-0"
+            className="rep-focus min-h-touch font-semibold text-[13px] text-rep-accent hover:text-rep-accent-strong cursor-pointer bg-transparent border-0 transition-colors p-0"
           >
             Para Municipios →
           </button>
@@ -52,7 +52,7 @@ export const WelcomePage = () => {
           <button
             onClick={handleStart}
             type="button"
-            className="font-bold text-[13px] text-[#1E6FCB] hover:text-[#15539E] px-3 py-2 cursor-pointer bg-transparent border-0"
+            className="rep-focus min-h-touch font-bold text-[13px] text-rep-accent hover:text-rep-accent-strong px-3 py-2 cursor-pointer bg-transparent border-0"
           >
             Ingresar
           </button>
@@ -61,7 +61,7 @@ export const WelcomePage = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleStart}
             type="button"
-            className="bg-[#1E6FCB] text-white px-4 py-2.5 rounded-[10px] font-bold text-[13px] hover:bg-[#15539E] cursor-pointer border-0 shadow-sm"
+            className="bg-rep-accent text-white px-4 py-2.5 rounded-[10px] font-bold text-[13px] hover:bg-rep-accent-strong cursor-pointer border-0 shadow-sm"
           >
             Comenzar
           </motion.button>
@@ -99,12 +99,12 @@ export const WelcomePage = () => {
             />
 
             {/* Título principal */}
-            <h1 className="font-extrabold text-[32px] md:text-[38px] lg:text-[42px] leading-tight md:leading-[1.18] text-white md:text-[#1F2C3D] tracking-[-0.6px] md:tracking-[-1px]">
+            <h1 className="font-extrabold text-[32px] md:text-[38px] lg:text-[42px] leading-tight md:leading-[1.18] text-white md:text-rep-ink tracking-[-0.6px] md:tracking-[-1px]">
               Reportalo
             </h1>
 
             {/* Bajada explicativa */}
-            <p className="font-medium text-[14px] md:text-[15.5px] leading-[1.55] md:leading-[1.6] text-white/90 md:text-[#6A7888] mt-[11px] md:mt-3 max-w-[280px] md:max-w-[480px]">
+            <p className="font-medium text-[14px] md:text-[15.5px] leading-[1.55] md:leading-[1.6] text-white/90 md:text-rep-ink-muted mt-[11px] md:mt-3 max-w-[280px] md:max-w-[480px]">
               Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
             </p>
 
@@ -129,22 +129,22 @@ export const WelcomePage = () => {
             {/* Lista de beneficios diferenciales */}
             <div className="flex flex-col gap-[12px] md:gap-[14px] mt-[26px] md:mt-7 w-full max-w-[300px] md:max-w-none">
               <div className="flex items-center gap-[10px]">
-                <Shield className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
+                <Shield className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
                   Anónimo ante el organismo receptor
                 </span>
               </div>
 
               <div className="flex items-center gap-[10px]">
-                <Sparkles className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
+                <Sparkles className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
                   La IA encuentra a quién corresponde
                 </span>
               </div>
 
               <div className="flex items-center gap-[10px]">
-                <MapIcon className="w-[19px] h-[19px] text-[#9FD0FF] md:text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-[#3A4658] text-left leading-snug">
+                <MapIcon className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
                   Seguimiento hasta resolverse
                 </span>
               </div>
@@ -159,40 +159,40 @@ export const WelcomePage = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleStart}
               type="button"
-              className="w-full bg-white md:bg-[#1E6FCB] text-[#1E6FCB] md:text-white rounded-[14px] py-[16px] px-6 text-center font-extrabold text-[15px] md:text-[15.5px] shadow-[0px_8px_18px_rgba(0,0,0,0.14)] md:shadow-[0px_8px_18px_rgba(30,111,203,0.28)] hover:opacity-95 cursor-pointer border-0"
+              className="w-full bg-rep-surface md:bg-rep-accent text-rep-accent md:text-white rounded-[14px] py-[16px] px-6 text-center font-extrabold text-[15px] md:text-[15.5px] shadow-[0px_8px_18px_rgba(0,0,0,0.14)] md:shadow-[0px_8px_18px_rgba(30,111,203,0.28)] hover:opacity-95 cursor-pointer border-0"
             >
               Comenzar
             </motion.button>
-            <p className="text-center md:text-left font-medium text-[11px] leading-[1.4] text-white/75 md:text-[#8593A2] px-[10px] md:px-1 m-0">
+            <p className="text-center md:text-left font-medium text-[11px] leading-[1.4] text-white/75 md:text-rep-ink-muted px-[10px] md:px-1 m-0">
               Entrás con tu correo, sin crear contraseña.
             </p>
           </div>
 
           {/* Fila de Métricas / Garantías exclusiva de Desktop */}
-          <div className="hidden md:flex items-center gap-8 lg:gap-12 pt-8 border-t border-slate-100 mt-8">
+          <div className="hidden md:flex items-center gap-8 lg:gap-12 pt-8 border-t border-rep-divider mt-8">
             <div>
-              <div className="font-extrabold text-[24px] leading-none text-[#1E6FCB]">
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
                 100%
               </div>
-              <div className="font-bold text-[10.5px] tracking-wider text-[#8593A2] mt-1.5 uppercase">
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
                 Identidad Protegida
               </div>
             </div>
 
             <div>
-              <div className="font-extrabold text-[24px] leading-none text-[#1E6FCB]">
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
                 IA Inteligente
               </div>
-              <div className="font-bold text-[10.5px] tracking-wider text-[#8593A2] mt-1.5 uppercase">
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
                 Encuadre de Organismo
               </div>
             </div>
 
             <div>
-              <div className="font-extrabold text-[24px] leading-none text-[#1E6FCB]">
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
                 Tiempo Real
               </div>
-              <div className="font-bold text-[10.5px] tracking-wider text-[#8593A2] mt-1.5 uppercase">
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
                 Seguimiento de Estado
               </div>
             </div>
@@ -200,25 +200,25 @@ export const WelcomePage = () => {
         </main>
 
         {/* Sidebar exclusiva de Desktop (>= md) basada en el diseño de municipios */}
-        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-[#F4F7FB] border-l border-[#EEF1F5] p-8 flex-col justify-between gap-4">
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
           <div>
-            <div className="font-extrabold text-[11px] text-[#8593A2] tracking-[0.5px] mb-4 uppercase">
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
               Cómo Funciona
             </div>
 
             <div className="flex flex-col gap-3">
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   1
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Reportás lo que ves
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Subís foto y ubicación exacta con total resguardo de tu anonimato.
                   </div>
                 </div>
@@ -226,16 +226,16 @@ export const WelcomePage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   2
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     La IA encuentra a quién corresponde
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Determina el organismo competente y la categoría del caso.
                   </div>
                 </div>
@@ -243,16 +243,16 @@ export const WelcomePage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   3
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Seguimiento hasta resolverse
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Recibís notificaciones y ves los avances de resolución de tu caso.
                   </div>
                 </div>
@@ -260,9 +260,9 @@ export const WelcomePage = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </span>
           </div>

@@ -7,6 +7,8 @@ import { AppLoadingScreen } from './components/common/AppLoadingScreen';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { PwaUpdater } from './components/common/PwaUpdater';
 import { getSelectableLocalities } from './services/localitiesService';
+import { PendingSyncManager } from './components/common/PendingSyncManager';
+import { getSessionMarker, getResumePath, clearResumePath } from './lib/sessionMarker';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage').then(m => ({ default: m.WelcomePage })));
@@ -23,6 +25,13 @@ const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ 
 const BlankAppPage = React.lazy(() => import('./pages/BlankAppPage').then(m => ({ default: m.BlankAppPage })));
 const MunicipiosPage = React.lazy(() => import('./pages/MunicipiosPage').then(m => ({ default: m.MunicipiosPage })));
 const NewReportPage = React.lazy(() => import('./pages/NewReportPage').then(m => ({ default: m.NewReportPage })));
+// ReportDetailPage ya se importa arriba (REP-3789): el bloque lo traia porque su
+// base no lo tenia.
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const PendingReportsPage = React.lazy(() => import('./pages/PendingReportsPage').then(m => ({ default: m.PendingReportsPage })));
+const SessionExpiredPage = React.lazy(() => import('./pages/SessionExpiredPage').then(m => ({ default: m.SessionExpiredPage })));
+const NewsDetailPage = React.lazy(() => import('./pages/NewsDetailPage').then(m => ({ default: m.NewsDetailPage })));
+const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
@@ -31,11 +40,24 @@ const ProtectedRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
   const location = useLocation();
 
+  // UJ v3.3 · M23: al llegar a la pantalla que se estaba usando antes de que venciera la
+  // sesión, se olvida. Se compara con pathname + search porque así la guarda
+  // SessionExpiredPage: comparando solo el pathname, una ruta con query string nunca
+  // coincidía y la marca quedaba en el dispositivo para siempre, redirigiendo a esa
+  // pantalla vieja en cada paso posterior por /onboarding.
+  React.useEffect(() => {
+    if (session && getResumePath() === `${location.pathname}${location.search}`) clearResumePath();
+  }, [session, location.pathname, location.search]);
+
   if (loading) {
     return <AppLoadingScreen message="Cargando Reportalo..." />;
   }
 
   if (!session) {
+    // Había sesión y ya no está (no se cerró a mano): «Tu sesión venció» (M23). Si no, bienvenida.
+    if (getSessionMarker()) {
+      return <Navigate to="/sesion-vencida" replace state={{ from: `${location.pathname}${location.search}` }} />;
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -59,7 +81,8 @@ const ProtectedRoute = ({ children }) => {
 
   // 3. Si ya completó onboarding e intenta ingresar a /onboarding, redirigir
   if (onboardingCompleted && location.pathname === '/onboarding') {
-    return <Navigate to={permissionsConfigured ? '/mapa' : '/permisos'} replace />;
+    // M23: después de reingresar, se retoma la pantalla donde estaba
+    return <Navigate to={permissionsConfigured ? (getResumePath() || '/mapa') : '/permisos'} replace />;
   }
 
   // 4. Si ya configuró permisos e intenta reingresar a /permisos, redirigir a /mapa
@@ -220,6 +243,38 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      {/* El detalle del reporte ya tiene su ruta /reportes/:id (REP-3789). El
+          bloque proponia /reporte/:id, en singular, tomada del mockup de D17: se
+          descarta para no dejar dos rutas hacia la misma pantalla. */}
+      {/* UJ v3.3 · M18 / D19 — notificaciones del ciudadano (REP-3791 Bloque 6) */}
+      <Route
+        path="/notificaciones"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* UJ v3.3 · M25 / D32 — nota completa de una novedad (REP-3791 Bloque 8) */}
+      <Route
+        path="/novedades/:id"
+        element={
+          <ProtectedRoute>
+            <NewsDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* UJ v3.3 · M20 — pendientes de envío (REP-3791 Bloque 4) */}
+      <Route
+        path="/pendientes"
+        element={
+          <ProtectedRoute>
+            <PendingReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* UJ v3.3 · M23 — sesión vencida (pública: se llega justamente sin sesión) */}
+      <Route path="/sesion-vencida" element={<SessionExpiredPage />} />
       <Route
         path="/r/:id"
         element={<NotFoundReportPage />}
@@ -232,6 +287,8 @@ export const AppRoutes = () => {
         path="/municipalidad/plan"
         element={<Navigate to="/municipios#planes" replace />}
       />
+      {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
+      <Route path="/acceso-restringido" element={<ForbiddenPage />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </React.Suspense>
@@ -250,6 +307,7 @@ export const App = () => {
         <AppRoutes />
         <Toaster richColors position="top-center" closeButton />
         <PwaUpdater />
+        <PendingSyncManager />
       </BrowserRouter>
     </AuthProvider>
   );

@@ -112,6 +112,28 @@ const shouldInvokeSupabaseBackend = () => {
   return isSupabaseConfigured;
 };
 
+const isTestRunner = () => Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+
+/**
+ * H-30 · El emulador local SOLO puede correr en desarrollo o bajo el runner de tests.
+ *
+ * El emulador limpia el EXIF pero NO difumina: no detecta caras ni patentes, informa
+ * un conteo de zonas fijo y devuelve una URL `blob:` local. Es útil para no bloquear
+ * a quien desarrolla sin backend, y es inaceptable en cualquier otro lado: devolvía
+ * `success: true` sobre una foto sin anonimizar, con caras y patentes de gente real.
+ *
+ * El camino peligroso no eran los fallbacks de DEV (esos ya se verificaban) sino el
+ * paso final: si `isSupabaseConfigured` es falso en un build de producción —por
+ * ejemplo, si faltan las variables de entorno al compilar— la ejecución caía en el
+ * emulador sin que nadie lo revisara.
+ *
+ * Fuera de DEV el pipeline ahora falla con `failSafeTriggered`, que es lo que la
+ * pantalla M21 ya sabe mostrar: «No pudimos procesar la foto».
+ *
+ * @returns {boolean} true solo en desarrollo interactivo o en tests.
+ */
+const isLocalEmulatorAllowed = () => Boolean(import.meta.env?.DEV) || isTestRunner();
+
 /**
  * Sube una fotografía transitoria al bucket privado de cuarentena.
  * @param {Blob|File} file Archivo fotográfico original
@@ -178,6 +200,11 @@ export const processEvidenceThroughQuarantine = async ({
   file,
   clientSideId,
   simulateError = false,
+  // H-30 · Costura de prueba. Por defecto sale del entorno, pero Vite reemplaza
+  // `import.meta.env.DEV` por un literal al compilar, así que no hay forma de
+  // simular un build de producción mutando el entorno en un test. Este parámetro
+  // permite ejercitar el camino real sin tocar la lógica. Nadie lo pasa en la app.
+  allowLocalEmulator = isLocalEmulatorAllowed(),
 }) => {
   // Validación de parámetros obligatorios
   if (!file || !clientSideId) {
@@ -269,6 +296,23 @@ export const processEvidenceThroughQuarantine = async ({
   }
 
   // 4. Entorno de desarrollo / Vitest sin backend activo: Emulador determinístico fail-safe
+  //
+  // H-30: fuera de DEV o de tests no se emula nada. Antes este punto se alcanzaba
+  // también en producción cuando shouldInvokeSupabaseBackend() daba falso, y el
+  // pipeline devolvía éxito con una foto sin difuminar.
+  if (!allowLocalEmulator) {
+    // La imagen original ya está en cuarentena: se purga antes de cortar, igual que
+    // en el resto de los caminos fail-safe, para no dejarla sin anonimizar.
+    if (shouldInvokeSupabaseBackend() && !isFallback) {
+      await supabase.storage.from(BUCKET_QUARANTINE).remove([quarantinePath]).catch(() => {});
+    }
+    return {
+      success: false,
+      error: 'No pudimos procesar la foto: el servicio de anonimización no está disponible.',
+      failSafeTriggered: true,
+    };
+  }
+
   try {
     // Sanitizamos los metadatos EXIF utilizando el módulo especializado (REP-2401)
     // uprightFile, no file: el fallback local tambien debe partir de la imagen

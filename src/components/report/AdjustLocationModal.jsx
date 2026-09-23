@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Move, MapPin, LocateFixed, MapPinned, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Move, MapPin, LocateFixed, LocateOff, RotateCw, TriangleAlert } from 'lucide-react';
 import {
   resolveAddressDetails,
   DEFAULT_CITY_COORDINATES,
@@ -29,13 +29,18 @@ const MAX_ZOOM = 19;
 /**
  * Componente modal/pantalla "¿Dónde ocurrió?" para corregir y ajustar el punto exacto de ubicación.
  * Limitado estrictamente a las zonas operativas de CABA y Avellaneda.
- * Diseño exacto User Journey v3.1 / Sprint 10.
+ * UJ v3.3 · M12 «Ajustar ubicación» (teléfono) y D13 (escritorio): solo cambia la capa visual.
+ * REP-3791 Bloques 1 y 1-D.
  */
 export const AdjustLocationModal = ({
   initialCoordinates,
   initialLocalityId,
   onConfirm,
   onClose,
+  // UJ v3.3 · M22 (REP-3791 Bloque 4): el GPS no respondió o el permiso está bloqueado
+  isGpsUnavailable = false,
+  isGpsDenied = false,
+  onRetryGps = null,
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -163,6 +168,26 @@ export const AdjustLocationModal = ({
     setCurrentCoords(target);
   }, [initialCoordinates]);
 
+  // M22: reintento de GPS; si vuelve, se recentra el mapa en la nueva posición
+  const [isRetryingGps, setIsRetryingGps] = useState(false);
+  const gpsRetryRequestedRef = useRef(false);
+  const handleRetryGps = async () => {
+    if (!onRetryGps) return;
+    gpsRetryRequestedRef.current = true;
+    setIsRetryingGps(true);
+    try {
+      await onRetryGps();
+    } finally {
+      setIsRetryingGps(false);
+    }
+  };
+  useEffect(() => {
+    if (gpsRetryRequestedRef.current && !isGpsUnavailable) {
+      gpsRetryRequestedRef.current = false;
+      handleRecenter();
+    }
+  }, [isGpsUnavailable, initialCoordinates, handleRecenter]);
+
   // Confirmar ubicación — R-1/R-2: requiere localidad elegida del selector, y que no
   // esté geográficamente lejos del pin (ver checkLocalityPinMismatch más arriba).
   const handleConfirmLocation = () => {
@@ -179,99 +204,128 @@ export const AdjustLocationModal = ({
   return (
     <div
       data-testid="adjust-location-modal"
-      className="relative w-full h-[100dvh] bg-white overflow-hidden flex flex-col font-manrope select-none"
+      className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-rep-surface font-manrope"
     >
-      {/* 1. Header con botón volver y título */}
-      <header className="flex-0 bg-white px-3.5 pt-2 pb-3 border-b border-[#EEF1F5] flex items-center gap-2.5 shadow-2xs z-20">
+      {/* 1. Cabecera */}
+      <header className="z-20 flex shrink-0 items-center gap-1 border-b border-rep-divider bg-rep-surface px-2 pb-2.5 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:px-6 desktop:py-3">
         <button
           type="button"
           onClick={onClose}
           aria-label="Volver a la revisión"
-          className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
+          className="rep-focus flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-[transform,background-color] duration-120 hover:bg-rep-divider active:scale-[0.98]"
         >
-          <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
+          <ArrowLeft className="h-6 w-6" strokeWidth={2.25} aria-hidden="true" />
         </button>
-        <span className="font-extrabold text-[16px] text-[#263249]">
-          ¿Dónde ocurrió?
-        </span>
+        <h1 className="m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">¿Dónde ocurrió?</h1>
       </header>
 
-      {/* 2. Área central del Mapa Interactivo */}
-      <div className="flex-1 relative overflow-hidden bg-[#E5E9EE]">
-        {/* Contenedor MapLibre */}
-        <div
-          ref={mapContainerRef}
-          data-testid="adjust-map-container"
-          className="w-full h-full"
-        />
+      {/* 2. Mapa: el pin queda fijo al centro y se mueve el mapa */}
+      <div className="relative flex-1 overflow-hidden bg-rep-surface-sunken">
+        <div ref={mapContainerRef} data-testid="adjust-map-container" className="h-full w-full" />
 
-        {/* Banner flotante superior */}
-        <div className="absolute left-3 right-3 top-3 z-10 bg-white rounded-xl py-2.5 px-3 flex items-center gap-2 shadow-[0_5px_16px_rgba(20,40,80,0.14)] pointer-events-none">
-          <Move className="w-[18px] h-[18px] text-[#8593A2]" strokeWidth={2.25} />
-          <span className="font-semibold text-[11px] leading-tight text-[#46566B]">
+        {isGpsUnavailable ? (
+          <div
+            data-testid="gps-unavailable-card"
+            role="alert"
+            className="absolute inset-x-3 top-3 z-10 flex flex-col gap-2 rounded-2xl bg-rep-surface px-4 py-3.5 shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:top-6 desktop:w-[420px] desktop:-translate-x-1/2"
+          >
+            <div className="flex items-center gap-2.5">
+              <LocateOff aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-danger" strokeWidth={2.25} />
+              <span className="text-rep-body font-extrabold text-rep-ink">No encontramos tu ubicación</span>
+            </div>
+            <p className="m-0 text-rep-label text-rep-ink-body">
+              {isGpsDenied
+                ? 'El permiso de ubicación está bloqueado. Podés habilitarlo en los ajustes del navegador, o marcar el punto en el mapa y elegir la localidad para seguir con el reporte.'
+                : 'El GPS no responde. Podés marcar el punto en el mapa y elegir la localidad para seguir con el reporte.'}
+            </p>
+            {!isGpsDenied && onRetryGps && (
+              <button
+                type="button"
+                onClick={handleRetryGps}
+                disabled={isRetryingGps}
+                className="rep-focus inline-flex min-h-touch items-center gap-1.5 self-start rounded-xl px-1 text-rep-label font-bold text-rep-accent disabled:opacity-45"
+              >
+                <RotateCw aria-hidden="true" className={`h-4 w-4 ${isRetryingGps ? 'motion-safe:animate-spin' : ''}`} strokeWidth={2.25} />
+                Volver a intentar con GPS
+              </button>
+            )}
+          </div>
+        ) : (
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-center gap-2.5 rounded-2xl bg-rep-surface px-3.5 py-3 shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:top-6 desktop:-translate-x-1/2">
+          <Move className="h-5 w-5 shrink-0 text-rep-ink-muted" strokeWidth={2.25} aria-hidden="true" />
+          <span className="text-rep-body font-semibold leading-snug text-rep-ink-body">
             Arrastrá el mapa para corregir el punto exacto.
           </span>
         </div>
+        )}
 
-        {/* Pin central de fijación en el mapa */}
-        <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-full flex flex-col items-center pointer-events-none z-10">
+        {/* La punta del pin marca el centro exacto del mapa, que es la coordenada que se confirma */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-full flex-col items-center">
           <MapPin
-            className="w-[44px] h-[44px] text-[#1E6FCB] drop-shadow-[0_4px_8px_rgba(20,40,80,0.3)]"
+            className="h-11 w-11 text-rep-accent drop-shadow-[0_4px_8px_rgba(20,40,80,0.3)]"
             strokeWidth={1.75}
-            fill="#1E6FCB"
+            fill="currentColor"
             fillOpacity={0.15}
+            aria-hidden="true"
           />
         </div>
 
-        {/* Círculo indicador de radio de precisión */}
-        <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[#1E6FCB]/14 border border-[#1E6FCB]/30 pointer-events-none z-5" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[5] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-rep-accent/30 bg-rep-accent/15" />
 
-        {/* Botón flotante para recentrar GPS */}
         <button
           type="button"
           onClick={handleRecenter}
           aria-label="Mi ubicación actual"
-          className="absolute right-3 bottom-3 z-10 w-9.5 h-9.5 rounded-xl bg-white flex items-center justify-center shadow-[0_5px_16px_rgba(20,40,80,0.14)] text-[#1E6FCB] cursor-pointer border-0 hover:bg-slate-50 transition-colors"
+          className="rep-focus absolute bottom-3 right-3 z-10 flex h-12 w-12 desktop:bottom-auto desktop:right-6 desktop:top-6 items-center justify-center rounded-xl bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 active:scale-[0.98] md:hover:brightness-[.96] dark:md:hover:brightness-[1.06]"
         >
-          <LocateFixed className="w-[20px] h-[20px]" strokeWidth={2.25} />
+          <LocateFixed className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
         </button>
       </div>
 
-      {/* 3. Panel inferior de confirmación */}
-      <footer className="flex-0 bg-white border-t border-[#EEF1F5] p-3.5 sm:px-4 z-20">
-        <div className="flex gap-2.5 items-start mb-3">
-          <MapPinned className="w-[19px] h-[19px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-          <div data-testid="adjust-street-address" className="font-bold text-[13px] text-[#263249]">
-            {addressDetails.street}
+      {/* 3. Panel de confirmación */}
+      {/* Teléfono: panel inferior (M12) · escritorio: tarjeta flotante sobre el mapa (D13) */}
+      <footer className="z-20 shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3.5 pb-[max(14px,env(safe-area-inset-bottom,14px))] desktop:absolute desktop:bottom-6 desktop:right-6 desktop:w-[400px] desktop:rounded-2xl desktop:border desktop:border-rep-border desktop:p-5 desktop:shadow-rep-float">
+        <div className="mx-auto w-full max-w-lg">
+          <div className="mb-3 flex items-start gap-2.5">
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} aria-hidden="true" />
+            <div className="min-w-0">
+              <div data-testid="adjust-street-address" className="text-[15px] font-extrabold leading-snug text-rep-ink">
+                {addressDetails.street}
+              </div>
+              <div className="mt-0.5 text-rep-label font-medium text-rep-ink-muted">
+                {localityLabel || addressDetails.locality}
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* R-4: selector de localidad junto al pin GPS */}
-        <div className="mb-3">
-          <LocalitySelector value={localityId} onChange={handleLocalityChange} />
-        </div>
+          {/* R-4 (REP-2500): la localidad la elige el ciudadano; no hay geocodificación inversa */}
+          <div className="mb-3">
+            <LocalitySelector value={localityId} onChange={handleLocalityChange} />
+          </div>
 
-        {localityLooksFar && (
-          <div
-            data-testid="locality-pin-mismatch-warning"
-            className="mb-3 flex items-start gap-2 rounded-[13px] bg-[#FFF6E5] border border-[#F5C453] py-2.5 px-3"
+          {localityLooksFar && (
+            <div
+              data-testid="locality-pin-mismatch-warning"
+              role="alert"
+              className="mb-3 flex items-start gap-2 rounded-2xl border border-rep-warning/40 bg-rep-warning-soft px-3.5 py-3"
+            >
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-rep-warning" strokeWidth={2.25} aria-hidden="true" />
+              <span className="text-rep-label font-semibold text-rep-warning-ink">
+                El barrio elegido parece estar lejos del punto marcado en el mapa. Movés el pin o elegís otro barrio para poder confirmar.
+              </span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleConfirmLocation}
+            disabled={!localityId || localityLooksFar}
+            aria-label="Confirmar ubicación"
+            className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-rep-accent disabled:active:scale-100"
           >
-            <TriangleAlert className="w-[16px] h-[16px] text-[#B3791B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-tight text-[#8A5A0F]">
-              El barrio elegido parece estar lejos del punto marcado en el mapa. Movés el pin o elegís otro barrio para poder confirmar.
-            </span>
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleConfirmLocation}
-          disabled={!localityId || localityLooksFar}
-          aria-label="Confirmar ubicación"
-          className="w-full bg-[#1E6FCB] rounded-[13px] py-3.5 px-4 text-center shadow-[0_8px_18px_rgba(30,111,203,0.3)] border-0 cursor-pointer text-white font-extrabold text-[14px] hover:brightness-105 active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
-        >
-          Confirmar ubicación
-        </button>
+            Confirmar ubicación
+          </button>
+        </div>
       </footer>
     </div>
   );

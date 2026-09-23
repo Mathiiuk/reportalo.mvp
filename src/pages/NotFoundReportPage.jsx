@@ -10,22 +10,22 @@ export const NotFoundReportPage = () => {
   const displayId = id || 'RP-1907';
 
   return (
-    <div className="w-full h-[100dvh] bg-[#F4F7FB] flex flex-col font-manrope overflow-hidden">
+    <div className="w-full h-[100dvh] bg-rep-bg flex flex-col font-manrope overflow-hidden">
       {/* Header */}
-      <div className="flex-none bg-white px-[14px] pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 border-b border-[#EEF1F5] flex items-center gap-[9px]">
+      <div className="flex-none bg-rep-surface px-[14px] pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 border-b border-rep-divider flex items-center gap-[9px]">
         <button 
           onClick={() => navigate(-1)}
           className="bg-transparent border-none p-0 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
         >
           <ArrowLeft className="w-[22px] h-[22px] text-[#5B6A7A]" strokeWidth={2.25} />
         </button>
-        <span className="font-extrabold text-[16px] text-[#263249]">
+        <span className="font-extrabold text-[16px] text-rep-ink">
           Reporte
         </span>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-[30px] md:px-10 pb-10 bg-[#F4F7FB]">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-[30px] md:px-10 pb-10 bg-rep-bg">
         <div className="flex items-center justify-center">
           <svg className="w-[164px] md:w-[196px] h-[112px] md:h-[134px]" viewBox="0 0 164 112" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="58" width="156" height="48" rx="7" fill="#cfd8e2"></rect>
@@ -42,17 +42,17 @@ export const NotFoundReportPage = () => {
           </svg>
         </div>
         
-        <div className="font-extrabold text-[17px] md:text-[22px] text-[#243447] mt-3 md:mt-4 tracking-[-0.2px] md:tracking-[-0.3px]">
+        <div className="font-extrabold text-[17px] md:text-[22px] text-rep-ink mt-3 md:mt-4 tracking-[-0.2px] md:tracking-[-0.3px]">
           Este reporte ya no está
         </div>
         
-        <div className="font-medium text-[12px] md:text-[13px] leading-[1.6] text-[#7A8696] mt-[7px] md:mt-2 text-pretty md:max-w-[430px]">
+        <div className="font-medium text-[12px] md:text-[13px] leading-[1.6] text-rep-ink-muted mt-[7px] md:mt-2 text-pretty md:max-w-[430px]">
           El enlace que abriste apunta a un reporte que se dio de baja o que nunca existió.
         </div>
         
-        <div className="w-full md:w-auto mt-4 md:mt-3.5 bg-white border border-[#E6ECF3] rounded-[12px] md:rounded-[11px] px-3 md:px-3.5 py-2.5 md:py-2.5 flex items-center justify-center md:justify-start gap-2 text-left">
-          <Unlink className="w-[16px] h-[16px] text-[#9AA7B5] flex-none" strokeWidth={2.25} />
-          <span className="font-semibold text-[9.5px] md:text-[11px] leading-[1.35] font-mono text-[#8593A2] truncate">
+        <div className="w-full md:w-auto mt-4 md:mt-3.5 bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[11px] px-3 md:px-3.5 py-2.5 md:py-2.5 flex items-center justify-center md:justify-start gap-2 text-left">
+          <Unlink className="w-[16px] h-[16px] text-rep-ink-faint flex-none" strokeWidth={2.25} />
+          <span className="font-semibold text-[9.5px] md:text-[11px] leading-[1.35] font-mono text-rep-ink-muted truncate">
             reportalo.ar/r/{displayId}
           </span>
         </div>
@@ -60,7 +60,7 @@ export const NotFoundReportPage = () => {
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-3.5 mt-5 md:mt-[18px]">
           <Link 
             to="/mapa"
-            className="bg-[#1E6FCB] hover:bg-[#195CA8] active:scale-95 transition-all rounded-[13px] md:rounded-[11px] px-[22px] md:px-5 py-[12px] md:py-[11px] flex items-center justify-center gap-[7px] shadow-[0_8px_18px_rgba(30,111,203,0.28)] md:shadow-none no-underline"
+            className="bg-rep-accent hover:bg-[#195CA8] active:scale-95 transition-all rounded-[13px] md:rounded-[11px] px-[22px] md:px-5 py-[12px] md:py-[11px] flex items-center justify-center gap-[7px] shadow-[0_8px_18px_rgba(30,111,203,0.28)] md:shadow-none no-underline"
           >
             <MapIcon className="w-[18px] h-[18px] md:w-[17px] md:h-[17px] text-white" strokeWidth={2.25} />
             <span className="font-extrabold text-[13px] md:text-[12.5px] text-white">
@@ -70,7 +70,7 @@ export const NotFoundReportPage = () => {
           
           <Link 
             to="/reportes"
-            className="font-bold text-[12px] text-[#8593A2] hover:text-[#5B6A7A] transition-colors bg-transparent border-none cursor-pointer no-underline"
+            className="font-bold text-[12px] text-rep-ink-muted hover:text-[#5B6A7A] transition-colors bg-transparent border-none cursor-pointer no-underline"
           >
             Ir a mis reportes
           </Link>

@@ -7,19 +7,19 @@ export const NotFoundPage = () => {
   const location = useLocation();
 
   return (
-    <div className="w-full h-[100dvh] bg-white flex flex-col font-manrope overflow-hidden">
+    <div className="w-full h-[100dvh] bg-rep-surface flex flex-col font-manrope overflow-hidden">
       {/* Header */}
-      <div className="flex-none bg-white px-6 pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 border-b border-[#EEF1F5] flex items-center">
+      <div className="flex-none bg-rep-surface px-6 pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 border-b border-rep-divider flex items-center">
         <Link to="/" className="flex items-center gap-2 no-underline text-inherit">
           <img src="/logo-icon.webp" alt="Reportalo" className="w-[19px] h-[25px] object-contain" />
-          <span className="font-extrabold text-[18px] text-[#263249] tracking-[-0.4px]">
+          <span className="font-extrabold text-[18px] text-rep-ink tracking-[-0.4px]">
             Reportalo
           </span>
         </Link>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-10 bg-white">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-10 bg-rep-surface">
         <svg width="168" height="130" viewBox="0 0 140 108" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="66" y="16" width="7" height="82" rx="3" fill="#b8c3cf"></rect>
           <path d="M16 28h52v18H16l-9-9 9-9Z" fill="#fff" stroke="#c9d4e0" strokeWidth="2.5" strokeLinejoin="round"></path>
@@ -33,17 +33,17 @@ export const NotFoundPage = () => {
           <path d="M56 98h16M84 98h14M110 98h20" stroke="#e2e8ef" strokeWidth="5" strokeLinecap="round"></path>
         </svg>
 
-        <h1 className="font-extrabold text-[22px] text-[#243447] mt-3.5 mb-0 tracking-[-0.3px]">
+        <h1 className="font-extrabold text-[22px] text-rep-ink mt-3.5 mb-0 tracking-[-0.3px]">
           No encontramos esta página
         </h1>
         
-        <p className="font-medium text-[13px] leading-[1.6] text-[#7A8696] mt-2 mb-0 max-w-[450px] text-pretty">
+        <p className="font-medium text-[13px] leading-[1.6] text-rep-ink-muted mt-2 mb-0 max-w-[450px] text-pretty">
           La dirección no corresponde a ninguna sección de Reportalo. Puede estar mal escrita o ser de una versión anterior del sitio.
         </p>
 
-        <div className="mt-3.5 bg-[#F4F7FB] border border-[#E6ECF3] rounded-[11px] px-4 py-2.5 text-left max-w-full overflow-hidden">
-          <div className="font-bold text-[9px] text-[#9AA7B5] tracking-[0.5px] mb-1">DIRECCIÓN</div>
-          <div className="font-semibold text-[11px] font-mono text-[#56657A] truncate">
+        <div className="mt-3.5 bg-rep-bg border border-rep-border rounded-[11px] px-4 py-2.5 text-left max-w-full overflow-hidden">
+          <div className="font-bold text-[9px] text-rep-ink-faint tracking-[0.5px] mb-1">DIRECCIÓN</div>
+          <div className="font-semibold text-[11px] font-mono text-rep-ink-label truncate">
             reportalo.ar{location.pathname}
           </div>
         </div>
@@ -51,21 +51,17 @@ export const NotFoundPage = () => {
         <div className="flex flex-col sm:flex-row items-center gap-3.5 mt-[18px]">
           <Link 
             to="/" 
-            className="bg-[#1E6FCB] text-white rounded-[11px] px-6 py-2.5 font-extrabold text-[12.5px] no-underline hover:bg-[#15539E] transition-colors"
+            className="rep-focus inline-flex min-h-touch items-center rounded-[11px] bg-rep-accent px-6 text-[12.5px] font-extrabold text-rep-on-accent no-underline transition-colors hover:bg-rep-accent-strong"
           >
             Volver al inicio
           </Link>
-          <button 
-            type="button"
-            className="bg-transparent border-none font-bold text-[12px] text-[#8593A2] cursor-pointer hover:text-[#5B6A7A] transition-colors"
-          >
-            Reportar el problema
-          </button>
+          {/* UJ v3.3 · M31: la única salida es volver al inicio; no se le pide al usuario que
+              reporte el error ni que copie la dirección (REP-3791 Bloque 9) */}
         </div>
 
         <div className="mt-5 flex items-center gap-1.5">
-          <AlertCircle className="w-[14px] h-[14px] text-[#C3CED9]" strokeWidth={2.25} />
-          <span className="font-semibold text-[10px] text-[#A8B4C0]">Error 404 · ruta desconocida</span>
+          <AlertCircle className="w-[14px] h-[14px] text-rep-ink-faint" strokeWidth={2.25} />
+          <span className="font-semibold text-[10px] text-rep-ink-faint">Error 404 · ruta desconocida</span>
         </div>
       </div>
     </div>

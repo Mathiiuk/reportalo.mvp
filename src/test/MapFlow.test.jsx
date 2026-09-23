@@ -11,6 +11,55 @@ import { NewsPage } from '../pages/NewsPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { AuthContext } from '../context/AuthContext';
 
+/*
+ * Reportes del mapa. Antes estos tests se apoyaban en src/data/mockReports.js, que
+ * CitizenMap importaba directamente: la pantalla principal mostraba cinco reclamos
+ * inventados y los tests verificaban ese invento (H-36). Ahora el componente recibe los
+ * reportes por prop, así que las pruebas declaran los suyos, con la forma que devuelve
+ * mapReportsService y los códigos de estado reales de la base.
+ */
+const MAP_REPORTS = [
+  {
+    id: 'rep-1',
+    title: 'Bache profundo en calzada principal',
+    description: 'Bache de gran tamaño que dificulta el tránsito vehicular.',
+    category: 'Infraestructura',
+    categoryIcon: 'traffic',
+    status: 'En revisión',
+    stateCode: 'EN_ANALISIS',
+    pinColor: '#1E6FCB',
+    coordinates: [-58.3816, -34.6037],
+    address: 'San Nicolás',
+    date: '24 Ago 2026',
+  },
+  {
+    id: 'rep-2',
+    title: 'Contenedor de residuos desbordado',
+    description: 'Contenedor desbordado sobre la vereda.',
+    category: 'Ambiente',
+    categoryIcon: 'park',
+    status: 'Resuelto',
+    stateCode: 'RESUELTO',
+    pinColor: '#2E9E6B',
+    coordinates: [-58.4452, -34.5711],
+    address: 'Belgrano',
+    date: '20 Ago 2026',
+  },
+  {
+    id: 'rep-3',
+    title: 'Semáforo fuera de servicio',
+    description: 'El semáforo de la esquina no funciona.',
+    category: 'Tránsito',
+    categoryIcon: 'car_crash',
+    status: 'En revisión',
+    stateCode: 'EN_ANALISIS',
+    pinColor: '#F78E35',
+    coordinates: [-58.3662, -34.6624],
+    address: 'Avellaneda Centro',
+    date: '18 Ago 2026',
+  },
+];
+
 // Mock de sonner
 vi.mock('sonner', () => ({
   toast: {
@@ -80,7 +129,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('UT-MP-02: Renderiza los 5 accesos de navegación en la barra inferior flotante (Mapa, Reportes, Cámara, Alertas, Perfil)', () => {
+  it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón flotante de reportar', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -92,7 +141,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     const nav = screen.getByRole('navigation', { name: /navegación principal/i });
     expect(within(nav).getByRole('button', { name: /mapa/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /reportes/i })).toBeInTheDocument();
-    expect(within(nav).getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
+    // UJ v3.3 · M08 (REP-3791 Bloque 5): «Reportar» pasa a ser un botón flotante sobre el mapa,
+    // fuera de la barra de pestañas, que queda con cuatro accesos.
+    expect(screen.getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /alertas/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
   });
@@ -132,8 +183,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getByRole('heading', { name: /novedades/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/sin novedades por ahora/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /explorar el mapa/i })).toBeInTheDocument();
+    // UJ v3.3 · M27 (REP-3791 Bloque 9): el vacío pasa al copy del diseño
+    expect(screen.getByRole('heading', { name: /todavía no hay publicaciones/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ver el mapa/i })).toBeInTheDocument();
   });
 
   it('UT-MP-06: ProfilePage renderiza los datos del usuario, versión vigente y botón de cerrar sesión', () => {
@@ -184,26 +236,26 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByRole('heading', { name: /mi perfil/i })).toBeInTheDocument();
   });
 
-  it('UT-MP-08: Renderiza marcadores de reportes de prueba sobre el mapa', async () => {
-    render(<CitizenMap />);
+  it('UT-MP-08: Renderiza marcadores de reportes sobre el mapa', async () => {
+    render(<CitizenMap reports={MAP_REPORTS} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('marker-REP-101')).toBeInTheDocument();
-      expect(screen.getByTestId('marker-REP-102')).toBeInTheDocument();
-      expect(screen.getByTestId('marker-REP-103')).toBeInTheDocument();
+      expect(screen.getByTestId('marker-rep-1')).toBeInTheDocument();
+      expect(screen.getByTestId('marker-rep-2')).toBeInTheDocument();
+      expect(screen.getByTestId('marker-rep-3')).toBeInTheDocument();
     });
   });
 
   it('UT-MP-09: Al hacer clic en un pin, despliega la tarjeta flotante con categoría, título y estado', async () => {
-    render(<CitizenMap />);
+    render(<CitizenMap reports={MAP_REPORTS} />);
 
-    const markerBtn = await screen.findByTestId('marker-REP-101');
+    const markerBtn = await screen.findByTestId('marker-rep-1');
     fireEvent.click(markerBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/Infraestructura vial/i)).toBeInTheDocument();
+      expect(screen.getByText('Infraestructura')).toBeInTheDocument();
       expect(screen.getByText(/Bache profundo en calzada principal/i)).toBeInTheDocument();
-      expect(screen.getByText(/Av. Corrientes 1050, San Nicolás/i)).toBeInTheDocument();
+      expect(screen.getByText(/San Nicolás/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cerrar detalle de reporte/i })).toBeInTheDocument();
     });
 
@@ -215,21 +267,32 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
   });
 
   it('UT-MP-10: Filtrado reactivo de reportes en el mapa y actualización de marcadores', async () => {
-    render(<CitizenMap />);
+    render(<CitizenMap reports={MAP_REPORTS} />);
 
     // Abrir menú de filtros
     fireEvent.click(screen.getByRole('button', { name: /filtros del mapa/i }));
     expect(screen.getByText(/Filtrar reclamos/i)).toBeInTheDocument();
 
-    // Seleccionar filtro "En curso": solo REP-101 y REP-104 tienen ese estado
-    fireEvent.click(screen.getByRole('button', { name: /^En curso$/i }));
+    // El filtro usa las etiquetas del §10: «En revisión» es EN_ANALISIS en la base.
+    // Solo rep-1 y rep-3 están en ese estado.
+    fireEvent.click(screen.getByRole('button', { name: /^En revisión$/i }));
 
     // Al seleccionar, el modal se cierra automáticamente y sólo quedan marcadores de ese filtro
     await waitFor(() => {
       expect(screen.queryByText(/Filtrar reclamos/i)).not.toBeInTheDocument();
-      expect(screen.getByTestId('marker-REP-101')).toBeInTheDocument();
-      expect(screen.getByTestId('marker-REP-104')).toBeInTheDocument();
-      expect(screen.queryByTestId('marker-REP-102')).not.toBeInTheDocument();
+      expect(screen.getByTestId('marker-rep-1')).toBeInTheDocument();
+      expect(screen.getByTestId('marker-rep-3')).toBeInTheDocument();
+      expect(screen.queryByTestId('marker-rep-2')).not.toBeInTheDocument();
+    });
+  });
+
+  it('UT-MP-12: sin reportes no inventa marcadores', async () => {
+    // H-36: antes el mapa leia mockReports y siempre mostraba cinco reclamos, existieran
+    // o no. Ahora, sin datos, no dibuja nada.
+    render(<CitizenMap reports={[]} />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('marker-rep-1')).not.toBeInTheDocument();
     });
   });
 

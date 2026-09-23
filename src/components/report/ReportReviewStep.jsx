@@ -1,28 +1,18 @@
 import React, { useState } from 'react';
-import {
-  Check,
-  MapPin,
-  Send,
-  Save,
-  Shield,
-  Trash2,
-  Gavel,
-  ArrowRight,
-  ArrowLeft,
-  Share2,
-  X,
-  Camera,
-  CloudOff,
-  Clock,
-  Info,
-  EyeOff,
-  ScanFace,
-} from 'lucide-react';
+import { MapPin, Send, Save, X, CloudOff, Clock, Info, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ReportFlowHeader } from './ReportFlowHeader';
+import { ConsentSheet } from './ConsentSheet';
+import { getCategoryTone } from './categoryTone';
+import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
+
+const FIELD_LABEL =
+  'text-rep-label font-semibold text-rep-ink-muted desktop:w-[120px] desktop:shrink-0 desktop:text-rep-label-d desktop:uppercase desktop:tracking-wide';
 
 /**
- * Componente UI para el Paso 3: Revisión y Modal "Antes de enviar" (User Journey v2).
- * Incluye visor modal de fotos para no perder el estado ni retroceder de paso.
+ * Paso 3 del alta de reporte: revisión antes de enviar + hoja de consentimiento.
+ * UJ v3.3 · M11 «Revisar y enviar» / M13 «Antes de enviar» (teléfono) y D12 / D14 (escritorio).
+ * REP-3791 Bloque 2. Mismo contrato de props que antes.
  */
 export const ReportReviewStep = ({
   evidenceList = [],
@@ -41,11 +31,16 @@ export const ReportReviewStep = ({
   onOpenTerms,
   onOpenAdjustLocation,
 }) => {
-
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [showPhotosGalleryModal, setShowPhotosGalleryModal] = useState(false);
+  const isDesktop = useIsDesktopLayout();
+
+  const deviceWord = isDesktop ? 'computadora' : 'teléfono';
+  const isOfflineDraft = !isOnline || draftStatus === 'PENDING_SYNC';
   const photoCount = evidenceList.length;
   const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto adjunta' : 'fotos adjuntas'}`;
+  const tone = selectedCategory ? getCategoryTone(selectedCategory) : null;
+  const submitLabel = !isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte';
 
   const displayAddress =
     address ||
@@ -60,10 +55,10 @@ export const ReportReviewStep = ({
       return;
     }
     if (hasAcceptedTerms) {
-      // Quien ya aceptó pasa derecho al envío
+      // Quien ya aceptó la versión vigente pasa derecho al envío (M14)
       onSubmitReport();
     } else {
-      // Primer reporte: abre el modal bottom sheet de consentimiento
+      // Sin aceptación vigente: hoja de consentimiento (M13 / D14)
       setShowConsentModal(true);
     }
   };
@@ -74,307 +69,238 @@ export const ReportReviewStep = ({
   };
 
   return (
-    <div
-      data-testid="report-review-step"
-      className="relative w-full h-full flex flex-col justify-between bg-[#F4F7FB]"
-    >
-      {/* 1. Header con stepper de 3 pasos completados */}
-      <div className="flex-0 bg-white px-4 pt-3 pb-3 border-b border-[#EEF1F5] shadow-2xs">
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Volver al detalle"
-            className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#5B6A7A] transition-colors cursor-pointer border-0 bg-transparent p-0"
+    <div data-testid="report-review-step" className="relative flex h-full w-full flex-col bg-rep-bg desktop:overflow-y-auto">
+      <ReportFlowHeader step={3} onBack={onBack} backLabel="Volver al detalle" />
+
+      <div className="min-h-0 flex-1 overflow-y-auto desktop:flex-none desktop:overflow-visible">
+        <div className="mx-auto flex w-full max-w-lg flex-col gap-3 px-4 py-4 desktop:grid desktop:max-w-[1200px] desktop:grid-cols-[minmax(280px,1fr)_minmax(0,1.9fr)] desktop:items-stretch desktop:gap-6 desktop:px-10 desktop:py-8">
+          {/* Fotos adjuntas: todavía no salieron del dispositivo */}
+          <section
+            aria-label="Fotos adjuntas"
+            className="rounded-2xl border border-rep-border bg-rep-surface p-3.5 shadow-rep-card desktop:flex desktop:flex-col desktop:gap-4 desktop:p-5"
           >
-            <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
-          </button>
-          <span className="font-extrabold text-[16px] text-[#263249] tracking-tight">
-            Nuevo reporte
-          </span>
-        </div>
-
-        {/* Stepper horizontal: 1 Foto (check verde) -> 2 Detalle (check verde) -> 3 Enviar (azul activo) */}
-        <div className="flex items-center gap-1.5 mt-3 px-1">
-          {/* Paso 1: Foto completada */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="w-5 h-5 rounded-full bg-[#2E9E6B] flex items-center justify-center text-white">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </span>
-            <span className="font-bold text-[11px] text-[#2E9E6B]">
-              Foto
-            </span>
-          </div>
-
-          <span className="flex-1 h-[2px] bg-[#1E6FCB]"></span>
-
-          {/* Paso 2: Detalle completado */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="w-5 h-5 rounded-full bg-[#2E9E6B] flex items-center justify-center text-white">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </span>
-            <span className="font-bold text-[11px] text-[#2E9E6B]">
-              Detalle
-            </span>
-          </div>
-
-          <span className="flex-1 h-[2px] bg-[#1E6FCB]"></span>
-
-          {/* Paso 3: Enviar activo */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="w-5 h-5 rounded-full bg-[#1E6FCB] flex items-center justify-center font-extrabold text-[11px] text-white">
-              3
-            </span>
-            <span className="font-bold text-[11px] text-[#1E6FCB]">
-              Enviar
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Cuerpo con tarjetas de resumen */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2.5 max-w-lg mx-auto w-full">
-        {/* Título de sección */}
-        <div className="font-bold text-[11.5px] text-[#56657A]">
-          Revisá antes de enviar
-        </div>
-
-        {/* Tarjeta 1: Evidencias fotográficas */}
-        <div className="bg-white border border-[#E6ECF3] rounded-[13px] p-3 shadow-2xs">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="font-bold text-[12px] text-[#263249]">
-              {photoLabel}
-            </span>
-            {photoCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowPhotosGalleryModal(true)}
-                className="font-bold text-[10.5px] text-[#1E6FCB] bg-transparent border-0 cursor-pointer hover:underline p-0"
-              >
-                Ver todas
-              </button>
-            )}
-          </div>
-
-          <div className="flex gap-2 items-center">
-            {/* Miniaturas de fotos */}
-            <div
-              className="flex gap-2 cursor-pointer"
-              onClick={() => setShowPhotosGalleryModal(true)}
-              title="Abrir visor de fotos"
-            >
-              {evidenceList.slice(0, 3).map((item, idx) => (
-                <div
-                  key={item.id || idx}
-                  className="w-16 h-16 rounded-[11px] overflow-hidden bg-[#CFD8E2] border border-slate-200 shadow-xs flex-shrink-0 hover:scale-105 transition-transform"
+            <div className="flex items-center justify-between">
+              <h3 className="m-0 text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{photoLabel}</h3>
+              {photoCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowPhotosGalleryModal(true)}
+                  className="rep-focus min-h-touch rounded-lg px-1 text-rep-label font-bold text-rep-accent hover:underline desktop:text-rep-label-d"
                 >
-                  <img
-                    src={item.previewUrl}
-                    alt={`Evidencia ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Texto informativo offline/privacidad */}
-            <div className="flex-1 flex flex-col justify-center gap-1 pl-1">
-              {!isOnline || draftStatus === 'PENDING_SYNC' ? (
-                <>
-                  <div className="inline-flex items-center gap-1 text-[#D97706]">
-                    <CloudOff className="w-[14px] h-[14px]" strokeWidth={2.25} />
-                    <span className="font-bold text-[9.5px]">
-                      Guardado en tu teléfono
-                    </span>
-                  </div>
-                  <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
-                    Se enviará automáticamente cuando tengas señal
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="inline-flex items-center gap-1 text-[#8593A2]">
-                    <Clock className="w-[14px] h-[14px]" strokeWidth={2.25} />
-                    <span className="font-bold text-[9.5px]">
-                      Todavía en tu teléfono
-                    </span>
-                  </div>
-                  <span className="font-medium text-[9.5px] leading-tight text-[#8593A2]">
-                    Se suben y se anonimizan al enviar
-                  </span>
-                </>
+                  Ver todas
+                </button>
               )}
             </div>
 
-          </div>
-        </div>
-
-        {/* Tarjeta 2: Detalles del Reporte (Categoría, Descripción, Ubicación) */}
-        <div className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex flex-col gap-2.5 shadow-2xs">
-          {/* Fila Categoría */}
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-[11px] text-[#8593A2]">
-              Categoría
-            </span>
-            <span
-              className="font-bold text-[10.5px] px-2.5 py-1 rounded-[9px]"
-              style={{
-                color: selectedCategory?.color || '#F78E35',
-                backgroundColor: selectedCategory?.bgLight || '#FFF2E6',
-              }}
-            >
-              {selectedCategory?.name || 'Tránsito'}
-            </span>
-          </div>
-
-          <div className="h-[1px] bg-[#EEF1F5]" />
-
-          {/* Fila Descripción */}
-          <div>
-            <div className="font-semibold text-[11px] text-[#8593A2] mb-1">
-              Descripción
-            </div>
-            <div className="font-medium text-[11.5px] leading-relaxed text-[#46566B]">
-              {description || 'Sin descripción adicional'}
-            </div>
-          </div>
-
-          <div className="h-[1px] bg-[#EEF1F5]" />
-
-          {/* Fila Ubicación */}
-          <div className="flex items-center gap-2">
-            <MapPin className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-[10px] text-[#8593A2]">
-                Ubicación
+            <div className="flex items-center gap-3 desktop:flex-col desktop:items-stretch desktop:gap-4">
+              <div className="flex shrink-0 gap-2">
+                {evidenceList.slice(0, 3).map((item, idx) => (
+                  <button
+                    key={item.id || idx}
+                    type="button"
+                    onClick={() => setShowPhotosGalleryModal(true)}
+                    aria-label={`Ver foto ${idx + 1}`}
+                    className="rep-focus h-16 w-16 overflow-hidden rounded-xl border border-rep-border bg-rep-track desktop:h-20 desktop:w-20"
+                  >
+                    <img src={item.previewUrl} alt={`Evidencia ${idx + 1}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
               </div>
-              <div className="font-bold text-[11px] text-[#34435A] truncate">
-                {displayAddress}
+
+              <div className="flex min-w-0 flex-col gap-0.5 desktop:rounded-xl desktop:bg-rep-surface-sunken desktop:p-3.5">
+                {isOfflineDraft ? (
+                  <>
+                    <span className="inline-flex items-center gap-1.5 text-rep-warning-ink">
+                      <CloudOff aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+                      <span className="text-rep-label font-bold desktop:text-rep-label-d">Guardado en tu {deviceWord}</span>
+                    </span>
+                    <span className="text-rep-label font-medium text-rep-ink-muted desktop:text-rep-label-d">
+                      Se enviará automáticamente cuando tengas señal
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1.5 text-rep-ink-label">
+                      <Clock aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+                      <span className="text-rep-label font-bold desktop:text-rep-label-d">Todavía en tu {deviceWord}</span>
+                    </span>
+                    <span className="text-rep-label font-medium text-rep-ink-muted desktop:text-rep-label-d">
+                      Se suben y se anonimizan al enviar
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onOpenAdjustLocation}
-              aria-label="Ajustar ubicación"
-              className="font-extrabold text-[10px] text-[#1E6FCB] bg-[#E8F1FB] hover:bg-[#D7E8FA] rounded-[9px] py-1.5 px-3 cursor-pointer border-0 transition-colors flex-shrink-0"
+          </section>
+
+          {/* Datos del reporte. En teléfono el título va primero (order-first); en escritorio encabeza la tarjeta derecha */}
+          <div className="contents desktop:flex desktop:flex-col desktop:gap-4 desktop:rounded-2xl desktop:border desktop:border-rep-border desktop:bg-rep-surface desktop:p-6 desktop:shadow-rep-card">
+            <h2 className="order-first m-0 text-rep-label font-bold text-rep-ink-label desktop:order-none desktop:text-rep-section-d desktop:text-rep-ink">
+              Revisá antes de enviar
+            </h2>
+
+            <section
+              aria-label="Datos del reporte"
+              className="flex flex-col gap-3 rounded-2xl border border-rep-border bg-rep-surface p-3.5 shadow-rep-card desktop:gap-4 desktop:rounded-none desktop:border-0 desktop:p-0 desktop:shadow-none"
             >
-              Ajustar
-            </button>
+              <div className="flex items-center justify-between gap-3 desktop:justify-start">
+                <span className={FIELD_LABEL}>Categoría</span>
+                <span
+                  className="rounded-lg px-2.5 py-1 text-rep-pill"
+                  style={{ color: tone?.ink, backgroundColor: tone?.soft }}
+                >
+                  {selectedCategory?.name || 'Tránsito'}
+                </span>
+              </div>
+
+              <div aria-hidden="true" className="h-px bg-rep-divider" />
+
+              <div className="desktop:flex">
+                <div className={`mb-1 desktop:mb-0 ${FIELD_LABEL}`}>Descripción</div>
+                <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">
+                  {description || 'Sin descripción adicional'}
+                </p>
+              </div>
+
+              <div aria-hidden="true" className="h-px bg-rep-divider" />
+
+              <div className="flex items-center gap-2.5">
+                <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-accent desktop:hidden" strokeWidth={2.25} />
+                <div className="min-w-0 flex-1 desktop:flex desktop:items-center">
+                  <div className={FIELD_LABEL}>Ubicación</div>
+                  <div className="truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{displayAddress}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onOpenAdjustLocation}
+                  aria-label="Ajustar ubicación"
+                  className="rep-focus inline-flex min-h-touch shrink-0 items-center gap-1.5 rounded-xl border border-rep-accent-border bg-rep-surface px-3 text-rep-label font-extrabold text-rep-accent transition-colors duration-120 hover:bg-rep-accent-soft desktop:text-rep-label-d"
+                >
+                  <SlidersHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
+                  Ajustar
+                </button>
+              </div>
+
+              {/* REP-2500-PRESEL: la localidad se preselecciono sola. Se avisa de
+                  forma explicita para que el ciudadano pueda corregirla: los
+                  centroides son aproximados y el locality_id define que organismo
+                  recibe el reclamo. Se conserva del trabajo ya mergeado en staging,
+                  restilado con los tokens del UJ v3.3. */}
+              {hasConfirmedLocality && isLocalityAutoSuggested && (
+                <div
+                  data-testid="auto-locality-hint"
+                  role="status"
+                  className="flex items-start gap-2 rounded-xl border border-rep-accent-border bg-rep-accent-soft px-3 py-2.5"
+                >
+                  <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-accent" strokeWidth={2.25} />
+                  <span className="text-rep-label font-semibold text-rep-accent desktop:text-rep-label-d">
+                    Detectamos esta localidad por tu ubicación. Si no es correcta, tocá "Ajustar".
+                  </span>
+                </div>
+              )}
+
+              {!hasConfirmedLocality && (
+                <div
+                  data-testid="missing-locality-hint"
+                  role="status"
+                  className="flex items-start gap-2 rounded-xl border border-rep-warning/40 bg-rep-warning-soft px-3 py-2.5"
+                >
+                  <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-warning" strokeWidth={2.25} />
+                  <span className="text-rep-label font-semibold text-rep-warning-ink desktop:text-rep-label-d">
+                    Confirmá la localidad exacta tocando "Ajustar" antes de enviar.
+                  </span>
+                </div>
+              )}
+            </section>
+
+            <div className="flex items-start gap-2.5 rounded-2xl border border-rep-warning/30 bg-rep-warning-soft p-3.5 desktop:mt-auto desktop:border-0 desktop:bg-transparent desktop:p-0">
+              <Info aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-rep-warning desktop:text-rep-ink-muted" strokeWidth={2.25} />
+              <p className="m-0 text-rep-label font-medium text-rep-warning-ink desktop:text-rep-label-d desktop:text-rep-ink-muted">
+                Tu identidad permanece anónima para el organismo receptor.
+              </p>
+            </div>
           </div>
-
-          {/* REP-2500-PRESEL: la localidad se preselecciono sola. Se avisa de
-              forma explicita para que el ciudadano pueda corregirla: los
-              centroides son aproximados y el locality_id define que organismo
-              recibe el reclamo. */}
-          {hasConfirmedLocality && isLocalityAutoSuggested && (
-            <div
-              data-testid="auto-locality-hint"
-              className="flex items-start gap-1.5 text-[#1E6FCB] bg-[#EEF5FC] border border-[#D4E6F8] rounded-lg px-2.5 py-1.5"
-            >
-              <Info className="w-[13px] h-[13px] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-              <span className="font-semibold text-[10px] leading-snug">
-                Detectamos esta localidad por tu ubicación. Si no es correcta, tocá "Ajustar".
-              </span>
-            </div>
-          )}
-
-          {!hasConfirmedLocality && (
-            <div
-              data-testid="missing-locality-hint"
-              className="flex items-start gap-1.5 text-[#B25E00] bg-[#FFF7EE] border border-[#F7E2C8] rounded-lg px-2.5 py-1.5"
-            >
-              <Info className="w-[13px] h-[13px] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-              <span className="font-semibold text-[10px] leading-snug">
-                Confirmá la localidad exacta tocando "Ajustar" antes de enviar.
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Tarjeta 3: Banner de Identidad Anónima */}
-        <div className="flex items-start gap-2 bg-[#FFF7EE] border border-[#F7E2C8] rounded-xl p-2.5">
-          <Info className="w-[17px] h-[17px] text-[#E07C1A] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-          <span className="font-medium text-[10.5px] leading-relaxed text-[#8A6A3E]">
-            Tu identidad permanece anónima para el organismo receptor.
-          </span>
         </div>
       </div>
 
-      {/* 3. Footer con Botón Enviar reporte y disclaimer de Términos */}
-      <div className="flex-0 bg-white border-top border-[#EEF1F5] p-3 flex flex-col">
-        <button
-          type="button"
-          onClick={handleSendClick}
-          aria-label={!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}
-          className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
-        >
-          <span>{!isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte'}</span>
-          {!isOnline ? <Save className="w-[18px] h-[18px]" strokeWidth={2.25} /> : <Send className="w-[18px] h-[18px]" strokeWidth={2.25} />}
-        </button>
+      {/* Acción principal */}
+      <div className="shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom,12px))] desktop:border-t-0 desktop:bg-transparent desktop:px-0 desktop:pb-8 desktop:pt-0">
+        <div className="mx-auto flex w-full max-w-lg flex-col desktop:max-w-[1200px] desktop:flex-row-reverse desktop:items-center desktop:justify-start desktop:gap-5 desktop:px-10">
+          <button
+            type="button"
+            onClick={handleSendClick}
+            aria-label={submitLabel}
+            className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] desktop:w-auto desktop:min-w-[220px] desktop:px-8"
+          >
+            <span>{submitLabel}</span>
+            {!isOnline ? (
+              <Save aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            ) : (
+              <Send aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            )}
+          </button>
 
-
-        {!hasAcceptedTerms && (
-          <div className="text-center pt-2">
-            <span className="font-medium text-[9.5px] leading-relaxed text-[#9AA7B5]">
+          {!hasAcceptedTerms && (
+            <p className="m-0 pt-2 text-center text-rep-label font-medium text-rep-ink-muted desktop:pt-0 desktop:text-rep-label-d">
               Antes de enviar te vamos a pedir aceptar los{' '}
               <button
                 type="button"
                 onClick={onOpenTerms}
-                className="text-[#8593A2] underline bg-transparent border-0 p-0 cursor-pointer font-medium text-[9.5px]"
+                className="rep-focus rounded font-bold text-rep-ink-label underline"
               >
                 términos
               </button>
               .
-            </span>
-          </div>
-        )}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* 4. MODAL DE VISUALIZACIÓN DE FOTOS DEL REPORTE */}
+      {/* Visor de fotos del reporte (no cambia de paso) */}
       <AnimatePresence>
         {showPhotosGalleryModal && (
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="review-gallery-title"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4"
+            className="fixed inset-0 z-50 flex flex-col justify-between bg-black/90 p-4 backdrop-blur-md"
           >
-            {/* Header del modal */}
             <div className="flex items-center justify-between pt-[max(8px,env(safe-area-inset-top,8px))]">
-              <span className="font-extrabold text-[15px] text-white">
+              <h2 id="review-gallery-title" className="m-0 text-rep-section text-white">
                 Fotos adjuntas al reporte ({photoCount})
-              </span>
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowPhotosGalleryModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white cursor-pointer border-0"
+                className="rep-focus flex min-h-touch min-w-touch items-center justify-center rounded-full bg-white/10 text-white focus-visible:ring-offset-black"
                 aria-label="Cerrar visor de fotos"
               >
-                <X className="w-5 h-5" />
+                <X aria-hidden="true" className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Grid de fotos en tamaño grande */}
-            <div className="flex-1 overflow-y-auto py-4 grid grid-cols-2 gap-3.5 items-center justify-center max-w-md mx-auto w-full">
+            <div className="mx-auto grid w-full max-w-md flex-1 grid-cols-2 content-center gap-3.5 overflow-y-auto py-4 desktop:max-w-3xl desktop:grid-cols-4">
               {evidenceList.map((item, idx) => (
                 <div
                   key={item.id || idx}
-                  className="relative rounded-2xl overflow-hidden aspect-square border-2 border-white/20 bg-slate-900 shadow-lg"
+                  className="relative aspect-square overflow-hidden rounded-2xl border-2 border-white/20 bg-black/40 shadow-lg"
                 >
-                  <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 font-extrabold text-[10px] text-white">
+                  <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
+                  <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-rep-label font-extrabold text-white">
                     #{idx + 1}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Footer del modal: volver al Paso 3 intacto */}
-            <div className="flex flex-col gap-2 max-w-md mx-auto w-full pb-[max(8px,env(safe-area-inset-bottom,8px))]">
+            <div className="mx-auto flex w-full max-w-md flex-col gap-2 pb-[max(8px,env(safe-area-inset-bottom,8px))]">
               <button
                 type="button"
                 onClick={() => setShowPhotosGalleryModal(false)}
-                className="w-full py-3.5 rounded-xl bg-[#1E6FCB] text-white font-extrabold text-[13.5px] cursor-pointer border-0 hover:bg-[#15539E] transition-colors"
+                className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent text-rep-button text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong focus-visible:ring-offset-black"
               >
                 Volver a la revisión
               </button>
@@ -383,106 +309,12 @@ export const ReportReviewStep = ({
         )}
       </AnimatePresence>
 
-      {/* 5. MODAL BOTTOM SHEET: "Antes de enviar" (DECISIÓN D01) */}
-      <AnimatePresence>
-        {showConsentModal && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
-            {/* Backdrop oscuro */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowConsentModal(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-            />
-
-            {/* Sheet modal flotante */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-              className="relative w-full max-w-md bg-white rounded-t-[28px] p-6 pb-[max(24px,env(safe-area-inset-bottom,24px))] shadow-2xl flex flex-col gap-3 z-10"
-            >
-              {/* Handle superior de arrastre */}
-              <div className="w-12 h-1.5 rounded-full bg-slate-200 mx-auto mb-1" />
-
-              {/* Título */}
-              <div className="font-extrabold text-[18px] text-[#243447] tracking-tight">
-                Antes de enviar
-              </div>
-
-              {/* Puntos clave de consentimiento */}
-              <div className="flex flex-col gap-2.5 my-1">
-                <div className="flex gap-2.5 items-start">
-                  <EyeOff className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
-                    El organismo receptor nunca ve tus datos personales.
-                  </span>
-                </div>
-
-                <div className="flex gap-2.5 items-start">
-                  <ScanFace className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
-                    Rostros y patentes se difuminan antes de guardarse.
-                  </span>
-                </div>
-
-                <div className="flex gap-2.5 items-start">
-                  <Trash2 className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
-                    Guardamos solo la versión anonimizada. El original se descarta.
-                  </span>
-                </div>
-
-                <div className="flex gap-2.5 items-start">
-                  <Gavel className="w-[18px] h-[18px] text-[#1E6FCB] flex-shrink-0" strokeWidth={2.25} />
-                  <span className="font-medium text-[11.5px] leading-snug text-[#46566B]">
-                    Podés pedir acceso, rectificación y supresión (Ley 25.326).
-                  </span>
-                </div>
-              </div>
-
-              {/* Link a leer términos completos */}
-              <button
-                type="button"
-                onClick={onOpenTerms}
-                className="inline-flex items-center gap-1.5 font-bold text-[11.5px] text-[#1E6FCB] bg-transparent border-0 p-0 cursor-pointer my-3 text-left hover:underline"
-              >
-                <span>Leer términos y privacidad · v1.2</span>
-                <ArrowRight className="w-[15px] h-[15px]" strokeWidth={2.25} />
-              </button>
-
-              {/* Botón Principal: "Acepto y envío" */}
-              <button
-                type="button"
-                onClick={handleAcceptAndSend}
-                aria-label="Acepto y envío"
-                className="w-full py-3.5 px-4 rounded-[13px] bg-[#1E6FCB] shadow-[0_8px_18px_rgba(30,111,203,0.3)] hover:brightness-105 active:scale-98 text-center flex items-center justify-center gap-2 text-white font-extrabold text-[14px] cursor-pointer border-0 transition-all"
-              >
-                <span>Acepto y envío</span>
-                <Send className="w-[18px] h-[18px]" strokeWidth={2.25} />
-              </button>
-
-              {/* Botón Secundario: "Ahora no" (vuelve al Paso 3 intacto sin bloquear) */}
-              <button
-                type="button"
-                onClick={() => setShowConsentModal(false)}
-                aria-label="Ahora no"
-                className="text-center py-2.5 font-bold text-[12px] text-[#8593A2] hover:text-[#56657A] bg-transparent border-0 cursor-pointer transition-colors"
-              >
-                Ahora no
-              </button>
-
-              <div className="text-center">
-                <span className="font-medium text-[9.5px] leading-relaxed text-[#9AA7B5]">
-                  Queda registrada la versión y la fecha de tu aceptación.
-                </span>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ConsentSheet
+        open={showConsentModal}
+        onAccept={handleAcceptAndSend}
+        onDismiss={() => setShowConsentModal(false)}
+        onOpenTerms={onOpenTerms}
+      />
     </div>
   );
 };

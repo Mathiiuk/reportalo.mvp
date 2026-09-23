@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera, Sun, Focus } from 'lucide-react';
 import {
   processAllEvidencesThroughQuarantine,
   PIPELINE_STEPS,
@@ -6,6 +7,8 @@ import {
 
 /**
  * Pantalla de protección y anonimización de fotos en el servidor ("Protegiendo tus fotos…").
+ * UJ v3.3 · M14 (teléfono) y D15 (escritorio: foto y pasos lado a lado). REP-3791 Bloque 2:
+ * solo cambia la capa visual; el pipeline de cuarentena y su manejo fail-safe no se tocaron.
  * Integra el pipeline server-side de cuarentena (REP-2404) con principio fail-safe ante errores.
  *
  * @param {object} props
@@ -24,6 +27,7 @@ export const ReportProcessingScreen = ({
   clientSideId = null,
   onProcessingComplete,
   onErrorBack,
+  onDiscard = null,
   processFn = null,
   durationMs = 3200,
   simulateError = false,
@@ -170,34 +174,29 @@ export const ReportProcessingScreen = ({
     }
   };
 
+  // Lista completa: la subida cifrada ya ocurrió y el resto avanza con el progreso del pipeline
+  const steps = ['Fotos subidas de forma cifrada', ...PIPELINE_STEPS];
+  const activeStep = currentStepIndex + 1;
+
   return (
     <div
       data-testid="report-processing-screen"
-      className="relative w-full h-full flex-1 min-h-0 bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
+      className="relative flex h-full min-h-0 w-full flex-1 select-none flex-col overflow-hidden bg-rep-camera font-manrope text-white"
     >
       <style>{`
-        @keyframes repScanBeam {
-          0% { top: -58px; }
-          50% { top: 220px; }
-          100% { top: -58px; }
-        }
-        @keyframes repScanLine {
-          0% { top: 0px; }
-          50% { top: 256px; }
-          100% { top: 0px; }
-        }
-        @keyframes repPulseAnim {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.97); }
-        }
+        @keyframes repScanBeam { 0% { top: -58px; } 50% { top: 220px; } 100% { top: -58px; } }
+        @keyframes repScanLine { 0% { top: 0px; } 50% { top: 256px; } 100% { top: 0px; } }
+        @keyframes repPulseAnim { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.97); } }
+        /* UJ v3.3 §10: la animación respeta «prefiere menos movimiento» y cae a un indicador estático */
+        @media (prefers-reduced-motion: reduce) { .rep-anim { animation: none !important; } }
       `}</style>
 
-      <div className="flex-1 flex flex-col px-5 sm:px-6 md:px-8 pt-4 pb-4 max-w-md mx-auto w-full">
-        {/* 1. Visor de escaneo de foto con rejilla y zonas detectadas */}
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-4 pt-[max(16px,env(safe-area-inset-top,16px))] desktop:max-w-[1100px] desktop:flex-row desktop:items-center desktop:justify-center desktop:gap-14 desktop:px-10">
+        {/* 1. Visor de escaneo */}
         <div
-          className={`relative rounded-[18px] overflow-hidden h-[258px] ${
+          className={`relative h-[258px] shrink-0 overflow-hidden rounded-[18px] transition-colors duration-300 desktop:h-[340px] desktop:w-[460px] ${
             hasError ? 'bg-[#2D1B1B]' : 'bg-[#2A313C]'
-          } flex-shrink-0 transition-colors duration-300`}
+          }`}
           style={{
             backgroundImage: `url(${photoUrl})`,
             backgroundPosition: 'center 34%',
@@ -205,13 +204,11 @@ export const ReportProcessingScreen = ({
             backgroundRepeat: 'no-repeat',
           }}
         >
-          {/* Filtro oscuro + blur */}
+          {/* Velo oscuro de espera: es solo visual, no es la anonimización (esa ocurre en el servidor) */}
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: hasError
-                ? 'rgba(30, 10, 10, 0.75)'
-                : 'rgba(10, 14, 20, 0.58)',
+              backgroundColor: hasError ? 'rgba(30, 10, 10, 0.75)' : 'rgba(10, 14, 20, 0.58)',
               backdropFilter: 'blur(3px)',
               WebkitBackdropFilter: 'blur(3px)',
             }}
@@ -219,87 +216,53 @@ export const ReportProcessingScreen = ({
 
           {!hasError && (
             <>
-              {/* Rejilla cibernética azul */}
               <div
-                className="absolute inset-0 pointer-events-none"
+                className="pointer-events-none absolute inset-0"
                 style={{
                   backgroundImage:
                     'linear-gradient(rgba(46, 159, 229, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(46, 159, 229, 0.1) 1px, transparent 1px)',
                   backgroundSize: '24px 24px',
                 }}
               />
-
-              {/* Haz de escaneo láser continuo */}
               <div
-                className="absolute left-0 right-0 h-[60px] pointer-events-none"
+                className="rep-anim pointer-events-none absolute left-0 right-0 h-[60px]"
                 style={{
-                  background:
-                    'linear-gradient(rgba(46, 159, 229, 0), rgba(46, 159, 229, 0.3))',
-                  animation: '3.2s ease-in-out 0s infinite normal none running repScanBeam',
+                  background: 'linear-gradient(rgba(46, 159, 229, 0), rgba(46, 159, 229, 0.3))',
+                  animation: 'repScanBeam 3.2s ease-in-out infinite',
                 }}
               />
               <div
-                className="absolute left-0 right-0 h-[2px] pointer-events-none"
+                className="rep-anim pointer-events-none absolute left-0 right-0 h-[2px]"
                 style={{
-                  background:
-                    'linear-gradient(90deg, rgba(46, 159, 229, 0), rgb(127, 212, 255), rgba(46, 159, 229, 0))',
+                  background: 'linear-gradient(90deg, rgba(46, 159, 229, 0), rgb(127, 212, 255), rgba(46, 159, 229, 0))',
                   boxShadow: 'rgba(46, 159, 229, 0.9) 0px 0px 12px',
-                  animation: '3.2s ease-in-out 0s infinite normal none running repScanLine',
+                  animation: 'repScanLine 3.2s ease-in-out infinite',
                 }}
               />
+              {[
+                { box: 'left-[24%] top-[30%] h-[70px] w-[58px]', delay: '0s' },
+                { box: 'right-[16%] top-[56%] h-[30px] w-[74px]', delay: '0.6s' },
+                { box: 'left-[59%] top-[19%] h-[30px] w-[30px]', delay: '1.2s' },
+              ].map(({ box, delay }) => (
+                <div
+                  key={box}
+                  className={`rep-anim pointer-events-none absolute ${box}`}
+                  style={{ animation: `repPulseAnim 3.2s ease-in-out ${delay} infinite` }}
+                >
+                  <div className="absolute left-0 top-0 h-3 w-3 rounded-tl-[5px] border-l-2 border-t-2 border-[#7FD4FF]" />
+                  <div className="absolute right-0 top-0 h-3 w-3 rounded-tr-[5px] border-r-2 border-t-2 border-[#7FD4FF]" />
+                  <div className="absolute bottom-0 left-0 h-3 w-3 rounded-bl-[5px] border-b-2 border-l-2 border-[#7FD4FF]" />
+                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-br-[5px] border-b-2 border-r-2 border-[#7FD4FF]" />
+                </div>
+              ))}
 
-              {/* Zona 1: Bounding Box Rostro/Sujeto (Izquierda) */}
-              <div
-                className="absolute left-[24%] top-[30%] w-[58px] h-[70px] pointer-events-none"
-                style={{
-                  animation: '3.2s ease-in-out 0s infinite normal none running repPulseAnim',
-                }}
-              >
-                <div className="absolute left-0 top-0 w-3.5 h-3.5 border-l-2 border-t-2 border-[#7FD4FF] rounded-tl-[5px]" />
-                <div className="absolute right-0 top-0 w-3.5 h-3.5 border-r-2 border-t-2 border-[#7FD4FF] rounded-tr-[5px]" />
-                <div className="absolute left-0 bottom-0 w-3.5 h-3.5 border-l-2 border-b-2 border-[#7FD4FF] rounded-bl-[5px]" />
-                <div className="absolute right-0 bottom-0 w-3.5 h-3.5 border-r-2 border-b-2 border-[#7FD4FF] rounded-br-[5px]" />
-              </div>
-
-              {/* Zona 2: Bounding Box Patente (Derecha abajo) */}
-              <div
-                className="absolute right-[16%] top-[56%] w-[74px] h-[30px] pointer-events-none"
-                style={{
-                  animation: '3.2s ease-in-out 0.6s infinite normal none running repPulseAnim',
-                }}
-              >
-                <div className="absolute left-0 top-0 w-3 h-3 border-l-2 border-t-2 border-[#7FD4FF] rounded-tl-[4px]" />
-                <div className="absolute right-0 top-0 w-3 h-3 border-r-2 border-t-2 border-[#7FD4FF] rounded-tr-[4px]" />
-                <div className="absolute left-0 bottom-0 w-3 h-3 border-l-2 border-b-2 border-[#7FD4FF] rounded-bl-[4px]" />
-                <div className="absolute right-0 bottom-0 w-3 h-3 border-r-2 border-b-2 border-[#7FD4FF] rounded-br-[4px]" />
-              </div>
-
-              {/* Zona 3: Bounding Box Elemento secundario (Centro arriba) */}
-              <div
-                className="absolute left-[59%] top-[19%] w-[30px] h-[30px] pointer-events-none"
-                style={{
-                  animation: '3.2s ease-in-out 1.2s infinite normal none running repPulseAnim',
-                }}
-              >
-                <div className="absolute left-0 top-0 w-2.5 h-2.5 border-l-2 border-t-2 border-[#7FD4FF]/75 rounded-tl-[4px]" />
-                <div className="absolute right-0 bottom-0 w-2.5 h-2.5 border-r-2 border-b-2 border-[#7FD4FF]/75 rounded-br-[4px]" />
-              </div>
-
-              {/* Badge inferior: zonas detectadas */}
-              <div
-                className="absolute left-[14px] bottom-[12px] flex items-center gap-[6px] rounded-[20px] py-[6px] px-[11px]"
-                style={{
-                  background: 'rgba(10, 20, 32, 0.62)',
-                  border: '1px solid rgba(127, 212, 255, 0.28)',
-                }}
-              >
+              <div className="absolute bottom-3 left-3.5 flex items-center gap-1.5 rounded-full border border-[#7FD4FF]/30 bg-[#0A1420]/60 px-3 py-1.5">
                 <span
-                  className="w-[6px] h-[6px] rounded-full bg-[#7FD4FF]"
-                  style={{
-                    animation: '1.1s ease-in-out 0s infinite normal none running repPulseAnim',
-                  }}
+                  aria-hidden="true"
+                  className="rep-anim h-1.5 w-1.5 rounded-full bg-[#7FD4FF]"
+                  style={{ animation: 'repPulseAnim 1.1s ease-in-out infinite' }}
                 />
-                <span className="font-bold text-[9px] text-[#CFE8FA] tracking-[0.4px]">
+                <span className="text-rep-label font-bold tracking-wide text-[#CFE8FA]">
                   {`${detectedCount} zonas detectadas`}
                 </span>
               </div>
@@ -311,135 +274,143 @@ export const ReportProcessingScreen = ({
               data-testid="fail-safe-badge-indicator"
               className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center"
             >
-              <span className="font-['Material_Symbols_Rounded'] text-[44px] text-[#FF6B6B] mb-2">
-                shield_with_heart
-              </span>
-              <span className="text-white font-bold text-[14px]">
-                Protección interrumpida
-              </span>
-              <span className="text-[#FFA8A8] text-[11.5px] mt-1">
+              <ShieldAlert aria-hidden="true" className="mb-2 h-11 w-11 text-[#FF6B6B]" strokeWidth={2} />
+              <span className="text-rep-body font-bold text-white">Protección interrumpida</span>
+              <span className="mt-1 text-rep-label text-[#FFA8A8]">
                 La foto original se eliminó para cuidar tu privacidad.
               </span>
             </div>
           )}
         </div>
 
-        {/* 2. Título y descripción (Normal o Fail-Safe) */}
-        {!hasError ? (
-          <>
-            <div className="font-extrabold text-[21px] text-white mt-[24px] tracking-[-0.3px]">
-              Protegiendo tus fotos…
-            </div>
-            <div className="font-medium text-[12.5px] leading-[1.55] text-[#8A95A3] mt-[7px]">
-              Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.
-            </div>
+        {/* 2. Estado del proceso */}
+        <div className="flex min-h-0 flex-1 flex-col desktop:max-w-[440px] desktop:flex-none">
+          {!hasError ? (
+            <>
+              <h1 className="m-0 mt-6 text-rep-title text-white desktop:mt-0 desktop:text-rep-title-d">Protegiendo tus fotos…</h1>
+              <p className="m-0 mt-2 text-rep-body text-rep-camera-ink-muted desktop:text-rep-body-d">
+                Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.
+              </p>
 
-            {/* 3. Barra de Progreso */}
-            <div
-              className="mt-[20px] h-[5px] rounded-[3px] overflow-hidden"
-              style={{ background: 'rgba(255, 255, 255, 0.12)' }}
-            >
               <div
-                className="h-full rounded-[3px] transition-all duration-75 ease-out"
-                style={{
-                  width: `${progress}%`,
-                  background: 'linear-gradient(90deg, rgb(30, 111, 203), rgb(46, 159, 229))',
-                }}
-              />
-            </div>
-
-            {/* 4. Lista de comprobación y pasos en tiempo real */}
-            <div className="flex flex-col gap-[10px] mt-[18px]">
-              {/* Paso 1: Fotos subidas */}
-              <div className="flex items-center gap-[9px]">
-                <span className="w-[18px] h-[18px] rounded-full bg-[#2E9E6B] flex items-center justify-center font-['Material_Symbols_Rounded'] text-[12px] text-white flex-shrink-0">
-                  check
-                </span>
-                <span className="font-semibold text-[11.5px] text-[#C8D2DD]">
-                  Fotos subidas de forma cifrada
-                </span>
-              </div>
-
-              {/* Paso 2: Dinámico */}
-              <div className="flex items-center gap-[9px]">
-                <span
-                  className="w-[18px] h-[18px] rounded-full border-2 border-[#2E9FE5] flex-shrink-0"
+                role="progressbar"
+                aria-label="Progreso de la protección de fotos"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+                className="mt-5 h-[5px] overflow-hidden rounded-full bg-white/10"
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-75 ease-out"
                   style={{
-                    animation: '1.1s ease-in-out 0s infinite normal none running repPulseAnim',
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, rgb(var(--rep-accent)), rgb(var(--rep-camera-accent)))',
                   }}
                 />
-                <span className="font-bold text-[11.5px] text-white">
-                  {PIPELINE_STEPS[currentStepIndex]}
-                </span>
               </div>
 
-              {/* Nota de categoría */}
-              <div className="flex items-center gap-[9px]">
-                <span className="font-['Material_Symbols_Rounded'] text-[15px] text-[#6B7684] flex-shrink-0">
-                  category
-                </span>
-                <span className="font-semibold text-[11px] leading-[1.35] text-[#6B7684]">
+              {/* Teléfono: paso hecho + paso en curso · escritorio: lista completa (D15) */}
+              <ol aria-live="polite" className="m-0 mt-5 flex list-none flex-col gap-3 p-0">
+                {steps.map((label, idx) => {
+                  const isDone = idx < activeStep;
+                  const isCurrent = idx === activeStep;
+                  const showOnPhone = idx === 0 || isCurrent;
+                  return (
+                    <li key={label} className={`${showOnPhone ? 'flex' : 'hidden desktop:flex'} items-center gap-2.5`}>
+                      {isDone ? (
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent">
+                          <Check aria-hidden="true" className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                      ) : isCurrent ? (
+                        <span
+                          aria-hidden="true"
+                          className="rep-anim h-5 w-5 shrink-0 rounded-full border-2 border-rep-camera-accent"
+                          style={{ animation: 'repPulseAnim 1.1s ease-in-out infinite' }}
+                        />
+                      ) : (
+                        <span aria-hidden="true" className="h-5 w-5 shrink-0 rounded-full bg-white/10" />
+                      )}
+                      <span
+                        className={`text-rep-body desktop:text-rep-body-d ${
+                          isCurrent ? 'font-bold text-white' : isDone ? 'font-semibold text-white/85' : 'font-medium text-white/45'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+
+              <div className="mt-5 flex items-start gap-2.5">
+                <Shapes aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-camera-ink-muted" strokeWidth={2} />
+                <span className="text-rep-label font-semibold text-rep-camera-ink-muted desktop:text-rep-label-d">
                   Los pasos cambian según la categoría del reporte ({categoryName}).
                 </span>
               </div>
-            </div>
 
-            {/* 5. Banner inferior: Descarte de imagen original */}
-            <div
-              className="mt-auto mb-[16px] flex items-center gap-[8px] rounded-[12px] p-[11px_12px]"
-              style={{ background: 'rgba(255, 255, 255, 0.07)' }}
-            >
-              <span className="font-['Material_Symbols_Rounded'] text-[16px] text-[#8A95A3] flex-shrink-0">
-                delete_forever
-              </span>
-              <span className="font-medium text-[10.5px] leading-[1.45] text-[#8A95A3]">
-                Al terminar, la imagen original se descarta del servidor.
-              </span>
-            </div>
-          </>
-        ) : (
-          /* Vista Fail-Safe ante error en cuarentena */
-          <div
-            data-testid="quarantine-fail-safe-view"
-            className="flex-1 flex flex-col mt-6"
-          >
-            <div className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
-              No pudimos proteger tu foto
-            </div>
-            <p className="font-medium text-[13px] leading-[1.5] text-[#A6B2C0] mt-2">
-              Por seguridad, la imagen original fue descartada automáticamente de nuestros servidores para cuidar tu privacidad.
-            </p>
-
-            <div className="mt-4 p-3 rounded-xl bg-[#241717] border border-[#5C2A2A] text-[#FFA8A8] text-[12px]">
-              {errorMessage || 'Ocurrió un inconveniente al anonimizar la imagen.'}
-            </div>
-
-            {/* Botones de acción fail-safe */}
-            <div className="mt-auto mb-4 flex flex-col gap-2.5">
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="w-full h-12 bg-[#2E9FE5] hover:bg-[#258AC8] active:scale-[0.98] transition-all rounded-xl font-bold text-[14px] text-white flex items-center justify-center gap-2 shadow-lg shadow-[#2E9FE5]/20"
-              >
-                <span className="font-['Material_Symbols_Rounded'] text-[18px]">
-                  refresh
+              <div className="mb-4 mt-auto flex items-center gap-2.5 rounded-xl bg-white/[0.07] px-3 py-3 desktop:mb-0 desktop:mt-4 desktop:bg-transparent desktop:px-0">
+                <Trash2 aria-hidden="true" className="h-4 w-4 shrink-0 text-rep-camera-ink-muted" strokeWidth={2} />
+                <span className="text-rep-label font-medium text-rep-camera-ink-muted desktop:text-rep-label-d">
+                  Al terminar, la imagen original se descarta del servidor.
                 </span>
-                Reintentar protección
-              </button>
+              </div>
+            </>
+          ) : (
+            /* Vista fail-safe ante error en cuarentena · UJ v3.3 · M21 «No pudimos procesar la foto» (Bloque 4) */
+            <div data-testid="quarantine-fail-safe-view" className="mt-6 flex flex-1 flex-col desktop:mt-0">
+              <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos procesar la foto</h1>
+              <p className="m-0 mt-2 text-rep-body text-white/75 desktop:text-rep-body-d">
+                No podemos garantizar el difuminado de la imagen, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
+              </p>
 
-              <button
-                type="button"
-                onClick={handleBackToCapture}
-                className="w-full h-11 bg-white/10 hover:bg-white/15 active:scale-[0.98] transition-all rounded-xl font-semibold text-[13.5px] text-[#C8D2DD] flex items-center justify-center gap-2"
-              >
-                <span className="font-['Material_Symbols_Rounded'] text-[18px]">
-                  photo_camera
-                </span>
-                Volver a sacar la foto
-              </button>
+              <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
+                <li className="flex items-center gap-2.5 text-rep-body text-white/85">
+                  <Sun aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
+                  Buscá más luz o acercate un poco
+                </li>
+                <li className="flex items-center gap-2.5 text-rep-body text-white/85">
+                  <Focus aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
+                  Esperá que enfoque antes de disparar
+                </li>
+              </ul>
+
+              {errorMessage && (
+                <p role="alert" className="m-0 mt-4 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label text-white/90">
+                  Detalle: {errorMessage}
+                </p>
+              )}
+
+              <div className="mb-4 mt-auto flex flex-col gap-2 desktop:mt-6">
+                <button
+                  type="button"
+                  onClick={handleBackToCapture}
+                  className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-camera-accent text-rep-button text-rep-camera transition-transform duration-120 active:scale-[0.98] focus-visible:ring-offset-rep-camera"
+                >
+                  <Camera aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                  Sacar otra foto
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="rep-focus flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-rep-body font-semibold text-white/85 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
+                >
+                  <RefreshCw aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                  Reintentar protección
+                </button>
+                {onDiscard && (
+                  <button
+                    type="button"
+                    onClick={onDiscard}
+                    className="rep-focus min-h-touch w-full rounded-xl text-rep-body font-bold text-[#FF8A80] focus-visible:ring-offset-rep-camera"
+                  >
+                    Descartar el reporte
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

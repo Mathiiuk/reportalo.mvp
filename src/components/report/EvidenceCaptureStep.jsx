@@ -1,13 +1,25 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Shield, Zap, X, MapPin, Camera, RefreshCw, AlertCircle, ArrowRight, Trash2, Eye } from 'lucide-react';
+import { Shield, X, LocateFixed, Camera, ImagePlus, AlertCircle, ArrowRight, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFriendlyLocationLabel } from '../../services/locationService';
+import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
+import { EvidenceUploadDesktop } from './EvidenceUploadDesktop';
+
+const MAX_PHOTOS = 4;
+
+// El visor es oscuro en los dos temas: el anillo de foco se separa sobre el fondo de cámara.
+const CAMERA_FOCUS = 'rep-focus focus-visible:ring-offset-rep-camera';
 
 /**
- * Componente UI para el Paso 1: Captura de Evidencia Fotográfica Fullscreen (REP-2201).
- * Diseño calcado del User Journey v2 con galería modal interactiva de 1 a 4 fotos.
+ * Paso 1 del alta de reporte en teléfono y tablet: captura a pantalla completa (1 a 4 fotos).
+ * UJ v3.3 · M09 «Capturar» (REP-3791 Bloque 1 · mobile).
+ *
+ * Diferencias deliberadas con el mockup (documentadas en el README del bloque):
+ * - Flash y cambio de cámara no se dibujan: con <input capture> los maneja la cámara del sistema.
+ * - El control de la derecha pasa a «Continuar» cuando hay fotos (el mockup no muestra cómo avanzar).
+ * - Sin difuminado en vivo: el badge es una promesa; el difuminado real ocurre en el servidor.
  */
-export const EvidenceCaptureStep = ({
+const EvidenceCaptureMobile = ({
   evidenceList = [],
   error,
   isProcessing = false,
@@ -39,25 +51,23 @@ export const EvidenceCaptureStep = ({
     const file = e.target.files?.[0];
     if (file && onCaptureFile) {
       onCaptureFile(file);
-      setSelectedPhotoIndex(null); // Resetear al visor de la foto más reciente
+      setSelectedPhotoIndex(null); // Volver al visor de la foto más reciente
     }
     e.target.value = '';
   };
 
   const photoCount = evidenceList.length;
-  // Foto activa a mostrar en el visor principal
   const activePhoto =
     selectedPhotoIndex !== null && evidenceList[selectedPhotoIndex]
       ? evidenceList[selectedPhotoIndex]
       : evidenceList[photoCount - 1] || null;
 
-  // Formato amigable de ubicación GPS dinámica
   const locationLabel = getFriendlyLocationLabel(geolocation);
 
   return (
     <div
       data-testid="evidence-capture-step"
-      className="relative w-full h-full flex-1 min-h-0 bg-[#0E1116] overflow-hidden flex flex-col font-manrope select-none text-white"
+      className="relative flex h-full min-h-0 w-full flex-1 select-none flex-col overflow-hidden bg-rep-camera font-manrope text-white"
     >
       {/* Inputs nativos ocultos */}
       <input
@@ -78,275 +88,246 @@ export const EvidenceCaptureStep = ({
         onChange={handleFileChange}
       />
 
-      {/* 1. VISOR PRINCIPAL / ESCENA DE CÁMARA O FOTO CAPTURADA */}
-      <div className="relative flex-1 w-full bg-[#1A1F26] overflow-hidden flex items-center justify-center">
+      {/* 1. Visor */}
+      <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-black/30">
         {activePhoto ? (
           <img
             src={activePhoto.previewUrl}
             alt="Evidencia capturada"
             data-testid="evidence-preview-img"
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1C232D] to-[#0E1116] p-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-[#1E6FCB]">
-              <Camera className="w-10 h-10" />
+          <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 text-rep-camera-accent">
+              <Camera className="h-10 w-10" aria-hidden="true" />
             </div>
-            <p className="text-[14px] font-bold text-slate-300 max-w-[240px] m-0">
+            <p className="m-0 max-w-[260px] text-rep-body font-bold text-white/80">
               Preparando cámara para registrar el reporte...
             </p>
           </div>
         )}
 
-        {/* Topbar flotante sobre el visor */}
-        <div className="absolute top-[max(12px,env(safe-area-inset-top,12px))] left-3 right-3 z-20 flex items-center justify-between pointer-events-auto">
-          {/* Botón Cerrar / Volver */}
+        {/* Barra superior flotante */}
+        <div className="absolute inset-x-3 top-[max(12px,env(safe-area-inset-top,12px))] z-20 flex items-center justify-between">
           <button
             type="button"
             onClick={onCancel}
             aria-label="Cerrar cámara"
-            className="w-9 h-9 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10 active:scale-95 transition-all cursor-pointer"
+            className={`${CAMERA_FOCUS} flex min-h-touch min-w-touch items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform duration-120 active:scale-[0.98]`}
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          {/* Badge Central: Privacidad Activada */}
-          <div className="flex items-center gap-1.5 bg-[#1E6FCB]/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-md">
-            <Shield className="w-3.5 h-3.5 fill-white text-white" />
-            <span className="font-extrabold text-[11px] tracking-wide text-white">
-              Privacidad activada
-            </span>
+          <div className="flex items-center gap-1.5 rounded-full bg-rep-accent px-3.5 py-2 text-rep-on-accent shadow-md">
+            <Shield className="h-4 w-4 fill-current" aria-hidden="true" />
+            <span className="text-[13px] font-extrabold">Privacidad activada</span>
           </div>
 
-          {/* Icono Galería / Flash */}
-          <button
-            type="button"
-            aria-label="Opciones de cámara"
-            onClick={() => galleryInputRef.current?.click()}
-            title="Seleccionar desde galería"
-            className="w-9 h-9 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10 active:scale-95 transition-all cursor-pointer"
-          >
-            <Zap className="w-4 h-4 fill-white text-white" />
-          </button>
+          {/* Espaciador: mantiene centrado el badge (el flash del mockup no aplica en web) */}
+          <span aria-hidden="true" className="min-w-touch" />
         </div>
 
-        {/* Badge Inferior Flotante: Ubicación GPS */}
-        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center gap-2 bg-black/55 backdrop-blur-md py-2 px-3 rounded-xl border border-white/10 text-slate-200">
-          <MapPin className="w-4 h-4 text-[#2E9FE5] flex-shrink-0" />
-          <span className="font-mono font-semibold text-[11px] truncate tracking-tight">
-            {locationLabel}
-          </span>
+        {/* Coordenadas tomadas al disparar */}
+        <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 rounded-xl bg-black/55 px-3 py-2.5 backdrop-blur-md">
+          <LocateFixed className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" aria-hidden="true" />
+          <span className="truncate font-mono text-[13px] font-semibold text-white/90">{locationLabel}</span>
         </div>
       </div>
 
-      {/* 2. PANEL INFERIOR DE ACCIONES Y CONTROL DE DISPARO */}
-      <div className="flex-0 bg-[#0E1116] px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom,16px))] flex flex-col">
-        {/* Banner de Error si ocurre */}
+      {/* 2. Panel inferior */}
+      <div className="shrink-0 bg-rep-camera px-5 pt-3.5 pb-[max(16px,env(safe-area-inset-bottom,16px))]">
         <AnimatePresence>
           {error && (
             <motion.div
+              role="alert"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-2 p-2.5 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 flex items-center gap-2 text-[11.5px] font-bold"
+              className="mb-3 flex items-center gap-2 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label font-bold text-white"
             >
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Copy de Privacidad */}
-        <p className="font-medium text-[11px] leading-relaxed text-[#8A95A3] text-center m-0 mb-3.5">
+        <p className="m-0 mb-4 text-center text-rep-body text-rep-camera-ink-muted">
           Sacá la foto normal. Los rostros y patentes se difuminan al procesarla, antes de guardarse.
         </p>
 
-        {/* Fila de Controles */}
         <div className="flex items-center justify-between gap-3">
-          {/* A. Miniaturas de fotos capturadas (Al hacer clic abre el visor modal) */}
-          <div className="w-14 flex items-center justify-start">
+          {/* A. Fotos tomadas (abre el visor de gestión) o acceso a galería */}
+          <div className="flex w-[76px] justify-start">
             {photoCount > 0 ? (
-              <div
-                data-testid="evidence-thumbnail-stack"
-                className="relative cursor-pointer"
-                onClick={() => setShowGalleryModal(true)}
-                title="Ver y gestionar fotos capturadas"
-              >
-                <div className="flex items-center">
-                  {evidenceList.slice(0, 2).map((item, idx) => (
-                    <div
-                      key={item.id}
-                      className="w-10 h-10 rounded-xl overflow-hidden border-[1.5px] border-white/60 shadow-md bg-slate-800 flex-shrink-0"
-                      style={{ marginLeft: idx > 0 ? '-14px' : '0px' }}
-                    >
-                      <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Badge con cantidad de fotos */}
-                <span className="absolute -top-1.5 -right-2 w-4.5 h-4.5 rounded-full bg-[#1E6FCB] border-2 border-[#0E1116] flex items-center justify-center font-extrabold text-[9px] text-white shadow-xs">
-                  {photoCount}
-                </span>
-
-                {/* Botón X para limpiar fotos */}
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onClearEvidence();
-                  }}
-                  aria-label="Eliminar fotos"
-                  className="absolute -bottom-1.5 -left-1.5 w-4 h-4 rounded-full bg-black/80 text-white flex items-center justify-center border-0 cursor-pointer p-0 hover:bg-red-600 transition-colors"
+                  data-testid="evidence-thumbnail-stack"
+                  onClick={() => setShowGalleryModal(true)}
+                  aria-label={`Ver y gestionar ${photoCount === 1 ? 'la foto tomada' : `las ${photoCount} fotos tomadas`}`}
+                  className={`${CAMERA_FOCUS} relative flex min-h-touch items-center rounded-xl`}
                 >
-                  <X className="w-2.5 h-2.5" />
+                  {evidenceList.slice(0, 2).map((item, idx) => (
+                    <span
+                      key={item.id}
+                      className="block h-12 w-12 shrink-0 overflow-hidden rounded-xl border-[1.5px] border-white/60 bg-black/40 shadow-md"
+                      style={{ marginLeft: idx > 0 ? '-18px' : '0px' }}
+                    >
+                      <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
+                    </span>
+                  ))}
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-2 -top-2 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-rep-camera bg-rep-accent px-1 text-[11px] font-extrabold text-rep-on-accent"
+                  >
+                    {photoCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClearEvidence}
+                  aria-label="Eliminar fotos"
+                  className={`${CAMERA_FOCUS} absolute -bottom-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/85 text-white before:absolute before:-inset-2.5 before:content-['']`}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="w-10 h-10 rounded-xl border border-dashed border-white/20 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
-                title="Subir de galería"
+                aria-label="Elegir foto de la galería"
+                className={`${CAMERA_FOCUS} flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/70 transition-colors duration-120 hover:text-white`}
               >
-                <Camera className="w-4 h-4 opacity-50" />
+                <ImagePlus className="h-5 w-5" aria-hidden="true" />
               </button>
             )}
           </div>
 
-          {/* B. Botón Central de Disparo (Trigger Cámara) */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              disabled={photoCount >= 4 || isProcessing}
-              onClick={() => cameraInputRef.current?.click()}
-              aria-label="Tomar fotografía"
-              className={`w-[68px] h-[68px] rounded-full border-4 border-white flex items-center justify-center transition-all cursor-pointer ${
-                photoCount >= 4
-                  ? 'bg-slate-700 opacity-60 cursor-not-allowed'
-                  : 'bg-[#1E6FCB] hover:scale-105 active:scale-95 shadow-[0_4px_18px_rgba(30,111,203,0.5)]'
-              }`}
-            >
-              <Camera className="w-7 h-7 text-white fill-white" />
-            </button>
-          </div>
+          {/* B. Disparador */}
+          <button
+            type="button"
+            disabled={photoCount >= MAX_PHOTOS || isProcessing}
+            onClick={() => cameraInputRef.current?.click()}
+            aria-label="Tomar fotografía"
+            className={`${CAMERA_FOCUS} flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-rep-accent text-rep-on-accent shadow-[0_4px_18px_rgb(var(--rep-accent)/0.45)] transition-transform duration-120 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none`}
+          >
+            <Camera className="h-8 w-8" strokeWidth={2.25} aria-hidden="true" />
+          </button>
 
-          {/* C. Lado Derecho: Galería / Cambiar Cámara / Continuar */}
-          <div className="w-14 flex flex-col items-center justify-center gap-1">
+          {/* C. Continuar (con fotos) o límite de fotos */}
+          <div className="flex w-[76px] flex-col items-center justify-center gap-1">
             {photoCount > 0 ? (
-              <button
-                type="button"
-                onClick={onContinue}
-                aria-label="Continuar al siguiente paso"
-                className="w-10 h-10 rounded-full bg-[#22C55E] text-white flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer border-0"
-                title="Continuar"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={onContinue}
+                  aria-label="Continuar al siguiente paso"
+                  className={`${CAMERA_FOCUS} flex h-12 w-12 items-center justify-center rounded-full bg-white text-rep-camera shadow-md transition-transform duration-120 active:scale-[0.96]`}
+                >
+                  <ArrowRight className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                </button>
+                <span aria-hidden="true" className="text-rep-label font-bold text-white/85">Continuar</span>
+              </>
             ) : (
-              <button
-                type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                aria-label="Cambiar a galería"
-                className="w-10 h-10 rounded-full bg-white/12 flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border-0"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+              <span className="text-rep-label font-bold text-rep-camera-ink-muted">máx. {MAX_PHOTOS}</span>
             )}
-            <span className="font-bold text-[9px] text-[#8A95A3]">
-              {photoCount > 0 ? 'Continuar' : 'máx. 4'}
-            </span>
           </div>
         </div>
       </div>
 
-      {/* 3. MODAL DE GESTIÓN Y VISUALIZACIÓN DE FOTOS (1 A 4 FOTOS) */}
+      {/* 3. Visor de gestión de fotos (1 a 4) */}
       <AnimatePresence>
         {showGalleryModal && (
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="evidence-gallery-title"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4"
+            className="fixed inset-0 z-50 flex flex-col justify-between bg-black/90 p-4 backdrop-blur-md"
           >
-            {/* Header del modal */}
             <div className="flex items-center justify-between pt-[max(8px,env(safe-area-inset-top,8px))]">
-              <span className="font-extrabold text-[15px] text-white">
-                Fotos capturadas ({photoCount}/4)
-              </span>
+              <h2 id="evidence-gallery-title" className="m-0 text-rep-section text-white">
+                Fotos capturadas ({photoCount}/{MAX_PHOTOS})
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowGalleryModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white cursor-pointer border-0"
+                className={`${CAMERA_FOCUS} flex min-h-touch min-w-touch items-center justify-center rounded-full bg-white/10 text-white`}
                 aria-label="Cerrar visor de fotos"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* Grid de fotos en tamaño grande */}
-            <div className="flex-1 overflow-y-auto py-4 grid grid-cols-2 gap-3.5 items-center justify-center max-w-md mx-auto w-full">
-              {evidenceList.map((item, idx) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedPhotoIndex(idx);
-                    setShowGalleryModal(false);
-                  }}
-                  className={`relative rounded-2xl overflow-hidden aspect-square border-2 bg-slate-900 cursor-pointer shadow-lg transition-transform hover:scale-[1.02] ${
-                    selectedPhotoIndex === idx || (selectedPhotoIndex === null && idx === photoCount - 1)
-                      ? 'border-[#1E6FCB] ring-2 ring-[#1E6FCB]/50'
-                      : 'border-white/20'
-                  }`}
-                >
-                  <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
-                  
-                  {/* Número de foto */}
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 font-extrabold text-[10px] text-white">
-                    #{idx + 1}
-                  </span>
-
-                  {/* Botón eliminar individual */}
-                  {onRemovePhoto && (
+            <div className="mx-auto grid w-full max-w-md flex-1 grid-cols-2 content-center gap-3.5 overflow-y-auto py-4">
+              {evidenceList.map((item, idx) => {
+                const isActive =
+                  selectedPhotoIndex === idx || (selectedPhotoIndex === null && idx === photoCount - 1);
+                return (
+                  <div key={item.id} className="relative">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemovePhoto(item.id);
-                        if (evidenceList.length <= 1) {
-                          setShowGalleryModal(false);
-                        }
+                      onClick={() => {
+                        setSelectedPhotoIndex(idx);
+                        setShowGalleryModal(false);
                       }}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-600/90 text-white flex items-center justify-center cursor-pointer border-0 hover:bg-red-700 transition-colors shadow-sm"
-                      title="Eliminar esta foto"
-                      aria-label={`Eliminar foto ${idx + 1}`}
+                      aria-label={`Ver foto ${idx + 1}`}
+                      aria-pressed={isActive}
+                      className={`${CAMERA_FOCUS} relative block aspect-square w-full overflow-hidden rounded-2xl border-2 bg-black/40 shadow-lg ${
+                        isActive ? 'border-rep-accent ring-2 ring-rep-accent/50' : 'border-white/20'
+                      }`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
+                      <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-rep-label font-extrabold text-white">
+                        #{idx + 1}
+                      </span>
                     </button>
-                  )}
-                </div>
-              ))}
+
+                    {onRemovePhoto && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onRemovePhoto(item.id);
+                          if (evidenceList.length <= 1) {
+                            setShowGalleryModal(false);
+                          }
+                        }}
+                        className={`${CAMERA_FOCUS} absolute right-1 top-1 flex min-h-touch min-w-touch items-center justify-center`}
+                        aria-label={`Eliminar foto ${idx + 1}`}
+                      >
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/75 text-white shadow-sm">
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Footer del modal */}
-            <div className="flex flex-col gap-2 max-w-md mx-auto w-full pb-[max(8px,env(safe-area-inset-bottom,8px))]">
-              {photoCount < 4 && (
+            <div className="mx-auto flex w-full max-w-md flex-col gap-2 pb-[max(8px,env(safe-area-inset-bottom,8px))]">
+              {photoCount < MAX_PHOTOS && (
                 <button
                   type="button"
                   onClick={() => {
                     setShowGalleryModal(false);
                     cameraInputRef.current?.click();
                   }}
-                  className="w-full py-3 rounded-xl bg-white/15 text-white font-bold text-[13px] flex items-center justify-center gap-2 cursor-pointer border-0 hover:bg-white/20 transition-colors"
+                  className={`${CAMERA_FOCUS} flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/15 text-rep-body font-bold text-white transition-colors duration-120 hover:bg-white/20`}
                 >
-                  <Camera className="w-4 h-4" />
-                  <span>Agregar otra foto ({4 - photoCount} restantes)</span>
+                  <Camera className="h-4 w-4" aria-hidden="true" />
+                  <span>Agregar otra foto ({MAX_PHOTOS - photoCount} restantes)</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => setShowGalleryModal(false)}
-                className="w-full py-3 rounded-xl bg-[#1E6FCB] text-white font-extrabold text-[13px] cursor-pointer border-0 hover:bg-[#15539E] transition-colors"
+                className={`${CAMERA_FOCUS} flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-rep-accent text-rep-button text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong`}
               >
                 Volver a la cámara
               </button>
@@ -356,6 +337,15 @@ export const EvidenceCaptureStep = ({
       </AnimatePresence>
     </div>
   );
+};
+
+/**
+ * Paso 1 del alta de reporte. Mismo contrato de props que antes (REP-3791):
+ * teléfono y tablet → cámara (M09) · escritorio ≥ 1025 px → carga de archivos (D10).
+ */
+export const EvidenceCaptureStep = (props) => {
+  const isDesktop = useIsDesktopLayout();
+  return isDesktop ? <EvidenceUploadDesktop {...props} /> : <EvidenceCaptureMobile {...props} />;
 };
 
 export default EvidenceCaptureStep;

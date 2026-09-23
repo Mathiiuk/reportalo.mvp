@@ -32,6 +32,8 @@ const baseReport = {
   id: REPORT_ID,
   user_id: OWNER_ID,
   description: 'Camión de gran porte estacionado sobre la rampa.',
+  // Codigo real de produccion (verificado contra la base el 21/09/2026).
+  // El catalogo real es RECIBIDO / EN_ANALISIS / DERIVADO / RESUELTO / DESESTIMADO.
   current_state_code: 'EN_ANALISIS',
   created_at: '2026-08-14T14:32:00Z',
   services: { service_name: 'Tránsito' },
@@ -146,9 +148,20 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
   });
 
   it('UT-DET-07: expone el estado real del reporte según report_states de producción', async () => {
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'DERIVADO' } });
+    // El catálogo real de public.report_states en produccion (CiudadAR) es
+    // RECIBIDO / EN_ANALISIS / DERIVADO / RESUELTO / DESESTIMADO. La píldora
+    // los traduce a las etiquetas del §10 del UJ v3.3 (H-23).
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'EN_ANALISIS' } });
     renderPage();
-    expect(await screen.findByText('DERIVADO')).toBeInTheDocument();
+    expect(await screen.findByTestId('status-pill')).toHaveTextContent('En revisión');
+  });
+
+  it('UT-DET-07b: un reporte desestimado se muestra como Descartado, no como en curso', async () => {
+    // El estado DESESTIMADO del catalogo real mapea al cierre alternativo del §10.
+    // Sin la traduccion, el ciudadano veria el codigo crudo en un reporte cerrado.
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'DESESTIMADO' } });
+    renderPage();
+    expect(await screen.findByTestId('status-pill')).toHaveTextContent('Descartado');
   });
 
   it('UT-DET-08: informa cuando el reporte no tiene evidencia adjunta', async () => {
@@ -181,22 +194,21 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
   });
 
   it('UT-DET-10: dibuja la línea de tiempo con el historial real del reporte', async () => {
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'DERIVADO' } });
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'EN_ANALISIS' } });
     getReportStateHistory.mockResolvedValue({
       success: true,
       history: [
         { id: 'h1', state_code: 'RECIBIDO', changed_at: '2026-08-14T14:32:00Z', notes: null },
         { id: 'h2', state_code: 'EN_ANALISIS', changed_at: '2026-08-15T09:10:00Z', notes: 'Derivado a inspección' },
-        { id: 'h3', state_code: 'DERIVADO', changed_at: '2026-08-16T11:00:00Z', notes: null },
       ],
     });
 
     renderPage();
 
     expect(await screen.findByTestId('report-timeline')).toBeInTheDocument();
-    expect(screen.getByTestId('timeline-step-DERIVADO')).toHaveAttribute('data-reached', 'true');
+    expect(screen.getByTestId('timeline-step-en_revision')).toHaveAttribute('data-reached', 'true');
     // "Resuelto" todavía no ocurrió: se dibuja apagado, sin fecha inventada.
-    expect(screen.getByTestId('timeline-step-RESUELTO')).toHaveAttribute('data-reached', 'false');
+    expect(screen.getByTestId('timeline-step-resuelto')).toHaveAttribute('data-reached', 'false');
     expect(screen.getByText(/Derivado a inspección/)).toBeInTheDocument();
   });
 
@@ -266,7 +278,7 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
 
     renderPage();
 
-    expect(await screen.findByTestId('timeline-step-RECIBIDO')).toHaveAttribute('data-reached', 'true');
-    expect(screen.getByTestId('timeline-step-EN_ANALISIS')).toHaveAttribute('data-reached', 'false');
+    expect(await screen.findByTestId('timeline-step-enviado')).toHaveAttribute('data-reached', 'true');
+    expect(screen.getByTestId('timeline-step-en_revision')).toHaveAttribute('data-reached', 'false');
   });
 });

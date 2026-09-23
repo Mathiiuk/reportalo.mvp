@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -9,15 +9,11 @@ import { ReportDetailsStep } from '../components/report/ReportDetailsStep';
 import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
-import { EvidencePreviewScreen } from '../components/report/EvidencePreviewScreen';
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
-import {
-  hasAcceptedCurrentTerms,
-  recordTermsAcceptance,
-} from '../services/termsService';
+import { hasAcceptedCurrentTerms, recordTermsAcceptance, CURRENT_TERMS_VERSION } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
 // REP-2500-PRESEL: sugerencia de localidad a partir de la ubicacion real
@@ -32,8 +28,8 @@ import {
   DRAFT_STATUS,
 } from '../services/offlineStorageService';
 // Persistencia real del reporte (REP-2500)
-import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
-import { buildShortCode } from '../services/reportDetailService';
+import { createCitizenReport, attachReportEvidence, isServerProtectedUrl } from '../services/reportSubmissionService';
+import { formatReportCode } from '../components/report/reportStatus';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { WifiOff } from 'lucide-react';
@@ -61,8 +57,16 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [description, setDescription] = useState('');
   // isGranted distingue una lectura real de GPS del valor por defecto
   // (DEFAULT_CITY_COORDINATES): sugerir una localidad a partir del respaldo
-  // seria inferir jurisdiccion desde una ubicacion inventada.
-  const { coordinates, isGranted: isLocationGranted } = useGeolocation({ autoFetch: true });
+  // seria inferir jurisdiccion desde una ubicacion inventada (REP-2500-PRESEL).
+  const {
+    coordinates,
+    isGranted: isLocationGranted,
+    status: gpsStatus,
+    isDenied: isGpsDenied,
+    refreshLocation,
+  } = useGeolocation({ autoFetch: true });
+  // UJ v3.3 · M22: el GPS no respondió o el permiso está bloqueado (PENDING no cuenta como error)
+  const isGpsUnavailable = ['DENIED', 'UNAVAILABLE', 'TIMEOUT', 'NOT_SUPPORTED'].includes(gpsStatus);
 
   // Monitoreo de conectividad a internet en tiempo real (REP-2703)
   const { isOnline } = useNetworkStatus();
@@ -85,6 +89,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Reporte ya persistido en Supabase (REP-2500) — id real y código para mostrar en éxito (E-4)
   const [persistedReport, setPersistedReport] = useState(null);
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  // REP-3543: constancia de consentimiento del envío que originó la aceptación (se muestra en M15)
+  const [consentRecord, setConsentRecord] = useState(null);
 
   const {
     evidenceList,
@@ -331,6 +337,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
+        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
       });
       navigate('/mapa', { replace: true });
       return;
@@ -343,11 +351,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Acto de consentimiento + envío (primer reporte)
   const handleAcceptTermsAndSubmit = async () => {
     await recordTermsAcceptance(user?.id, { camera: true, location: true });
+    setConsentRecord({ version: CURRENT_TERMS_VERSION, acceptedAt: new Date().toISOString() });
     if (!isOnline) {
       await markDraftPendingSync(clientSideId);
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
+        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
       });
       navigate('/mapa', { replace: true });
       return;
@@ -373,11 +384,40 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     return { lat: null, lng: null };
   };
 
-  // Persistencia real del reporte al confirmar la evidencia (REP-2500): crea la fila real,
-  // adjunta cada evidencia ya sanitizada, y solo avanza a la pantalla de éxito si todo se guardó (AC-05).
-  const handleConfirmEvidenceAndPersist = async () => {
+  // Persistencia real del reporte (REP-2500): crea la fila real, adjunta cada evidencia ya sanitizada
+  // y solo avanza al acuse si todo se guardó (AC-05). UJ v3.3: corre sola al terminar la protección
+  // (ya no hay paso de «Confirmar y enviar»); si falla, vuelve a la revisión con el borrador intacto.
+  const handleConfirmEvidenceAndPersist = async (evidencesOverride) => {
     setIsSubmittingReport(true);
     try {
+      // H-30 · La validación de privacidad va ANTES de crear el reporte, para que las dos
+      // vías de envío se comporten igual. La cola offline se niega a enviar y conserva el
+      // borrador cuando alguna foto no salió protegida del servidor (pendingSyncService);
+      // acá se hacía lo contrario: se creaba el reporte igual, sin la foto, y el efecto
+      // del paso 6 borraba el borrador, así que las fotos del ciudadano se perdían sin
+      // posibilidad de reintento.
+      const evidencesToAttach =
+        evidencesOverride?.length > 0
+          ? evidencesOverride
+          : processedEvidenceList.length > 0
+            ? processedEvidenceList
+            : activeList;
+      const protectedUrls = evidencesToAttach
+        .map((evidence) => evidence.sanitizedUrl)
+        .filter(isServerProtectedUrl);
+
+      if (protectedUrls.length !== evidencesToAttach.length) {
+        console.error(
+          '[handleConfirmEvidenceAndPersist] Evidencia sin proteccion del servidor:',
+          `${evidencesToAttach.length - protectedUrls.length} de ${evidencesToAttach.length}`
+        );
+        toast.error('No pudimos proteger tu foto', {
+          description: 'Para cuidar tu privacidad no enviamos el reporte. Tu borrador quedó guardado.',
+        });
+        goToStep(3);
+        return;
+      }
+
       const { lat, lng } = extractLatLng(activeCoords);
 
       const creationResult = await createCitizenReport({
@@ -394,18 +434,17 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         toast.error('No pudimos enviar tu reporte', {
           description: creationResult.error || 'Probá de nuevo en unos segundos.',
         });
+        goToStep(3);
         return;
       }
 
-      const evidencesToAttach = processedEvidenceList.length > 0 ? processedEvidenceList : activeList;
       // attachReportEvidence devuelve { success, error } y no lanza. Antes el
       // resultado se descartaba, asi que un fallo al adjuntar quedaba mudo: el
       // reporte se enviaba "bien" y la foto simplemente no existia. Fue asi
       // como paso inadvertido que report_images no tenia policy de INSERT.
+      // Todas las URLs de protectedUrls ya pasaron la validacion de privacidad de arriba.
       const failedAttachments = [];
-      for (const evidence of evidencesToAttach) {
-        const sanitizedUrl = evidence.sanitizedUrl || evidence.previewUrl;
-        if (!sanitizedUrl) continue;
+      for (const sanitizedUrl of protectedUrls) {
         // eslint-disable-next-line no-await-in-loop
         const attachResult = await attachReportEvidence({
           reportId: creationResult.data.id,
@@ -430,7 +469,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         // Mismo codigo corto que muestra el detalle (REP-3789): antes la
         // pantalla de exito usaba 8 caracteres y el detalle 4, de modo que el
         // mismo reporte se identificaba de dos formas distintas.
-        reportCode: buildShortCode(creationResult.data.id),
+        reportCode: formatReportCode(creationResult.data.id),
       });
       goToStep(6);
     } catch (err) {
@@ -438,10 +477,20 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       toast.error('Error al enviar el reporte', {
         description: 'Ocurrió un problema inesperado. Probá de nuevo.',
       });
+      goToStep(3);
     } finally {
       setIsSubmittingReport(false);
     }
   };
+
+  // Callback estable para ReportProcessingScreen: su pipeline se reinicia si cambia la referencia
+  // de onProcessingComplete, y la persistencia provoca re-renders mientras la pantalla sigue montada.
+  const persistReportRef = useRef(handleConfirmEvidenceAndPersist);
+  persistReportRef.current = handleConfirmEvidenceAndPersist;
+  const handleProcessingComplete = useCallback((processedEvidences) => {
+    setProcessedEvidenceList(processedEvidences || []);
+    persistReportRef.current(processedEvidences);
+  }, []);
 
   // Determinar agencia receptora según ubicación
   const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
@@ -454,8 +503,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       data-testid="new-report-page"
       className={`relative w-full h-[100dvh] ${
         currentStep === 1 || currentStep === 4 || currentStep === 5
-          ? 'bg-[#0E1116]'
-          : 'bg-[#F4F7FB]'
+          ? 'bg-rep-camera'
+          : 'bg-rep-bg'
       } overflow-hidden flex flex-col font-manrope select-none`}
     >
       {/* Banner informativo de estado sin conexión (REP-2703) */}
@@ -568,37 +617,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               clientSideId={clientSideId}
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
-              onProcessingComplete={(processedEvidences) => {
-                // Al completar la anonimización y sanitización, almacenamos las fotos procesadas y pasamos a previsualizar (REP-2402)
-                setProcessedEvidenceList(processedEvidences || activeList);
-                goToStep(5);
-              }}
+              onDiscard={handleCancel}
+              onProcessingComplete={handleProcessingComplete}
             />
           </motion.div>
         )}
 
-        {/* PASO 5: Previsualización de Evidencia Anonimizada ("Tu foto está lista y protegida" - REP-2402) */}
-        {currentStep === 5 && (
-          <motion.div
-            key="step-5"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
-          >
-            <EvidencePreviewScreen
-              evidenceList={processedEvidenceList.length > 0 ? processedEvidenceList : activeList}
-              categoryName={selectedCategory?.name || 'Infracción de tránsito'}
-              onConfirm={handleConfirmEvidenceAndPersist}
-              isSubmitting={isSubmittingReport}
-              onRetake={() => {
-                clearEvidence();
-                goToStep(1);
-              }}
-            />
-          </motion.div>
-        )}
+        {/* UJ v3.3: ya no hay paso 5 de vista previa — M14 encadena con M15 («Cae Confirmar y enviar»).
+            La foto anonimizada y el conteo de zonas se verán en el detalle del reporte (M16, Bloque 3). */}
 
         {/* PASO 6: Confirmación de Envío Exitoso ("Reporte enviado") */}
         {currentStep === 6 && (
@@ -626,6 +652,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
                 navigate('/mapa');
               }}
               onViewTerms={() => setShowTermsModal(true)}
+              consentVersion={consentRecord?.version}
+              consentAcceptedAt={consentRecord?.acceptedAt}
             />
           </motion.div>
         )}
@@ -639,11 +667,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed inset-0 z-50 bg-white"
+            className="fixed inset-0 z-50 bg-rep-surface"
           >
             <AdjustLocationModal
               initialCoordinates={activeCoords}
               initialLocalityId={customLocation?.localityId}
+              isGpsUnavailable={isGpsUnavailable}
+              isGpsDenied={isGpsDenied}
+              onRetryGps={refreshLocation}
               onClose={() => setShowAdjustLocationModal(false)}
               onConfirm={(adjustedData) => {
                 // Una eleccion manual deja de ser una sugerencia automatica:

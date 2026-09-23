@@ -74,7 +74,11 @@ CREATE TABLE IF NOT EXISTS public.citizen_reports (
     latitud DOUBLE PRECISION NOT NULL,
     longitud DOUBLE PRECISION NOT NULL,
     description TEXT NOT NULL,
-    current_state_code VARCHAR NOT NULL DEFAULT 'borrador'::character varying REFERENCES public.report_states(code),
+    -- Default real de produccion, verificado contra la base el 21/09/2026. Antes
+    -- decia 'borrador', codigo que no existe en report_states: con la FK, todo
+    -- insert que no trajera current_state_code habria fallado. Lo corrigio la
+    -- migracion M-1 de docs/REP-3769_seed_y_RAG.sql y faltaba reflejarlo aca.
+    current_state_code VARCHAR NOT NULL DEFAULT 'RECIBIDO'::character varying REFERENCES public.report_states(code),
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

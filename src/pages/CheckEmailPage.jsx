@@ -14,8 +14,9 @@ export const CheckEmailPage = () => {
   const emailParam = new URLSearchParams(location.search).get('email');
   const userEmail = location.state?.email || emailParam || 'tu correo';
 
-  // Temporizador de cuenta regresiva (inicia en 45 segundos según mockup)
-  const [countdown, setCountdown] = useState(45);
+  // UJ v3.3 · M03: reenvío con cuenta regresiva de 60 s para evitar abuso.
+  // Antes arrancaba en 45 s, tomados de un mockup anterior.
+  const [countdown, setCountdown] = useState(60);
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
@@ -70,23 +71,23 @@ export const CheckEmailPage = () => {
   };
 
   // Formato del tiempo mm:ss
-  const formattedTime = `0:${countdown < 10 ? '0' : ''}${countdown}`;
+  const formattedTime = `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`;
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-[#F4F7FB] md:bg-white">
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-bg md:bg-white">
       
       {/* Navbar desktop (>= md) */}
-      <header className="hidden md:flex flex-shrink-0 border-b border-[#EEF1F5] px-8 lg:px-12 py-4 items-center gap-6 bg-white">
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
         <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
           <img
             src="/logo-icon.webp"
             alt="Reportalo"
             className="w-[20px] h-[26px] object-contain"
           />
-          <span className="font-extrabold text-[19px] text-[#263249] tracking-[-0.4px]">
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
             Reportalo
           </span>
-          <span className="font-bold text-[9px] text-[#1E6FCB] bg-[#EEF5FC] px-2 py-1 rounded-[7px] ml-1">
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
             CIUDADANOS
           </span>
         </Link>
@@ -95,7 +96,7 @@ export const CheckEmailPage = () => {
           <button
             onClick={handleGoBack}
             type="button"
-            className="flex items-center gap-1.5 font-bold text-[13px] text-[#5B6A7A] hover:text-[#1E6FCB] px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
+            className="flex items-center gap-1.5 font-bold text-[13px] text-rep-ink-label hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
           >
             <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
             Volver a opciones de acceso
@@ -115,7 +116,7 @@ export const CheckEmailPage = () => {
               onClick={handleGoBack}
               type="button"
               aria-label="Volver a la pantalla de login"
-              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-[#5B6A7A] hover:bg-slate-200/60 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
+              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-rep-ink-label hover:bg-slate-200/60 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
             >
               <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </button>
@@ -129,24 +130,24 @@ export const CheckEmailPage = () => {
             className="w-full max-w-[340px] md:max-w-[420px] mx-auto flex flex-col items-center justify-center text-center my-auto pb-4"
           >
             {/* Icono central de buzón / email enviado */}
-            <div className="w-[82px] h-[82px] rounded-[26px] bg-[#E8F1FB] flex items-center justify-center mb-[22px] shadow-sm">
-              <MailCheck className="w-[42px] h-[42px] text-[#1E6FCB]" strokeWidth={1.75} />
+            <div className="w-[82px] h-[82px] rounded-[26px] bg-rep-accent-soft flex items-center justify-center mb-[22px] shadow-sm">
+              <MailCheck className="w-[42px] h-[42px] text-rep-accent" strokeWidth={1.75} />
             </div>
 
             {/* Título */}
-            <h1 className="font-extrabold text-[22px] md:text-[28px] text-[#243447] tracking-[-0.4px] leading-tight m-0">
+            <h1 className="font-extrabold text-[22px] md:text-[28px] text-rep-ink tracking-[-0.4px] leading-tight m-0">
               Revisá tu correo
             </h1>
 
             {/* Bajada con email en tiempo real */}
-            <p className="font-medium text-[13px] md:text-[14px] leading-[1.55] text-[#7A8696] mt-2 mb-0">
+            <p className="font-medium text-[13px] md:text-[14px] leading-[1.55] text-rep-ink-muted mt-2 mb-0">
               Te enviamos un enlace de acceso a
             </p>
-            <div className="font-extrabold text-[13.5px] md:text-[15px] text-[#1E6FCB] mt-[3px] break-all max-w-[300px]">
+            <div className="font-extrabold text-[13.5px] md:text-[15px] text-rep-accent mt-[3px] break-all max-w-[300px]">
               {userEmail}
             </div>
 
-            <p className="font-medium text-[12.5px] md:text-[13px] leading-[1.5] text-[#8593A2] mt-3.5 max-w-[230px] md:max-w-[280px]">
+            <p className="font-medium text-[12.5px] md:text-[13px] leading-[1.5] text-rep-ink-muted mt-3.5 max-w-[230px] md:max-w-[280px]">
               Tocá el enlace desde este teléfono y entrás directo.
             </p>
 
@@ -156,7 +157,7 @@ export const CheckEmailPage = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleOpenEmailApp}
               type="button"
-              className="mt-[26px] w-full bg-[#1E6FCB] text-white rounded-[14px] py-[15px] px-5 text-center font-extrabold text-[15px] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer border-0 transition-colors"
+              className="mt-[26px] w-full bg-rep-accent text-white rounded-[14px] py-[15px] px-5 text-center font-extrabold text-[15px] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-rep-accent-strong cursor-pointer border-0 transition-colors"
             >
               Abrir mi correo
             </motion.button>
@@ -165,8 +166,8 @@ export const CheckEmailPage = () => {
             <div className="mt-3.5 flex items-center justify-center gap-1.5 min-h-[28px]">
               {countdown > 0 ? (
                 <>
-                  <Clock className="w-[15px] h-[15px] text-[#AAB4BF]" strokeWidth={2.25} />
-                  <span className="font-bold text-[12.5px] text-[#9AA7B5]">
+                  <Clock className="w-[15px] h-[15px] text-rep-ink-faint" strokeWidth={2.25} />
+                  <span className="font-bold text-[12.5px] text-rep-ink-faint">
                     Reenviar en {formattedTime}
                   </span>
                 </>
@@ -175,7 +176,7 @@ export const CheckEmailPage = () => {
                   onClick={handleResend}
                   disabled={isResending}
                   type="button"
-                  className="font-bold text-[13px] text-[#1E6FCB] hover:text-[#15539E] cursor-pointer bg-transparent border-0 underline transition-colors disabled:opacity-50"
+                  className="rep-focus min-h-touch font-bold text-[13px] text-rep-accent hover:text-rep-accent-strong cursor-pointer bg-transparent border-0 underline transition-colors disabled:opacity-50"
                 >
                   {isResending ? 'Enviando nuevo enlace...' : 'Reenviar enlace de acceso'}
                 </button>
@@ -184,9 +185,9 @@ export const CheckEmailPage = () => {
           </motion.div>
 
           {/* Tarjeta inferior informativa: Vencimiento en 15 min */}
-          <div className="w-full max-w-[340px] md:max-w-[420px] mx-auto mb-2 flex items-start gap-2 bg-white border border-[#E6ECF3] rounded-[12px] p-[11px_12px] shadow-sm text-left">
-            <Info className="w-[17px] h-[17px] text-[#8593A2] flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
-            <span className="font-medium text-[11px] leading-[1.45] text-[#6A7888]">
+          <div className="w-full max-w-[340px] md:max-w-[420px] mx-auto mb-2 flex items-start gap-2 bg-rep-surface border border-rep-border rounded-[12px] p-[11px_12px] shadow-sm text-left">
+            <Info className="w-[17px] h-[17px] text-rep-ink-muted flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
+            <span className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted">
               El enlace vence en 15 minutos y sirve una sola vez.
             </span>
           </div>
@@ -194,25 +195,25 @@ export const CheckEmailPage = () => {
         </main>
 
         {/* Sidebar desktop (>= md) armonizada con el resto de la app */}
-        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-[#F4F7FB] border-l border-[#EEF1F5] p-8 flex-col justify-between gap-4">
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
           <div>
-            <div className="font-extrabold text-[11px] text-[#8593A2] tracking-[0.5px] mb-4 uppercase">
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
               Cómo ingresar con Magic Link
             </div>
 
             <div className="flex flex-col gap-3">
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   1
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Revisá tu bandeja de entrada
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Buscá el correo enviado por Reportalo (si no lo ves, chequeá la carpeta de Spam).
                   </div>
                 </div>
@@ -220,16 +221,16 @@ export const CheckEmailPage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   2
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Hacé clic en el enlace
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     El botón dentro del email te redirigirá de manera segura a la plataforma.
                   </div>
                 </div>
@@ -237,16 +238,16 @@ export const CheckEmailPage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   3
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Acceso instantáneo y seguro
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Tu sesión quedará iniciada automáticamente sin contraseñas.
                   </div>
                 </div>
@@ -254,9 +255,9 @@ export const CheckEmailPage = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
               Tu identidad se mantiene resguardada ante el municipio al reportar.
             </span>
           </div>

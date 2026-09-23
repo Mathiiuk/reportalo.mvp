@@ -74,20 +74,20 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-white">
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
       
       {/* Navbar desktop (>= md) */}
-      <header className="hidden md:flex flex-shrink-0 border-b border-[#EEF1F5] px-8 lg:px-12 py-4 items-center gap-6 bg-white">
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
         <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
           <img
             src="/logo-icon.webp"
             alt="Reportalo"
             className="w-[20px] h-[26px] object-contain"
           />
-          <span className="font-extrabold text-[19px] text-[#263249] tracking-[-0.4px]">
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
             Reportalo
           </span>
-          <span className="font-bold text-[9px] text-[#1E6FCB] bg-[#EEF5FC] px-2 py-1 rounded-[7px] ml-1">
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
             CIUDADANOS
           </span>
         </Link>
@@ -96,7 +96,7 @@ export const LoginPage = () => {
           <button
             onClick={handleGoBack}
             type="button"
-            className="flex items-center gap-1.5 font-bold text-[13px] text-[#5B6A7A] hover:text-[#1E6FCB] px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
+            className="flex items-center gap-1.5 font-bold text-[13px] text-rep-ink-label hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
           >
             <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
             Volver al inicio
@@ -118,13 +118,13 @@ export const LoginPage = () => {
           >
             {/* Si proviene de rechazo de términos, mostrar el banner de alerta */}
             {isRejected && (
-              <div className="bg-[#FDECEA] border border-[#F7D2CC] rounded-[14px] p-[13px_14px] flex gap-[9px] mb-4 shadow-2xs text-left">
-                <Gavel className="w-[18px] h-[18px] text-[#C0392B] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+              <div className="bg-rep-danger-soft border border-rep-danger/30 rounded-[14px] p-[13px_14px] flex gap-[9px] mb-4 shadow-2xs text-left">
+                <Gavel className="w-[18px] h-[18px] text-rep-danger flex-shrink-0 mt-0.5" strokeWidth={2.25} />
                 <div>
-                  <div className="font-extrabold text-[11.5px] text-[#8A3B30]">
+                  <div className="font-extrabold text-[11.5px] text-rep-danger">
                     Rechazaste los términos
                   </div>
-                  <div className="font-medium text-[10.5px] leading-[1.45] text-[#8A3B30] mt-[3px]">
+                  <div className="font-medium text-[10.5px] leading-[1.45] text-rep-danger mt-[3px]">
                     {formatRejectionDate(rejectionRecord?.rejected_at)}. Para usar Reportalo tenés que aceptar la versión vigente.
                   </div>
                 </div>
@@ -134,17 +134,17 @@ export const LoginPage = () => {
             {/* Encabezado adaptativo: Específico de Rechazo o Estándar */}
             {isRejected ? (
               <div className="flex flex-col items-center text-center my-4">
-                <div className="w-[76px] h-[76px] rounded-[22px] bg-white flex items-center justify-center mb-[18px] shadow-[0px_8px_18px_rgba(20,40,80,0.1)] border border-[#E6ECF3]/60">
+                <div className="w-[76px] h-[76px] rounded-[22px] bg-rep-surface flex items-center justify-center mb-[18px] shadow-[0px_8px_18px_rgba(20,40,80,0.1)] border border-rep-border/60">
                   <img
                     src="/logo-icon.webp"
                     alt="Reportalo"
                     className="w-[38px] h-[50px] object-contain"
                   />
                 </div>
-                <h1 className="font-extrabold text-[20px] md:text-[24px] text-[#243447] tracking-[-0.3px] m-0">
+                <h1 className="font-extrabold text-[20px] md:text-[24px] text-rep-ink tracking-[-0.3px] m-0">
                   Entrar a Reportalo
                 </h1>
-                <p className="font-medium text-[11.5px] md:text-[12.5px] leading-[1.5] text-[#7A8696] mt-[8px] max-w-[210px] m-0">
+                <p className="font-medium text-[11.5px] md:text-[12.5px] leading-[1.5] text-rep-ink-muted mt-[8px] max-w-[210px] m-0">
                   Te mandamos un enlace de acceso. No hace falta contraseña.
                 </p>
               </div>
@@ -155,7 +155,7 @@ export const LoginPage = () => {
                   onClick={handleGoBack}
                   type="button"
                   aria-label="Volver a la pantalla de bienvenida"
-                  className="md:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-[#5B6A7A] hover:bg-slate-100 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
+                  className="md:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-rep-ink-label hover:bg-rep-divider active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
                 </button>
@@ -167,16 +167,16 @@ export const LoginPage = () => {
                     alt="Reportalo Icon"
                     className="w-[18px] h-[24px] object-contain"
                   />
-                  <span className="font-extrabold text-[17px] text-[#263249]">
+                  <span className="font-extrabold text-[17px] text-rep-ink">
                     Reportalo
                   </span>
                 </div>
 
                 {/* Encabezado y bajada estándar */}
-                <h1 className="font-extrabold text-[23px] md:text-[30px] text-[#243447] mt-[18px] md:mt-0 tracking-[-0.5px] leading-tight">
+                <h1 className="font-extrabold text-[23px] md:text-[30px] text-rep-ink mt-[18px] md:mt-0 tracking-[-0.5px] leading-tight">
                   Ingresá a Reportalo
                 </h1>
-                <p className="font-medium text-[13px] md:text-[14px] leading-[1.45] text-[#8593A2] mt-[5px]">
+                <p className="font-medium text-[13px] md:text-[14px] leading-[1.45] text-rep-ink-muted mt-[5px]">
                   Sin contraseñas. Elegí cómo querés entrar.
                 </p>
               </>
@@ -210,18 +210,18 @@ export const LoginPage = () => {
                   onClick={handleGoogleLogin}
                   disabled={isSubmittingGoogle || isSubmittingMagicLink}
                   type="button"
-                  className="mt-6 w-full flex items-center justify-center gap-[10px] bg-white border-[1.5px] border-[#DDE4EC] rounded-[14px] p-[14px] hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-60 shadow-sm"
+                  className="mt-6 w-full flex items-center justify-center gap-[10px] bg-rep-surface border-[1.5px] border-rep-track rounded-[14px] p-[14px] hover:bg-rep-surface-sunken hover:border-rep-ink-faint transition-all cursor-pointer disabled:opacity-60 shadow-sm"
                 >
                   {isSubmittingGoogle ? (
-                    <span className="text-sm font-semibold text-[#5B6A7A] animate-pulse">
+                    <span className="text-sm font-semibold text-rep-ink-label animate-pulse">
                       Conectando con Google...
                     </span>
                   ) : (
                     <>
-                      <span className="w-5 h-5 rounded-full bg-white border border-[#EEF1F5] flex items-center justify-center font-extrabold text-[12px] text-[#4285F4] flex-shrink-0">
+                      <span className="w-5 h-5 rounded-full bg-rep-surface border border-rep-divider flex items-center justify-center font-extrabold text-[12px] text-[#4285F4] flex-shrink-0">
                         G
                       </span>
-                      <span className="font-bold text-[14px] text-[#3A4658]">
+                      <span className="font-bold text-[14px] text-rep-ink-body">
                         Continuar con Google
                       </span>
                     </>
@@ -230,9 +230,9 @@ export const LoginPage = () => {
 
                 {/* Separador 'o' */}
                 <div className="flex items-center gap-[9px] my-5">
-                  <span className="flex-1 h-[1px] bg-[#EEF1F5]"></span>
-                  <span className="font-semibold text-[11px] text-[#AAB4BF]">o</span>
-                  <span className="flex-1 h-[1px] bg-[#EEF1F5]"></span>
+                  <span className="flex-1 h-[1px] bg-rep-divider"></span>
+                  <span className="font-semibold text-[11px] text-rep-ink-faint">o</span>
+                  <span className="flex-1 h-[1px] bg-rep-divider"></span>
                 </div>
               </>
             )}
@@ -242,16 +242,16 @@ export const LoginPage = () => {
               {!isRejected && (
                 <label
                   htmlFor="email"
-                  className="block font-bold text-[11.5px] text-[#56657A] mb-[6px]"
+                  className="block font-bold text-[11.5px] text-rep-ink-label mb-[6px]"
                 >
                   Tu correo
                 </label>
               )}
               <div
-                className={`flex items-center gap-[9px] bg-white border ${
+                className={`flex items-center gap-[9px] bg-rep-surface border ${
                   isValidEmail
-                    ? 'border-[#1E6FCB] shadow-[0px_0px_0px_3px_rgba(30,111,203,0.12)]'
-                    : 'border-[#DDE6EF]'
+                    ? 'border-rep-accent shadow-[0px_0px_0px_3px_rgba(30,111,203,0.12)]'
+                    : 'border-rep-track'
                 } rounded-[13px] py-[13px] px-[14px] transition-all`}
               >
                 <input
@@ -263,7 +263,7 @@ export const LoginPage = () => {
                   disabled={isSubmittingMagicLink}
                   autoComplete="email"
                   required
-                  className="font-medium text-[12px] md:text-[13px] text-[#46566B] placeholder-[#AAB4BF] flex-1 bg-transparent border-0 outline-none p-0"
+                  className="font-medium text-[12px] md:text-[13px] text-rep-ink-body placeholder:text-rep-ink-faint flex-1 bg-transparent border-0 outline-none p-0"
                 />
               </div>
 
@@ -274,8 +274,8 @@ export const LoginPage = () => {
                 disabled={!isValidEmail || isSubmittingMagicLink}
                 className={`w-full mt-3 rounded-[13px] py-[14px] px-4 text-center border-0 font-extrabold text-[14px] md:text-[15px] text-white transition-all ${
                   isValidEmail && !isSubmittingMagicLink
-                    ? 'bg-[#1E6FCB] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer'
-                    : 'bg-[#1E6FCB]/70 opacity-80 cursor-not-allowed shadow-none'
+                    ? 'bg-rep-accent shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-rep-accent-strong cursor-pointer'
+                    : 'bg-rep-accent/70 opacity-80 cursor-not-allowed shadow-none'
                 }`}
               >
                 {isSubmittingMagicLink ? (
@@ -295,7 +295,7 @@ export const LoginPage = () => {
                 <div className="text-center pt-2.5">
                   <Link
                     to="/terminos"
-                    className="font-bold text-[11.5px] text-[#1E6FCB] hover:underline no-underline cursor-pointer"
+                    className="font-bold text-[11.5px] text-rep-accent hover:underline no-underline cursor-pointer"
                   >
                     Ver los términos otra vez
                   </Link>
@@ -305,34 +305,34 @@ export const LoginPage = () => {
           </motion.div>
 
           {/* Tarjeta de resguardo de identidad en móvil (< md) */}
-          <div className="md:hidden mt-8 mb-2 flex items-start gap-2 bg-[#EEF5FC] border border-[#D4E6F8] rounded-[12px] p-[12px] max-w-[420px] w-full mx-auto">
-            <Shield className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
-            <p className="font-medium text-[11.5px] leading-[1.45] text-[#46566B] m-0">
+          <div className="md:hidden mt-8 mb-2 flex items-start gap-2 bg-rep-accent-soft border border-rep-accent-border rounded-[12px] p-[12px] max-w-[420px] w-full mx-auto">
+            <Shield className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
+            <p className="font-medium text-[11.5px] leading-[1.45] text-rep-ink-body m-0">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </p>
           </div>
         </main>
 
         {/* Sidebar desktop (>= md) */}
-        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-[#F4F7FB] border-l border-[#EEF1F5] p-8 flex-col justify-between gap-4">
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
           <div>
-            <div className="font-extrabold text-[11px] text-[#8593A2] tracking-[0.5px] mb-4 uppercase">
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
               Seguridad y Privacidad
             </div>
 
             <div className="flex flex-col gap-3">
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   1
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Tu identidad nunca se comparte
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     El organismo receptor únicamente recibe la evidencia técnica y la ubicación.
                   </div>
                 </div>
@@ -340,16 +340,16 @@ export const LoginPage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   2
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Sin necesidad de contraseñas
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Recibí un enlace directo en tu correo de un solo uso o entrá con Google.
                   </div>
                 </div>
@@ -357,16 +357,16 @@ export const LoginPage = () => {
 
               <motion.div
                 whileHover={{ y: -2 }}
-                className="bg-white border border-[#E6ECF3] rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
               >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-[#EEF5FC] text-[#1E6FCB] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
                   3
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Historial centralizado
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Seguí la evolución de todos tus reclamos en un solo lugar.
                   </div>
                 </div>
@@ -374,9 +374,9 @@ export const LoginPage = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </span>
           </div>

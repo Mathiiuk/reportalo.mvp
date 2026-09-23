@@ -1,19 +1,50 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Bell, Map as MapIcon, FileText, Camera, User, Newspaper, ImagePlus } from 'lucide-react';
+import { Bell, Map as MapIcon, FileText, Camera, User, Megaphone, ImagePlus, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserInitials } from '../../utils/userUtils';
 
+/**
+ * UJ v3.3 §10 «Comportamiento del tema»: el conmutador vive en la barra superior y la preferencia
+ * se guarda por cuenta, lo que necesita un campo en el perfil (H-09, sin resolver).
+ * Hasta que exista, el botón queda apagado: las pantallas que todavía no usan los tokens del
+ * Bloque 0 se verían a medio pasar a oscuro. Para habilitarlo, poner esta constante en true.
+ */
+export const THEME_TOGGLE_ENABLED = false;
+
+const TABS = [
+  { key: 'mapa', label: 'Mapa', icon: MapIcon, path: '/mapa', ariaLabel: 'Mapa' },
+  { key: 'reportes', label: 'Mis reportes', icon: FileText, path: '/reportes', ariaLabel: 'Mis reportes' },
+  { key: 'alertas', label: 'Novedades', icon: Megaphone, path: '/alertas', ariaLabel: 'Alertas y novedades' },
+  { key: 'perfil', label: 'Perfil', icon: User, path: '/perfil', ariaLabel: 'Perfil' },
+];
+
+const ThemeToggle = ({ className = '' }) => {
+  if (!THEME_TOGGLE_ENABLED) return null;
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  return (
+    <button
+      type="button"
+      aria-label={isDark ? 'Usar tema claro' : 'Usar tema oscuro'}
+      onClick={() => document.documentElement.classList.toggle('dark')}
+      className={`rep-focus flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-colors duration-120 hover:bg-rep-divider ${className}`}
+    >
+      {isDark ? <Sun aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} /> : <Moon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />}
+    </button>
+  );
+};
+
+/**
+ * Marco de la app: barra superior, navegación y acceso a «Reportar».
+ * UJ v3.3 · M08 (teléfono: cabecera + cuatro pestañas + botón flotante) y D09 (escritorio:
+ * la navegación pasa al encabezado). REP-3791 Bloque 5. Mismo contrato de props que antes.
+ */
 export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-
-  // Obtener iniciales dinámicas del usuario autenticado
   const userInitials = getUserInitials(user);
 
-  // Determinar pestaña activa según la ruta
   const getActiveTab = () => {
     if (location.pathname.startsWith('/mapa')) return 'mapa';
     if (location.pathname.startsWith('/reportes')) return 'reportes';
@@ -21,7 +52,6 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
     if (location.pathname.startsWith('/perfil')) return 'perfil';
     return activeTab;
   };
-
   const currentTab = getActiveTab();
 
   const handleCameraClick = () => {
@@ -41,180 +71,136 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#F4F7FB] overflow-hidden flex flex-col font-manrope select-none">
-
-      {/* Header Superior (Mobile) */}
-      <header className="md:hidden z-30 bg-white border-b border-slate-100 shadow-xs pt-[max(16px,env(safe-area-inset-top,16px))]">
-        <div className="px-5 pt-2 pb-2 flex items-center justify-between">
+    <div className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-rep-bg font-manrope">
+      {/* Cabecera en teléfono (M08) */}
+      <header className="z-30 flex-none border-b border-rep-divider bg-rep-surface pt-[max(12px,env(safe-area-inset-top,12px))] md:hidden">
+        <div className="flex items-center justify-between px-4 pb-2 pt-1">
           <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
-            <img
-              src="/logo-icon.webp"
-              alt="Logo Reportalo"
-              className="w-6 h-7 object-contain select-none"
-            />
-            <span className="text-[21px] font-extrabold text-[#1B365D] tracking-tight">
-              Reportalo
+            <img src="/logo-icon.webp" alt="" aria-hidden="true" className="h-7 w-6 select-none object-contain" />
+            <span className="text-rep-title text-rep-ink">
+              Reportalo<span className="align-super text-[10px] font-bold text-rep-ink-muted">™</span>
             </span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => navigate('/alertas')}
-            className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#475569] hover:bg-slate-100 active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
-            aria-label="Ver alertas y notificaciones"
-          >
-            <Bell className="w-5 h-5 text-[#334155]" />
-            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#DC2626] text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow-xs">
-              2
-            </span>
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => navigate('/notificaciones')}
+              aria-label="Ver alertas y notificaciones"
+              className="rep-focus relative flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-colors duration-120 hover:bg-rep-divider active:scale-[0.98]"
+            >
+              <Bell aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+              <span className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-rep-surface bg-rep-danger px-1 text-[10px] font-extrabold text-white">
+                2
+              </span>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Header Superior (Desktop) */}
-      <header className="hidden md:flex flex-none border-b border-[#EEF1F5] px-[26px] py-[12px] bg-white items-center gap-5 z-30 shadow-xs">
-        <Link to="/mapa" className="flex items-center gap-2 no-underline text-inherit hover:opacity-90 transition-opacity">
-          <img src="/logo-icon.webp" alt="Reportalo" className="w-[19px] h-[25px] object-contain" />
-          <span className="font-extrabold text-[18px] text-[#263249] tracking-[-0.4px]">
-            Reportalo
+      {/* Cabecera en escritorio (D09): la navegación vive acá */}
+      <header className="z-30 hidden flex-none items-center gap-5 border-b border-rep-divider bg-rep-surface px-6 py-2.5 md:flex">
+        <Link to="/mapa" className="flex items-center gap-2 text-inherit no-underline transition-opacity hover:opacity-90">
+          <img src="/logo-icon.webp" alt="" aria-hidden="true" className="h-[25px] w-[19px] object-contain" />
+          <span className="text-rep-section-d text-rep-ink">
+            Reportalo<span className="align-super text-[9px] font-bold text-rep-ink-muted">™</span>
           </span>
         </Link>
-        
-        <div className="flex gap-6 ml-4">
-          <Link 
-            to="/mapa" 
-            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'mapa' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
-          >
-            Mapa
-          </Link>
-          <Link 
-            to="/reportes" 
-            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'reportes' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
-          >
-            Mis reportes
-          </Link>
-          <Link 
-            to="/alertas" 
-            className={`no-underline text-[13px] transition-colors py-1 ${currentTab === 'alertas' ? 'font-bold text-[#1E6FCB] border-b-2 border-[#1E6FCB]' : 'font-semibold text-[#7A8696] hover:text-[#5B6A7A]'}`}
-          >
-            Novedades
-          </Link>
-        </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <button 
+        <nav aria-label="Secciones" className="ml-4 flex gap-6">
+          {TABS.filter((tab) => tab.key !== 'perfil').map((tab) => (
+            <Link
+              key={tab.key}
+              to={tab.path}
+              className={`rep-focus rounded py-1 text-rep-label-d no-underline transition-colors ${
+                currentTab === tab.key
+                  ? 'border-b-2 border-rep-accent font-bold text-rep-accent'
+                  : 'font-semibold text-rep-ink-muted hover:text-rep-ink-label'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            type="button"
             onClick={handleCameraClick}
-            className="flex items-center gap-[7px] bg-[#1E6FCB] text-white px-[16px] py-[9px] rounded-[10px] cursor-pointer hover:bg-[#15539E] transition-colors border-none shadow-xs font-bold text-[12.5px]"
+            className="rep-focus flex min-h-touch items-center gap-2 rounded-xl bg-rep-accent px-4 text-rep-label-d font-bold text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98]"
           >
-            <ImagePlus className="w-[17px] h-[17px]" strokeWidth={2.25} />
+            <ImagePlus aria-hidden="true" className="h-[17px] w-[17px]" strokeWidth={2.25} />
             <span>Reportar</span>
           </button>
-          
-          <Link 
-            to="/perfil" 
+          <Link
+            to="/perfil"
             title="Ver mi perfil"
-            className="w-[32px] h-[32px] rounded-full bg-[#E8F1FB] border border-[#D4E6F8] flex items-center justify-center font-extrabold text-[12px] text-[#1E6FCB] cursor-pointer no-underline hover:bg-[#D9EAFB] transition-colors"
+            aria-label="Ver mi perfil"
+            className="rep-focus flex h-9 w-9 items-center justify-center rounded-full border border-rep-accent-border bg-rep-accent-soft text-rep-label font-extrabold text-rep-accent no-underline transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06]"
           >
             {userInitials}
           </Link>
         </div>
       </header>
 
-      {/* Contenedor del contenido principal (Ocupa todo el ancho en desktop) */}
-      <main className="relative w-full h-full min-h-0 flex-1 overflow-hidden flex flex-col bg-[#F4F7FB]">
-        {children}
-      </main>
+      <main className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-rep-bg">{children}</main>
 
-      {/* Barra de Navegación Inferior Flotante (Mobile) */}
-      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom,12px))] left-0 right-0 z-30 px-4 flex justify-center pointer-events-none">
+      {/* Botón «Reportar» sobre el mapa (M08) */}
+      {currentTab === 'mapa' && (
+        <div className="pointer-events-none fixed bottom-[max(92px,calc(env(safe-area-inset-bottom,12px)+80px))] right-4 z-30 md:hidden">
+          <label
+            htmlFor="mobile-direct-camera-trigger"
+            aria-label="Tomar foto y reportar"
+            className="rep-focus pointer-events-auto flex min-h-touch cursor-pointer items-center gap-2 rounded-full bg-rep-accent px-5 py-3.5 text-rep-button text-rep-on-accent shadow-rep-accent transition-transform duration-120 active:scale-[0.97]"
+          >
+            <Camera aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+            <span>Reportar</span>
+            <input
+              id="mobile-direct-camera-trigger"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={handleDirectCapture}
+              data-testid="direct-camera-trigger"
+            />
+          </label>
+        </div>
+      )}
+
+      {/* Barra de pestañas en teléfono (M08): cuatro accesos */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(12px,env(safe-area-inset-bottom,12px))] z-30 flex justify-center px-4 md:hidden">
         <nav
           aria-label="Navegación principal"
-          className="bg-white rounded-[28px] shadow-[0px_10px_35px_rgba(15,30,60,0.15)] border border-[#E8EEF5] px-3.5 py-1.5 flex items-center justify-between w-full max-w-[390px] pointer-events-auto"
+          className="pointer-events-auto flex w-full max-w-[390px] items-center justify-between rounded-[28px] border border-rep-border bg-rep-surface px-2 py-1.5 shadow-rep-float"
         >
-          {/* 1. Mapa */}
-          <button
-            type="button"
-            onClick={() => navigate('/mapa')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
-              currentTab === 'mapa'
-                ? 'bg-[#E6F6FD] text-[#0284C7]'
-                : 'text-[#94A3B8] hover:text-[#475569]'
-            }`}
-          >
-            <MapIcon className="w-5 h-5" />
-            <span className="text-[9.5px] font-bold">
-              Mapa
-            </span>
-          </button>
-
-          {/* 2. Reportes */}
-          <button
-            type="button"
-            onClick={() => navigate('/reportes')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
-              currentTab === 'reportes'
-                ? 'bg-[#E6F6FD] text-[#0284C7]'
-                : 'text-[#94A3B8] hover:text-[#475569]'
-            }`}
-          >
-            <FileText className="w-5 h-5" />
-            <span className="text-[9.5px] font-bold">
-              Reportes
-            </span>
-          </button>
-
-          {/* 3. Botón Central: Cámara (Naranja flotante con trigger nativo directo) */}
-          <div className="relative flex justify-center px-1">
-            <label
-              htmlFor="mobile-direct-camera-trigger"
-              aria-label="Tomar foto y reportar"
-              className="w-[54px] h-[54px] -mt-6 rounded-full bg-gradient-to-tr from-[#EA580C] to-[#FB923C] text-white flex items-center justify-center shadow-[0px_8px_20px_rgba(234,88,12,0.45)] border-[3.5px] border-white cursor-pointer transition-all hover:scale-105 active:scale-95 select-none"
-            >
-              <Camera className="w-6 h-6" />
-              <input
-                id="mobile-direct-camera-trigger"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                capture="environment"
-                className="hidden"
-                onChange={handleDirectCapture}
-                data-testid="direct-camera-trigger"
-              />
-            </label>
-          </div>
-
-          {/* 4. Novedades */}
-          <button
-            type="button"
-            onClick={() => navigate('/alertas')}
-            aria-label="Alertas y novedades"
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
-              currentTab === 'alertas'
-                ? 'bg-[#E6F6FD] text-[#0284C7]'
-                : 'text-[#94A3B8] hover:text-[#475569]'
-            }`}
-          >
-            <Newspaper className="w-5 h-5" />
-            <span className="text-[9.5px] font-bold">
-              Novedades
-            </span>
-          </button>
-
-          {/* 5. Perfil */}
-          <button
-            type="button"
-            onClick={() => navigate('/perfil')}
-            className={`flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 py-1 px-3 transition-all rounded-[14px] ${
-              currentTab === 'perfil'
-                ? 'bg-[#E6F6FD] text-[#0284C7]'
-                : 'text-[#94A3B8] hover:text-[#475569]'
-            }`}
-          >
-            <User className="w-5 h-5" />
-            <span className="text-[9.5px] font-bold">
-              Perfil
-            </span>
-          </button>
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = currentTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => navigate(tab.path)}
+                aria-label={tab.ariaLabel}
+                aria-current={isActive ? 'page' : undefined}
+                className={`rep-focus relative flex min-h-touch flex-1 flex-col items-center gap-0.5 rounded-[14px] border-0 bg-transparent px-2 py-1 transition-colors duration-120 ${
+                  isActive ? 'bg-rep-accent-soft text-rep-accent' : 'text-rep-ink-faint hover:text-rep-ink-label'
+                }`}
+              >
+                <span className="relative">
+                  <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+                  {/* Punto de no leídas en Novedades (M08) */}
+                  {tab.key === 'alertas' && (
+                    <span aria-hidden="true" className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full border border-rep-surface bg-rep-danger" />
+                  )}
+                </span>
+                <span className="text-[10px] font-bold leading-none">{tab.label}</span>
+              </button>
+            );
+          })}
         </nav>
       </div>
     </div>

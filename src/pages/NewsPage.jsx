@@ -1,94 +1,116 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Megaphone } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Map as MapIcon } from 'lucide-react';
+import { NewsCard } from '../components/news/NewsCard';
+import { EmptyState } from '../components/common/EmptyState';
+import { DEMO_NEWS, getPublishedNews } from '../services/newsService';
 
+const FILTERS = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'municipio', label: 'Municipio' },
+  { key: 'app', label: 'App' },
+  { key: 'cerca', label: 'Cerca mío' },
+];
+
+/**
+ * Novedades del municipio y de la app (UJ v3.3 · M24 teléfono / D31 escritorio — REP-3791 Bloque 8).
+ * Una destacada arriba y el resto compactas debajo, con filtros por origen.
+ */
 export const NewsPage = () => {
-  const newsItems = [];
+  const navigate = useNavigate();
+  const [newsItems, setNewsItems] = useState([]);
+  const [isDemoActive, setIsDemoActive] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('todas');
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublishedNews()
+      .then((result) => {
+        if (isMounted) setNewsItems(result.news || []);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const currentNews = isDemoActive ? DEMO_NEWS : newsItems;
+
+  const filteredNews = useMemo(
+    () =>
+      currentNews.filter((item) => {
+        if (activeFilter === 'todas') return true;
+        if (activeFilter === 'cerca') return Boolean(item.hasLocation);
+        return item.source === activeFilter;
+      }),
+    [currentNews, activeFilter]
+  );
+
+  const [featured, ...rest] = filteredNews;
+  // El modo demostración viaja en la URL: sin esa marca, el detalle no sirve contenido
+  // de ejemplo (si no, un enlace compartido mostraría un comunicado que nadie publicó).
+  const openItem = (item) => navigate(`/novedades/${item.id}${isDemoActive ? '?demo=1' : ''}`);
 
   return (
     <AppLayout activeTab="novedades">
-      <div className="flex-1 overflow-y-auto bg-[#F4F7FB] px-4 sm:px-6 md:px-10 py-6">
-        <div className="max-w-5xl mx-auto flex flex-col gap-5">
-          
-          {/* Título de Sección */}
-          <div>
-            <h1 className="font-extrabold text-[24px] sm:text-[28px] text-[#243447] tracking-[-0.4px] m-0">
-              Novedades
-            </h1>
-            <p className="font-medium text-[12.5px] sm:text-[13px] text-[#8593A2] mt-1 mb-0">
-              Avisos oficiales y resoluciones de tu municipio
-            </p>
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Novedades</h1>
+              <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
+                Avisos oficiales de tu municipio y cambios de la app.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsDemoActive((prev) => !prev)}
+              className="rep-focus min-h-touch shrink-0 rounded-lg border-0 bg-rep-accent-soft px-3.5 text-rep-label font-bold text-rep-accent transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06]"
+            >
+              {isDemoActive ? 'Limpiar demo' : 'Cargar demo'}
+            </button>
           </div>
 
-          {newsItems.length > 0 ? (
-            <>
-              {/* Listado de Noticias y Alertas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {newsItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ y: -2 }}
-                    className="bg-white border border-[#E6ECF3] rounded-[16px] p-5 flex flex-col gap-2 shadow-xs cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-extrabold text-[10px] px-2 py-0.5 rounded-[6px] uppercase tracking-wider ${item.tagColor}`}>
-                        {item.tag}
-                      </span>
-                      <span className="font-semibold text-[11px] text-[#9AA7B5]">
-                        {item.date}
-                      </span>
-                    </div>
-
-                    <div className="flex gap-3.5 items-start mt-1">
-                      <div className="w-10 h-10 rounded-[11px] bg-[#EEF5FC] flex items-center justify-center flex-shrink-0 text-[#1E6FCB]">
-                        <span className="material-symbols-rounded text-[22px] filled">
-                          {item.icon}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-[15px] text-[#263249] m-0">
-                          {item.title}
-                        </h3>
-                        <p className="font-medium text-[12.5px] leading-[1.5] text-[#7A8696] mt-1 mb-0">
-                          {item.summary}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="bg-white rounded-[24px] border border-[#E6ECF3] p-8 md:p-12 shadow-xs max-w-xl mx-auto flex flex-col items-center justify-center text-center mt-6 md:mt-12">
-              <div className="flex items-center justify-center">
-                <svg width="132" height="104" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M34 42h14l40-22v58L48 56H34a8 8 0 0 1-8-8v-6a8 8 0 0 1 8-8Z" fill="#fff" stroke="#c9d4e0" strokeWidth="2.5" strokeLinejoin="round"></path>
-                  <path d="M44 56h14l4 30a7 7 0 0 1-7 8h-4a7 7 0 0 1-7-6l-4-32Z" fill="#eef2f7" stroke="#c9d4e0" strokeWidth="2.5" strokeLinejoin="round"></path>
-                  <path d="M100 34c6 5 6 25 0 30" stroke="#dbe3ec" strokeWidth="4" strokeLinecap="round" strokeDasharray="3 8"></path>
-                  <path d="M112 26c11 9 11 41 0 50" stroke="#e6ecf3" strokeWidth="4" strokeLinecap="round" strokeDasharray="3 9"></path>
-                </svg>
-              </div>
-              <div className="font-extrabold text-[18px] text-[#243447] mt-4 tracking-[-0.2px]">
-                Sin novedades por ahora
-              </div>
-              <div className="font-medium text-[13px] leading-[1.6] text-[#7A8696] mt-[8px] max-w-[380px] text-pretty">
-                Te avisamos acá cuando un reporte tuyo cambie de estado o el organismo deje una nota.
-              </div>
-              
-              <Link 
-                to="/mapa"
-                className="mt-5 inline-flex items-center gap-1.5 bg-[#EEF5FC] text-[#1E6FCB] hover:bg-[#E1EFFD] px-4 py-2 rounded-xl font-bold text-[12.5px] cursor-pointer no-underline transition-colors"
+          {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación */}
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+            {FILTERS.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setActiveFilter(filter.key)}
+                aria-pressed={activeFilter === filter.key}
+                className={`rep-focus min-h-touch shrink-0 rounded-xl border px-3.5 text-rep-label font-bold transition-colors duration-120 ${
+                  activeFilter === filter.key
+                    ? 'border-rep-accent bg-rep-accent text-rep-on-accent'
+                    : 'border-rep-border bg-rep-surface text-rep-ink-label'
+                }`}
               >
-                <MapIcon className="w-[16px] h-[16px]" strokeWidth={2.25} />
-                <span>Explorar el mapa</span>
-              </Link>
-            </div>
-          )}
+                {filter.label}
+              </button>
+            ))}
+          </div>
 
+          {filteredNews.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <NewsCard item={featured} variant="featured" onOpen={openItem} />
+              {rest.map((item) => (
+                <NewsCard key={item.id} item={item} onOpen={openItem} />
+              ))}
+            </div>
+          ) : (
+            /* Estado vacío (UJ v3.3 · M27 / D35): tono de espera, salida secundaria al mapa */
+            <EmptyState
+              icon={Megaphone}
+              title="Todavía no hay publicaciones"
+              description="Cuando el municipio publique un aviso de obra u operativo, o salga una versión nueva de la app, lo vas a leer acá."
+              secondaryAction={{ label: 'Ver el mapa', onClick: () => navigate('/mapa') }}
+            />
+          )}
         </div>
       </div>
     </AppLayout>
   );
 };
+
+export default NewsPage;

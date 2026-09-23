@@ -15,10 +15,29 @@ import {
   Trash2,
   TrafficCone,
   Trees,
+  Store,
+  HeartHandshake,
+  Eye,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCategoryTone } from '../report/categoryTone';
+import { getStatusConfig, normalizeReportState } from '../report/reportStatus';
+import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 
-// Mapeo de iconos de categoría (mockReports.js) para los marcadores del mapa.
+// Estados del §10 que pueden aparecer en el mapa. «borrador» no entra: el borrador vive
+// en el dispositivo y nunca llega a la base.
+const MAP_STATE_FILTERS = ['todos', 'enviado', 'en_revision', 'notificado', 'resuelto', 'descartado'];
+
+// «Notificado al responsable» no entra en el panel de filtros, que es angosto.
+const FILTER_SHORT_LABELS = { notificado: 'Notificado' };
+
+const filterLabel = (filter) => {
+  if (filter === 'todos') return 'Todos los reclamos';
+  return FILTER_SHORT_LABELS[filter] || getStatusConfig(filter).label;
+};
+
+// Mapeo de iconos de categoría para los marcadores del mapa. Las claves las resuelve
+// mapReportsService a partir del nombre de la categoría.
 // Se renderizan a HTML estático porque el marcador de MapLibre es un nodo DOM
 // plano (Marker({ element })), no un componente React.
 const MARKER_ICON_MAP = {
@@ -27,6 +46,8 @@ const MARKER_ICON_MAP = {
   delete: Trash2,
   traffic: TrafficCone,
   park: Trees,
+  store: Store,
+  assist: HeartHandshake,
 };
 
 const renderMarkerIcon = (categoryIcon) => {
@@ -35,7 +56,6 @@ const renderMarkerIcon = (categoryIcon) => {
     createElement(IconComponent, { size: 20, color: '#ffffff', strokeWidth: 2.25 })
   );
 };
-import { MOCK_REPORTS } from '../../data/mockReports';
 import {
   getUserCoordinates,
   LOCATION_STATUS,
@@ -67,7 +87,28 @@ const DEFAULT_ZOOM = 12.8;
 const MIN_ZOOM = 11.5;
 const MAX_ZOOM = 19;
 
-export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
+/**
+ * Mapa colaborativo (UJ v3.3 · M08 en teléfono y D09 en escritorio — REP-3791 Bloque 5).
+ *
+ * Es presentacional: los reportes llegan por prop. Antes los leía de
+ * `src/data/mockReports.js`, así que la pantalla principal mostraba reclamos inventados
+ * y «Ver el reporte» abría un detalle inexistente (H-36). Quien los trae ahora es
+ * `MapPage`, con `getPublicMapReports`.
+ *
+ * `onOpenReport(id)` es opcional para que el componente siga funcionando fuera de un
+ * Router (así lo montan varios tests): sin esa prop no se ofrece «Ver el reporte».
+ *
+ * @param {Array} [reports] Reportes ya adaptados por mapReportsService
+ * @param {boolean} [isLoadingReports] Mientras se resuelve la primera carga
+ */
+export const CitizenMap = ({
+  onFilterClick,
+  autoLocate = true,
+  onOpenReport = null,
+  reports = [],
+  isLoadingReports = false,
+}) => {
+  const isDesktop = useIsDesktopLayout();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -82,10 +123,13 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
   const [locationStatus, setLocationStatus] = useState(LOCATION_STATUS.PENDING);
   const [showLocationBanner, setShowLocationBanner] = useState(false);
 
-  // Filtrado reactivo de reportes
-  const filteredReports = MOCK_REPORTS.filter((report) => {
+  // Filtrado reactivo por estado. Se compara contra el código normalizado del §10 y
+  // no contra la etiqueta visible: los datos traen los códigos reales de la base
+  // (RECIBIDO, EN_ANALISIS, DERIVADO, RESUELTO, DESESTIMADO) y la traducción vive en
+  // un solo lugar.
+  const filteredReports = reports.filter((report) => {
     if (activeFilter === 'todos') return true;
-    return report.status.toLowerCase() === activeFilter.toLowerCase();
+    return normalizeReportState(report.stateCode) === activeFilter;
   });
 
   // Renderizar o actualizar el marcador de posición del usuario (punto azul GPS con halo)
@@ -326,66 +370,19 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
     }
   }, [filteredReports, mapLoaded, selectedReport, userLocation, updateUserMarker]);
 
-  return (
-    <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden bg-[#e5e9ec] flex">
-      
-      {/* Desktop Empty State Sidebar (Left) */}
-      {filteredReports.length === 0 && (
-        <div className="hidden md:flex w-[312px] flex-shrink-0 border-r border-[#EEF1F5] flex-col bg-white z-20 h-full">
-          {/* Header filtros */}
-          <div className="py-3.5 px-5 border-b border-[#EEF1F5]">
-            <div className="flex items-center justify-between">
-              <span className="font-extrabold text-[13px] text-[#243447]">0 resultados</span>
-              <button 
-                onClick={() => setActiveFilter('todos')}
-                className="font-bold text-[11px] text-[#1E6FCB] bg-transparent border-none cursor-pointer p-0"
-              >
-                Limpiar todo
-              </button>
-            </div>
-            <div className="mt-2.5 flex gap-1.5 flex-wrap">
-              {activeFilter !== 'todos' && (
-                <span className="font-bold text-[10px] text-[#1E6FCB] bg-[#E8F1FB] border border-[#D4E6F8] rounded-[9px] px-2 py-1 inline-flex items-center gap-1">
-                  {activeFilter}
-                  <X className="w-[13px] h-[13px] cursor-pointer" strokeWidth={2.5} onClick={() => setActiveFilter('todos')} />
-                </span>
-              )}
-            </div>
-          </div>
-          
-          {/* Content vacío */}
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-6 pb-6">
-            <svg width="120" height="94" viewBox="0 0 132 104" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="10" y="12" width="112" height="80" rx="9" fill="#f2f6fa" stroke="#d6dfe9" strokeWidth="2"></rect>
-              <path d="M10 46h112M10 68h112M46 12v80M86 12v80" stroke="#e2e9f1" strokeWidth="3"></path>
-              <path d="M52 30h46L80 52v22l-10-6V52L52 30Z" fill="#fff" stroke="#1E6FCB" strokeWidth="2.6" strokeLinejoin="round"></path>
-              <circle cx="80" cy="40" r="4" fill="#1E6FCB" opacity=".25"></circle>
-              <circle cx="104" cy="76" r="13" fill="#fff" stroke="#c9d4e0" strokeWidth="2.5"></circle>
-              <path d="M99 71l10 10M109 71l-10 10" stroke="#9aa7b5" strokeWidth="2.6" strokeLinecap="round"></path>
-            </svg>
-            
-            <div className="font-extrabold text-[15px] text-[#243447] mt-3 tracking-tight">
-              Ningún reporte con estos filtros
-            </div>
-            
-            <div className="font-medium text-[11.5px] leading-[1.55] text-[#7A8696] mt-1.5">
-              Hay reportes en la zona, pero ninguno coincide con los filtros activos.
-            </div>
-            
-            <div className="mt-4 flex gap-2">
-              <button 
-                onClick={() => setActiveFilter('todos')}
-                className="bg-[#1E6FCB] text-white border-none rounded-[11px] px-4 py-2 font-extrabold text-[12px] cursor-pointer hover:bg-[#15539E] transition-colors"
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  // Resumen de lo que se ve en el mapa (M08 / D09), calculado sobre los reportes mostrados
+  const categorySummary = Object.entries(
+    filteredReports.reduce((acc, report) => {
+      const key = report.category || 'Sin categoría';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  );
 
+  return (
+    <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-rep-surface-sunken">
       {/* Map Container */}
-      <div className="relative flex-1 h-full w-full">
+      <div className="relative h-full w-full flex-1">
         
         {/* Contenedor DOM para MapLibre con touch-action: none */}
         <div
@@ -396,12 +393,52 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
         />
 
         {/* Overlay central en el mapa para Desktop si no hay resultados */}
+        {/* Sin resultados (UJ v3.3 · M29 / D33 — REP-3791 Bloque 9).
+            Son tres situaciones distintas y decirlas igual sería mentir: todavía
+            cargando, no hay ningún reporte en la zona, o hay pero los filtros los
+            dejaron afuera. Solo la última ofrece limpiar filtros. */}
         {filteredReports.length === 0 && (
-          <div className="hidden md:flex absolute inset-0 bg-[#F4F7FB]/60 z-10 pointer-events-none items-center justify-center">
-            <div className="bg-white border border-[#E6ECF3] rounded-[12px] px-4 py-2.5 flex items-center gap-2 shadow-[0_8px_22px_rgba(20,40,80,0.12)]">
-              <MapPinOff className="w-[18px] h-[18px] text-[#9AA7B5]" strokeWidth={2.25} />
-              <span className="font-semibold text-[11.5px] text-[#56657A]">Sin marcadores para mostrar</span>
-            </div>
+          <div className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-[420px] -translate-y-1/2 rounded-2xl border border-rep-border bg-rep-surface p-5 text-center shadow-rep-float md:left-1/2 md:right-auto md:-translate-x-1/2">
+            {isLoadingReports ? (
+              <p className="m-0 text-rep-body text-rep-ink-muted">Cargando reportes…</p>
+            ) : reports.length === 0 ? (
+              <>
+                <MapPinOff aria-hidden="true" className="mx-auto h-6 w-6 text-rep-ink-faint" strokeWidth={2.25} />
+                <p className="m-0 mt-3 text-rep-section text-rep-ink">Todavía no hay reportes en la zona</p>
+                <p className="m-0 mt-1.5 text-rep-body text-rep-ink-muted">
+                  Cuando alguien reporte algo cerca tuyo, va a aparecer acá.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {activeFilter !== 'todos' && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-rep-accent-soft px-2 py-1 text-rep-pill uppercase tracking-wide text-rep-accent">
+                      {filterLabel(activeFilter)}
+                      <button
+                        type="button"
+                        onClick={() => setActiveFilter('todos')}
+                        aria-label={`Quitar el filtro ${filterLabel(activeFilter)}`}
+                        className="rep-focus rounded"
+                      >
+                        <X className="h-3 w-3" strokeWidth={2.5} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <p className="m-0 mt-3 text-rep-section text-rep-ink">Ningún reporte con estos filtros</p>
+                <p className="m-0 mt-1.5 text-rep-body text-rep-ink-muted">
+                  Hay reportes en la zona, pero ninguno coincide con los filtros activos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('todos')}
+                  className="rep-focus mt-4 flex min-h-touch w-full items-center justify-center rounded-xl border-0 bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong"
+                >
+                  Limpiar filtros
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -442,14 +479,14 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
               exit={{ opacity: 0, y: -20 }}
               className="absolute top-4 left-4 right-18 z-20 max-w-[420px]"
             >
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:px-4 shadow-lg border border-slate-200 flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <AlertCircle className="w-4 h-4 text-[#E08A00] flex-shrink-0" />
-                  <div className="text-left min-w-0">
-                    <div className="font-bold text-[12px] text-[#243447] truncate">
+              <div className="flex items-center justify-between gap-2.5 rounded-2xl border border-rep-border bg-rep-surface/95 p-3 shadow-rep-float backdrop-blur-md sm:px-4">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rep-warning" />
+                  <div className="min-w-0 text-left">
+                    <div className="truncate text-rep-label font-bold text-rep-ink">
                       Ubicación desactivada
                     </div>
-                    <div className="text-[11px] text-[#64748B] truncate">
+                    <div className="truncate text-rep-label text-rep-ink-muted">
                       Mostrando CABA y Avellaneda por defecto
                     </div>
                   </div>
@@ -459,7 +496,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
                   <button
                     type="button"
                     onClick={() => detectUserLocation(true)}
-                    className="px-2.5 py-1 rounded-lg bg-[#EEF5FC] text-[#1E6FCB] hover:bg-[#E1EFFD] font-extrabold text-[11px] cursor-pointer border-0 transition-colors flex items-center gap-1"
+                    className="rep-focus flex min-h-touch items-center gap-1 rounded-lg border-0 bg-rep-accent-soft px-2.5 py-1 text-rep-label font-extrabold text-rep-accent transition-colors duration-120"
                   >
                     <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
                     <span>Activar</span>
@@ -468,7 +505,7 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
                     type="button"
                     onClick={() => setShowLocationBanner(false)}
                     aria-label="Cerrar aviso de ubicación"
-                    className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center cursor-pointer border-0 transition-colors"
+                    className="rep-focus flex h-8 w-8 items-center justify-center rounded-md border-0 bg-transparent text-rep-ink-faint transition-colors duration-120 hover:text-rep-ink-label"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -478,6 +515,28 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
           )}
         </AnimatePresence>
 
+        {/* Resumen de lo que se ve en el mapa (M08 · D09) */}
+        <div
+          className={`absolute left-4 z-20 w-[150px] rounded-2xl border border-rep-border bg-rep-surface/95 px-3.5 py-3 shadow-rep-float backdrop-blur-md md:w-[220px] ${
+            showLocationBanner ? 'top-[92px] md:top-[84px]' : 'top-4'
+          }`}
+        >
+          <div className="text-[26px] font-extrabold leading-none text-rep-ink">{filteredReports.length}</div>
+          <div className="mt-1 text-[10px] font-extrabold uppercase tracking-wider text-rep-ink-muted">Reportes visibles</div>
+          {/* El desglose por categoría entra en la tarjeta, sin abrir otra pantalla (D09) */}
+          {isDesktop && categorySummary.length > 0 && (
+            <ul className="m-0 mt-2.5 flex list-none flex-col gap-1 border-t border-rep-divider p-0 pt-2.5">
+              {categorySummary.map(([category, total]) => (
+                <li key={category} className="flex items-center gap-2 text-rep-label">
+                  <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: getCategoryTone({ name: category }).base }} />
+                  <span className="min-w-0 flex-1 truncate font-semibold text-rep-ink-label">{category}</span>
+                  <span className="font-extrabold text-rep-ink">{total}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Botón Flotante de Filtros (Top Right) */}
         <button
           type="button"
@@ -486,18 +545,18 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
             setShowFiltersModal((prev) => !prev);
             if (onFilterClick) onFilterClick();
           }}
-          className="absolute top-4 right-4 z-20 w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+          className="rep-focus absolute right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] md:right-[76px]"
         >
-          <SlidersHorizontal className="w-5 h-5 text-[#1E6FCB]" />
+          <SlidersHorizontal className="h-5 w-5" strokeWidth={2.25} />
         </button>
 
         {/* Menú de Filtros emergente */}
         {showFiltersModal && (
-          <div className="absolute right-4 top-18 bg-white rounded-2xl p-3 shadow-xl border border-slate-100 z-30 w-48 flex flex-col gap-1 animate-in fade-in zoom-in-95">
-            <div className="font-extrabold text-[11px] text-[#8593A2] uppercase tracking-wider mb-1 px-1">
+          <div className="absolute right-4 top-[124px] z-30 flex w-52 flex-col gap-1 rounded-2xl border border-rep-border bg-rep-surface p-3 shadow-rep-float md:right-[76px] md:top-[68px]">
+            <div className="mb-1 px-1 text-[11px] font-extrabold uppercase tracking-wider text-rep-ink-muted">
               Filtrar reclamos
             </div>
-            {['todos', 'Enviado', 'En curso', 'Resuelto'].map((filter) => (
+            {MAP_STATE_FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
@@ -505,25 +564,21 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
                   setActiveFilter(filter);
                   setShowFiltersModal(false);
                 }}
-                className={`text-left px-3 py-2 rounded-xl font-bold text-xs cursor-pointer border-0 transition-colors capitalize ${
+                className={`rep-focus min-h-touch rounded-xl border-0 px-3 py-2 text-left text-rep-label font-bold transition-colors duration-120 ${
                   activeFilter === filter
-                    ? 'bg-[#EEF5FC] text-[#1E6FCB]'
-                    : 'text-[#56657A] hover:bg-slate-50'
+                    ? 'bg-rep-accent-soft text-rep-accent'
+                    : 'bg-transparent text-rep-ink-label hover:bg-rep-surface-sunken'
                 }`}
               >
-                {filter === 'todos' ? 'Todos los reclamos' : filter}
+                {filterLabel(filter)}
               </button>
             ))}
           </div>
         )}
 
-        {/* Banner de Estado Vacío si el filtro no tiene resultados (Mobile) */}
-        {filteredReports.length === 0 && (
-          <div className="md:hidden absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-slate-200 text-xs font-bold text-[#56657A] flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-[#E08A00]" />
-            <span>No hay reportes con estado "{activeFilter}"</span>
-          </div>
-        )}
+        {/* El banner de vacío de teléfono se retiró en el Bloque 9: había dos avisos
+            distintos para lo mismo, uno acá y otro en escritorio. Ahora es una sola
+            tarjeta, arriba. */}
 
         {/* Tarjeta Flotante de Reporte Seleccionado (Popup Bottom Card) */}
         <AnimatePresence>
@@ -533,15 +588,21 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute bottom-[92px] sm:bottom-[102px] left-4 right-4 sm:left-auto sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-30 sm:w-[420px] bg-white rounded-[24px] p-4 sm:p-5 shadow-[0px_14px_40px_rgba(15,30,60,0.22)] border border-[#E4ECF4]"
+              className="absolute inset-x-4 bottom-[104px] z-30 rounded-[22px] border border-rep-border bg-rep-surface p-4 shadow-rep-float md:inset-x-auto md:bottom-6 md:right-6 md:w-[380px] md:p-5"
             >
-              {/* Cabecera del reporte */}
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#EEF5FC] text-[#1E6FCB]">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="rounded-lg px-2.5 py-1 text-rep-pill uppercase tracking-wide"
+                    style={{
+                      color: getCategoryTone({ name: selectedReport.category }).ink,
+                      backgroundColor: getCategoryTone({ name: selectedReport.category }).soft,
+                    }}
+                  >
                     {selectedReport.category}
                   </span>
-                  <span className={`font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${selectedReport.statusColor}`}>
+                  <span className="inline-flex items-center gap-1.5 text-rep-label font-bold text-rep-accent">
+                    <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
                     {selectedReport.status}
                   </span>
                 </div>
@@ -550,40 +611,39 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
                   type="button"
                   onClick={() => setSelectedReport(null)}
                   aria-label="Cerrar detalle de reporte"
-                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer border-0 transition-colors"
+                  className="rep-focus flex h-8 w-8 items-center justify-center rounded-full border-0 bg-rep-surface-sunken text-rep-ink-label transition-colors duration-120"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* Título y descripción */}
-              <h3 className="font-extrabold text-[15px] sm:text-[16px] text-[#1B365D] tracking-tight m-0 mb-1 leading-snug">
-                {selectedReport.title}
-              </h3>
-              <p className="font-medium text-[12px] text-[#64748B] m-0 mb-3 line-clamp-2 leading-relaxed">
-                {selectedReport.description}
-              </p>
+              <h3 className="m-0 mb-1 text-rep-section leading-snug text-rep-ink">{selectedReport.title}</h3>
+              <p className="m-0 mb-3 line-clamp-2 text-rep-body text-rep-ink-muted">{selectedReport.description}</p>
 
-              {/* Footer con Dirección y Fecha */}
-              <div className="flex items-center justify-between text-[11px] text-[#8593A2] pt-2.5 border-t border-slate-100">
-                <div className="flex items-center gap-1 min-w-0">
-                  <MapPin className="w-3.5 h-3.5 text-[#1E6FCB] flex-shrink-0" />
-                  <span className="truncate font-semibold text-[#475569]">
-                    {selectedReport.address}
-                  </span>
+              <div className="flex items-center justify-between gap-2 border-t border-rep-divider pt-2.5">
+                <div className="flex min-w-0 items-center gap-1 text-rep-label text-rep-ink-muted">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-rep-accent" />
+                  <span className="truncate font-semibold text-rep-ink-label">{selectedReport.address}</span>
+                  <span className="shrink-0">· {selectedReport.date}</span>
                 </div>
-                <span className="font-semibold flex-shrink-0 ml-2">
-                  {selectedReport.date}
-                </span>
+                {onOpenReport && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenReport(selectedReport.id)}
+                    className="rep-focus min-h-touch shrink-0 rounded-lg px-1 text-rep-label font-bold text-rep-accent hover:underline"
+                  >
+                    Ver el reporte
+                  </button>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Leyenda Menos / Más (Bottom Left at 104px) */}
-        <div className="absolute bottom-[104px] left-4 z-20 bg-white/95 backdrop-blur-md rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-md border border-slate-100 text-[11px] font-bold text-[#64748B] select-none">
+        <div className="absolute bottom-[104px] left-4 z-20 flex select-none items-center gap-2 rounded-full border border-rep-border bg-rep-surface/95 px-3.5 py-1.5 text-rep-label font-bold text-rep-ink-muted shadow-rep-float backdrop-blur-md md:bottom-6 md:left-1/2 md:-translate-x-1/2">
           <span>Menos</span>
-          <div className="w-14 h-2 rounded-full bg-gradient-to-r from-[#22C55E] via-[#F97316] to-[#EF4444]" />
+          <div className="h-2 w-14 rounded-full bg-gradient-to-r from-rep-success via-rep-warning to-rep-danger" />
           <span>Más</span>
         </div>
 
@@ -593,9 +653,9 @@ export const CitizenMap = ({ onFilterClick, autoLocate = true }) => {
           aria-label="Centrar en mi ubicación"
           title="Centrar en mi ubicación"
           onClick={() => detectUserLocation(true)}
-          className="absolute bottom-[104px] right-4 z-20 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-[#1E6FCB] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+          className="rep-focus absolute right-4 top-[68px] z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] md:top-4"
         >
-          <Navigation className={`w-5 h-5 text-[#1E6FCB] ${isLocating ? 'animate-spin' : ''}`} />
+          <Navigation className={`h-5 w-5 ${isLocating ? 'motion-safe:animate-spin' : ''}`} strokeWidth={2.25} />
         </button>
       </div>
     </div>

@@ -32,5 +32,13 @@ export default defineConfig({
     // Definir ámbito de tests en la carpeta src para no incluir archivos de skills internas
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.agents'],
+    // El limite por defecto de vitest son 5 s. Las suites que montan MapLibre en
+    // jsdom (OfflineReportFlow, LocationFlow, AdjustLocationModal) quedaban justo
+    // en el borde: con la maquina cargada daban rojos intermitentes que no eran
+    // del codigo. Verificado el 21/09/2026 apartando el cambio bajo prueba y
+    // viendo que la suite igual fallaba. 30 s no oculta un test lento de verdad
+    // y evita que el CI (H-07) empiece a fallar sin causa.
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
 });
