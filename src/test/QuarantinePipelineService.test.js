@@ -4,7 +4,7 @@
  * Valida el aislamiento transitorio, sanitización de metadatos EXIF, principio fail-safe y emulador local.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   sanitizeImageMetadataLocally,
   uploadToQuarantine,
@@ -187,10 +187,34 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
   });
 
   describe('6. Integración con Supabase Storage y Edge Function mockeados', () => {
-    it('UT-QPS-14: Sube a Storage e invoca la Edge Function exitosamente cuando Supabase está activo', async () => {
+    // H-06: estos tests simulan por su cuenta la configuración de Supabase. Antes dependían del .env de
+    // quien los corría: sin él, el servicio no tomaba el camino de Supabase y fallaban en un checkout
+    // limpio (y fallarían en el CI). Ahora cada uno arma su propio cliente mockeado.
+    const cargarServicioConSupabaseMockeado = async ({ upload, remove, invoke }) => {
+      vi.resetModules();
+      vi.doMock('../lib/supabaseClient', () => ({
+        isSupabaseConfigured: true,
+        supabase: {
+          // REP-2501: la subida a cuarentena exige sesión (va a la carpeta del usuario)
+          auth: {
+            getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'user-qps-1' } } } }),
+          },
+          storage: { from: vi.fn(() => ({ upload, remove })) },
+          functions: { invoke },
+        },
+      }));
+      const servicio = await import('../services/quarantinePipelineService');
       const { supabase } = await import('../lib/supabaseClient');
-      const originalFunctions = supabase.functions;
+      return { servicio, supabase };
+    };
 
+    // El mock no debe filtrarse a los demás tests del archivo
+    afterEach(() => {
+      vi.doUnmock('../lib/supabaseClient');
+      vi.resetModules();
+    });
+
+    it('UT-QPS-14: Sube a Storage e invoca la Edge Function exitosamente cuando Supabase está activo', async () => {
       const mockUpload = vi.fn().mockResolvedValue({ data: { path: 'temp_mock.jpg' }, error: null });
       const mockRemove = vi.fn().mockResolvedValue({ data: {}, error: null });
       const mockInvoke = vi.fn().mockResolvedValue({
@@ -203,68 +227,46 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
         error: null,
       });
 
-      // REP-2501: la subida a cuarentena exige sesión (va a la carpeta del usuario)
-      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
-        data: { session: { user: { id: 'user-qps-1' } } },
-      });
-
-      const spyStorage = vi.spyOn(supabase.storage, 'from').mockReturnValue({
+      const { servicio, supabase } = await cargarServicioConSupabaseMockeado({
         upload: mockUpload,
         remove: mockRemove,
-      });
-
-      Object.defineProperty(supabase, 'functions', {
-        value: { invoke: mockInvoke },
-        configurable: true,
+        invoke: mockInvoke,
       });
 
       const mockFile = new File(['mock-img'], 'foto.jpg', { type: 'image/jpeg' });
-      const result = await processEvidenceThroughQuarantine({
+      const result = await servicio.processEvidenceThroughQuarantine({
         file: mockFile,
         clientSideId: 'mock-client-id',
       });
 
-      expect(spyStorage).toHaveBeenCalledWith(BUCKET_QUARANTINE);
-      expect(mockUpload).toHaveBeenCalled();
+      expect(supabase.storage.from).toHaveBeenCalledWith(BUCKET_QUARANTINE);
+      // REP-2501: la foto va a la carpeta del usuario con sesión
+      expect(mockUpload).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-qps-1\/temp_mock-client-id_\d+\./),
+        expect.anything(),
+        expect.anything()
+      );
       expect(mockInvoke).toHaveBeenCalledWith('quarantine-anonymize', {
         body: expect.objectContaining({ clientSideId: 'mock-client-id' }),
       });
       expect(result.success).toBe(true);
       expect(result.sanitizedUrl).toContain('anon_123.webp');
       expect(result.entitiesDetectedCount).toBe(3);
-
-      spyStorage.mockRestore();
-      Object.defineProperty(supabase, 'functions', {
-        value: originalFunctions,
-        configurable: true,
-      });
     });
 
     it('UT-QPS-15: Si la Edge Function falla por red, purga de inmediato la foto original de cuarentena', async () => {
-      const { supabase } = await import('../lib/supabaseClient');
-      const originalFunctions = supabase.functions;
-
       const mockUpload = vi.fn().mockResolvedValue({ data: { path: 'temp_to_purge.jpg' }, error: null });
       const mockRemove = vi.fn().mockResolvedValue({ data: {}, error: null });
       const mockInvoke = vi.fn().mockRejectedValue(new Error('Network connection timeout'));
 
-      // REP-2501: la subida a cuarentena exige sesión (va a la carpeta del usuario)
-      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
-        data: { session: { user: { id: 'user-qps-1' } } },
-      });
-
-      const spyStorage = vi.spyOn(supabase.storage, 'from').mockReturnValue({
+      const { servicio } = await cargarServicioConSupabaseMockeado({
         upload: mockUpload,
         remove: mockRemove,
-      });
-
-      Object.defineProperty(supabase, 'functions', {
-        value: { invoke: mockInvoke },
-        configurable: true,
+        invoke: mockInvoke,
       });
 
       const mockFile = new File(['mock-img'], 'foto.jpg', { type: 'image/jpeg' });
-      const result = await processEvidenceThroughQuarantine({
+      const result = await servicio.processEvidenceThroughQuarantine({
         file: mockFile,
         clientSideId: 'purge-client-id',
       });
@@ -275,12 +277,6 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
       expect(result.success).toBe(false);
       expect(result.failSafeTriggered).toBe(true);
       expect(result.error).toContain('Network connection timeout');
-
-      spyStorage.mockRestore();
-      Object.defineProperty(supabase, 'functions', {
-        value: originalFunctions,
-        configurable: true,
-      });
     });
   });
 });
