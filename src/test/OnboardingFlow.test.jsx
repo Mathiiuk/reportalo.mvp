@@ -18,7 +18,8 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
 
     expect(screen.getByRole('heading', { name: /Una foto es un reclamo/i, level: 1 })).toBeInTheDocument();
     expect(screen.getByText(/Sacás la foto de lo que está mal en tu barrio/i)).toBeInTheDocument();
-    expect(screen.getByText(/ILUSTRACIÓN · foto de un incidente/i)).toBeInTheDocument();
+    // REP-3791 Bloque 7-B: el marcador de ilustración pasa a pictograma (decisión de UX)
+    expect(screen.getByTestId('onboarding-pictogram-1')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Saltar/i }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: /Siguiente/i })).toBeInTheDocument();
   });

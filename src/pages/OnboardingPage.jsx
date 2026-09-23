@@ -43,10 +43,13 @@ export const OnboardingPage = () => {
       description:
         'Sacás la foto de lo que está mal en tu barrio y Reportalo la convierte en un reclamo formal ante quien tiene que resolverlo.',
       renderIllustration: () => (
-        <div className="h-[250px] rounded-[20px] bg-[#EEF3F9] border border-[#E6ECF3] flex flex-col items-center justify-center gap-3 shadow-inner">
-          <ImagePlus className="w-[52px] h-[52px] text-[#1E6FCB]" strokeWidth={1.5} />
-          <span className="font-semibold text-[10.5px] text-[#9AA7B5] tracking-[0.4px] uppercase">
-            ILUSTRACIÓN · foto de un incidente
+        <div className="h-[250px] rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col items-center justify-center gap-3 shadow-inner">
+          {/* Pictograma (decisión de UX, REP-3791 Bloque 7-B): reemplaza el marcador de ilustración */}
+          <span aria-hidden="true" data-testid="onboarding-pictogram-1" className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-rep-surface shadow-rep-card">
+            <ImagePlus className="h-12 w-12 text-rep-accent" strokeWidth={1.75} />
+            <span className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent shadow-rep-accent">
+              <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+            </span>
           </span>
         </div>
       ),
@@ -58,11 +61,11 @@ export const OnboardingPage = () => {
         'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
       renderIllustration: () => (
         <div className="h-[250px] rounded-[20px] bg-[#E9F5EF] border border-[#D5EBE0] flex flex-col items-center justify-center gap-3.5 shadow-inner">
-          <ScanFace className="w-[52px] h-[52px] text-[#2E9E6B]" strokeWidth={1.5} />
-          <div className="flex items-center gap-2 bg-white rounded-[10px] py-2 px-3 shadow-[0px_3px_10px_rgba(20,40,80,0.08)]">
+          <ScanFace className="w-[52px] h-[52px] text-rep-success" strokeWidth={1.5} />
+          <div className="flex items-center gap-2 bg-rep-surface rounded-[10px] py-2 px-3 shadow-[0px_3px_10px_rgba(20,40,80,0.08)]">
             <span className="w-[26px] h-[26px] rounded-[7px] bg-[repeating-linear-gradient(45deg,#C9D5E2_0px,#C9D5E2_3px,#E2E9F0_3px,#E2E9F0_6px)] flex-shrink-0" />
-            <ArrowRight className="w-[15px] h-[15px] text-[#2E9E6B]" strokeWidth={2.25} />
-            <span className="w-[26px] h-[26px] rounded-[7px] bg-[#E3F5EC] flex items-center justify-center text-[#2E9E6B] flex-shrink-0">
+            <ArrowRight className="w-[15px] h-[15px] text-rep-success" strokeWidth={2.25} />
+            <span className="w-[26px] h-[26px] rounded-[7px] bg-rep-success-soft flex items-center justify-center text-rep-success flex-shrink-0">
               <Shield className="w-[15px] h-[15px]" strokeWidth={2.25} />
             </span>
           </div>
@@ -75,13 +78,13 @@ export const OnboardingPage = () => {
       description:
         'Vas viendo en qué estado está tu reclamo, quién lo tiene que resolver y qué fundamento legal lo respalda.',
       renderIllustration: () => (
-        <div className="h-[250px] rounded-[20px] bg-[#EEF3F9] border border-[#E6ECF3] flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left">
+        <div className="h-[250px] rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left">
           {/* 1. Enviado */}
           <div className="flex items-center gap-2.5">
-            <span className="w-[18px] h-[18px] rounded-full bg-[#2E9E6B] flex items-center justify-center text-white flex-shrink-0">
+            <span className="w-[18px] h-[18px] rounded-full bg-rep-success flex items-center justify-center text-white flex-shrink-0">
               <Check className="w-[12px] h-[12px]" strokeWidth={3} />
             </span>
-            <span className="font-bold text-[12px] text-[#34435A]">
+            <span className="font-bold text-[12px] text-rep-ink">
               Enviado
             </span>
           </div>
@@ -89,10 +92,10 @@ export const OnboardingPage = () => {
 
           {/* 2. En revisión */}
           <div className="flex items-center gap-2.5">
-            <span className="w-[18px] h-[18px] rounded-full bg-[#1E6FCB] flex items-center justify-center text-white flex-shrink-0">
+            <span className="w-[18px] h-[18px] rounded-full bg-rep-accent flex items-center justify-center text-white flex-shrink-0">
               <Eye className="w-[12px] h-[12px]" strokeWidth={2.5} />
             </span>
-            <span className="font-bold text-[12px] text-[#34435A]">
+            <span className="font-bold text-[12px] text-rep-ink">
               En revisión
             </span>
           </div>
@@ -101,7 +104,7 @@ export const OnboardingPage = () => {
           {/* 3. Notificado */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full border-2 border-[#CFD8E2] flex-shrink-0" />
-            <span className="font-bold text-[12px] text-[#9AA7B5]">
+            <span className="font-bold text-[12px] text-rep-ink-faint">
               Notificado
             </span>
           </div>
@@ -110,7 +113,7 @@ export const OnboardingPage = () => {
           {/* 4. Resuelto */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full border-2 border-[#CFD8E2] flex-shrink-0" />
-            <span className="font-bold text-[12px] text-[#9AA7B5]">
+            <span className="font-bold text-[12px] text-rep-ink-faint">
               Resuelto
             </span>
           </div>
@@ -122,20 +125,20 @@ export const OnboardingPage = () => {
   const current = steps[currentStep];
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-white">
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
       
       {/* Header superior desktop (>= md) */}
-      <header className="hidden md:flex flex-shrink-0 border-b border-[#EEF1F5] px-8 lg:px-12 py-4 items-center gap-6 bg-white">
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
         <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
           <img
             src="/logo-icon.webp"
             alt="Reportalo"
             className="w-[20px] h-[26px] object-contain"
           />
-          <span className="font-extrabold text-[19px] text-[#263249] tracking-[-0.4px]">
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
             Reportalo
           </span>
-          <span className="font-bold text-[9px] text-[#1E6FCB] bg-[#EEF5FC] px-2 py-1 rounded-[7px] ml-1 uppercase">
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1 uppercase">
             CIUDADANOS
           </span>
         </Link>
@@ -144,7 +147,7 @@ export const OnboardingPage = () => {
           <button
             onClick={handleFinish}
             type="button"
-            className="font-bold text-[13px] text-[#9AA7B5] hover:text-[#1E6FCB] px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
+            className="font-bold text-[13px] text-rep-ink-faint hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
           >
             Saltar onboarding
           </button>
@@ -163,7 +166,7 @@ export const OnboardingPage = () => {
               <button
                 onClick={handleFinish}
                 type="button"
-                className="font-bold text-[12.5px] text-[#9AA7B5] hover:text-[#1E6FCB] p-1 cursor-pointer bg-transparent border-0 transition-colors"
+                className="font-bold text-[12.5px] text-rep-ink-faint hover:text-rep-accent p-1 cursor-pointer bg-transparent border-0 transition-colors"
               >
                 Saltar
               </button>
@@ -191,12 +194,12 @@ export const OnboardingPage = () => {
                 </div>
 
                 {/* Título */}
-                <h1 className="font-extrabold text-[24px] md:text-[28px] text-[#243447] mt-7 tracking-[-0.5px] leading-tight">
+                <h1 className="font-extrabold text-[24px] md:text-[28px] text-rep-ink mt-7 tracking-[-0.5px] leading-tight">
                   {current.title}
                 </h1>
 
                 {/* Descripción */}
-                <p className="font-medium text-[13.5px] md:text-[14.5px] leading-[1.6] text-[#7A8696] mt-2.5">
+                <p className="font-medium text-[13.5px] md:text-[14.5px] leading-[1.6] text-rep-ink-muted mt-2.5">
                   {current.description}
                 </p>
               </motion.div>
@@ -216,8 +219,8 @@ export const OnboardingPage = () => {
                   type="button"
                   className={`h-[6px] rounded-[3px] transition-all cursor-pointer border-0 p-0 ${
                     currentStep === index
-                      ? 'w-[22px] bg-[#1E6FCB]'
-                      : 'w-[6px] bg-[#DDE4EC] hover:bg-slate-300'
+                      ? 'w-[22px] bg-rep-accent'
+                      : 'w-[6px] bg-rep-track hover:bg-slate-300'
                   }`}
                 />
               ))}
@@ -229,7 +232,7 @@ export const OnboardingPage = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleNext}
               type="button"
-              className="w-full bg-[#1E6FCB] text-white rounded-[14px] py-[15px] px-6 text-center font-extrabold text-[15px] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-[#15539E] cursor-pointer border-0 transition-colors"
+              className="w-full bg-rep-accent text-white rounded-[14px] py-[15px] px-6 text-center font-extrabold text-[15px] shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-rep-accent-strong cursor-pointer border-0 transition-colors"
             >
               {currentStep === 2 ? 'Empezar' : 'Siguiente'}
             </motion.button>
@@ -237,9 +240,9 @@ export const OnboardingPage = () => {
         </main>
 
         {/* Sidebar desktop (>= md) armonizada con el Home y /municipios */}
-        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-[#F4F7FB] border-l border-[#EEF1F5] p-8 flex-col justify-between gap-4">
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
           <div>
-            <div className="font-extrabold text-[11px] text-[#8593A2] tracking-[0.5px] mb-4 uppercase">
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
               Cómo funciona Reportalo
             </div>
 
@@ -249,24 +252,24 @@ export const OnboardingPage = () => {
                 onClick={() => setCurrentStep(0)}
                 className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
                   currentStep === 0
-                    ? 'bg-white border-[#1E6FCB] ring-1 ring-[#1E6FCB]/20'
-                    : 'bg-white/80 border-[#E6ECF3] hover:bg-white'
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
                 }`}
               >
                 <span
                   className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
                     currentStep === 0
-                      ? 'bg-[#1E6FCB] text-white'
-                      : 'bg-[#EEF5FC] text-[#1E6FCB]'
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
                   }`}
                 >
                   1
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Una foto es un reclamo
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Sacás la foto y la IA de Reportalo encuadra el organismo responsable.
                   </div>
                 </div>
@@ -277,24 +280,24 @@ export const OnboardingPage = () => {
                 onClick={() => setCurrentStep(1)}
                 className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
                   currentStep === 1
-                    ? 'bg-white border-[#1E6FCB] ring-1 ring-[#1E6FCB]/20'
-                    : 'bg-white/80 border-[#E6ECF3] hover:bg-white'
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
                 }`}
               >
                 <span
                   className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
                     currentStep === 1
-                      ? 'bg-[#1E6FCB] text-white'
-                      : 'bg-[#EEF5FC] text-[#1E6FCB]'
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
                   }`}
                 >
                   2
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Privacidad y Anonimización
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Difuminado automático de rostros y patentes antes de almacenarse.
                   </div>
                 </div>
@@ -305,24 +308,24 @@ export const OnboardingPage = () => {
                 onClick={() => setCurrentStep(2)}
                 className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
                   currentStep === 2
-                    ? 'bg-white border-[#1E6FCB] ring-1 ring-[#1E6FCB]/20'
-                    : 'bg-white/80 border-[#E6ECF3] hover:bg-white'
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
                 }`}
               >
                 <span
                   className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
                     currentStep === 2
-                      ? 'bg-[#1E6FCB] text-white'
-                      : 'bg-[#EEF5FC] text-[#1E6FCB]'
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
                   }`}
                 >
                   3
                 </span>
                 <div>
-                  <div className="font-bold text-[13px] text-[#263249]">
+                  <div className="font-bold text-[13px] text-rep-ink">
                     Seguimiento en tiempo real
                   </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-[#7A8696] mt-0.5">
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
                     Consultá el estado y las notas oficiales de tu caso hasta resolverse.
                   </div>
                 </div>
@@ -330,9 +333,9 @@ export const OnboardingPage = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 pt-3 border-t border-[#EEF1F5]">
-            <ShieldCheck className="w-[17px] h-[17px] text-[#1E6FCB] flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-[1.5] text-[#56657A]">
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
               Tu identidad nunca se comparte con el organismo receptor.
             </span>
           </div>
