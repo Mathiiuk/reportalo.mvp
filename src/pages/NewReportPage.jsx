@@ -12,7 +12,7 @@ import { ReportProcessingScreen } from '../components/report/ReportProcessingScr
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
+import { resolveServiceDbId, getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
 import { hasAcceptedCurrentTerms, recordTermsAcceptance, CURRENT_TERMS_VERSION } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
@@ -89,6 +89,22 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Reporte ya persistido en Supabase (REP-2500) — id real y código para mostrar en éxito (E-4)
   const [persistedReport, setPersistedReport] = useState(null);
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  // REP-2204: candado contra el doble envío. Es un ref y no un estado a propósito: dos toques
+  // en el mismo cuadro leen el mismo render, y solo un ref se ve actualizado entre los dos.
+  const submitLockRef = useRef(false);
+  // Segunda barrera: la persistencia misma tampoco corre dos veces a la vez
+  const persistInFlightRef = useRef(false);
+  const [isSendLocked, setIsSendLocked] = useState(false);
+  const lockSubmit = () => {
+    if (submitLockRef.current) return false;
+    submitLockRef.current = true;
+    setIsSendLocked(true);
+    return true;
+  };
+  const unlockSubmit = () => {
+    submitLockRef.current = false;
+    setIsSendLocked(false);
+  };
   // REP-3543: constancia de consentimiento del envío que originó la aceptación (se muestra en M15)
   const [consentRecord, setConsentRecord] = useState(null);
 
@@ -331,9 +347,16 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   // Envío de reporte: si está offline, se persiste en PENDING_SYNC; si está online, avanza a cuarentena
   const handleSubmitReport = async () => {
+    // REP-2204: un segundo toque mientras el primero está en curso no hace nada
+    if (!lockSubmit()) return;
     if (!isOnline) {
       // Estado explícito PENDING_SYNC cuando no hay conectividad (REP-2703)
-      await markDraftPendingSync(clientSideId);
+      try {
+        await markDraftPendingSync(clientSideId);
+      } catch (err) {
+        unlockSubmit();
+        throw err;
+      }
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
@@ -350,10 +373,21 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   // Acto de consentimiento + envío (primer reporte)
   const handleAcceptTermsAndSubmit = async () => {
-    await recordTermsAcceptance(user?.id, { camera: true, location: true });
+    if (!lockSubmit()) return;
+    try {
+      await recordTermsAcceptance(user?.id, { camera: true, location: true });
+    } catch (err) {
+      unlockSubmit();
+      throw err;
+    }
     setConsentRecord({ version: CURRENT_TERMS_VERSION, acceptedAt: new Date().toISOString() });
     if (!isOnline) {
-      await markDraftPendingSync(clientSideId);
+      try {
+        await markDraftPendingSync(clientSideId);
+      } catch (err) {
+        unlockSubmit();
+        throw err;
+      }
       // Mensaje coloquial informando que se guardó y enviará solo
       toast.success('Reporte guardado con éxito', {
         description: 'Se enviará automáticamente apenas recuperes señal.',
@@ -365,6 +399,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
     goToStep(4);
   };
+
+  // REP-2204: si el envío falla y el flujo vuelve a la revisión, se puede reintentar
+  useEffect(() => {
+    if (currentStep <= 3) {
+      submitLockRef.current = false;
+      setIsSendLocked(false);
+    }
+  }, [currentStep]);
 
   // E-2: el borrador local solo se purga una vez que el servidor confirmó el guardado real (paso 6)
   useEffect(() => {
@@ -388,6 +430,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // y solo avanza al acuse si todo se guardó (AC-05). UJ v3.3: corre sola al terminar la protección
   // (ya no hay paso de «Confirmar y enviar»); si falla, vuelve a la revisión con el borrador intacto.
   const handleConfirmEvidenceAndPersist = async (evidencesOverride) => {
+    // REP-2204: si ya hay una persistencia en curso (doble disparo del callback) no se crea otro reporte
+    if (persistInFlightRef.current) return;
+    persistInFlightRef.current = true;
     setIsSubmittingReport(true);
     try {
       // H-30 · La validación de privacidad va ANTES de crear el reporte, para que las dos
@@ -420,10 +465,21 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
       const { lat, lng } = extractLatLng(activeCoords);
 
+      // REP-2204: con las categorías de respaldo no hay dbId; se resuelve por código y, si no se
+      // puede, no se envía: antes el reporte se guardaba sin categoría sin avisar.
+      const serviceId = await resolveServiceDbId(selectedCategory);
+      if (!serviceId) {
+        toast.error('No pudimos identificar la categoría', {
+          description: 'Tu borrador sigue guardado. Revisá tu conexión y probá de nuevo.',
+        });
+        goToStep(3);
+        return;
+      }
+
       const creationResult = await createCitizenReport({
         clientSideId,
         userId: user?.id,
-        serviceId: selectedCategory?.dbId ?? null,
+        serviceId,
         localityId: customLocation?.localityId ?? null,
         description,
         latitud: lat,
@@ -432,7 +488,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
       if (!creationResult.success) {
         toast.error('No pudimos enviar tu reporte', {
-          description: creationResult.error || 'Probá de nuevo en unos segundos.',
+          // REP-2204: mensaje pensado para el ciudadano; el detalle técnico queda en el log
+          description: creationResult.userMessage || 'Tu borrador sigue guardado: probá de nuevo en unos segundos.',
         });
         goToStep(3);
         return;
@@ -480,6 +537,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       goToStep(3);
     } finally {
       setIsSubmittingReport(false);
+      persistInFlightRef.current = false;
     }
   };
 
@@ -589,6 +647,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               hasAcceptedTerms={userHasAccepted}
               isOnline={isOnline}
               draftStatus={draftStatus}
+              isSubmitting={isSendLocked}
               onBack={handleBack}
               onSubmitReport={handleSubmitReport}
               onAcceptTermsAndSubmit={handleAcceptTermsAndSubmit}

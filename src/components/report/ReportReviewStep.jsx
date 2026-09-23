@@ -5,6 +5,7 @@ import { ReportFlowHeader } from './ReportFlowHeader';
 import { ConsentSheet } from './ConsentSheet';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
+import { getSubmissionReadiness } from '../../services/reportReadiness';
 
 const FIELD_LABEL =
   'text-rep-label font-semibold text-rep-ink-muted desktop:w-[120px] desktop:shrink-0 desktop:text-rep-label-d desktop:uppercase desktop:tracking-wide';
@@ -25,6 +26,7 @@ export const ReportReviewStep = ({
   hasAcceptedTerms = false,
   isOnline = true,
   draftStatus = 'DRAFT_LOCAL',
+  isSubmitting = false,
   onBack,
   onSubmitReport,
   onAcceptTermsAndSubmit,
@@ -40,7 +42,16 @@ export const ReportReviewStep = ({
   const photoCount = evidenceList.length;
   const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto adjunta' : 'fotos adjuntas'}`;
   const tone = selectedCategory ? getCategoryTone(selectedCategory) : null;
-  const submitLabel = !isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte';
+  // REP-2204: el botón solo está disponible con los datos mínimos del MVP y mientras no haya un envío en curso
+  const { ready: isReadyToSubmit, missing } = getSubmissionReadiness({
+    evidenceList,
+    selectedCategory,
+    description,
+    hasConfirmedLocality,
+  });
+  const isSubmitBlocked = isSubmitting || !isReadyToSubmit;
+  const idleLabel = !isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte';
+  const submitLabel = isSubmitting ? 'Enviando…' : idleLabel;
 
   const displayAddress =
     address ||
@@ -49,11 +60,15 @@ export const ReportReviewStep = ({
       : 'Punto marcado en el mapa');
 
   const handleSendClick = () => {
+    // REP-2204: un toque más durante el envío no debe iniciar otro
+    if (isSubmitting) return;
     // R-1/R-2: no se puede enviar sin que el ciudadano confirme la localidad real
     if (!hasConfirmedLocality) {
       onOpenAdjustLocation?.();
       return;
     }
+    // REP-2204: faltan datos mínimos; el aviso de qué falta ya está a la vista debajo del botón
+    if (!isReadyToSubmit) return;
     if (hasAcceptedTerms) {
       // Quien ya aceptó la versión vigente pasa derecho al envío (M14)
       onSubmitReport();
@@ -230,7 +245,14 @@ export const ReportReviewStep = ({
             type="button"
             onClick={handleSendClick}
             aria-label={submitLabel}
-            className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] desktop:w-auto desktop:min-w-[220px] desktop:px-8"
+            // aria-disabled y no disabled: el botón sigue enfocable y, sin localidad confirmada, abre el ajuste de ubicación
+            aria-disabled={isSubmitBlocked}
+            aria-describedby={!isReadyToSubmit ? 'submit-missing' : undefined}
+            className={`rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 desktop:w-auto desktop:min-w-[220px] desktop:px-8 ${
+              isSubmitBlocked
+                ? 'cursor-not-allowed opacity-45 shadow-none'
+                : 'hover:bg-rep-accent-strong active:scale-[0.98]'
+            }`}
           >
             <span>{submitLabel}</span>
             {!isOnline ? (
@@ -239,6 +261,20 @@ export const ReportReviewStep = ({
               <Send aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
             )}
           </button>
+
+          {/* REP-2204: qué falta para poder enviar */}
+          {!isReadyToSubmit && (
+            <ul
+              id="submit-missing"
+              data-testid="submit-missing"
+              role="status"
+              className="m-0 list-none p-0 pt-2 text-center text-rep-label font-medium text-rep-danger desktop:pt-0 desktop:text-left desktop:text-rep-label-d"
+            >
+              {missing.map((item) => (
+                <li key={item.key}>{item.label}</li>
+              ))}
+            </ul>
+          )}
 
           {!hasAcceptedTerms && (
             <p className="m-0 pt-2 text-center text-rep-label font-medium text-rep-ink-muted desktop:pt-0 desktop:text-rep-label-d">

@@ -11,6 +11,7 @@
  */
 import { getAllPendingSyncReports, deleteDraftReport } from './offlineStorageService';
 import { processAllEvidencesThroughQuarantine } from './quarantinePipelineService';
+import { resolveServiceDbId } from './categoriesService';
 import {
   createCitizenReport,
   attachReportEvidence,
@@ -62,10 +63,18 @@ export const sendPendingDraft = async (draft, userId) => {
     }
 
     const { lat, lng } = extractLatLng(draft.customLocation?.coordinates || draft.geolocation);
+
+    // REP-2204: un borrador guardado sin conexión usa las categorías de respaldo (sin dbId).
+    // Se resuelve por código y, si no se puede, no se envía sin categoría: queda pendiente.
+    const serviceId = await resolveServiceDbId(draft.selectedCategory);
+    if (!serviceId) {
+      return { success: false, error: 'No se pudo identificar la categoría del reporte.' };
+    }
+
     const creation = await createCitizenReport({
       clientSideId: draft.client_side_id,
       userId,
-      serviceId: draft.selectedCategory?.dbId ?? null,
+      serviceId,
       localityId: draft.customLocation?.localityId ?? null,
       description: draft.description,
       latitud: lat,
