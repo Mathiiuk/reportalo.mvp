@@ -5,7 +5,8 @@
 **Fecha:** 21/09/2026 · **Actualizado:** 23/09/2026 · **Sprint:** 13
 
 > **Estado de este documento (23/09/2026).** Se escribió cuando solo estaban aplicados los bloques 0 a 4. Desde entonces los
-> **bloques 5 a 9 se implementaron y se mergearon** a `staging` (PR #96, `09c7e6f`), junto con REP-2203, REP-2501 y REP-2204.
+> **bloques 5 a 9 se implementaron y se mergearon** a `staging` (PR #96, `09c7e6f`), junto con REP-2203, REP-2501 y REP-2204. **Los bloques 6 y 7
+> están parciales**: faltan **6-B (Perfil)** y **7-B (onboarding y permisos)**.
 > Sigue sirviendo como guía para cualquier bloque o revisión del handoff que falte. Cambios de esta versión: regla nueva **R-7**,
 > §4 y §5 actualizados al estado real y checklist de §6 ajustado. R-1 a R-6 y la historia de los bloques 0 a 4 se conservan.
 
@@ -194,8 +195,8 @@ REP-2203, REP-2501 y REP-2204. Cualquier bloque nuevo se genera contra esa cabez
 | 3 · detalle del reporte con fundamento legal | `557298e` |
 | 4 · sin conexión y errores del reporte | `bcb8872` |
 | 5 · mapa de inicio y navegación | `a549ba5` |
-| 6 · mis reportes y notificaciones | `e2f9f7e` |
-| 7 · acceso y primer ingreso | `1cfc6d3` |
+| 6 · mis reportes y notificaciones (M17, M18). **Parcial: falta 6-B, Perfil (M19)** | `e2f9f7e` |
+| 7 · acceso y primer ingreso (M01 a M03). **Parcial: falta 7-B, onboarding y permisos (M04 a M07)** | `1cfc6d3` |
 | 8 · novedades | `d1173f9` |
 | 9 · estados vacíos y errores | `1f274d6` |
 
@@ -257,17 +258,24 @@ Testing Library.
 
 ## 5. Sobre el alcance de los bloques 5 a 10
 
-**Estado al 23/09/2026.** Los bloques 5 a 9 ya están implementados y mergeados (ver §4). **El bloque 10 no tiene commit en `staging`:**
-confirmar su alcance con Iván antes de generarlo.
+**Estado al 23/09/2026.** Los bloques 5, 8 y 9 están completos y los bloques 6 y 7 están **parciales** (ver §4): faltan **6-B (Perfil)** y **7-B (onboarding y permisos)**.
+**El bloque 10 (Municipio y oficial, D21–D30) no tiene commit en `staging`** y, según la hoja de ruta de Iván, queda fuera del Sprint 13. El tablero del
+municipio (D39) no se implementa: está fuera del MVP.
 
-Observaciones de producto que este documento pedía resolver antes de generar los bloques 5 a 10, y su estado según el código:
+Observaciones de producto y su estado. Fuente: código de `staging` y las respuestas de Iván en REP-3787 (23/09/2026):
 
 | Observación | Estado al 23/09/2026 |
 |---|---|
-| **H-35**: la descripción es obligatoria en el servicio pero no en la pantalla | **Resuelta** por REP-2203: obligatoria, de 10 a 280 caracteres, en pantalla, servicio y base |
+| **H-35**: la descripción es obligatoria en el servicio pero no en la pantalla | **Resuelta en lo principal** por REP-2203 (obligatoria, de 10 a 280 caracteres, en pantalla, servicio y base). **Falta la salida para los borradores trabados en la cola offline:** Pendientes no permite editarlos ni descartarlos, y con el mínimo de 10 caracteres es más probable que un borrador viejo falle al sincronizar. Iván lo confirma con Hernán |
 | **H-33** (M20, Bloque 6): el estado «Listo para enviar» no existe en el flujo real | **Sigue abierta**: no hay ninguna implementación de ese estado en `src/` |
 | **H-27** (Bloque 5/6): «Compartir» manda el link de una pantalla privada | **Sigue abierta**: `ReportDetailPage` comparte `window.location.href` y no existe una vista pública del reporte |
-| **H-19**: el texto legal del consentimiento cambió y necesita validación del PO | **Sin validar** (no consta la aprobación). Ver la observación siguiente, que es más grave |
+| **H-19**: el texto legal del consentimiento cambió y necesita validación del PO | **Postergada a otro sprint** (Iván, 23/09): el texto de M13 queda el de la v3.3 y la re-aceptación ocurre solo al cambiar la versión de términos. Ver la observación siguiente, que esa postergación no cubre |
+| **H-09** (6-B): dónde se guarda la preferencia de tema | Iván: **tema claro por defecto**, sin importar el del dispositivo. **Sigue abierto** si es por dispositivo o por cuenta (Matías propuso por dispositivo). Lo confirma Hernán |
+| **Descargar mis datos** (6-B) | Iván: **fuera del MVP**; como idea, un PDF con datos básicos y el listado de reportes por estado. Hoy el botón existe y descarga un JSON |
+| **PA-01** (7-B): orden del recorrido | **Sigue abierta**: Iván no tiene la información; la respuesta es de Hernán. Solo hay que decidir si se corrigen los criterios de aceptación (la app ya hace bienvenida, acceso y onboarding) |
+| **Ilustraciones del onboarding** (7-B) | **Resuelta**: van con **pictogramas**, y el 7-B se genera igual |
+| **Términos en el onboarding** (7-B) | **Resuelta**: la pantalla de términos **sale** del recorrido. Los términos se exigen una sola vez, al enviar el primer reporte (M13), y vuelven solo si cambia la versión. El onboarding cierra en permisos y de ahí al mapa. Iván corrige el título del recorrido en el UJ |
+| **H-06**: tests que fallan en un checkout limpio | **Confirmada** (se comprobó sin configuración de Supabase): fallan UT-QPS-14 y UT-QPS-15 (2 de 371). Dependen del `.env`; conviene que mockeen la configuración dentro del propio test, o fallarán en el CI (H-07) |
 
 **Observación nueva, a resolver con el PO antes de cualquier bloque sobre consentimiento o privacidad: la app promete difuminado que el servidor no hace.**
 El texto de la hoja de consentimiento dice «Difuminamos rostros y patentes en el servidor, antes de guardar», y hay promesas equivalentes en la captura
