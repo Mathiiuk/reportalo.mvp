@@ -1,0 +1,861 @@
+{
+  "summary": {
+    "BASE": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 858,
+      "inputMean": 863,
+      "outputMedian": 383,
+      "outputMean": 356,
+      "outputMax": 598,
+      "thoughtsMean": 29,
+      "thoughtsMax": 379,
+      "latencyMedian": 1944,
+      "latencyP90": 2470,
+      "retried": 0,
+      "conciseCitizenOk": null,
+      "conciseOfficialOk": null,
+      "wordsCitizenMedian": 30,
+      "wordsOfficialMedian": 48
+    },
+    "A": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 726,
+      "inputMean": 738,
+      "outputMedian": 279,
+      "outputMean": 313,
+      "outputMax": 548,
+      "thoughtsMean": 4,
+      "thoughtsMax": 162,
+      "latencyMedian": 1824,
+      "latencyP90": 2501,
+      "retried": 0,
+      "conciseCitizenOk": null,
+      "conciseOfficialOk": null,
+      "wordsCitizenMedian": 31,
+      "wordsOfficialMedian": 49
+    },
+    "B": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 726,
+      "inputMean": 738,
+      "outputMedian": 350,
+      "outputMean": 312,
+      "outputMax": 537,
+      "thoughtsMean": 0,
+      "thoughtsMax": 0,
+      "latencyMedian": 1869,
+      "latencyP90": 2429,
+      "retried": 0,
+      "conciseCitizenOk": null,
+      "conciseOfficialOk": null,
+      "wordsCitizenMedian": 27,
+      "wordsOfficialMedian": 49
+    },
+    "C": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 4
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 1,
+      "inputMedian": 726,
+      "inputMean": 738,
+      "outputMedian": 366,
+      "outputMean": 328,
+      "outputMax": 566,
+      "thoughtsMean": 10,
+      "thoughtsMax": 442,
+      "latencyMedian": 1960,
+      "latencyP90": 2453,
+      "retried": 0,
+      "conciseCitizenOk": null,
+      "conciseOfficialOk": null,
+      "wordsCitizenMedian": 28,
+      "wordsOfficialMedian": 51.5
+    },
+    "BASE+": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 916,
+      "inputMean": 921,
+      "outputMedian": 328,
+      "outputMean": 286,
+      "outputMax": 524,
+      "thoughtsMean": 0,
+      "thoughtsMax": 0,
+      "latencyMedian": 1882,
+      "latencyP90": 2642,
+      "retried": 0,
+      "conciseCitizenOk": "45/45",
+      "conciseOfficialOk": "35/35"
+    },
+    "A+": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 784,
+      "inputMean": 796,
+      "outputMedian": 333,
+      "outputMean": 290,
+      "outputMax": 644,
+      "thoughtsMean": 11,
+      "thoughtsMax": 481,
+      "latencyMedian": 1756,
+      "latencyP90": 2351,
+      "retried": 0,
+      "conciseCitizenOk": "45/45",
+      "conciseOfficialOk": "37/37"
+    },
+    "B+": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 784,
+      "inputMean": 796,
+      "outputMedian": 287,
+      "outputMean": 272,
+      "outputMax": 378,
+      "thoughtsMean": 0,
+      "thoughtsMax": 0,
+      "latencyMedian": 1726,
+      "latencyP90": 2109,
+      "retried": 0,
+      "conciseCitizenOk": "45/45",
+      "conciseOfficialOk": "35/35"
+    },
+    "C+": {
+      "n": 45,
+      "perCase": {
+        "A": {
+          "n": 5,
+          "correct": 5
+        },
+        "B": {
+          "n": 5,
+          "correct": 5
+        },
+        "C": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-Av": {
+          "n": 5,
+          "correct": 5
+        },
+        "D-CABA": {
+          "n": 5,
+          "correct": 5
+        },
+        "E": {
+          "n": 5,
+          "correct": 5
+        },
+        "E-sin-categoria": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba1": {
+          "n": 5,
+          "correct": 5
+        },
+        "Prueba2": {
+          "n": 5,
+          "correct": 5
+        }
+      },
+      "correctDecide": 30,
+      "nDecide": 30,
+      "wrongCitationDecide": 0,
+      "wrongCitationInfo": 0,
+      "falsePositiveInfo": 0,
+      "lostToAbstention": 0,
+      "truncados": 0,
+      "jsonInvalido": 0,
+      "errorApi": 0,
+      "validacion": 0,
+      "inputMedian": 784,
+      "inputMean": 796,
+      "outputMedian": 265,
+      "outputMean": 275,
+      "outputMax": 450,
+      "thoughtsMean": 0,
+      "thoughtsMax": 0,
+      "latencyMedian": 1762,
+      "latencyP90": 2518,
+      "retried": 0,
+      "conciseCitizenOk": "45/45",
+      "conciseOfficialOk": "37/37"
+    },
+    "__baselineCitasFueraDeTop3": {
+      "B": {
+        "runsConCitaFueraDeTop3": 5,
+        "citas": {
+          "Ley 451 (CABA) — Régimen de Faltas > Artículo 6.1.52 (estacionamiento o detención prohibida)": 5
+        }
+      }
+    }
+  },
+  "decisions": {
+    "A": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": true,
+      "all": true,
+      "gain": {
+        "input": -15.384615384615385,
+        "output": -27.154046997389038,
+        "latency": -6.172839506172839
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ]
+    },
+    "B": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": true,
+      "all": true,
+      "gain": {
+        "input": -15.384615384615385,
+        "output": -8.616187989556137,
+        "latency": -3.8580246913580245
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ]
+    },
+    "C": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": true,
+      "all": true,
+      "gain": {
+        "input": -15.384615384615385,
+        "output": -4.43864229765013,
+        "latency": 0.823045267489712
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ]
+    },
+    "BASE+": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": false,
+      "all": false,
+      "gain": {
+        "input": 6.75990675990676,
+        "output": -14.360313315926893,
+        "latency": -3.189300411522634
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ],
+      "plus": {
+        "truncados0": true,
+        "max819": true,
+        "concision90": true
+      }
+    },
+    "A+": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": false,
+      "all": false,
+      "gain": {
+        "input": -8.624708624708624,
+        "output": -13.054830287206268,
+        "latency": -9.670781893004115
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ],
+      "plus": {
+        "truncados0": true,
+        "max819": true,
+        "concision90": true
+      }
+    },
+    "B+": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": true,
+      "all": true,
+      "gain": {
+        "input": -8.624708624708624,
+        "output": -25.06527415143603,
+        "latency": -11.213991769547325
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ],
+      "plus": {
+        "truncados0": true,
+        "max819": true,
+        "concision90": true
+      }
+    },
+    "C+": {
+      "R1": true,
+      "R2": true,
+      "R3": true,
+      "R4": true,
+      "R5": true,
+      "all": true,
+      "gain": {
+        "input": -8.624708624708624,
+        "output": -30.809399477806785,
+        "latency": -9.362139917695474
+      },
+      "r1Detail": [
+        {
+          "case": "A",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "B",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "C",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-Av",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "D-CABA",
+          "variant": 5,
+          "base": 5
+        },
+        {
+          "case": "E",
+          "variant": 5,
+          "base": 5
+        }
+      ],
+      "plus": {
+        "truncados0": true,
+        "max819": true,
+        "concision90": true
+      }
+    }
+  }
+}

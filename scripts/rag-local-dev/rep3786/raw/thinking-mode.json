@@ -1,0 +1,54 @@
+{
+  "chosen": {
+    "id": "budget0",
+    "thinkingConfig": {
+      "thinkingBudget": 0
+    }
+  },
+  "observed": [
+    {
+      "modo": "low",
+      "ok": true,
+      "status": 200,
+      "thoughts": 0,
+      "candidates": 568,
+      "prompt": 932,
+      "finishReason": "STOP",
+      "latencyMs": 3246,
+      "error": null
+    },
+    {
+      "modo": "budget0",
+      "ok": true,
+      "status": 200,
+      "thoughts": 0,
+      "candidates": 546,
+      "prompt": 932,
+      "finishReason": "STOP",
+      "latencyMs": 2398,
+      "error": null
+    },
+    {
+      "modo": "minimal",
+      "ok": false,
+      "status": 400,
+      "thoughts": 0,
+      "candidates": null,
+      "prompt": null,
+      "finishReason": null,
+      "latencyMs": 231,
+      "error": "{\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Thinking level MINIMAL is not supported for this model. Please retry with other thinking level.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n"
+    },
+    {
+      "modo": "omitido",
+      "ok": true,
+      "status": 200,
+      "thoughts": 1248,
+      "candidates": 338,
+      "prompt": 932,
+      "finishReason": "STOP",
+      "latencyMs": 5071,
+      "error": null
+    }
+  ]
+}
