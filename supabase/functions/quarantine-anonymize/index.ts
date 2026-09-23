@@ -6,12 +6,15 @@
  * Implementa el principio de Privacidad por Diseño (Privacy by Design):
  * - Aísla de forma transitoria la fotografía en el bucket privado 'evidence-quarantine'.
  * - Sanitiza metadatos EXIF (REP-2401).
- * - Detecta y difumina rostros y patentes (REP-2400 / REP-2907).
+ * - Detecta rostros y patentes (REP-2400 / REP-2907). OJO: hoy solo informa las zonas, todavía NO las difumina.
  * - Almacena de forma exclusiva la versión final protegida en 'report-evidences'.
+ * - REP-2501: exige sesión, solo procesa fotos que el propio usuario subió a su carpeta y
+ *   rechaza lo que no sea JPEG. Lo que no puede procesar, lo purga igual.
  * - Purgado Fail-Safe: Destruye obligatoriamente la imagen original de cuarentena tanto al finalizar como ante errores.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
+import { isJpeg, isOwnQuarantinePath, isUuid, stripExifMetadata } from './exif.ts';
 
 // Cabeceras estándar para permitir CORS en las peticiones del frontend
 const CORS_HEADERS = {
@@ -38,61 +41,6 @@ interface BoundingBox {
   height: number;
   type: 'face' | 'license_plate' | 'sensitive_text';
 }
-
-/**
- * Función auxiliar para sanitizar metadatos EXIF de un buffer de imagen JPEG.
- * Elimina marcadores APP1 (0xFFE1) que contienen metadatos EXIF y GPS.
- * @param buffer Uint8Array con los bytes de la imagen
- * @returns Uint8Array limpio sin cabeceras EXIF
- */
-export const stripExifMetadata = (buffer: Uint8Array): Uint8Array => {
-  // Verificamos si es una imagen JPEG válida (empieza con 0xFFD8)
-  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
-    // Si no es JPEG o es WebP/PNG, devolvemos el buffer original
-    return buffer;
-  }
-
-  const cleanedChunks: Uint8Array[] = [];
-  let offset = 2; // Omitimos el marcador SOI (0xFFD8)
-  cleanedChunks.push(new Uint8Array([0xff, 0xd8]));
-
-  while (offset < buffer.length) {
-    if (buffer[offset] !== 0xff) {
-      break;
-    }
-
-    const marker = buffer[offset + 1];
-
-    // Marcador SOS (Start of Scan) o EOI (End of Image): llegamos a los datos de la imagen
-    if (marker === 0xda || marker === 0xd9) {
-      cleanedChunks.push(buffer.subarray(offset));
-      break;
-    }
-
-    // Longitud del segmento actual
-    const length = (buffer[offset + 2] << 8) + buffer[offset + 3];
-
-    // Si es APP1 (0xFFE1: EXIF) o APP2 (0xFFE2: FlashPix/ICC en ciertos casos de identificación), lo descartamos
-    const isExifMarker = marker === 0xe1;
-
-    if (!isExifMarker) {
-      cleanedChunks.push(buffer.subarray(offset, offset + 2 + length));
-    }
-
-    offset += 2 + length;
-  }
-
-  // Concatenamos todos los fragmentos seguros sin metadatos
-  const totalLength = cleanedChunks.reduce((acc, curr) => acc + curr.length, 0);
-  const result = new Uint8Array(totalLength);
-  let currentPos = 0;
-  for (const chunk of cleanedChunks) {
-    result.set(chunk, currentPos);
-    currentPos += chunk.length;
-  }
-
-  return result;
-};
 
 /**
  * Detecta zonas sensibles (rostros y patentes) mediante Google Vision API o fallback simulado seguro.
@@ -210,7 +158,31 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Registramos la ruta para la purga forzosa en bloque finally
+    // REP-2501: esta función corre con service role y estaba desplegada sin verificar el
+    // JWT, así que cualquiera podía pedirle procesar (y borrar) una foto ajena. Se
+    // identifica al usuario por su token y solo se acepta su propia carpeta.
+    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const { data: authData, error: authError } = token
+      ? await supabaseAdmin.auth.getUser(token)
+      : { data: null, error: new Error('Falta el token de sesión.') };
+    const authenticatedUserId = authData?.user?.id;
+
+    if (authError || !authenticatedUserId) {
+      return new Response(JSON.stringify({ error: 'Se requiere una sesión iniciada.' }), {
+        status: 401,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!isUuid(clientSideId) || !isOwnQuarantinePath(quarantinePath, authenticatedUserId)) {
+      return new Response(JSON.stringify({ error: 'La ruta de la evidencia no es válida.' }), {
+        status: 403,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Recién con la ruta validada se registra para la purga forzosa del bloque finally:
+    // nunca se borra una ruta que no es del usuario que hizo el pedido.
     quarantinePathToDelete = quarantinePath;
 
     // 1. Descargamos la imagen cruda desde el bucket privado de cuarentena
@@ -224,6 +196,15 @@ Deno.serve(async (req: Request) => {
 
     const rawArrayBuffer = await rawFileBlob.arrayBuffer();
     const rawUint8Array = new Uint8Array(rawArrayBuffer);
+
+    // Solo JPEG: en PNG/WebP no hay forma de quitar los metadatos sin re-codificar. El
+    // original se purga igual en el bloque finally.
+    if (!isJpeg(rawUint8Array)) {
+      return new Response(
+        JSON.stringify({ error: 'Solo se aceptan fotos en formato JPEG.', failSafeTriggered: true }),
+        { status: 415, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 2. Sanitizamos los metadatos EXIF para remover coordenadas GPS y datos del dispositivo (REP-2401)
     const sanitizedBuffer = stripExifMetadata(rawUint8Array);

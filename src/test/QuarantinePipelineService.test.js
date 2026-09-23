@@ -203,6 +203,11 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
         error: null,
       });
 
+      // REP-2501: la subida a cuarentena exige sesión (va a la carpeta del usuario)
+      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+        data: { session: { user: { id: 'user-qps-1' } } },
+      });
+
       const spyStorage = vi.spyOn(supabase.storage, 'from').mockReturnValue({
         upload: mockUpload,
         remove: mockRemove,
@@ -242,6 +247,11 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
       const mockUpload = vi.fn().mockResolvedValue({ data: { path: 'temp_to_purge.jpg' }, error: null });
       const mockRemove = vi.fn().mockResolvedValue({ data: {}, error: null });
       const mockInvoke = vi.fn().mockRejectedValue(new Error('Network connection timeout'));
+
+      // REP-2501: la subida a cuarentena exige sesión (va a la carpeta del usuario)
+      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+        data: { session: { user: { id: 'user-qps-1' } } },
+      });
 
       const spyStorage = vi.spyOn(supabase.storage, 'from').mockReturnValue({
         upload: mockUpload,

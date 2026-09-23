@@ -68,6 +68,10 @@ vi.mock('../lib/supabaseClient', () => ({
         select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [], error: null }) })),
       };
     }),
+    // REP-2501: la subida a cuarentena lee la sesión para usar la carpeta del usuario
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'user-e2e-1' } } } }),
+    },
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn().mockResolvedValue({ error: null }),

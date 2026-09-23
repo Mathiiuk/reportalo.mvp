@@ -12,6 +12,7 @@ import {
   hasExifMetadata,
   stripExifFromJpeg,
   normalizeImageOrientation,
+  ensureJpeg,
 } from './metadataSanitizer';
 
 // Reexportamos las funciones para trazabilidad de la suite de pruebas y auditoría de QA
@@ -135,6 +136,19 @@ const isTestRunner = () => Boolean(import.meta.env?.VITEST || import.meta.env?.M
 const isLocalEmulatorAllowed = () => Boolean(import.meta.env?.DEV) || isTestRunner();
 
 /**
+ * Id del usuario con sesión iniciada, o null si no hay sesión o no se pudo leer.
+ * @returns {Promise<string|null>}
+ */
+const getSessionUserId = async () => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Sube una fotografía transitoria al bucket privado de cuarentena.
  * @param {Blob|File} file Archivo fotográfico original
  * @param {string} clientSideId Identificador de correlación del reporte
@@ -147,10 +161,20 @@ export const uploadToQuarantine = async (file, clientSideId) => {
 
   // Generamos un nombre único y transitorio para la cuarentena
   const fileExtension = file.name?.split('.').pop() || 'jpg';
-  const quarantinePath = `temp_${clientSideId}_${Date.now()}.${fileExtension}`;
+  const fileName = `temp_${clientSideId}_${Date.now()}.${fileExtension}`;
+  let quarantinePath = fileName;
 
   // Si Supabase está configurado con credenciales reales o mockeado en tests
   if (shouldInvokeSupabaseBackend()) {
+    // REP-2501: la foto va a la carpeta del propio usuario (`<user_id>/temp_...`). La
+    // política de Storage y la Edge Function solo aceptan esa carpeta, así nadie puede
+    // pedir que se procese (o se borre) la foto de otra persona.
+    const userId = await getSessionUserId();
+    if (!userId && !(!isTestRunner() && import.meta.env?.DEV)) {
+      return { success: false, error: 'Necesitás iniciar sesión para enviar la foto.' };
+    }
+    if (userId) quarantinePath = `${userId}/${fileName}`;
+
     try {
       // R5-02 (REP-2908-VERIF ronda 5): sin upsert. quarantinePath ya es
       // único por clientSideId + timestamp, nunca debería colisionar, y la
@@ -220,7 +244,9 @@ export const processEvidenceThroughQuarantine = async ({
   // tambien la etiqueta Orientation, asi que una foto vertical terminaba
   // mostrandose acostada. Rotando los pixeles aca, la imagen queda derecha para
   // los dos caminos: el server-side de la Edge Function y el fallback local.
-  const uprightFile = await normalizeImageOrientation(file);
+  // REP-2501: además, todo lo que no sea JPEG se convierte, porque el servidor solo
+  // acepta JPEG (no puede quitar los metadatos de un PNG/WebP sin re-codificarlo).
+  const uprightFile = await ensureJpeg(await normalizeImageOrientation(file));
 
   // 1. Paso 1: Subida transitoria al bucket privado de cuarentena
   const uploadResult = await uploadToQuarantine(uprightFile, clientSideId);
