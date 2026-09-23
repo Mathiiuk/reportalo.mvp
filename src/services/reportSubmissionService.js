@@ -13,6 +13,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { BUCKET_PUBLIC_EVIDENCES } from './quarantinePipelineService';
+import { validateDescription } from './reportDescription';
 
 const INITIAL_STATE_CODE = 'RECIBIDO';
 
@@ -48,6 +49,14 @@ export const createCitizenReport = async ({
     return { success: false, error: 'Faltan datos obligatorios para crear el reporte.' };
   }
 
+  // REP-2203: misma regla que el formulario (10 a 280 caracteres), por si el envío
+  // llega por otro camino (borrador offline, sincronización) sin pasar por el paso 2
+  const descriptionCheck = validateDescription(description);
+  if (!descriptionCheck.valid) {
+    return { success: false, error: descriptionCheck.error };
+  }
+  const cleanDescription = description.trim();
+
   const { data, error } = await supabase
     .from('citizen_reports')
     .upsert(
@@ -56,7 +65,7 @@ export const createCitizenReport = async ({
         user_id: userId,
         service_id: serviceId ?? null,
         locality_id: localityId,
-        description,
+        description: cleanDescription,
         latitud,
         longitud,
         current_state_code: INITIAL_STATE_CODE,

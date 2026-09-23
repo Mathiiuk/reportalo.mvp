@@ -91,3 +91,77 @@ describe('REP-2200: ReportDetailsStep (Paso 2 del Journey v2)', () => {
     expect(onContinueMock).toHaveBeenCalledTimes(1);
   });
 });
+
+// REP-2203: descripción breve — campo identificado, límite, validación y conservación
+describe('REP-2203: descripción del reporte en el Paso 2', () => {
+  const categories = DEFAULT_REPORT_CATEGORIES;
+  const renderStep = (description, overrides = {}) => {
+    const props = {
+      categories,
+      selectedCategory: categories[0],
+      description,
+      onSelectCategory: vi.fn(),
+      onChangeDescription: vi.fn(),
+      onBack: vi.fn(),
+      onContinue: vi.fn(),
+      ...overrides,
+    };
+    render(<ReportDetailsStep {...props} />);
+    return props;
+  };
+
+  it('UT-DESC-08: el campo está identificado con su etiqueta y limita la longitud a 280', () => {
+    renderStep('');
+    const field = screen.getByLabelText(/Descripción/i);
+    expect(field).toHaveAttribute('maxlength', '280');
+  });
+
+  it('UT-DESC-09: informa el límite con un contador de caracteres', () => {
+    renderStep('Camión bloqueando rampa');
+    expect(screen.getByTestId('description-counter')).toHaveTextContent('23/280');
+    expect(screen.getByText(/entre 10 y 280 caracteres/i)).toBeInTheDocument();
+  });
+
+  it('UT-DESC-10: vacía, no deja continuar y muestra una indicación comprensible', () => {
+    const { onContinue } = renderStep('');
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/i }));
+
+    expect(onContinue).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(/Escribí una descripción/i);
+    expect(screen.getByLabelText(/Descripción/i)).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('UT-DESC-11: con menos de 10 caracteres no deja continuar e indica el mínimo', () => {
+    const { onContinue } = renderStep('bache');
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/i }));
+
+    expect(onContinue).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(/al menos 10/i);
+  });
+
+  it('UT-DESC-12: con una descripción válida continúa y no muestra errores', () => {
+    const { onContinue } = renderStep('Camión bloqueando la rampa');
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/i }));
+
+    expect(onContinue).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('UT-DESC-13: el texto ingresado se conserva al volver a montar el paso con el mismo valor', () => {
+    const texto = 'Derrame de aceite en la esquina';
+    const { unmount } = render(
+      <ReportDetailsStep
+        categories={categories}
+        selectedCategory={categories[0]}
+        description={texto}
+        onSelectCategory={vi.fn()}
+        onChangeDescription={vi.fn()}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+    unmount();
+    renderStep(texto);
+    expect(screen.getByLabelText(/Descripción/i)).toHaveValue(texto);
+  });
+});

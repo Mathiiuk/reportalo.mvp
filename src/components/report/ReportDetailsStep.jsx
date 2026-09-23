@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Check,
   Info,
@@ -13,6 +13,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReportFlowHeader } from './ReportFlowHeader';
 import { getCategoryTone } from './categoryTone';
+import {
+  DESCRIPTION_MIN_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
+  validateDescription,
+} from '../../services/reportDescription';
 
 // Ícono Lucide por código de ícono de la categoría (bundleado, no depende de una fuente externa)
 const ICON_MAP = {
@@ -33,13 +38,28 @@ const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 export const ReportDetailsStep = ({
   categories = [],
   selectedCategory,
-  description,
+  description = '',
   onSelectCategory,
   onChangeDescription,
   onBack,
   onContinue,
 }) => {
   const radioRefs = useRef([]);
+  const descriptionRef = useRef(null);
+  // REP-2203: el error solo se muestra tras intentar continuar y se limpia al corregir
+  const [attemptedContinue, setAttemptedContinue] = useState(false);
+  const descriptionValidation = validateDescription(description);
+  const showDescriptionError = attemptedContinue && !descriptionValidation.valid;
+
+  const handleContinue = () => {
+    if (!descriptionValidation.valid) {
+      setAttemptedContinue(true);
+      descriptionRef.current?.focus();
+      return;
+    }
+    onContinue();
+  };
+
   const currentCategory =
     categories.find((cat) => cat.id === selectedCategory?.id) || selectedCategory;
   const currentTone = currentCategory ? getCategoryTone(currentCategory) : null;
@@ -167,12 +187,40 @@ export const ReportDetailsStep = ({
             </label>
             <textarea
               id="report-description"
+              ref={descriptionRef}
               value={description}
               onChange={(event) => onChangeDescription(event.target.value)}
               placeholder="Describí brevemente lo que observás (ej.: vehículo obstruyendo rampa, derrame, bache profundo)..."
               rows={3}
-              className="block w-full select-text resize-none rounded-2xl border border-rep-border bg-rep-surface px-3.5 py-3 text-rep-input text-rep-ink-body outline-none transition-colors duration-120 placeholder:text-rep-ink-faint focus:border-rep-accent focus:ring-2 focus:ring-rep-accent/15 desktop:h-[320px]"
+              maxLength={DESCRIPTION_MAX_LENGTH}
+              aria-required="true"
+              aria-invalid={showDescriptionError}
+              aria-describedby="report-description-help report-description-error"
+              className={`block w-full select-text resize-none rounded-2xl border bg-rep-surface px-3.5 py-3 text-rep-input text-rep-ink-body outline-none transition-colors duration-120 placeholder:text-rep-ink-faint focus:ring-2 desktop:h-[320px] ${
+                showDescriptionError
+                  ? 'border-rep-danger focus:border-rep-danger focus:ring-rep-danger/15'
+                  : 'border-rep-border focus:border-rep-accent focus:ring-rep-accent/15'
+              }`}
             />
+            <div className="flex items-start justify-between gap-3">
+              <p id="report-description-help" className="m-0 text-rep-label text-rep-ink-muted">
+                Entre {DESCRIPTION_MIN_LENGTH} y {DESCRIPTION_MAX_LENGTH} caracteres.
+              </p>
+              <span
+                data-testid="description-counter"
+                className="shrink-0 text-rep-label tabular-nums text-rep-ink-muted"
+              >
+                {description.length}/{DESCRIPTION_MAX_LENGTH}
+              </span>
+            </div>
+            {/* El aviso aparece recién al intentar continuar, no mientras el usuario todavía escribe */}
+            <p
+              id="report-description-error"
+              role={showDescriptionError ? 'alert' : undefined}
+              className="m-0 text-rep-label text-rep-danger empty:hidden"
+            >
+              {showDescriptionError ? descriptionValidation.error : null}
+            </p>
           </div>
 
           {/* Anticipa dónde aparece el fundamento legal (el análisis corre después de guardar) */}
@@ -198,7 +246,7 @@ export const ReportDetailsStep = ({
           </button>
           <button
             type="button"
-            onClick={onContinue}
+            onClick={handleContinue}
             disabled={!selectedCategory}
             aria-describedby={!selectedCategory ? 'report-category-required' : undefined}
             className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-rep-accent disabled:active:scale-100 desktop:w-auto desktop:min-w-[180px] desktop:px-8"
