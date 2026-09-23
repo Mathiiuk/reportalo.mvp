@@ -410,3 +410,51 @@ export const normalizeImageOrientation = async (file) => {
     return file;
   }
 };
+
+/**
+ * REP-2501 · Convierte a JPEG lo que no lo sea.
+ *
+ * La Edge Function `quarantine-anonymize` solo acepta JPEG: en PNG o WebP no hay forma de
+ * quitar los metadatos sin re-codificar la imagen, y guardar un archivo sin verificar es
+ * peor que rechazarlo. Como el selector de fotos admite PNG y WebP, se re-dibujan acá en un
+ * canvas, que además descarta cualquier metadato del archivo original.
+ *
+ * Si no se puede convertir (sin canvas, o la imagen no se decodifica) se devuelve el
+ * original: el servidor lo rechaza y purga la copia de cuarentena, sin perder la evidencia
+ * del lado del usuario.
+ *
+ * @param {Blob|File} file
+ * @returns {Promise<Blob|File>}
+ */
+export const ensureJpeg = async (file) => {
+  if (!file || file.type === 'image/jpeg') return file;
+
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
+    return file;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+
+    // JPEG no tiene transparencia: sin un fondo, los píxeles transparentes de un PNG quedan negros
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0);
+    if (typeof bitmap.close === 'function') bitmap.close();
+
+    const converted = await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92);
+    });
+
+    return converted || file;
+  } catch (error) {
+    return file;
+  }
+};

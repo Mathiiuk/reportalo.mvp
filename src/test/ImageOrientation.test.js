@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { normalizeImageOrientation, readExifOrientation } from '../services/metadataSanitizer';
+import { normalizeImageOrientation, readExifOrientation, ensureJpeg } from '../services/metadataSanitizer';
 
 /** JPEG minimo con un APP1/EXIF que declara Orientation = 6 (rotar 90 grados). */
 const buildJpegWithOrientation = (orientation) => {
@@ -95,5 +95,57 @@ describe('Fix de fotos acostadas: normalizeImageOrientation', () => {
   it('UT-ORI-06: tolera entradas invalidas', async () => {
     expect(await normalizeImageOrientation(null)).toBeNull();
     expect(await normalizeImageOrientation({})).toEqual({});
+  });
+});
+
+// REP-2501: el servidor solo acepta JPEG (no puede limpiar PNG/WebP sin re-codificar),
+// así que el cliente convierte lo que no sea JPEG antes de subirlo a cuarentena.
+describe('REP-2501: ensureJpeg', () => {
+  afterEach(() => {
+    delete global.createImageBitmap;
+    vi.restoreAllMocks();
+  });
+
+  it('UT-JPG-01: un JPEG pasa sin re-codificar', async () => {
+    const file = { name: 'foto.jpg', type: 'image/jpeg' };
+    global.createImageBitmap = vi.fn();
+
+    expect(await ensureJpeg(file)).toBe(file);
+    expect(global.createImageBitmap).not.toHaveBeenCalled();
+  });
+
+  it('UT-JPG-02: un PNG se convierte a JPEG (sobre fondo blanco, sin transparencia)', async () => {
+    const png = { name: 'captura.png', type: 'image/png' };
+    const jpegBlob = { type: 'image/jpeg', size: 10 };
+    const drawImage = vi.fn();
+    const fillRect = vi.fn();
+    const toBlob = vi.fn((callback) => callback(jpegBlob));
+
+    global.createImageBitmap = vi.fn().mockResolvedValue({ width: 300, height: 200, close: vi.fn() });
+    vi.spyOn(document, 'createElement').mockReturnValue({
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage, fillRect, fillStyle: '' }),
+      toBlob,
+    });
+
+    const result = await ensureJpeg(png);
+
+    expect(result).toBe(jpegBlob);
+    expect(fillRect).toHaveBeenCalled();
+    expect(toBlob).toHaveBeenCalledWith(expect.any(Function), 'image/jpeg', 0.92);
+  });
+
+  it('UT-JPG-03: si no puede convertir devuelve el original (el servidor lo rechaza y lo purga)', async () => {
+    const webp = { name: 'foto.webp', type: 'image/webp' };
+    global.createImageBitmap = vi.fn().mockRejectedValue(new Error('decode error'));
+
+    expect(await ensureJpeg(webp)).toBe(webp);
+  });
+
+  it('UT-JPG-04: tolera entradas inválidas y entornos sin canvas', async () => {
+    expect(await ensureJpeg(null)).toBeNull();
+    const webp = { name: 'foto.webp', type: 'image/webp' };
+    expect(await ensureJpeg(webp)).toBe(webp);
   });
 });
