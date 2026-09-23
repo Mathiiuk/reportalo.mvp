@@ -84,13 +84,51 @@ describe('REP-2500: createCitizenReport', () => {
       clientSideId: 'csid-1',
       userId: 'user-1',
       localityId: 'locality-1',
-      description: 'x',
+      description: 'Bache en la esquina',
       latitud: 0,
       longitud: 0,
     });
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('falló');
+  });
+
+  // REP-2203: el servicio no confía en el formulario y valida la descripción también
+  it.each([
+    ['muy corta', 'bache'],
+    ['solo espacios', '            '],
+    ['demasiado larga', 'a'.repeat(281)],
+  ])('REP-2203: rechaza una descripción %s sin llamar a Supabase', async (_caso, description) => {
+    const result = await createCitizenReport({
+      clientSideId: 'csid-1',
+      userId: 'user-1',
+      localityId: 'locality-1',
+      description,
+      latitud: 0,
+      longitud: 0,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/descripción/i);
+    expect(mockUpsert).not.toHaveBeenCalled();
+  });
+
+  it('REP-2203: guarda la descripción sin espacios en los bordes', async () => {
+    mockSingle.mockResolvedValue({ data: { id: 'r', client_side_id: 'c' }, error: null });
+
+    await createCitizenReport({
+      clientSideId: 'csid-1',
+      userId: 'user-1',
+      localityId: 'locality-1',
+      description: '  Bache en la esquina  ',
+      latitud: 0,
+      longitud: 0,
+    });
+
+    expect(mockUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({ description: 'Bache en la esquina' }),
+      expect.anything()
+    );
   });
 });
 

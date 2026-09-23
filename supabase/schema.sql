@@ -73,7 +73,9 @@ CREATE TABLE IF NOT EXISTS public.citizen_reports (
     locality_id UUID REFERENCES public.localities(id),
     latitud DOUBLE PRECISION NOT NULL,
     longitud DOUBLE PRECISION NOT NULL,
-    description TEXT NOT NULL,
+    -- REP-2203: obligatoria, entre 10 y 280 caracteres (mismo rango que el formulario)
+    description TEXT NOT NULL CONSTRAINT citizen_reports_description_length
+        CHECK (char_length(btrim(description)) BETWEEN 10 AND 280),
     -- Default real de produccion, verificado contra la base el 21/09/2026. Antes
     -- decia 'borrador', codigo que no existe en report_states: con la FK, todo
     -- insert que no trajera current_state_code habria fallado. Lo corrigio la

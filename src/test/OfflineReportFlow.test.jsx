@@ -144,6 +144,10 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
     });
 
     // Avanzamos del Paso 2 al Paso 3
+    // REP-2203: la descripción es obligatoria (10 a 280 caracteres) para avanzar
+    fireEvent.change(screen.getByLabelText(/Descripción/i), {
+      target: { value: 'Basural a cielo abierto en vereda' },
+    });
     const continueButtonPaso2 = screen.getByRole('button', { name: /^continuar$/i });
     fireEvent.click(continueButtonPaso2);
 
@@ -194,6 +198,10 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
     // Esperamos el Paso 2 y avanzamos
     await waitFor(() => {
       expect(screen.getByTestId('report-details-step')).toBeInTheDocument();
+    });
+    // REP-2203: la descripción es obligatoria (10 a 280 caracteres) para avanzar
+    fireEvent.change(screen.getByLabelText(/Descripción/i), {
+      target: { value: 'Basural a cielo abierto en vereda' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^continuar$/i }));
 
