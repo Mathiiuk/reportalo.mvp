@@ -221,3 +221,68 @@ describe('REP-2500: getMyReports', () => {
     expect(result.reports).toEqual([]);
   });
 });
+
+// REP-2204: el ciudadano nunca ve el mensaje crudo de Supabase
+describe('REP-2204: createCitizenReport devuelve un mensaje comprensible', () => {
+  const params = {
+    clientSideId: 'csid-1',
+    userId: 'user-1',
+    serviceId: 'service-1',
+    localityId: 'locality-1',
+    description: 'Bache en la esquina',
+    latitud: -34.6,
+    longitud: -58.4,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpsert.mockReturnValue({ select: mockSelect });
+    mockSelect.mockReturnValue({ single: mockSingle });
+  });
+
+  it('UT-SNM-01: un error técnico de la base se traduce a un texto claro que tranquiliza sobre el borrador', async () => {
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'new row violates row-level security policy for table "citizen_reports"' },
+    });
+
+    const result = await createCitizenReport(params);
+
+    expect(result.success).toBe(false);
+    expect(result.userMessage).not.toMatch(/row-level|policy|citizen_reports/i);
+    expect(result.userMessage).toMatch(/borrador/i);
+    // El detalle técnico se conserva para el log
+    expect(result.error).toMatch(/row-level/);
+  });
+
+  it('UT-SNM-02: un corte de red se explica como problema de conexión', async () => {
+    mockSingle.mockResolvedValue({ data: null, error: { message: 'TypeError: Failed to fetch' } });
+
+    const result = await createCitizenReport(params);
+
+    expect(result.userMessage).toMatch(/conexión/i);
+  });
+
+  it('UT-SNM-03: si la llamada lanza una excepción no se pierde el borrador ni se rompe la pantalla', async () => {
+    mockSingle.mockRejectedValue(new Error('Failed to fetch'));
+
+    const result = await createCitizenReport(params);
+
+    expect(result.success).toBe(false);
+    expect(result.userMessage).toMatch(/conexión/i);
+  });
+
+  it('UT-SNM-04: una descripción inválida muestra su propio mensaje, ya en castellano', async () => {
+    const result = await createCitizenReport({ ...params, description: 'bache' });
+
+    expect(result.success).toBe(false);
+    expect(result.userMessage).toMatch(/al menos 10/i);
+  });
+
+  it('UT-SNM-05: si faltan datos obligatorios el mensaje no muestra jerga', async () => {
+    const result = await createCitizenReport({ clientSideId: 'csid-1' });
+
+    expect(result.userMessage).toBeTruthy();
+    expect(result.userMessage).not.toMatch(/undefined|null|NOT NULL/i);
+  });
+});

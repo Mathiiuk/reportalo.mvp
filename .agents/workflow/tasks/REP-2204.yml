@@ -1,0 +1,72 @@
+id: REP-2204
+external_ref: https://unlz2026.atlassian.net/browse/REP-2204
+title: >-
+  Enviar reporte con un boton claro (datos minimos, sin doble envio, fallo
+  controlado)
+type: feat
+status: READY_FOR_PR
+priority: medium
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/services/reportReadiness.js
+    - src/components/report/ReportReviewStep.jsx
+    - src/pages/NewReportPage.jsx
+    - src/services/reportSubmissionService.js
+    - src/services/categoriesService.js
+    - src/services/pendingSyncService.js
+  environments:
+    - local
+    - staging
+requirements:
+  - >-
+    El boton de envio solo queda disponible con los datos minimos (foto,
+    categoria, descripcion valida, ubicacion confirmada)
+  - >-
+    Al enviar se usan solo la evidencia sanitizada, la categoria, la descripcion
+    y la ubicacion confirmada
+  - Evitar la duplicacion del envio por doble interaccion
+  - >-
+    Exito - identificador del reporte y confirmacion clara (ya existia; se
+    verifica)
+  - Fallo - mensaje comprensible y sin perder el borrador
+  - >-
+    La imagen original nunca se transmite en el envio (ya garantizado por
+    isServerProtectedUrl; se verifica)
+acceptance_criteria:
+  - 'CA-01: con datos incompletos el boton queda no disponible y se ve que falta'
+  - >-
+    CA-02: con la ubicacion sin confirmar el boton sigue llevando al ajuste de
+    ubicacion
+  - >-
+    CA-03: mientras se envia el boton muestra Enviando y no reacciona a mas
+    toques
+  - >-
+    CA-04: dos toques seguidos registran el consentimiento y crean el reporte
+    una sola vez
+  - >-
+    CA-05: el reporte se envia con el id de categoria resuelto; si no se puede
+    resolver, no se envia sin categoria
+  - >-
+    CA-06: un error de la base o de red se muestra en castellano y aclara que el
+    borrador sigue guardado
+  - >-
+    CA-07: QA valida envio exitoso, validacion de campos y fallo controlado
+    (tests unitarios e integrado)
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build

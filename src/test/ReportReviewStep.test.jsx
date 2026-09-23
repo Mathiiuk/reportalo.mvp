@@ -189,3 +189,86 @@ describe('REP-2200: ReportReviewStep y Modal "Antes de enviar" (Journey v2)', ()
     expect(onSubmitMock).not.toHaveBeenCalled();
   });
 });
+
+// REP-2204: el botón de envío solo está disponible con los datos mínimos y no se duplica
+describe('REP-2204: botón de envío del paso de revisión', () => {
+  const evidence = [{ id: '1', previewUrl: 'blob:mock1', name: 'foto1.jpg' }];
+  const category = DEFAULT_REPORT_CATEGORIES[0];
+
+  const renderStep = (overrides = {}) => {
+    const props = {
+      evidenceList: evidence,
+      selectedCategory: category,
+      description: 'Bache profundo en la esquina',
+      geolocation: null,
+      address: 'Av. Mitre 1240, Avellaneda',
+      hasConfirmedLocality: true,
+      hasAcceptedTerms: true,
+      isOnline: true,
+      onBack: vi.fn(),
+      onSubmitReport: vi.fn(),
+      onAcceptTermsAndSubmit: vi.fn(),
+      onOpenTerms: vi.fn(),
+      onOpenAdjustLocation: vi.fn(),
+      ...overrides,
+    };
+    render(<ReportReviewStep {...props} />);
+    return props;
+  };
+
+  it('UT-SND-01: con los datos mínimos el botón está disponible y envía', () => {
+    const { onSubmitReport } = renderStep();
+    const button = screen.getByRole('button', { name: /Enviar reporte/i });
+
+    expect(button).not.toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(button);
+    expect(onSubmitReport).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('submit-missing')).not.toBeInTheDocument();
+  });
+
+  it('UT-SND-02: con la descripción vacía no envía y dice qué falta', () => {
+    const { onSubmitReport } = renderStep({ description: '' });
+    const button = screen.getByRole('button', { name: /Enviar reporte/i });
+
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(button);
+    expect(onSubmitReport).not.toHaveBeenCalled();
+    expect(screen.getByTestId('submit-missing')).toHaveTextContent(/descripción/i);
+  });
+
+  it('UT-SND-03: sin fotos ni categoría no envía y lista todo lo que falta', () => {
+    const { onSubmitReport } = renderStep({ evidenceList: [], selectedCategory: null });
+    fireEvent.click(screen.getByRole('button', { name: /Enviar reporte/i }));
+
+    expect(onSubmitReport).not.toHaveBeenCalled();
+    const missing = screen.getByTestId('submit-missing');
+    expect(missing).toHaveTextContent(/foto/i);
+    expect(missing).toHaveTextContent(/categoría/i);
+  });
+
+  it('UT-SND-04: sin ubicación confirmada el botón sigue abriendo el ajuste de ubicación', () => {
+    const { onSubmitReport, onOpenAdjustLocation } = renderStep({ hasConfirmedLocality: false });
+    const button = screen.getByRole('button', { name: /Enviar reporte/i });
+
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(button);
+    expect(onOpenAdjustLocation).toHaveBeenCalledTimes(1);
+    expect(onSubmitReport).not.toHaveBeenCalled();
+  });
+
+  it('UT-SND-05: mientras se envía muestra «Enviando…» y no reacciona a más toques', () => {
+    const { onSubmitReport, onAcceptTermsAndSubmit } = renderStep({ isSubmitting: true });
+    const button = screen.getByRole('button', { name: /Enviando/i });
+
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(onSubmitReport).not.toHaveBeenCalled();
+    expect(onAcceptTermsAndSubmit).not.toHaveBeenCalled();
+  });
+
+  it('UT-SND-06: sin conexión conserva el texto «Guardar reporte sin conexión»', () => {
+    renderStep({ isOnline: false });
+    expect(screen.getByRole('button', { name: /Guardar reporte sin conexión/i })).toBeInTheDocument();
+  });
+});

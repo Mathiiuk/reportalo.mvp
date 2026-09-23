@@ -137,3 +137,32 @@ export const getReportCategories = async () => {
     return DEFAULT_REPORT_CATEGORIES;
   }
 };
+
+/**
+ * REP-2204 · Id de la categoría en la tabla `services`.
+ *
+ * Las categorías de respaldo (sin conexión, o si la consulta a `services` falló) no traen
+ * `dbId`, y un reporte enviado con ellas iba con `service_id = null`: sin categoría, sin que
+ * nadie se enterara. Al enviar se resuelve el id por `service_code`; si no se puede, se
+ * devuelve null y quien llama decide no enviar en vez de guardar el reporte sin categoría.
+ *
+ * @param {{ id?: string, dbId?: string } | null} category
+ * @returns {Promise<string|null>}
+ */
+export const resolveServiceDbId = async (category) => {
+  if (!category) return null;
+  if (category.dbId) return category.dbId;
+  if (!category.id || !isSupabaseConfigured) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('id')
+      .eq('service_code', category.id)
+      .maybeSingle();
+    if (error || !data?.id) return null;
+    return data.id;
+  } catch {
+    return null;
+  }
+};

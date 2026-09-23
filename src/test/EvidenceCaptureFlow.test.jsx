@@ -8,6 +8,27 @@ import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { NewReportPage } from '../pages/NewReportPage';
 
+// REP-2204: espía del alta del reporte, para verificar que un doble toque no lo crea dos veces
+const { upsertReportSpy } = vi.hoisted(() => ({
+  upsertReportSpy: vi.fn(() => ({
+    select: () => ({
+      single: () => Promise.resolve({
+        data: { id: 'report-e2e-1', client_side_id: 'csid-e2e-1' },
+        error: null,
+      }),
+    }),
+  })),
+}));
+
+// REP-2204: espía del registro de consentimiento (se registra una vez por envío, no una por toque)
+const { recordTermsSpy } = vi.hoisted(() => ({
+  recordTermsSpy: vi.fn().mockResolvedValue({ success: true }),
+}));
+vi.mock('../services/termsService', async (importOriginal) => ({
+  ...(await importOriginal()),
+  recordTermsAcceptance: recordTermsSpy,
+}));
+
 // REP-2500: createCitizenReport exige un usuario autenticado (user_id NOT NULL)
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
@@ -40,16 +61,7 @@ vi.mock('../lib/supabaseClient', () => ({
         };
       }
       if (table === 'citizen_reports') {
-        return {
-          upsert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 'report-e2e-1', client_side_id: 'csid-e2e-1' },
-                error: null,
-              }),
-            })),
-          })),
-        };
+        return { upsert: upsertReportSpy };
       }
       if (table === 'report_images') {
         return {
@@ -63,9 +75,15 @@ vi.mock('../lib/supabaseClient', () => ({
           })),
         };
       }
-      // Otras tablas (ej. services): sin datos, así categoriesService cae al fallback local
+      // Otras tablas (ej. services): sin datos, así categoriesService cae al fallback local.
+      // REP-2204: las categorías de respaldo no traen dbId, así que al enviar se resuelve por service_code.
       return {
-        select: vi.fn(() => ({ order: vi.fn().mockResolvedValue({ data: [], error: null }) })),
+        select: vi.fn(() => ({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'service-e2e-1' }, error: null }),
+          })),
+        })),
       };
     }),
     // REP-2501: la subida a cuarentena lee la sesión para usar la carpeta del usuario
@@ -323,6 +341,75 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
         },
         { timeout: 5000 }
       );
+
+      // REP-2204: se envía la categoría resuelta, la descripción, la localidad confirmada y nada más
+      expect(upsertReportSpy).toHaveBeenCalledTimes(1);
+      const enviado = upsertReportSpy.mock.calls[0][0];
+      expect(enviado.service_id).toBe('service-e2e-1');
+      expect(enviado.description).toBe('Bache enorme en la calle');
+      expect(enviado.locality_id).toBe('loc-almagro');
+      expect(Object.keys(enviado).sort()).toEqual(
+        ['client_side_id', 'current_state_code', 'description', 'latitud', 'locality_id', 'longitud', 'service_id', 'user_id']
+      );
     }, 15000);
+
+    // REP-2204: un doble toque en «Acepto y envío» no debe crear dos reportes
+    it(
+      'UT-SND-07: dos toques seguidos en «Acepto y envío» registran el consentimiento y crean el reporte una sola vez',
+      async () => {
+        // El test anterior deja los términos aceptados: sin esto no aparece la hoja de consentimiento
+        localStorage.clear();
+        render(
+          <MemoryRouter initialEntries={['/nuevo-reporte']}>
+            <NewReportPage />
+          </MemoryRouter>
+        );
+
+        fireEvent.change(screen.getByTestId('gallery-file-input'), {
+          target: { files: [new File(['sample image'], 'bache_real.jpg', { type: 'image/jpeg' })] },
+        });
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /continuar al siguiente paso/i })).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByRole('button', { name: /continuar al siguiente paso/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /^Continuar$/i })).toBeInTheDocument();
+        });
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bache enorme en la calle' } });
+        fireEvent.click(screen.getByRole('button', { name: /^Continuar$/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByRole('button', { name: /enviar reporte/i }));
+        await waitFor(() => {
+          expect(screen.getByTestId('locality-selector-trigger')).not.toBeDisabled();
+        });
+        fireEvent.click(screen.getByTestId('locality-selector-trigger'));
+        fireEvent.click(await screen.findByTestId('locality-option-loc-almagro'));
+        fireEvent.click(screen.getByRole('button', { name: /confirmar ubicación/i }));
+
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /enviar reporte/i })).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByRole('button', { name: /enviar reporte/i }));
+
+        const accept = await screen.findByRole('button', { name: /acepto y envío/i });
+        // Dos toques en el mismo cuadro, sobre el mismo botón
+        fireEvent.click(accept);
+        fireEvent.click(accept);
+
+        await waitFor(
+          () => {
+            expect(screen.getByText('Reporte enviado')).toBeInTheDocument();
+          },
+          { timeout: 5000 }
+        );
+        expect(upsertReportSpy).toHaveBeenCalledTimes(1);
+        expect(recordTermsSpy).toHaveBeenCalledTimes(1);
+      },
+      15000
+    );
   });
 });

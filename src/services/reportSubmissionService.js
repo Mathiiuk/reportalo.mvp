@@ -33,6 +33,24 @@ const INITIAL_STATE_CODE = 'RECIBIDO';
  * @param {number} params.longitud
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
+/**
+ * REP-2204: mensajes para el ciudadano. El texto técnico de Supabase (RLS, constraints,
+ * "Failed to fetch") no le sirve a nadie: va al log, y a la pantalla llega una frase que
+ * dice qué pasó y que el borrador sigue guardado.
+ */
+const MESSAGE_NETWORK =
+  'Parece que hay un problema de conexión. Tu borrador sigue guardado: probá de nuevo cuando tengas señal.';
+const MESSAGE_GENERIC =
+  'No pudimos guardar tu reporte. Tu borrador sigue guardado: probá de nuevo en unos segundos.';
+const MESSAGE_MISSING_DATA =
+  'Faltan datos para enviar el reporte. Revisá la foto, la categoría, la descripción y la ubicación.';
+
+const isNetworkFailure = (message) =>
+  /failed to fetch|networkerror|network request failed|load failed|timeout|timed out/i.test(String(message ?? ''));
+
+const toCitizenMessage = (technicalMessage) =>
+  isNetworkFailure(technicalMessage) ? MESSAGE_NETWORK : MESSAGE_GENERIC;
+
 export const createCitizenReport = async ({
   clientSideId,
   userId,
@@ -43,40 +61,57 @@ export const createCitizenReport = async ({
   longitud,
 }) => {
   if (!isSupabaseConfigured) {
-    return { success: false, error: 'Supabase no está configurado.' };
+    return { success: false, error: 'Supabase no está configurado.', userMessage: MESSAGE_GENERIC };
   }
   if (!clientSideId || !userId || !localityId || !description) {
-    return { success: false, error: 'Faltan datos obligatorios para crear el reporte.' };
+    return {
+      success: false,
+      error: 'Faltan datos obligatorios para crear el reporte.',
+      userMessage: MESSAGE_MISSING_DATA,
+    };
   }
 
   // REP-2203: misma regla que el formulario (10 a 280 caracteres), por si el envío
   // llega por otro camino (borrador offline, sincronización) sin pasar por el paso 2
   const descriptionCheck = validateDescription(description);
   if (!descriptionCheck.valid) {
-    return { success: false, error: descriptionCheck.error };
+    // Este texto ya está escrito para el ciudadano
+    return { success: false, error: descriptionCheck.error, userMessage: descriptionCheck.error };
   }
   const cleanDescription = description.trim();
 
-  const { data, error } = await supabase
-    .from('citizen_reports')
-    .upsert(
-      {
-        client_side_id: clientSideId,
-        user_id: userId,
-        service_id: serviceId ?? null,
-        locality_id: localityId,
-        description: cleanDescription,
-        latitud,
-        longitud,
-        current_state_code: INITIAL_STATE_CODE,
-      },
-      { onConflict: 'client_side_id', ignoreDuplicates: false }
-    )
-    .select('id, client_side_id')
-    .single();
+  // REP-2204: una excepción de red no debe romper la pantalla ni perder el borrador
+  let data;
+  let error;
+  try {
+    ({ data, error } = await supabase
+      .from('citizen_reports')
+      .upsert(
+        {
+          client_side_id: clientSideId,
+          user_id: userId,
+          service_id: serviceId ?? null,
+          locality_id: localityId,
+          description: cleanDescription,
+          latitud,
+          longitud,
+          current_state_code: INITIAL_STATE_CODE,
+        },
+        { onConflict: 'client_side_id', ignoreDuplicates: false }
+      )
+      .select('id, client_side_id')
+      .single());
+  } catch (thrown) {
+    return {
+      success: false,
+      error: thrown?.message ?? 'No se pudo guardar el reporte.',
+      userMessage: toCitizenMessage(thrown?.message),
+    };
+  }
 
   if (error || !data) {
-    return { success: false, error: error?.message ?? 'No se pudo guardar el reporte.' };
+    const technical = error?.message ?? 'No se pudo guardar el reporte.';
+    return { success: false, error: technical, userMessage: toCitizenMessage(technical) };
   }
 
   return { success: true, data };
