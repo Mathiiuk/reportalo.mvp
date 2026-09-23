@@ -76,8 +76,21 @@ export const getPublishedNews = async () => {
   return { news: [], pending: false };
 };
 
-export const getNewsItem = async (newsId) => {
-  const demoItem = DEMO_NEWS.find((item) => item.id === newsId);
+/**
+ * Nota completa. El contenido de demostración solo se entrega si quien llama lo pide
+ * explícitamente (`includeDemo`), igual que `getPublishedNews`, que devuelve vacío
+ * mientras no haya origen de datos.
+ *
+ * Sin esa condición, entrar a /novedades/demo-1 por un enlace compartido o por el
+ * historial mostraba un comunicado redactado como oficial —firmado por una secretaría
+ * del municipio— aunque la pantalla de Novedades estuviera vacía. Nadie publicó eso.
+ *
+ * @param {string} newsId
+ * @param {object} [options]
+ * @param {boolean} [options.includeDemo] true solo cuando la pantalla está en modo demostración
+ */
+export const getNewsItem = async (newsId, { includeDemo = false } = {}) => {
+  const demoItem = includeDemo ? DEMO_NEWS.find((item) => item.id === newsId) : null;
   return { item: demoItem ?? null, pending: !NEWS_SOURCE_READY && !demoItem };
 };
 

@@ -206,8 +206,11 @@ export const ReportsPage = () => {
 
           {isLoadingReports && !isDemoActive ? (
             <div className="py-10 text-center text-rep-body font-semibold text-rep-ink-muted">Cargando tus reportes…</div>
-          ) : filteredReports.length === 0 ? (
-            /* Estado vacío (UJ v3.3 · M26 / D34 — REP-3791 Bloque 9) */
+          ) : filteredReports.length === 0 && !showDrafts ? (
+            /* Estado vacío (UJ v3.3 · M26 / D34 — REP-3791 Bloque 9).
+               No se dibuja si hay borradores arriba: el ciudadano acaba de cargar un
+               reporte y lo está viendo en pantalla, así que decirle «todavía no
+               enviaste reportes» y ofrecerle «hacer mi primer reporte» lo contradice. */
             <EmptyState
               icon={Inbox}
               title="Todavía no enviaste reportes"
@@ -215,7 +218,7 @@ export const ReportsPage = () => {
               primaryAction={{ label: 'Hacer mi primer reporte', icon: ImagePlus, onClick: () => navigate('/nuevo-reporte') }}
               secondaryAction={{ label: 'Ver el mapa de la zona', onClick: () => navigate('/mapa') }}
             />
-          ) : (
+          ) : filteredReports.length === 0 ? null : (
             /* Lista: tarjetas en teléfono, filas en escritorio (D18) */
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {filteredReports.map((report) => (

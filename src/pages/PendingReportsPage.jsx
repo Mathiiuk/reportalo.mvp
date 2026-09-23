@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, CloudOff, Hourglass, Lock, RefreshCw, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CloudOff, Hourglass, Lock, RefreshCw, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getAllPendingSyncReports } from '../services/offlineStorageService';
@@ -26,6 +26,9 @@ const formatWhen = (value) => {
   if (date.toDateString() === yesterday.toDateString()) return `ayer ${time}`;
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} · ${time}`;
 };
+
+// Sin blobs guardados no hay nada que enviar: el borrador no puede salir de la cola.
+const hasStoredPhotos = (draft) => (draft?.evidenceList || []).some((ev) => ev.blob);
 
 const draftTitle = (draft) => {
   const text = String(draft.description || '').trim().split('\n')[0];
@@ -152,10 +155,20 @@ export const PendingReportsPage = () => {
                     <div className="flex min-w-0 flex-col gap-1">
                       <span className="truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{draftTitle(draft)}</span>
                       <span className="truncate text-rep-label text-rep-ink-muted">{meta}</span>
-                      <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-warning-ink">
-                        <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-                        Falta protegerse la foto: requiere conexión.
-                      </span>
+                      {/* Un borrador cuyas fotos ya no están en el dispositivo no se va a
+                          poder enviar nunca: decir «requiere conexión» sería mentir y el
+                          ciudadano esperaría para siempre un envío que no va a ocurrir. */}
+                      {hasStoredPhotos(draft) ? (
+                        <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-warning-ink">
+                          <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                          Falta protegerse la foto: requiere conexión.
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-danger">
+                          <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                          No se puede enviar: las fotos ya no están en este dispositivo.
+                        </span>
+                      )}
                     </div>
                   </li>
                 );

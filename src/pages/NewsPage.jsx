@@ -48,7 +48,9 @@ export const NewsPage = () => {
   );
 
   const [featured, ...rest] = filteredNews;
-  const openItem = (item) => navigate(`/novedades/${item.id}`);
+  // El modo demostración viaja en la URL: sin esa marca, el detalle no sirve contenido
+  // de ejemplo (si no, un enlace compartido mostraría un comunicado que nadie publicó).
+  const openItem = (item) => navigate(`/novedades/${item.id}${isDemoActive ? '?demo=1' : ''}`);
 
   return (
     <AppLayout activeTab="novedades">

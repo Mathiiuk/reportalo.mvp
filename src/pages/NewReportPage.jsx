@@ -390,6 +390,34 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const handleConfirmEvidenceAndPersist = async (evidencesOverride) => {
     setIsSubmittingReport(true);
     try {
+      // H-30 · La validación de privacidad va ANTES de crear el reporte, para que las dos
+      // vías de envío se comporten igual. La cola offline se niega a enviar y conserva el
+      // borrador cuando alguna foto no salió protegida del servidor (pendingSyncService);
+      // acá se hacía lo contrario: se creaba el reporte igual, sin la foto, y el efecto
+      // del paso 6 borraba el borrador, así que las fotos del ciudadano se perdían sin
+      // posibilidad de reintento.
+      const evidencesToAttach =
+        evidencesOverride?.length > 0
+          ? evidencesOverride
+          : processedEvidenceList.length > 0
+            ? processedEvidenceList
+            : activeList;
+      const protectedUrls = evidencesToAttach
+        .map((evidence) => evidence.sanitizedUrl)
+        .filter(isServerProtectedUrl);
+
+      if (protectedUrls.length !== evidencesToAttach.length) {
+        console.error(
+          '[handleConfirmEvidenceAndPersist] Evidencia sin proteccion del servidor:',
+          `${evidencesToAttach.length - protectedUrls.length} de ${evidencesToAttach.length}`
+        );
+        toast.error('No pudimos proteger tu foto', {
+          description: 'Para cuidar tu privacidad no enviamos el reporte. Tu borrador quedó guardado.',
+        });
+        goToStep(3);
+        return;
+      }
+
       const { lat, lng } = extractLatLng(activeCoords);
 
       const creationResult = await createCitizenReport({
@@ -410,31 +438,13 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         return;
       }
 
-      const evidencesToAttach =
-        evidencesOverride?.length > 0
-          ? evidencesOverride
-          : processedEvidenceList.length > 0
-            ? processedEvidenceList
-            : activeList;
       // attachReportEvidence devuelve { success, error } y no lanza. Antes el
       // resultado se descartaba, asi que un fallo al adjuntar quedaba mudo: el
       // reporte se enviaba "bien" y la foto simplemente no existia. Fue asi
       // como paso inadvertido que report_images no tenia policy de INSERT.
+      // Todas las URLs de protectedUrls ya pasaron la validacion de privacidad de arriba.
       const failedAttachments = [];
-      const unprotectedEvidences = [];
-      for (const evidence of evidencesToAttach) {
-        // H-25 (REP-3791 Bloque 4): nunca se usa previewUrl (la foto original sin difuminar) como respaldo
-        const sanitizedUrl = evidence.sanitizedUrl;
-        if (!sanitizedUrl) continue;
-        // H-30: misma regla de privacidad que aplica la cola offline
-        // (pendingSyncService.isServerUrl). El pipeline tiene un camino "emulador"
-        // que solo limpia EXIF, no difumina, y devuelve exito con una URL blob:
-        // local. Esa foto NO paso por el difuminado del servidor, asi que no se
-        // adjunta: attachReportEvidence la subiria al bucket publico.
-        if (!isServerProtectedUrl(sanitizedUrl)) {
-          unprotectedEvidences.push(sanitizedUrl);
-          continue;
-        }
+      for (const sanitizedUrl of protectedUrls) {
         // eslint-disable-next-line no-await-in-loop
         const attachResult = await attachReportEvidence({
           reportId: creationResult.data.id,
@@ -443,18 +453,6 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         if (!attachResult?.success) {
           failedAttachments.push(attachResult?.error ?? 'Error desconocido');
         }
-      }
-
-      if (unprotectedEvidences.length > 0) {
-        // El ciudadano tiene que saber que su foto no viajo, y por que. Callarlo
-        // seria peor: creeria que adjunto evidencia que en realidad no existe.
-        console.error(
-          '[handleConfirmEvidenceAndPersist] Evidencia sin proteccion del servidor, no adjuntada:',
-          unprotectedEvidences.length
-        );
-        toast.warning('Tu reporte se envió, pero la foto no se pudo proteger', {
-          description: 'Para cuidar tu privacidad no la adjuntamos. Probá de nuevo más tarde.',
-        });
       }
 
       if (failedAttachments.length > 0) {

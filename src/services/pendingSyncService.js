@@ -11,7 +11,12 @@
  */
 import { getAllPendingSyncReports, deleteDraftReport } from './offlineStorageService';
 import { processAllEvidencesThroughQuarantine } from './quarantinePipelineService';
-import { createCitizenReport, attachReportEvidence, isServerProtectedUrl } from './reportSubmissionService';
+import {
+  createCitizenReport,
+  attachReportEvidence,
+  isServerProtectedUrl,
+  getAttachedEvidenceUrls,
+} from './reportSubmissionService';
 
 // La regla de privacidad vive en reportSubmissionService: una sola definición
 // para las dos vías de envío, la de la cola y la del envío con conexión (H-30).
@@ -70,7 +75,12 @@ export const sendPendingDraft = async (draft, userId) => {
       return { success: false, error: creation.error };
     }
 
+    // El alta es idempotente por client_side_id, pero adjuntar no lo es: si un intento
+    // anterior alcanzó a registrar algunas fotos y falló en otra, este recorrido las
+    // duplicaría. Se saltean las que ya están.
+    const alreadyAttached = await getAttachedEvidenceUrls(creation.data.id);
     for (const sanitizedUrl of protectedUrls) {
+      if (alreadyAttached.has(sanitizedUrl)) continue;
       // eslint-disable-next-line no-await-in-loop
       const attached = await attachReportEvidence({ reportId: creation.data.id, sanitizedUrl });
       if (!attached.success) {

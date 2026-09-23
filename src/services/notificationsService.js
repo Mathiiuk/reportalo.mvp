@@ -13,6 +13,9 @@ import { getStatusConfig, normalizeReportState, formatReportCode } from '../comp
 
 const READ_AT_KEY = 'reportalo_notifications_read_at';
 
+// Tope de ids que entran en el `in` del historial (ver el comentario en getMyNotifications)
+const MAX_REPORTS_IN_QUERY = 50;
+
 const safeStorage = () => {
   try {
     return typeof window !== 'undefined' ? window.localStorage : null;
@@ -57,11 +60,20 @@ export const getMyNotifications = async (userId) => {
     if (reportsError) {
       error = reportsError.message;
     } else if (reports?.length) {
-      const byId = new Map(reports.map((report) => [report.id, report]));
+      // El `in` viaja como query string, así que la lista de ids no puede crecer sin
+      // techo: con varios cientos de reportes la URL supera el límite de los proxies
+      // (8 KB es lo habitual) y la consulta falla con 414. Se consultan los reportes
+      // más recientes, que son los que pueden tener movimiento reciente; para eso se
+      // pide `created_at`.
+      const recentReportIds = [...reports]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, MAX_REPORTS_IN_QUERY)
+        .map((report) => report.id);
+
       const { data: history, error: historyError } = await supabase
         .from('report_state_history')
         .select('report_id, state_code, notes, changed_at')
-        .in('report_id', [...byId.keys()])
+        .in('report_id', recentReportIds)
         .order('changed_at', { ascending: false })
         .limit(60);
 

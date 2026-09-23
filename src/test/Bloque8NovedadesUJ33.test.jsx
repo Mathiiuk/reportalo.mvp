@@ -39,8 +39,10 @@ describe('REP-3791 Bloque 8 · Novedades (UJ v3.3 · M24 / M25)', () => {
   });
 
   it('UT-B8-03: la nota completa muestra quién publica y ofrece ver el tramo en el mapa', async () => {
+    // El contenido de demostración solo se sirve con ?demo=1, que es lo que agrega la
+    // lista cuando está en modo demo.
     render(
-      <MemoryRouter initialEntries={['/novedades/demo-1']}>
+      <MemoryRouter initialEntries={['/novedades/demo-1?demo=1']}>
         <Routes>
           <Route path="/novedades/:id" element={<NewsDetailPage />} />
         </Routes>

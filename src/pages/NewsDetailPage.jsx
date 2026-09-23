@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Share2, Map as MapIcon, ChevronRight, Megaphone, Sparkles } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
@@ -18,17 +18,20 @@ const formatFullDate = (isoDate) => {
 export const NewsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Solo se muestra contenido de demostración si se llegó desde la lista en modo demo
+  const includeDemo = searchParams.get('demo') === '1';
   const [state, setState] = useState({ loading: true, item: null });
 
   useEffect(() => {
     let isMounted = true;
-    getNewsItem(id).then((result) => {
+    getNewsItem(id, { includeDemo }).then((result) => {
       if (isMounted) setState({ loading: false, item: result.item });
     });
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, includeDemo]);
 
   const handleShare = async () => {
     try {

@@ -106,6 +106,32 @@ const isAlreadyInPublicBucket = (url) =>
 export const isServerProtectedUrl = (url) => /^https?:\/\//i.test(String(url ?? ''));
 
 /**
+ * URLs de evidencia ya registradas para un reporte.
+ *
+ * `createCitizenReport` es idempotente por `client_side_id`, pero `attachReportEvidence`
+ * no lo es: si un reintento vuelve a recorrer la lista entera, las fotos que sí habían
+ * entrado se duplican en `report_images`. Consultar lo ya adjuntado permite saltearlas.
+ *
+ * @param {string} reportId
+ * @returns {Promise<Set<string>>} URLs ya adjuntas; vacío si no se pueden leer.
+ */
+export const getAttachedEvidenceUrls = async (reportId) => {
+  if (!isSupabaseConfigured || !reportId) return new Set();
+  try {
+    const { data, error } = await supabase
+      .from('report_images')
+      .select('image_url')
+      .eq('report_id', reportId);
+    if (error || !data) return new Set();
+    return new Set(data.map((row) => row.image_url));
+  } catch {
+    // Ante la duda se devuelve vacío: se prefiere un posible duplicado antes que
+    // perder una evidencia por no adjuntarla.
+    return new Set();
+  }
+};
+
+/**
  * Adjunta la evidencia ya sanitizada (nunca la original ni EXIF) al reporte
  * persistido.
  *

@@ -40,10 +40,14 @@ const ProtectedRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
   const location = useLocation();
 
-  // UJ v3.3 · M23: al llegar a la pantalla que se estaba usando antes de que venciera la sesión, se olvida
+  // UJ v3.3 · M23: al llegar a la pantalla que se estaba usando antes de que venciera la
+  // sesión, se olvida. Se compara con pathname + search porque así la guarda
+  // SessionExpiredPage: comparando solo el pathname, una ruta con query string nunca
+  // coincidía y la marca quedaba en el dispositivo para siempre, redirigiendo a esa
+  // pantalla vieja en cada paso posterior por /onboarding.
   React.useEffect(() => {
-    if (session && getResumePath() === location.pathname) clearResumePath();
-  }, [session, location.pathname]);
+    if (session && getResumePath() === `${location.pathname}${location.search}`) clearResumePath();
+  }, [session, location.pathname, location.search]);
 
   if (loading) {
     return <AppLoadingScreen message="Cargando Reportalo..." />;
