@@ -1,0 +1,15 @@
+{
+  "_nota": "Rúbrica de fidelidad de hechos (protocolo §5): 2 = todo lo afirmado se ve en la foto; 1 = hay un error menor o una inferencia presentada como hecho; 0 = inventa un hecho relevante. Evaluación de Matías el 24/09/2026 comparando cada extracción de raw/runs.ndjson con la foto anonimizada; pendiente de revisión por Ivo y/o Hernán.",
+  "puntajes": {
+    "01": { "rep1": 2, "rep2": 2, "rep3": 2, "obs": "Fiel. Pasa de «bastón blanco» a «rampa para personas con movilidad reducida/discapacidad»: es el uso de la rampa, no un hecho inventado." },
+    "02": { "rep1": 2, "rep2": 2, "rep3": 2, "obs": "Fiel. Marca como incertidumbre si está rota o sin suministro." },
+    "03": { "rep1": 1, "rep2": 1, "rep3": 1, "obs": "Lee la señal de «prohibido girar» como «giro obligatorio o curva». El resto (poste doblado, isleta, puente, Ceda el paso) es correcto." },
+    "04": { "rep1": 1, "rep2": 2, "rep3": 1, "obs": "rep1 y rep3 agregan «dificulta el paso de los autos», que no se ve." },
+    "05": { "rep1": 2, "rep2": 2, "rep3": 2, "obs": "Fiel. «Peligro para los que caminan» es una valoración en el texto del reclamo, no en los hechos." },
+    "07": { "rep1": 2, "rep2": 2, "rep3": 2, "obs": "Fiel, incluso lee «19 a 21» y «Buenos Aires Ciudad» de los contenedores." },
+    "08": { "rep1": 2, "rep2": 1, "rep3": 2, "obs": "rep2 dice «personas» en plural: hay una sola, pixelada. No describe rasgos de nadie." },
+    "09": { "rep1": 2, "rep2": 2, "rep3": 2, "obs": "Escena irrelevante: 0 hechos inventados y «hay_problema_visible: false» en las 3 repeticiones." }
+  },
+  "hechosInventadosEnIrrelevantes": 0,
+  "promedio": 1.75
+}

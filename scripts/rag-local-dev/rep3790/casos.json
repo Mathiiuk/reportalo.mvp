@@ -1,0 +1,62 @@
+{
+  "_nota": "BORRADOR de Matías (24/09/2026). El texto equivalente y la localidad/categoría se fijan antes de correr y valen igual para T e I. El resultado esperado lo validan Ivo y/o Hernán (REP-3790, comentario de Leo del 24/09). Las rutas se comparan por substring contra hierarchy_path de lo citado.",
+  "_reglas": {
+    "abstencion": "estado indeterminado, sin_normativa o fuera_de_alcance, y 0 citas",
+    "correcta_con_norma": "estado fundamentado y al menos una cita cuya ruta contenga alguno de 'normas'",
+    "falso_positivo": "cualquier cita que no esté en 'normas' ni en 'discutibles'",
+    "discutible": "cita que el validador tiene que decidir; no suma como correcta ni como falso positivo"
+  },
+  "casos": [
+    {
+      "id": "01", "foto": "01-auto-rampa.jpg", "tipo": "clara", "origen": "REP-3786 caso B",
+      "localidad": "CABA", "categoria": "TRANSITO",
+      "texto": "Auto estacionado en la esquina frente a la rampa peatonal, tapando el acceso. Al lado de la rampa hay una persona con bastón blanco esperando para cruzar.",
+      "esperado": { "abstencion": false, "normas": ["Artículo 7.1.9", "Artículo 6.1.52"], "discutibles": ["Artículo 6.1.37"] }
+    },
+    {
+      "id": "02", "foto": "02-luminaria-rota.jpg", "tipo": "clara", "origen": "REP-3786 caso D-CABA",
+      "localidad": "CABA", "categoria": "INFRAESTRUCTURA",
+      "texto": "De noche, la luminaria de la calle está apagada y el poste queda a oscuras, mientras las luces de más adelante funcionan.",
+      "esperado": { "abstencion": false, "normas": ["Artículo 2 (servicios comprendidos) > inciso b)"], "discutibles": ["Artículo 3 (funciones) > inciso j)"] }
+    },
+    {
+      "id": "03", "foto": "03-cartel-caido.jpg", "tipo": "ambigua", "origen": "lista de Leo (señal dañada/caída)",
+      "localidad": "CABA", "categoria": "INFRAESTRUCTURA",
+      "texto": "En una esquina con semáforos, una señal de tránsito de prohibido girar está caída e inclinada sobre la isleta, casi en el piso.",
+      "esperado": { "abstencion": true, "normas": [], "discutibles": ["Artículo 2 (servicios comprendidos) > inciso b)", "Artículo 3 (funciones) > inciso j)"] },
+      "_nota_validador": "El corpus no tiene una norma sobre carteles caídos. Ley 210 art. 2 b) habla de «señalamiento luminoso» (semáforos): ¿alcanza para una señal no luminosa?"
+    },
+    {
+      "id": "04", "foto": "04-bache-visible.jpg", "tipo": "clara", "origen": "lista de Leo",
+      "localidad": "Avellaneda", "categoria": "INFRAESTRUCTURA",
+      "texto": "Bache grande en la calle, frente a una casa, con el asfalto roto y piedras sueltas adentro.",
+      "esperado": { "abstencion": false, "normas": ["Artículo 59", "Artículo 192"], "discutibles": ["Artículo 52"] }
+    },
+    {
+      "id": "05", "foto": "05-.jpg", "tipo": "clara", "origen": "REP-3786 caso A",
+      "localidad": "Avellaneda", "categoria": "INFRAESTRUCTURA",
+      "texto": "Boca de tormenta rota junto al cordón: falta la reja, la tapa de hormigón está partida y adentro hay basura y bolsas.",
+      "esperado": { "abstencion": false, "normas": ["Artículo 59", "Artículo 192"], "discutibles": ["Artículo 52"] }
+    },
+    {
+      "id": "07", "foto": "07-basura-acmulada.jpg", "tipo": "clara", "origen": "lista de Leo",
+      "localidad": "CABA", "categoria": "AMBIENTE",
+      "texto": "Bolsas de basura acumuladas en la vereda al lado de los contenedores, que están llenos y uno con la tapa abierta.",
+      "esperado": { "abstencion": false, "normas": ["Artículo 2 (servicios comprendidos) > inciso c)"], "discutibles": [] },
+      "_nota_validador": "Único fragmento elegible: Ley 210 art. 2 c) «Higiene urbana». Los contenedores son del GCBA, por eso CABA."
+    },
+    {
+      "id": "08", "foto": "08-puesto-de-venta-ambulante.jpg", "tipo": "sin_normativa", "origen": "lista de Leo (comercio irregular) · REP-3786 Prueba2",
+      "localidad": "Avellaneda", "categoria": null,
+      "texto": "Puesto de venta de ropa armado sobre la vereda, con percheros, una mesa y mercadería en el piso que ocupa el paso.",
+      "esperado": { "abstencion": true, "normas": [], "discutibles": ["inciso t) (venta de productos en el camino)", "inciso t) (obstrucción)"] },
+      "_nota_validador": "Sin categoría para que el modelo vea todo lo elegible. Ley 24.449 art. 48 t) habla de venta «en zona alguna del camino» (ruta): ¿aplica a una vereda urbana?"
+    },
+    {
+      "id": "09", "foto": "09-plaza.jpg", "tipo": "irrelevante", "origen": "lista de Leo (reemplaza «chicos jugando al fútbol»)",
+      "localidad": "CABA", "categoria": null,
+      "texto": "Plaza con césped y senderos al atardecer, con gente caminando y paseando.",
+      "esperado": { "abstencion": true, "normas": [], "discutibles": [] }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# REP-3790: las fotos de prueba no entran al repo (aunque no tengan datos identificables).
+# Solo se versionan los resultados y el informe.
+fotos/*
+!fotos/LEEME.md
+# Vectores del corpus: se regeneran con embed-fragments.mjs
+raw/fragment-vectors.json

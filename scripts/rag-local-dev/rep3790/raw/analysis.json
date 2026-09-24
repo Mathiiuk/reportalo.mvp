@@ -1,0 +1,282 @@
+{
+  "resumen": {
+    "corridas": 48,
+    "normativaCorrecta": {
+      "T": 18,
+      "I": 17,
+      "ratioIsobreT": 0.944
+    },
+    "falsosPositivos": {
+      "T": 0,
+      "I": 0
+    },
+    "discutibles": {
+      "T": 9,
+      "I": 11
+    },
+    "fallasTecnicas": {
+      "T": 1,
+      "I": 0
+    },
+    "casosConsistentes": {
+      "T": 5,
+      "I": 6,
+      "de": 8
+    },
+    "latenciaMedianaMs": {
+      "T": 2554,
+      "I": 5184,
+      "ratioIsobreT": 2.03,
+      "porEtapaI": {
+        "extraccion": 2681,
+        "vector": 375.5,
+        "generacion": 2213.5
+      },
+      "porEtapaT": {
+        "vector": 399,
+        "generacion": 2118.5
+      }
+    },
+    "tokensExtraccionMediana": {
+      "entrada": 1315,
+      "imagen": 1100,
+      "salida": 220.5
+    },
+    "tokensGeneracionMediana": {
+      "T": {
+        "entrada": 940,
+        "salida": 323.5
+      },
+      "I": {
+        "entrada": 943,
+        "salida": 295.5
+      }
+    }
+  },
+  "porCaso": {
+    "01": {
+      "T": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 1,
+        "fallasTecnicas": 0,
+        "consistente": false,
+        "corridas": [
+          "fundamentado [Artículo 6.1.37 (obstrucción de vía); Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]",
+          "fundamentado [Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]",
+          "fundamentado [Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 3,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [Artículo 6.1.37 (obstrucción de vía); Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]",
+          "fundamentado [Artículo 6.1.37 (obstrucción de vía); Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]",
+          "fundamentado [Artículo 6.1.37 (obstrucción de vía); Artículo 6.1.52 (estacionamiento o detención prohibida); Artículo 7.1.9 (prohibiciones generales)]"
+        ]
+      }
+    },
+    "02": {
+      "T": {
+        "n": 3,
+        "correctas": 2,
+        "falsosPositivos": 0,
+        "discutibles": 3,
+        "fallasTecnicas": 0,
+        "consistente": false,
+        "corridas": [
+          "fundamentado [inciso b); inciso j)]",
+          "indeterminado [inciso b); inciso j)]",
+          "fundamentado [inciso b); inciso j)]"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 2,
+        "falsosPositivos": 0,
+        "discutibles": 2,
+        "fallasTecnicas": 0,
+        "consistente": false,
+        "corridas": [
+          "fundamentado [inciso b); inciso j)]",
+          "indeterminado [inciso b)]",
+          "fundamentado [inciso b); inciso j)]"
+        ]
+      }
+    },
+    "03": {
+      "T": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "sin_normativa",
+          "sin_normativa",
+          "sin_normativa"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "sin_normativa",
+          "sin_normativa",
+          "sin_normativa"
+        ]
+      }
+    },
+    "04": {
+      "T": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [Artículo 59; inciso 4]",
+          "fundamentado [Artículo 59; inciso 4]",
+          "fundamentado [Artículo 59; inciso 4]"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [Artículo 59; inciso 4]",
+          "fundamentado [Artículo 59; inciso 4]",
+          "fundamentado [Artículo 59; inciso 4]"
+        ]
+      }
+    },
+    "05": {
+      "T": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 3,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]",
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]",
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 3,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]",
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]",
+          "fundamentado [Artículo 52; Artículo 59; inciso 4]"
+        ]
+      }
+    },
+    "07": {
+      "T": {
+        "n": 3,
+        "correctas": 0,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "indeterminado [inciso c)]",
+          "indeterminado [inciso c)]",
+          "indeterminado [inciso c)]"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 0,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "indeterminado [inciso c)]",
+          "indeterminado [inciso c)]",
+          "indeterminado [inciso c)]"
+        ]
+      }
+    },
+    "08": {
+      "T": {
+        "n": 3,
+        "correctas": 1,
+        "falsosPositivos": 0,
+        "discutibles": 2,
+        "fallasTecnicas": 1,
+        "consistente": false,
+        "corridas": [
+          "fundamentado [inciso t) (venta de productos en el camino)]",
+          "fundamentado [inciso t) (venta de productos en el camino)]",
+          "indeterminado"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 0,
+        "falsosPositivos": 0,
+        "discutibles": 3,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fundamentado [inciso t) (venta de productos en el camino)]",
+          "fundamentado [inciso t) (venta de productos en el camino)]",
+          "fundamentado [inciso t) (venta de productos en el camino)]"
+        ]
+      }
+    },
+    "09": {
+      "T": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": true,
+        "corridas": [
+          "fuera_de_alcance",
+          "fuera_de_alcance",
+          "fuera_de_alcance"
+        ]
+      },
+      "I": {
+        "n": 3,
+        "correctas": 3,
+        "falsosPositivos": 0,
+        "discutibles": 0,
+        "fallasTecnicas": 0,
+        "consistente": false,
+        "corridas": [
+          "fuera_de_alcance",
+          "indeterminado",
+          "fuera_de_alcance"
+        ]
+      }
+    }
+  }
+}
