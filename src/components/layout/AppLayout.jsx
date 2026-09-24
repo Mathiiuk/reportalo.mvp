@@ -1,16 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bell, Map as MapIcon, FileText, Camera, User, Megaphone, ImagePlus, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getUserInitials } from '../../utils/userUtils';
+import { THEME_TOGGLE_ENABLED, setThemePreference } from '../../lib/themePreference';
 
-/**
- * UJ v3.3 §10 «Comportamiento del tema»: el conmutador vive en la barra superior y la preferencia
- * se guarda por cuenta, lo que necesita un campo en el perfil (H-09, sin resolver).
- * Hasta que exista, el botón queda apagado: las pantallas que todavía no usan los tokens del
- * Bloque 0 se verían a medio pasar a oscuro. Para habilitarlo, poner esta constante en true.
- */
-export const THEME_TOGGLE_ENABLED = false;
+// UJ v3.3 §10 «Comportamiento del tema»: el conmutador vive en la barra superior. La constante
+// y el guardado de la preferencia viven en lib/themePreference (H-09); se reexporta para Perfil.
+export { THEME_TOGGLE_ENABLED };
 
 const TABS = [
   { key: 'mapa', label: 'Mapa', icon: MapIcon, path: '/mapa', ariaLabel: 'Mapa' },
@@ -20,13 +17,16 @@ const TABS = [
 ];
 
 const ThemeToggle = ({ className = '' }) => {
+  // Estado propio para que el ícono cambie al tocarlo; parte del tema ya aplicado en <html>
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
   if (!THEME_TOGGLE_ENABLED) return null;
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
   return (
     <button
       type="button"
       aria-label={isDark ? 'Usar tema claro' : 'Usar tema oscuro'}
-      onClick={() => document.documentElement.classList.toggle('dark')}
+      onClick={() => setIsDark(setThemePreference(isDark ? 'light' : 'dark') === 'dark')}
       className={`rep-focus flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-colors duration-120 hover:bg-rep-divider ${className}`}
     >
       {isDark ? <Sun aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} /> : <Moon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />}

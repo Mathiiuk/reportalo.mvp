@@ -5,6 +5,10 @@ import App from './App';
 // pintado no depende de la red (antes venía de Google Fonts y bloqueaba el arranque)
 import '@fontsource-variable/manrope';
 import './index.css';
+import { initTheme } from './lib/themePreference';
+
+// Tema guardado en el dispositivo (H-09), aplicado antes del primer render de React
+initTheme();
 
 // Limpieza automática de Service Workers antiguos en entorno de desarrollo para evitar conflictos con Vite ESM/HMR
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator && import.meta.env.DEV) {

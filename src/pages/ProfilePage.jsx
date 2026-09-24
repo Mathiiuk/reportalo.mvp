@@ -19,7 +19,7 @@ import {
   setNotificationPreference,
 } from '../services/notificationService';
 import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast } from 'lucide-react';
-import { THEME_TOGGLE_ENABLED } from '../components/layout/AppLayout';
+import { THEME_TOGGLE_ENABLED, setThemePreference } from '../lib/themePreference';
 
 /**
  * Pantalla de Perfil de Usuario Ciudadano.
@@ -27,13 +27,12 @@ import { THEME_TOGGLE_ENABLED } from '../components/layout/AppLayout';
  * sincronizado con los permisos del SO/PWA, acceso a novedades, permisos y términos vigentes.
  */
 export const ProfilePage = () => {
-  // Apariencia: por ahora se aplica en el dispositivo; la preferencia por cuenta depende de H-09
+  // Apariencia: se guarda en el dispositivo; la preferencia por cuenta depende de H-09
   const [theme, setTheme] = useState(() =>
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'
   );
   const handleThemeChange = (next) => {
-    setTheme(next);
-    document.documentElement.classList.toggle('dark', next === 'dark');
+    setTheme(setThemePreference(next));
   };
 
   const navigate = useNavigate();
