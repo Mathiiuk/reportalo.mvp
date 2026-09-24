@@ -84,6 +84,50 @@ export const openDatabase = () => {
 };
 
 /**
+ * Escribe un registro de borrador tal cual está (IndexedDB, con respaldo en memoria).
+ * No toca `updatedAt`: quien lo llama decide si hay que actualizarlo (H-35).
+ * @param {object} record Registro ya normalizado
+ * @returns {Promise<object>} El mismo registro
+ */
+const persistDraftRecord = async (record) => {
+  // Si IndexedDB está disponible, persistimos en la base de datos del navegador
+  if (isIndexedDBAvailable()) {
+    try {
+      // Abrimos la conexión
+      const db = await openDatabase();
+
+      // Retornamos una promesa para la transacción de escritura
+      return new Promise((resolve, reject) => {
+        // Iniciamos una transacción de lectura y escritura (readwrite) en el almacén de borradores
+        const transaction = db.transaction([STORE_DRAFTS], 'readwrite');
+        // Obtenemos el object store
+        const store = transaction.objectStore(STORE_DRAFTS);
+        // Insertamos o actualizamos (put) el registro
+        const putRequest = store.put(record);
+
+        // Al finalizar la operación de guardado
+        putRequest.onsuccess = () => {
+          resolve(record);
+        };
+
+        // Si ocurre un error al escribir el registro
+        putRequest.onerror = (e) => {
+          reject(e.target.error);
+        };
+      });
+    } catch (err) {
+      // Si falla IndexedDB, usamos el almacén en memoria como salvaguarda
+      inMemoryFallbackStore.set(record.client_side_id, record);
+      return record;
+    }
+  } else {
+    // Si no hay IndexedDB, guardamos en la memoria de respaldo
+    inMemoryFallbackStore.set(record.client_side_id, record);
+    return record;
+  }
+};
+
+/**
  * Guarda o actualiza un borrador de reporte ciudadano en IndexedDB.
  * Almacena las fotografías originales (Blob/File) sin convertirlas a Base64.
  * @param {object} draftData Datos del borrador a persistir
@@ -128,45 +172,13 @@ export const saveDraftReport = async (draftData) => {
     address: draftData.address || '',
     // La imagen almacenada localmente NO se considera procesada ni anonimizada por el backend
     isProcessedByBackend: false,
+    // H-35: motivo del último intento de envío fallido ({ code, kind, message, at }); null si no hubo
+    lastSyncError: draftData.lastSyncError || null,
     createdAt: draftData.createdAt || now,
     updatedAt: now,
   };
 
-  // Si IndexedDB está disponible, persistimos en la base de datos del navegador
-  if (isIndexedDBAvailable()) {
-    try {
-      // Abrimos la conexión
-      const db = await openDatabase();
-
-      // Retornamos una promesa para la transacción de escritura
-      return new Promise((resolve, reject) => {
-        // Iniciamos una transacción de lectura y escritura (readwrite) en el almacén de borradores
-        const transaction = db.transaction([STORE_DRAFTS], 'readwrite');
-        // Obtenemos el object store
-        const store = transaction.objectStore(STORE_DRAFTS);
-        // Insertamos o actualizamos (put) el registro
-        const putRequest = store.put(recordToSave);
-
-        // Al finalizar la operación de guardado
-        putRequest.onsuccess = () => {
-          resolve(recordToSave);
-        };
-
-        // Si ocurre un error al escribir el registro
-        putRequest.onerror = (e) => {
-          reject(e.target.error);
-        };
-      });
-    } catch (err) {
-      // Si falla IndexedDB, usamos el almacén en memoria como salvaguarda
-      inMemoryFallbackStore.set(client_side_id, recordToSave);
-      return recordToSave;
-    }
-  } else {
-    // Si no hay IndexedDB, guardamos en la memoria de respaldo
-    inMemoryFallbackStore.set(client_side_id, recordToSave);
-    return recordToSave;
-  }
+  return persistDraftRecord(recordToSave);
 };
 
 /**
@@ -289,6 +301,35 @@ export const markDraftPendingSync = async (clientSideId) => {
 
   // Guardamos el registro con su nuevo estado
   return await saveDraftReport(existingDraft);
+};
+
+/**
+ * Actualiza campos de un borrador ya guardado (H-35: completar la descripción de un pendiente trabado).
+ * Conserva las fotos. Editar el borrador borra el motivo del fallo anterior: ya no es el estado actual.
+ * @param {string} clientSideId
+ * @param {object} patch Campos a cambiar (p. ej. { description })
+ * @returns {Promise<object|null>} Borrador actualizado, o null si no existe
+ */
+export const updateDraftReport = async (clientSideId, patch = {}) => {
+  const existing = await getDraftReport(clientSideId);
+  if (!existing) return null;
+  return saveDraftReport({ ...existing, ...patch, lastSyncError: patch.lastSyncError ?? null });
+};
+
+/**
+ * Guarda el motivo del último intento de envío fallido, para mostrarlo en Pendientes (H-35).
+ * NO cambia `updatedAt`: la fecha que ve el ciudadano es la de su último cambio, no la del último reintento.
+ * @param {string} clientSideId
+ * @param {{ code: string, kind: 'invalid'|'retry', message: string }} syncError
+ * @returns {Promise<object|null>} Borrador actualizado, o null si no existe
+ */
+export const recordDraftSyncError = async (clientSideId, syncError) => {
+  const existing = await getDraftReport(clientSideId);
+  if (!existing) return null;
+  return persistDraftRecord({
+    ...existing,
+    lastSyncError: { ...syncError, at: new Date().toISOString() },
+  });
 };
 
 /**
