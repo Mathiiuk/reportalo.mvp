@@ -28,11 +28,36 @@ import {
   DRAFT_STATUS,
 } from '../services/offlineStorageService';
 // Persistencia real del reporte (REP-2500)
-import { createCitizenReport, attachReportEvidence, isServerProtectedUrl } from '../services/reportSubmissionService';
+import {
+  createCitizenReport,
+  attachReportEvidence,
+  isServerProtectedUrl,
+  isNetworkFailure,
+} from '../services/reportSubmissionService';
 import { formatReportCode } from '../components/report/reportStatus';
+import { PENDING_QUEUED_EVENT } from '../components/common/PendingSyncManager';
 // Hook de monitoreo reactivo de conectividad (REP-2703)
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { WifiOff } from 'lucide-react';
+
+// Con señal débil el teléfono sigue «online» pero un pedido puede no volver nunca. Pasado este
+// tiempo, el reporte se deja en la cola de pendientes en vez de dejar al ciudadano esperando.
+const SEND_TIMEOUT_MS = 20000;
+const SEND_TIMED_OUT = Symbol('send-timed-out');
+const withSendTimeout = (promise) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(SEND_TIMED_OUT), SEND_TIMEOUT_MS);
+    Promise.resolve(promise).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
 
 /**
  * Pagina principal del flujo de Nuevo Reporte Ciudadano (REP-2200 / REP-2703).
@@ -345,25 +370,34 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     }
   };
 
+  // Deja el reporte en la cola de pendientes (PENDING_SYNC) y vuelve al mapa. Se usa sin conexión
+  // y también cuando hay señal pero no alcanza para enviar: PendingSyncManager lo envía solo después.
+  const saveForLaterAndExit = async () => {
+    try {
+      await markDraftPendingSync(clientSideId);
+    } catch (err) {
+      unlockSubmit();
+      throw err;
+    }
+    setDraftStatus(DRAFT_STATUS.PENDING_SYNC);
+    // Avisa a PendingSyncManager para que empiece a reintentar el envío solo
+    window.dispatchEvent(new Event(PENDING_QUEUED_EVENT));
+    // Mensaje coloquial informando que se guardó y enviará solo
+    toast.success('Reporte guardado con éxito', {
+      description: 'Se enviará automáticamente apenas recuperes señal.',
+      // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+      action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
+    });
+    navigate('/mapa', { replace: true });
+  };
+
   // Envío de reporte: si está offline, se persiste en PENDING_SYNC; si está online, avanza a cuarentena
   const handleSubmitReport = async () => {
     // REP-2204: un segundo toque mientras el primero está en curso no hace nada
     if (!lockSubmit()) return;
     if (!isOnline) {
       // Estado explícito PENDING_SYNC cuando no hay conectividad (REP-2703)
-      try {
-        await markDraftPendingSync(clientSideId);
-      } catch (err) {
-        unlockSubmit();
-        throw err;
-      }
-      // Mensaje coloquial informando que se guardó y enviará solo
-      toast.success('Reporte guardado con éxito', {
-        description: 'Se enviará automáticamente apenas recuperes señal.',
-        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
-        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
-      });
-      navigate('/mapa', { replace: true });
+      await saveForLaterAndExit();
       return;
     }
 
@@ -374,27 +408,14 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Acto de consentimiento + envío (primer reporte)
   const handleAcceptTermsAndSubmit = async () => {
     if (!lockSubmit()) return;
-    try {
-      await recordTermsAcceptance(user?.id, { camera: true, location: true });
-    } catch (err) {
-      unlockSubmit();
-      throw err;
-    }
+    // La aceptación queda guardada en el teléfono en el acto; la copia en Supabase va de fondo.
+    // No se espera: con poca señal, esperar ese insert dejaba el envío trabado en este paso.
+    recordTermsAcceptance(user?.id, { camera: true, location: true }).catch((err) => {
+      console.warn('[handleAcceptTermsAndSubmit] La aceptación no llegó al servidor todavía:', err);
+    });
     setConsentRecord({ version: CURRENT_TERMS_VERSION, acceptedAt: new Date().toISOString() });
     if (!isOnline) {
-      try {
-        await markDraftPendingSync(clientSideId);
-      } catch (err) {
-        unlockSubmit();
-        throw err;
-      }
-      // Mensaje coloquial informando que se guardó y enviará solo
-      toast.success('Reporte guardado con éxito', {
-        description: 'Se enviará automáticamente apenas recuperes señal.',
-        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
-        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
-      });
-      navigate('/mapa', { replace: true });
+      await saveForLaterAndExit();
       return;
     }
     goToStep(4);
@@ -467,7 +488,13 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
       // REP-2204: con las categorías de respaldo no hay dbId; se resuelve por código y, si no se
       // puede, no se envía: antes el reporte se guardaba sin categoría sin avisar.
-      const serviceId = await resolveServiceDbId(selectedCategory);
+      const serviceResult = await withSendTimeout(resolveServiceDbId(selectedCategory));
+      if (serviceResult === SEND_TIMED_OUT) {
+        // Hay señal pero no alcanza: el reporte queda en la cola y sale solo después
+        await saveForLaterAndExit();
+        return;
+      }
+      const serviceId = serviceResult;
       if (!serviceId) {
         toast.error('No pudimos identificar la categoría', {
           description: 'Tu borrador sigue guardado. Revisá tu conexión y probá de nuevo.',
@@ -476,15 +503,25 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         return;
       }
 
-      const creationResult = await createCitizenReport({
-        clientSideId,
-        userId: user?.id,
-        serviceId,
-        localityId: customLocation?.localityId ?? null,
-        description,
-        latitud: lat,
-        longitud: lng,
-      });
+      const creationResult = await withSendTimeout(
+        createCitizenReport({
+          clientSideId,
+          userId: user?.id,
+          serviceId,
+          localityId: customLocation?.localityId ?? null,
+          description,
+          latitud: lat,
+          longitud: lng,
+        })
+      );
+
+      // Red lenta o caída: no se vuelve a la revisión a pedir que reintente a mano. El alta es
+      // idempotente por client_side_id, así que si este intento igual llega al servidor, el envío
+      // de la cola recupera ese mismo reporte y le adjunta las fotos sin duplicarlas.
+      if (creationResult === SEND_TIMED_OUT || (!creationResult.success && isNetworkFailure(creationResult.error))) {
+        await saveForLaterAndExit();
+        return;
+      }
 
       if (!creationResult.success) {
         toast.error('No pudimos enviar tu reporte', {
@@ -677,6 +714,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
               onDiscard={handleCancel}
+              // Señal débil: si subir y proteger las fotos no termina a tiempo, el reporte va a la cola
+              onSaveForLater={saveForLaterAndExit}
               onProcessingComplete={handleProcessingComplete}
             />
           </motion.div>

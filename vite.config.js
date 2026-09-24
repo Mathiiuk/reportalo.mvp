@@ -15,7 +15,8 @@ export default defineConfig({
       pwaAssets: { disabled: true },
       manifest: false,
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        // woff2: la fuente Manrope se sirve desde la app y tiene que abrir sin red
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         maximumFileSizeToCacheInBytes: 5000000,
       },
     })

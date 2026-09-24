@@ -45,7 +45,7 @@ const MESSAGE_GENERIC =
 const MESSAGE_MISSING_DATA =
   'Faltan datos para enviar el reporte. Revisá la foto, la categoría, la descripción y la ubicación.';
 
-const isNetworkFailure = (message) =>
+export const isNetworkFailure = (message) =>
   /failed to fetch|networkerror|network request failed|load failed|timeout|timed out/i.test(String(message ?? ''));
 
 const toCitizenMessage = (technicalMessage) =>

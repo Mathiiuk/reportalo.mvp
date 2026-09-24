@@ -9,6 +9,7 @@ import { PwaUpdater } from './components/common/PwaUpdater';
 import { getSelectableLocalities } from './services/localitiesService';
 import { PendingSyncManager } from './components/common/PendingSyncManager';
 import { getSessionMarker, getResumePath, clearResumePath } from './lib/sessionMarker';
+import { readStoredSession } from './lib/storedSession';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage').then(m => ({ default: m.WelcomePage })));
@@ -34,6 +35,13 @@ const NewsDetailPage = React.lazy(() => import('./pages/NewsDetailPage').then(m 
 const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+
+// Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
+// pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
+if (readStoredSession()) {
+  import('./pages/MapPage').catch(() => {});
+  import('./pages/NewReportPage').catch(() => {});
+}
 
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {

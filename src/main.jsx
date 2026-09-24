@@ -1,6 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+// Manrope local: se empaqueta con la app y el service worker la precachea, así el primer
+// pintado no depende de la red (antes venía de Google Fonts y bloqueaba el arranque)
+import '@fontsource-variable/manrope';
 import './index.css';
 
 // Limpieza automática de Service Workers antiguos en entorno de desarrollo para evitar conflictos con Vite ESM/HMR

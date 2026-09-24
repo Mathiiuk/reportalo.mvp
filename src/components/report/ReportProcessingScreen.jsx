@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera, Sun, Focus } from 'lucide-react';
+import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera, Sun, Focus, Clock } from 'lucide-react';
 import {
   processAllEvidencesThroughQuarantine,
   PIPELINE_STEPS,
@@ -20,6 +20,8 @@ import {
  * @param {Function} [props.processFn] Función opcional para inyectar o mockear el pipeline
  * @param {number} [props.durationMs] Tiempo mínimo de animación para visualización armónica
  * @param {boolean} [props.simulateError] Bandera para simular error fail-safe en pruebas
+ * @param {Function} [props.onSaveForLater] Deja el reporte en la cola de pendientes (señal débil)
+ * @param {number} [props.timeoutMs] Espera máxima del pipeline antes de pasar el reporte a la cola
  */
 export const ReportProcessingScreen = ({
   evidenceList = [],
@@ -31,6 +33,8 @@ export const ReportProcessingScreen = ({
   processFn = null,
   durationMs = 3200,
   simulateError = false,
+  onSaveForLater = null,
+  timeoutMs = 45000,
 }) => {
   // Índice del paso actual mostrado al usuario
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -47,6 +51,11 @@ export const ReportProcessingScreen = ({
 
   // Referencia para evitar dobles llamadas a onProcessingComplete
   const hasCompletedRef = useRef(false);
+  // Se venció la espera y el reporte pasó a la cola: un resultado que llegue tarde se ignora
+  const abandonedRef = useRef(false);
+  // Por ref y no en las dependencias: si cambiara la referencia, el pipeline se reiniciaría
+  const onSaveForLaterRef = useRef(onSaveForLater);
+  onSaveForLaterRef.current = onSaveForLater;
 
   // URL de la primera fotografía para el visor o fallback de prueba
   const photoUrl = evidenceList[0]?.previewUrl || '/assets/street-scene.png';
@@ -55,6 +64,7 @@ export const ReportProcessingScreen = ({
   const executePipeline = useCallback(async () => {
     // Restablecemos estados al iniciar o reintentar
     hasCompletedRef.current = false;
+    abandonedRef.current = false;
     setHasError(false);
     setErrorMessage('');
     setProgress(15);
@@ -93,6 +103,9 @@ export const ReportProcessingScreen = ({
       }
     })();
 
+    // Temporizador de espera máxima (se arma más abajo, junto al intervalo)
+    let watchdog = null;
+
     // Intervalo de animación visual suave
     const interval = setInterval(async () => {
       // Tiempo transcurrido desde el inicio
@@ -113,6 +126,9 @@ export const ReportProcessingScreen = ({
         clearInterval(interval);
         // Esperamos que termine el procesamiento real si aún estaba en curso
         await runnerPromise;
+        // Si mientras tanto se venció la espera, el reporte ya está en la cola: no se sigue
+        if (abandonedRef.current) return;
+        clearTimeout(watchdog);
 
         // Verificamos si el pipeline fue exitoso
         if (pipelineResult && pipelineResult.success) {
@@ -139,8 +155,18 @@ export const ReportProcessingScreen = ({
       }
     }, 40);
 
+    // Con señal débil la subida puede no terminar nunca. Pasado timeoutMs, si hay a dónde
+    // mandarlo, el reporte queda en la cola de pendientes y el ciudadano vuelve al mapa.
+    watchdog = setTimeout(() => {
+      if (hasCompletedRef.current || !onSaveForLaterRef.current || timeoutMs <= 0) return;
+      abandonedRef.current = true;
+      clearInterval(interval);
+      onSaveForLaterRef.current();
+    }, timeoutMs);
+
     return () => {
       clearInterval(interval);
+      clearTimeout(watchdog);
     };
   }, [
     evidenceList,
@@ -149,6 +175,7 @@ export const ReportProcessingScreen = ({
     onProcessingComplete,
     processFn,
     simulateError,
+    timeoutMs,
   ]);
 
   // Efecto que inicia o reintenta el pipeline
@@ -398,6 +425,17 @@ export const ReportProcessingScreen = ({
                   <RefreshCw aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
                   Reintentar protección
                 </button>
+                {/* Si la falla fue de señal, el ciudadano puede dejarlo en la cola y seguir */}
+                {onSaveForLater && (
+                  <button
+                    type="button"
+                    onClick={onSaveForLater}
+                    className="rep-focus flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-rep-body font-semibold text-white/85 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
+                  >
+                    <Clock aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                    Guardar y enviar cuando haya señal
+                  </button>
+                )}
                 {onDiscard && (
                   <button
                     type="button"
