@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { toast } from 'sonner';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { markSessionActive, clearSessionMarker } from '../lib/sessionMarker';
+import { readStoredSession } from '../lib/storedSession';
 import { syncTermsConsentWithRemote } from '../services/termsService';
 
 // Creación del contexto de autenticación
@@ -17,9 +18,12 @@ export const AuthContext = createContext({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Si el teléfono ya tiene una sesión guardada, se entra con ella sin esperar a la red:
+  // así la app abre directo en el mapa aunque la señal sea mala o no haya
+  const [bootSession] = useState(readStoredSession);
+  const [user, setUser] = useState(bootSession?.user ?? null);
+  const [session, setSession] = useState(bootSession);
+  const [loading, setLoading] = useState(!bootSession);
   const [authError, setAuthError] = useState(null);
 
   // Limpiar mensaje de error
@@ -99,6 +103,14 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         if (!mounted) return;
+        // Sin red, auth-js no puede renovar el token vencido y avisa `null`, pero deja la
+        // sesión guardada. Eso no es un cierre de sesión: se sigue con la que hay y se
+        // renueva sola al volver la señal. Solo se sale ante SIGNED_OUT o si auth-js la borró
+        // (refresh token rechazado por el servidor).
+        if (!currentSession && event !== 'SIGNED_OUT' && readStoredSession()) {
+          setLoading(false);
+          return;
+        }
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -147,7 +159,13 @@ export const AuthProvider = ({ children }) => {
             if (initialSession.user?.id) {
               syncTermsConsentWithRemote(initialSession.user.id).catch(() => {});
             }
+          } else if (readStoredSession()) {
+            // Sin red para renovar el token: la sesión sigue guardada y se mantiene (ver arriba)
+            setLoading(false);
           } else if (!isHandlingAuthRedirect) {
+            // Ya no hay sesión guardada: se descarta la que se usó para arrancar, si había
+            setSession(null);
+            setUser(null);
             // Solo desactivamos loading si no estamos esperando la resolución del hash OAuth
             setLoading(false);
           }

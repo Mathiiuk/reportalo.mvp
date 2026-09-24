@@ -34,8 +34,8 @@ export const NotFoundReportPage = () => {
             <path d="M65 70c9-4 22-5 29 0s8 13 0 16-25 3-32-2 -6-10 3-14Z" fill="#3b4756"></path>
             <rect x="112" y="10" width="48" height="32" rx="5" fill="#fff" stroke="#c0392b" strokeWidth="3"></rect>
             <rect x="133" y="42" width="6" height="30" rx="2" fill="#b8c3cf"></rect>
-            <text x="136" y="26" fontFamily="Manrope,sans-serif" fontSize="9" fontWeight="800" fill="#c0392b" textAnchor="middle">CERRADO</text>
-            <text x="136" y="37" fontFamily="Manrope,sans-serif" fontSize="7.5" fontWeight="700" fill="#9aa7b5" textAnchor="middle">404</text>
+            <text x="136" y="26" fontFamily="Manrope Variable,Manrope,sans-serif" fontSize="9" fontWeight="800" fill="#c0392b" textAnchor="middle">CERRADO</text>
+            <text x="136" y="37" fontFamily="Manrope Variable,Manrope,sans-serif" fontSize="7.5" fontWeight="700" fill="#9aa7b5" textAnchor="middle">404</text>
             <path d="M18 84l9-32h8l9 32H18Z" fill="#F78E35"></path>
             <rect x="12" y="82" width="39" height="8" rx="3" fill="#e07c1a"></rect>
             <rect x="22" y="62" width="17" height="6" fill="#fff" opacity=".85"></rect>

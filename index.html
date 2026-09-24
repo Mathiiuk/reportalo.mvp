@@ -7,13 +7,9 @@
   <meta name="description" content="Reportalo - Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida." />
   <title>Reportalo</title>
 
-  <!-- Google Fonts: Manrope -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Google Fonts: Material Symbols Rounded -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <!-- Sin hojas de estilo externas: Manrope se sirve desde la app (src/main.jsx) y queda
+       en el caché del service worker. Con Google Fonts, el teléfono no pintaba nada hasta
+       que respondía fonts.googleapis.com: con poca señal eran ~12 s de pantalla negra. -->
 
   <!-- PWA Manifest & Icons -->
   <link rel="manifest" href="/manifest.json" />

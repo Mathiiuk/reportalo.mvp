@@ -78,8 +78,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
-        manrope: ['Manrope', 'sans-serif'],
+        // 'Manrope Variable' es la fuente local (@fontsource-variable/manrope, sin red)
+        sans: ['Manrope Variable', 'Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        manrope: ['Manrope Variable', 'Manrope', 'sans-serif'],
       },
       // UJ v3.3 §10 «Escala tipográfica real». Sin sufijo = teléfono; sufijo -d = escritorio.
       // Los mockups están dibujados a escala reducida: no copiar los px del dibujo.
