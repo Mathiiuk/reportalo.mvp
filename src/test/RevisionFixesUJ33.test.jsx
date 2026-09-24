@@ -14,17 +14,15 @@ import { getNewsItem } from '../services/newsService';
 import { NewsDetailPage } from '../pages/NewsDetailPage';
 
 describe('Revision REP-3787: contenido de demostracion de Novedades', () => {
-  it('UT-FIX-01: getNewsItem no entrega contenido de demostracion si no se lo piden', async () => {
-    // Sin esta condicion, entrar a /novedades/demo-1 por un enlace compartido mostraba
-    // un comunicado firmado por una secretaria del municipio que nadie publico.
-    const sinPedirlo = await getNewsItem('demo-1');
-    expect(sinPedirlo.item).toBeNull();
-
-    const pidiendolo = await getNewsItem('demo-1', { includeDemo: true });
-    expect(pidiendolo.item).not.toBeNull();
+  it('UT-FIX-01: getNewsItem no entrega contenido de demostracion: la app ya no lo trae', async () => {
+    // Un comunicado firmado por una secretaria del municipio que nadie publico no puede
+    // aparecer por ninguna via, ni pidiendolo ni desde un enlace compartido.
+    const resultado = await getNewsItem('demo-1');
+    expect(resultado.item).toBeNull();
+    expect(resultado.pending).toBe(true);
   });
 
-  it('UT-FIX-02: la nota sin ?demo=1 no muestra el comunicado de ejemplo', async () => {
+  it('UT-FIX-02: una nota de ejemplo vieja (enlace compartido) muestra «ya no está disponible»', async () => {
     render(
       <MemoryRouter initialEntries={['/novedades/demo-1']}>
         <Routes>

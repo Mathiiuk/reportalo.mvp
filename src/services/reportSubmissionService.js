@@ -263,7 +263,7 @@ export const attachReportEvidence = async ({ reportId, sanitizedUrl }) => {
 };
 
 /**
- * "Mis reportes" — reemplaza demoReports en ReportsPage.jsx.
+ * Reportes enviados por el usuario, para "Mis reportes" y las métricas del Perfil.
  * @param {string} userId
  * @returns {Promise<{ success: boolean, reports: Array<object>, error?: string }>}
  */

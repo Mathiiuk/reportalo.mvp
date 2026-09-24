@@ -6,6 +6,15 @@ import { ProfilePage } from '../pages/ProfilePage';
 import { AuthContext } from '../context/AuthContext';
 import * as notificationService from '../services/notificationService';
 
+// Métricas reales del perfil: reportes enviados (Supabase) y borradores del dispositivo.
+// Se simulan para no depender de la red ni del .env (lección de H-06).
+const { getMyReportsMock, getPendingMock } = vi.hoisted(() => ({
+  getMyReportsMock: vi.fn(),
+  getPendingMock: vi.fn(),
+}));
+vi.mock('../services/reportSubmissionService', () => ({ getMyReports: getMyReportsMock }));
+vi.mock('../services/offlineStorageService', () => ({ getAllPendingSyncReports: getPendingMock }));
+
 // Mock de sonner
 vi.mock('sonner', () => ({
   toast: {
@@ -21,6 +30,17 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     localStorage.clear();
     document.body.innerHTML = '';
     vi.restoreAllMocks();
+    // 4 reportes enviados (2 cerrados: resuelto y descartado) y 1 borrador sin enviar
+    getMyReportsMock.mockResolvedValue({
+      success: true,
+      reports: [
+        { id: 'r1', current_state_code: 'RECIBIDO' },
+        { id: 'r2', current_state_code: 'EN_ANALISIS' },
+        { id: 'r3', current_state_code: 'RESUELTO' },
+        { id: 'r4', current_state_code: 'DESESTIMADO' },
+      ],
+    });
+    getPendingMock.mockResolvedValue([{ client_side_id: 'draft-1' }]);
   });
 
   const mockAuthContext = {
@@ -30,7 +50,7 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     signOut: vi.fn(),
   };
 
-  it('UT-PF-01: Renderiza los datos del usuario, avatar con iniciales y métricas de reportes', () => {
+  it('UT-PF-01: Renderiza los datos del usuario, avatar con iniciales y métricas reales de reportes', async () => {
     render(
       <AuthContext.Provider value={mockAuthContext}>
         <MemoryRouter initialEntries={['/perfil']}>
@@ -43,13 +63,47 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     expect(screen.getByText('Lucía F.')).toBeInTheDocument();
     expect(screen.getByText('lucia.f@mail.com')).toBeInTheDocument();
 
-    // Métricas
-    expect(screen.getByText('7')).toBeInTheDocument();
+    // Métricas: salen de los reportes del usuario y de la cola local, no de valores fijos
+    await waitFor(() => expect(screen.getByTestId('profile-stat-total')).toHaveTextContent('4'));
     expect(screen.getByText('REPORTES')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByTestId('profile-stat-closed')).toHaveTextContent('2');
     expect(screen.getByText('RESUELTOS')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('profile-stat-pending')).toHaveTextContent('1'));
     expect(screen.getByText('SIN ENVIAR')).toBeInTheDocument();
+    expect(getMyReportsMock).toHaveBeenCalledWith('usr-123');
+  });
+
+  it('UT-PF-10: Si no se pueden leer los reportes, las métricas muestran «–» y no inventan números', async () => {
+    getMyReportsMock.mockResolvedValue({ success: false, reports: [], error: 'sin red' });
+    getPendingMock.mockResolvedValue([]);
+
+    render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <MemoryRouter initialEntries={['/perfil']}>
+          <ProfilePage />
+        </MemoryRouter>
+      </AuthContext.Provider>
+    );
+
+    // Sin enviar: la cola local está vacía. Reportes y resueltos: no se pudieron leer
+    await waitFor(() => expect(screen.getByTestId('profile-stat-pending')).toHaveTextContent('0'));
+    expect(screen.getByTestId('profile-stat-total')).toHaveTextContent('–');
+    expect(screen.getByTestId('profile-stat-closed')).toHaveTextContent('–');
+  });
+
+  it('UT-PF-11: Sin términos aceptados, el perfil lo dice en lugar de mostrar una aceptación inventada', () => {
+    render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <MemoryRouter initialEntries={['/perfil']}>
+          <ProfilePage />
+        </MemoryRouter>
+      </AuthContext.Provider>
+    );
+
+    expect(screen.getByText('Términos y condiciones')).toBeInTheDocument();
+    expect(screen.getByTestId('profile-terms-detail')).toHaveTextContent(/todavía no los aceptaste/i);
+    expect(screen.queryByText(/Términos aceptados/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Leer los términos/i })).toBeInTheDocument();
   });
 
   it('UT-PF-02: El menú contiene Notificaciones, Novedades (con ícono newspaper), Permisos de la app y Descargar datos', () => {
@@ -216,6 +270,11 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
 
   it('UT-PF-09: Tarjeta de términos muestra versión v1.3 y navega a /terminos en modo consulta', async () => {
     const TermsDestination = () => <div data-testid="terms-view">Vista de Términos</div>;
+    // Aceptación real registrada al enviar un reporte (la guarda termsService)
+    localStorage.setItem(
+      'reportalo_terms_consent',
+      JSON.stringify({ userId: 'usr-123', terms_version: '1.3', accepted_at: '2026-09-20T17:05:00' })
+    );
 
     render(
       <AuthContext.Provider value={mockAuthContext}>
@@ -229,7 +288,7 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     );
 
     expect(screen.getByText(/Términos aceptados/i)).toBeInTheDocument();
-    expect(screen.getByText(/v1.3/i)).toBeInTheDocument();
+    expect(screen.getByTestId('profile-terms-detail')).toHaveTextContent('Versión v1.3 · aceptada el 20/09/2026 a las 17:05.');
 
     const termsBtn = screen.getByRole('button', { name: /Ver el texto aceptado/i });
     fireEvent.click(termsBtn);

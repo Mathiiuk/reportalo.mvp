@@ -4,7 +4,7 @@ import { Megaphone } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { NewsCard } from '../components/news/NewsCard';
 import { EmptyState } from '../components/common/EmptyState';
-import { DEMO_NEWS, getPublishedNews } from '../services/newsService';
+import { getPublishedNews } from '../services/newsService';
 
 const FILTERS = [
   { key: 'todas', label: 'Todas' },
@@ -20,7 +20,6 @@ const FILTERS = [
 export const NewsPage = () => {
   const navigate = useNavigate();
   const [newsItems, setNewsItems] = useState([]);
-  const [isDemoActive, setIsDemoActive] = useState(false);
   const [activeFilter, setActiveFilter] = useState('todas');
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export const NewsPage = () => {
     };
   }, []);
 
-  const currentNews = isDemoActive ? DEMO_NEWS : newsItems;
+  const currentNews = newsItems;
 
   const filteredNews = useMemo(
     () =>
@@ -48,28 +47,17 @@ export const NewsPage = () => {
   );
 
   const [featured, ...rest] = filteredNews;
-  // El modo demostración viaja en la URL: sin esa marca, el detalle no sirve contenido
-  // de ejemplo (si no, un enlace compartido mostraría un comunicado que nadie publicó).
-  const openItem = (item) => navigate(`/novedades/${item.id}${isDemoActive ? '?demo=1' : ''}`);
+  const openItem = (item) => navigate(`/novedades/${item.id}`);
 
   return (
     <AppLayout activeTab="novedades">
       <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Novedades</h1>
-              <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
-                Avisos oficiales de tu municipio y cambios de la app.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsDemoActive((prev) => !prev)}
-              className="rep-focus min-h-touch shrink-0 rounded-lg border-0 bg-rep-accent-soft px-3.5 text-rep-label font-bold text-rep-accent transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06]"
-            >
-              {isDemoActive ? 'Limpiar demo' : 'Cargar demo'}
-            </button>
+          <div>
+            <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Novedades</h1>
+            <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
+              Avisos oficiales de tu municipio y cambios de la app.
+            </p>
           </div>
 
           {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación */}

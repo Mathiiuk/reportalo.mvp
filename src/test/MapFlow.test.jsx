@@ -61,6 +61,11 @@ const MAP_REPORTS = [
 ];
 
 // Mock de sonner
+// El perfil lee los reportes del usuario: se simula para no depender de la red ni del .env (H-06)
+vi.mock('../services/reportSubmissionService', () => ({
+  getMyReports: vi.fn().mockResolvedValue({ success: true, reports: [] }),
+}));
+
 vi.mock('sonner', () => ({
   toast: {
     info: vi.fn(),
@@ -158,7 +163,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByText('Más')).toBeInTheDocument();
   });
 
-  it('UT-MP-04: ReportsPage renderiza el empty state con ilustración, píldoras y botón Cargar demo', () => {
+  it('UT-MP-04: ReportsPage renderiza el empty state y ya no ofrece reportes demo', () => {
     render(
       <MemoryRouter initialEntries={['/reportes']}>
         <ReportsPage />
@@ -166,13 +171,10 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getByRole('heading', { name: /mis reportes/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cargar demo/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /todavía no enviaste reportes/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /hacer mi primer reporte/i })).toBeInTheDocument();
-
-    // Activar modo demo mediante botón Cargar demo
-    fireEvent.click(screen.getByRole('button', { name: /cargar demo/i }));
-    expect(screen.getByText(/bache en calzada principal/i)).toBeInTheDocument();
+    // La app es funcional: la lista muestra solo reportes reales, sin modo demo
+    expect(screen.queryByRole('button', { name: /cargar demo/i })).not.toBeInTheDocument();
   });
 
   it('UT-MP-05: NewsPage renderiza el empty state de novedades municipales', () => {
@@ -188,7 +190,11 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getByRole('button', { name: /ver el mapa/i })).toBeInTheDocument();
   });
 
-  it('UT-MP-06: ProfilePage renderiza los datos del usuario, versión vigente y botón de cerrar sesión', () => {
+  it('UT-MP-06: ProfilePage renderiza los datos del usuario, versión aceptada y botón de cerrar sesión', () => {
+    localStorage.setItem(
+      'reportalo_terms_consent',
+      JSON.stringify({ terms_version: '1.3', accepted_at: '2026-09-20T17:05:00' })
+    );
     render(
       <AuthContext.Provider value={mockAuthContext}>
         <MemoryRouter initialEntries={['/perfil']}>
