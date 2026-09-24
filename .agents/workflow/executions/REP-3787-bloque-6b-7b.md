@@ -44,7 +44,17 @@ la constante apagada, el arranque fuerza claro aunque haya un oscuro guardado.
 
 No se verificó en navegador: Perfil, onboarding y permisos exigen sesión iniciada.
 
-## 4. Observaciones
+## 4. Datos reales en Perfil y Mis reportes
+
+| Archivo | Cambio |
+|---|---|
+| `src/pages/ProfilePage.jsx` | Métricas reales (enviados y cerrados desde `citizen_reports`, «sin enviar» desde la cola local); «Resueltos» usa el mismo criterio que Mis reportes para que los números coincidan. Términos reales. Descarga de datos sin estadísticas ni consentimiento inventados. |
+| `src/pages/ReportsPage.jsx` | Se quita «Cargar demo» y sus tres reportes ficticios. |
+| `src/test/ProfileFlow.test.jsx` · `MapFlow.test.jsx` | Simulan las fuentes de datos (sin red ni `.env`). Tests nuevos: UT-PF-10 (sin conexión muestra «–») y UT-PF-11 (sin términos aceptados). |
+
+`pnpm test`: **436 / 436**. `pnpm build`: compila.
+
+## 5. Observaciones
 
 | ID | Observación | Responsable |
 |---|---|---|
@@ -52,7 +62,7 @@ No se verificó en navegador: Perfil, onboarding y permisos exigen sesión inici
 | H-09 | Por dispositivo implementado. Falta que Hernán confirme, y decidir cuándo se enciende el conmutador. | Hernán |
 | PA-01 | Sin cambios: el código ya sigue el UJ v3.3. Falta corregir criterios de aceptación. | Hernán |
 | H-55 | «Descargar mis datos» sigue visible. Iván lo dio por fuera del MVP. | Hernán |
-| H-57 | Perfil muestra datos fijos: métricas 7 / 3 / 1 y «a las 14:32, aceptada al enviar el reporte #RP-2048». Viene de antes del bloque. Se superpone con REP-3552. | Matías |
+| H-57 | **Resuelta.** Perfil ya no muestra datos fijos: métricas desde `getMyReports` y la cola local (con «–» si no se pueden leer), términos con la versión y fecha reales de la aceptación o «Todavía no los aceptaste», sin nombre ni correo de relleno. «Mis reportes» ya no tiene modo demo. | Matías |
 | H-54 · H-56 | Colores sueltos fuera de paleta en onboarding, permisos y perfil (`bg-white` en tarjetas de escritorio incluido): no responden al tema oscuro. | Iván (UX) |
 
 ---

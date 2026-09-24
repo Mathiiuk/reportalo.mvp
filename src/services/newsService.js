@@ -6,7 +6,7 @@
  * Todavía no hay origen de datos: no existe una tabla de publicaciones ni un panel donde el
  * municipio las cargue (H-46). Hasta que exista, `getPublishedNews` devuelve una lista vacía y la
  * pantalla muestra su estado vacío. El contenido de demostración sirve para revisar el diseño y
- * para que QA pueda validar la pantalla sin backend, igual que la demo de Mis reportes.
+ * para que QA pueda validar la pantalla sin backend. Mis reportes ya no tiene demo: lee reportes reales.
  */
 
 // Punto único donde enchufar la consulta real cuando exista la tabla

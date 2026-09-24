@@ -45,7 +45,6 @@ export const ReportsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('todos');
-  const [isDemoActive, setIsDemoActive] = useState(false);
   const [myReports, setMyReports] = useState([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
   // UJ v3.3 · M17: los borradores sin enviar encabezan la lista (REP-3791 Bloque 6)
@@ -81,38 +80,7 @@ export const ReportsPage = () => {
     };
   }, [user?.id]);
 
-  // Reportes demo para exploración
-  const demoReports = [
-    {
-      id: 'REP-101',
-      title: 'Bache en calzada principal',
-      category: 'Infraestructura vial',
-      status: 'En curso',
-      statusColor: 'bg-[#FFF6E9] text-[#E08A00]',
-      date: '24 Ago 2026',
-      address: 'Av. Corrientes 1420',
-    },
-    {
-      id: 'REP-102',
-      title: 'Luminaria apagada en esquina',
-      category: 'Alumbrado público',
-      status: 'En curso',
-      statusColor: 'bg-[#FFF6E9] text-[#E08A00]',
-      date: '20 Ago 2026',
-      address: 'Calle San Martín 850',
-    },
-    {
-      id: 'REP-103',
-      title: 'Contenedor de residuos desbordado',
-      category: 'Higiene urbana',
-      status: 'Resueltos',
-      statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]',
-      date: '15 Ago 2026',
-      address: 'Pje. Los Sauces 312',
-    },
-  ];
-
-  const currentReports = isDemoActive ? demoReports : myReports;
+  const currentReports = myReports;
 
   const filteredReports = currentReports.filter((r) => {
     if (activeFilter === 'todos') return true;
@@ -131,27 +99,18 @@ export const ReportsPage = () => {
     return text.length > 48 ? `${text.slice(0, 47)}…` : text;
   };
 
-  const showDrafts = !isDemoActive && pendingDrafts.length > 0 && activeFilter !== 'resueltos';
+  const showDrafts = pendingDrafts.length > 0 && activeFilter !== 'resueltos';
 
   return (
     <AppLayout activeTab="reportes">
       <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-          {/* Título y demo */}
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
-              <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
-                Seguimiento de lo que enviaste y de lo que todavía está en este dispositivo.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsDemoActive((prev) => !prev)}
-              className="rep-focus min-h-touch shrink-0 rounded-lg border-0 bg-rep-accent-soft px-3.5 text-rep-label font-bold text-rep-accent transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06]"
-            >
-              {isDemoActive ? 'Limpiar demo' : 'Cargar demo'}
-            </button>
+          {/* Título */}
+          <div>
+            <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
+            <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
+              Seguimiento de lo que enviaste y de lo que todavía está en este dispositivo.
+            </p>
           </div>
 
           {/* Filtros con recuento (M17 · D18) */}
@@ -204,7 +163,7 @@ export const ReportsPage = () => {
             </ul>
           )}
 
-          {isLoadingReports && !isDemoActive ? (
+          {isLoadingReports ? (
             <div className="py-10 text-center text-rep-body font-semibold text-rep-ink-muted">Cargando tus reportes…</div>
           ) : filteredReports.length === 0 && !showDrafts ? (
             /* Estado vacío (UJ v3.3 · M26 / D34 — REP-3791 Bloque 9).
@@ -226,8 +185,7 @@ export const ReportsPage = () => {
                   <motion.button
                     type="button"
                     whileHover={{ y: -2 }}
-                    /* Los reportes demo tienen ids ficticios (REP-101): no abren detalle */
-                    onClick={isDemoActive ? undefined : () => navigate(`/reportes/${report.id}`)}
+                    onClick={() => navigate(`/reportes/${report.id}`)}
                     data-testid="report-row"
                     className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
                   >

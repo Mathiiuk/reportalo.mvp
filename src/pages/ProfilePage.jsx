@@ -4,11 +4,10 @@ import { toast } from 'sonner';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useAuth } from '../hooks/useAuth';
 import { getUserInitials } from '../utils/userUtils';
-import {
-  CURRENT_TERMS_VERSION,
-  getTermsRecord,
-  formatAcceptedDate,
-} from '../services/termsService';
+import { getTermsRecord, formatRejectionDate } from '../services/termsService';
+import { getMyReports } from '../services/reportSubmissionService';
+import { getAllPendingSyncReports } from '../services/offlineStorageService';
+import { isClosedState } from '../components/report/reportStatus';
 import {
   getNotificationPermission,
   requestNotificationPermission,
@@ -38,13 +37,46 @@ export const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
-  // Consentimiento y términos
+  // Consentimiento y términos: solo lo que realmente se aceptó. Los términos se piden al
+  // enviar el primer reporte (M13), así que un ciudadano nuevo todavía no tiene registro.
   const termsRecord = getTermsRecord(user?.id);
-  const acceptedVersion = termsRecord?.terms_version || CURRENT_TERMS_VERSION;
-  const acceptedDate = formatAcceptedDate(termsRecord?.accepted_at);
-  const userInitials = getUserInitials(user) || 'LF';
-  const userName = user?.user_metadata?.full_name || 'Lucía F.';
-  const userEmail = user?.email || 'lucia.f@mail.com';
+  const hasAcceptedTerms = Boolean(termsRecord?.terms_version && termsRecord?.accepted_at);
+  const userInitials = getUserInitials(user);
+  const userName =
+    user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Ciudadano';
+  const userEmail = user?.email || '';
+
+  // Métricas reales: enviados y cerrados salen de citizen_reports; «sin enviar», de la cola
+  // local del dispositivo. Mientras cargan, o si no se pudieron leer, se muestra «–».
+  const [reportStats, setReportStats] = useState({ total: null, closed: null, pending: null });
+
+  useEffect(() => {
+    let isMounted = true;
+    getAllPendingSyncReports()
+      .then((drafts) => {
+        if (isMounted) setReportStats((prev) => ({ ...prev, pending: (drafts || []).length }));
+      })
+      .catch(() => {});
+    if (user?.id) {
+      getMyReports(user.id)
+        .then((result) => {
+          if (!isMounted || !result?.success) return;
+          const reports = result.reports || [];
+          setReportStats((prev) => ({
+            ...prev,
+            total: reports.length,
+            // Mismo criterio que «Resueltos» en Mis reportes, para que los números coincidan
+            closed: reports.filter((r) => isClosedState(r.current_state_code)).length,
+          }));
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const formatStat = (value) => (value === null ? '–' : value);
 
   // Estados de Notificaciones PWA
   const [notificationsActive, setNotificationsActive] = useState(() => isNotificationsEnabled());
@@ -120,18 +152,15 @@ export const ProfilePage = () => {
     try {
       const dataPayload = {
         usuario: {
-          id: user?.id || 'demo-user',
+          id: user?.id ?? null,
           nombre: userName,
           email: userEmail,
         },
-        consentimiento_terminos: termsRecord || {
-          terms_version: acceptedVersion,
-          accepted_at: new Date().toISOString(),
-        },
+        consentimiento_terminos: hasAcceptedTerms ? termsRecord : null,
         estadisticas: {
-          reportes_totales: 7,
-          resueltos: 3,
-          sin_enviar: 1,
+          reportes_totales: reportStats.total,
+          resueltos: reportStats.closed,
+          sin_enviar: reportStats.pending,
         },
         exportado_el: new Date().toISOString(),
       };
@@ -210,8 +239,8 @@ export const ProfilePage = () => {
               {/* 3 Métricas de Reportes */}
               <div className="grid grid-cols-3 gap-2 md:gap-2.5">
                 <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
-                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-accent">
-                    7
+                  <div data-testid="profile-stat-total" className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-accent">
+                    {formatStat(reportStats.total)}
                   </div>
                   <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     REPORTES
@@ -219,8 +248,8 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
-                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-success">
-                    3
+                  <div data-testid="profile-stat-closed" className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-success">
+                    {formatStat(reportStats.closed)}
                   </div>
                   <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     RESUELTOS
@@ -228,8 +257,8 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
-                  <div className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#F78E35]">
-                    1
+                  <div data-testid="profile-stat-pending" className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#F78E35]">
+                    {formatStat(reportStats.pending)}
                   </div>
                   <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
                     SIN ENVIAR
@@ -237,16 +266,24 @@ export const ProfilePage = () => {
                 </div>
               </div>
 
-              {/* Términos aceptados */}
+              {/* Términos: la versión y la fecha reales de la aceptación, o que todavía no se aceptaron */}
               <div className="bg-rep-surface border border-rep-border rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  <BadgeCheck className="w-[18px] h-[18px] text-rep-success select-none" strokeWidth={2} />
+                  {hasAcceptedTerms && (
+                    <BadgeCheck className="w-[18px] h-[18px] text-rep-success select-none" strokeWidth={2} />
+                  )}
                   <span className="font-bold text-[11.5px] md:text-[12.5px] text-rep-ink">
-                    Términos aceptados
+                    {hasAcceptedTerms ? 'Términos aceptados' : 'Términos y condiciones'}
                   </span>
                 </div>
-                <div className="font-medium text-[10.5px] md:text-[11.5px] leading-[1.45] text-rep-ink-muted mt-0.5">
-                  Versión v{acceptedVersion} · {acceptedDate} a las 14:32, aceptada al enviar el reporte #RP-2048.
+                <div
+                  data-testid="profile-terms-detail"
+                  className="font-medium text-[10.5px] md:text-[11.5px] leading-[1.45] text-rep-ink-muted mt-0.5"
+                >
+                  {hasAcceptedTerms
+                    ? // formatRejectionDate solo formatea «DD/MM/AAAA a las H:MM»; no implica rechazo
+                      `Versión v${termsRecord.terms_version} · aceptada el ${formatRejectionDate(termsRecord.accepted_at)}.`
+                    : 'Todavía no los aceptaste. Se piden una sola vez, al enviar tu primer reporte.'}
                 </div>
                 <button
                   type="button"
@@ -254,7 +291,7 @@ export const ProfilePage = () => {
                   onClick={() => navigate('/terminos', { state: { consultaDesde: 'perfil' } })}
                   className="font-bold text-[10.5px] md:text-[11.5px] text-rep-accent hover:text-[#15539E] cursor-pointer bg-transparent border-0 p-0 mt-1 block text-left"
                 >
-                  Ver el texto aceptado →
+                  {hasAcceptedTerms ? 'Ver el texto aceptado →' : 'Leer los términos →'}
                 </button>
               </div>
 
