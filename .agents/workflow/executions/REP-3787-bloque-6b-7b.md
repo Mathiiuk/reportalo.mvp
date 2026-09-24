@@ -50,6 +50,7 @@ No se verificó en navegador: Perfil, onboarding y permisos exigen sesión inici
 |---|---|
 | `src/pages/ProfilePage.jsx` | Métricas reales (enviados y cerrados desde `citizen_reports`, «sin enviar» desde la cola local); «Resueltos» usa el mismo criterio que Mis reportes para que los números coincidan. Términos reales. Descarga de datos sin estadísticas ni consentimiento inventados. |
 | `src/pages/ReportsPage.jsx` | Se quita «Cargar demo» y sus tres reportes ficticios. |
+| `src/pages/NewsPage.jsx` · `NewsDetailPage.jsx` · `services/newsService.js` | Se quita la demo de Novedades (`DEMO_NEWS`, «Cargar demo», `?demo=1`). Sin origen de datos (H-46) la pantalla queda en su estado vacío. Los tests de diseño usan publicaciones de prueba definidas en el propio test. |
 | `src/test/ProfileFlow.test.jsx` · `MapFlow.test.jsx` | Simulan las fuentes de datos (sin red ni `.env`). Tests nuevos: UT-PF-10 (sin conexión muestra «–») y UT-PF-11 (sin términos aceptados). |
 
 `pnpm test`: **436 / 436**. `pnpm build`: compila.
