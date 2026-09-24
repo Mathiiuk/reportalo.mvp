@@ -34,7 +34,7 @@ Se corrieron **360 generaciones reales** (8 configuraciones × 9 casos × 5 repe
 2. **Todo el ahorro medible sale de recuperar menos fragmentos (top-3), y ahí hay una pérdida de normativa relevante.** En el caso B
    («auto estacionado sobre la rampa»), el baseline cita la **Ley 451 art. 6.1.52 (estacionamiento o detención prohibida) en 5 de 5 corridas**. Ese fragmento es
    el 4.º de la recuperación, así que top-3 lo deja afuera y, en las seis configuraciones con top-3, el modelo lo cita **0 de 5** veces: pasa a citar el art. 6.1.37
-   (obstrucción de vía), menos específico.
+   (obstrucción de vía), menos específico. Un cálculo posterior (§9) muestra que tampoco hay una variante intermedia (top-k 4) que ahorre lo suficiente: ~3.7 %.
 3. **Desactivar el thinking no aporta nada medible.** El baseline (`low`) ya casi no razona (4 de 45 corridas); con `thinkingBudget: 0` casi desaparecen esos picos (B: 0 de 45; C: 1 de 45, de 442 tokens),
    pero el promedio de salida y la latencia no cambian, y no garantiza 0.
 4. **`maxOutputTokens` 1024 y la instrucción de concisión son seguros pero de poco valor en costo.** 0 truncamientos (máximo observado 644 tokens) y concisión
@@ -192,10 +192,20 @@ fragmento fuera del top-3; en el resto, toda cita cae dentro de los tres primero
 
 **Opcional, sin impacto en costo:** `maxOutputTokens` 1024 y la instrucción de concisión (BASE+). Es seguro (0 truncamientos, concisión 100 %), pero solo se justifica por legibilidad, y antes habría que revisar con el PO el desplazamiento del caso D-CABA hacia `asistencia`.
 
-**Seguimiento propuesto (exploratorio, no forma parte de la regla pre-registrada)**
-- **Variante D: top-k 4 · umbral 0.52 · thinking `low`.** Conservaría el 4.º fragmento de B (0.646), de C (0.651) y de E (0.595), o sea todas las citas que el baseline hizo en este experimento, y aun así recortaría entrada.
-  Son 45 llamadas más. Se corre como hipótesis nueva, sin usarla para reinterpretar esta regla.
-- Repetir la comparación de la configuración elegida sobre la matriz de 20 casos de REP-3784 cuando exista.
+**Variante D (top-k 4 · umbral 0.52 · thinking `low`): analizada por cálculo, no corrida**
+
+Se propuso como seguimiento porque conservaría el 4.º fragmento de B (0.646), de C (0.651) y de E (0.595), o sea todas las citas que el baseline hizo en este experimento.
+Antes de gastar llamadas se calculó sobre la recuperación de la Fase 0 y los tokens medidos (`variant-d-estimate.mjs`; salida en `raw/variant-d-estimate.txt`), y resultó que no hay nada que medir:
+
+- **El prompt de D es idéntico al de BASE en 8 de 9 casos.** BASE ya recuperaba 4 fragmentos o menos en todos salvo E sin categoría (6 → 4).
+- **Ahorro esperado: ~3.7 % de la entrada** (unos 32 de 863 tokens por llamada, a ~143 tokens por fragmento), muy por debajo del 10 % que exige R5.
+- **El ahorro de top-3 sale de no mandar lo que el baseline sí recuperaba:** el 4.º fragmento en B, C, E y Prueba 2 (−1 cada uno) y 3 fragmentos de E sin categoría, en total 7 fragmentos en 5 de 9 casos. Entre ellos está la Ley 451 art. 6.1.52 que el baseline cita en B.
+- **Un umbral más alto tampoco lo resuelve con estos casos.** El fragmento que necesita el caso A tiene 0.559, y hay fragmentos irrelevantes de otros casos con más similitud (0.588 en E sin categoría), así que ningún corte global los separa.
+  Es una observación sobre 9 casos, no una conclusión general.
+
+**Conclusión:** en este corpus, ahorrar más del 10 % de entrada exige descartar normativa que el baseline usa. Refuerza la recomendación de mantener el baseline. No se corrieron llamadas de la variante D.
+
+**Seguimiento que sigue abierto:** repetir la comparación de la configuración elegida sobre la matriz de 20 casos de REP-3784 cuando exista.
 
 ## 10. Parámetros finales
 
@@ -226,6 +236,7 @@ Todo en `scripts/rag-local-dev/rep3786/`, versionado y reproducible:
 | `raw/summary.json` | Resumen por configuración y aplicación de la regla |
 | `raw/retrieval-01…07.json`, `fragments.json`, `raw/extra-fragments.json`, `phase0-analysis.json` | Fase 0: recuperación k=6, texto de los 14 fragmentos verificado por md5, recuperación derivada |
 | `raw/thinking-mode.json` | Sonda de thinking |
+| `variant-d-estimate.mjs` → `raw/variant-d-estimate.txt` | Cálculo de la variante D (top-k 4), sin llamadas a Gemini |
 | `evaluate.mjs`, `run-experiment.mjs`, `analyze.mjs`, `phase0.mjs`, `probe-thinking.mjs`, `gemini-call.mjs`, `prepare-retrieval-sql.mjs` | Rúbrica, corredor, análisis y utilidades |
 
 Reproducir: `node phase0.mjs && node probe-thinking.mjs && node run-experiment.mjs --reps 5 && node analyze.mjs`

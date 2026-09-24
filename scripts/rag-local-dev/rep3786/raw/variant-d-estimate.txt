@@ -1,0 +1,22 @@
+caso            | frag BASE | frag D | ¿cambia el prompt?
+A               |         3 |      3 | no (idéntico al baseline)
+B               |         4 |      4 | no (idéntico al baseline)
+C               |         4 |      4 | no (idéntico al baseline)
+D-Av            |         3 |      3 | no (idéntico al baseline)
+D-CABA          |         2 |      2 | no (idéntico al baseline)
+E               |         4 |      4 | no (idéntico al baseline)
+E-sin-categoria |         6 |      4 | SÍ
+Prueba1         |         2 |      2 | no (idéntico al baseline)
+Prueba2         |         4 |      4 | no (idéntico al baseline)
+
+Casos donde D difiere del baseline: 1 de 9
+
+Tokens de entrada por fragmento (estimado): 143
+Entrada media del BASE por llamada: 863
+Ahorro esperado de D: ~32 tokens por llamada = 3.7% (R5 exige 10%)
+
+Fragmentos que A (top-3) deja de enviar: B −1, C −1, E −1, E-sin-categoria −3, Prueba2 −1 (total 7, en 5 de 9 casos)
+
+Fragmento necesario del caso A, similitud mínima: 0.559
+Fragmentos irrelevantes de E sin categoría (puestos 5 y 6): 0.588, 0.52
+Hay un fragmento irrelevante con MÁS similitud que el necesario: ningún umbral global los separa en estos casos.
