@@ -15,7 +15,11 @@ vi.mock('../services/offlineStorageService', () => ({
   deleteDraftReport: vi.fn().mockResolvedValue(true),
   updateDraftReport: vi.fn(),
 }));
-vi.mock('../services/pendingSyncService', () => ({ syncPendingReports: vi.fn() }));
+// Se usan las reglas reales (getDraftProblems) y solo se simula el envío
+vi.mock('../services/pendingSyncService', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, syncPendingReports: vi.fn() };
+});
 
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';

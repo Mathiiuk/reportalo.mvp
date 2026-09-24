@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, AlertTriangle, CloudOff, Hourglass, Lock, RefreshCw, Trash2, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CloudOff, Hourglass, Lock, MapPin, RefreshCw, Trash2, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getAllPendingSyncReports, deleteDraftReport, updateDraftReport } from '../services/offlineStorageService';
-import { syncPendingReports } from '../services/pendingSyncService';
+import { syncPendingReports, getDraftProblems } from '../services/pendingSyncService';
 import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, validateDescription } from '../services/reportDescription';
 import { PENDING_SYNC_EVENT } from '../components/common/PendingSyncManager';
+import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { getCategoryTone } from '../components/report/categoryTone';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 
@@ -38,26 +39,28 @@ const draftTitle = (draft) => {
 };
 
 /**
- * H-35 · Por qué este borrador no salió, en palabras del ciudadano; null si no hay un motivo propio.
- * La descripción se valida acá mismo (una sola regla: reportDescription) porque es lo que más se puede
- * corregir sin salir de Pendientes; el resto sale del último intento de envío que quedó guardado.
- * Un fallo de protección de fotos ya tiene su texto habitual («requiere conexión»).
+ * H-35 · Por qué este borrador no salió, en palabras del ciudadano (puede haber más de un motivo).
+ * Las reglas salen de getDraftProblems, la misma lista que usa el envío: la pantalla y la cola no pueden
+ * contradecirse. Un fallo de protección de fotos ya tiene su texto habitual («requiere conexión») y las
+ * fotos que faltan tienen su propio aviso, así que ninguno de los dos se repite acá.
  */
-const draftReason = (draft) => {
-  const description = validateDescription(draft.description);
-  if (!description.valid) return { text: description.error, tone: 'danger' };
+const draftReasons = (draft) => {
+  const problems = getDraftProblems(draft).filter((problem) => problem.code !== 'PHOTOS');
+  if (problems.length > 0) return problems.map((problem) => ({ text: problem.error, tone: 'danger' }));
   const stored = draft.lastSyncError;
   if (stored && stored.code !== 'PROTECTION' && stored.message) {
-    return { text: stored.message, tone: stored.kind === 'invalid' ? 'danger' : 'warning' };
+    return [{ text: stored.message, tone: stored.kind === 'invalid' ? 'danger' : 'warning' }];
   }
-  return null;
+  return [];
 };
 
 /**
- * Una tarjeta de Pendientes (UJ v3.3 · M20). H-35: además del estado, permite completar la descripción
- * cuando es lo que falta y descartar el reporte (con confirmación), para que un borrador trabado tenga salida.
+ * Una tarjeta de Pendientes (UJ v3.3 · M20). H-35: además del estado, permite completar la descripción o confirmar la
+ * ubicación cuando eso es lo que falta, y descartar el reporte (con confirmación), para que un borrador trabado tenga salida.
+ * Diseño: el ícono y el título van arriba y todo lo demás ocupa el ancho completo debajo, para que el texto no quede
+ * apretado contra el borde derecho.
  */
-const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) => {
+const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocation, onDiscard }) => {
   const tone = getCategoryTone(draft.selectedCategory || {});
   const Icon = ICON_MAP[draft.selectedCategory?.icon] || HelpCircle;
   const place = draft.customLocation?.localityLabel || draft.address || 'Ubicación guardada';
@@ -66,8 +69,10 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
     .join(' · ');
 
   const photos = hasStoredPhotos(draft);
-  const reason = draftReason(draft);
-  const canEditDescription = photos && !validateDescription(draft.description).valid;
+  const problems = getDraftProblems(draft);
+  const reasons = draftReasons(draft);
+  const canEditDescription = photos && problems.some((problem) => problem.code === 'DESCRIPTION');
+  const canConfirmLocation = photos && problems.some((problem) => problem.code === 'LOCATION');
 
   const [confirming, setConfirming] = useState(false);
   const [text, setText] = useState(draft.description || '');
@@ -96,23 +101,30 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
     }
   };
 
-  const reasonColor = reason?.tone === 'warning' ? 'text-rep-warning-ink' : 'text-rep-danger';
+  const hasDanger = reasons.some((reason) => reason.tone === 'danger');
+  const reasonColor = hasDanger ? 'text-rep-danger' : 'text-rep-warning-ink';
 
   return (
     <li
       data-testid="pending-report-item"
-      className="flex gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card"
+      className="flex flex-col gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card"
     >
-      <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-        style={{ backgroundColor: tone.soft, color: tone.base }}
-      >
-        <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{draftTitle(draft)}</span>
-        <span className="truncate text-rep-label text-rep-ink-muted">{meta}</span>
+      {/* Encabezado: ícono + título y datos del reporte */}
+      <div data-testid="pending-card-header" className="flex items-start gap-3">
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: tone.soft, color: tone.base }}
+        >
+          <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <span className="line-clamp-2 break-words text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{draftTitle(draft)}</span>
+          <span className="mt-0.5 line-clamp-2 break-words text-rep-label text-rep-ink-muted">{meta}</span>
+        </div>
+      </div>
 
+      {/* Cuerpo: a todo el ancho de la tarjeta, debajo del ícono */}
+      <div data-testid="pending-card-body" className="flex w-full flex-col gap-2">
         {/* Un borrador cuyas fotos ya no están en el dispositivo no se va a
             poder enviar nunca: decir «requiere conexión» sería mentir y el
             ciudadano esperaría para siempre un envío que no va a ocurrir. */}
@@ -121,11 +133,15 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
             <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
             No se puede enviar: las fotos ya no están en este dispositivo.
           </span>
-        ) : reason ? (
-          <span data-testid="pending-reason" className={`inline-flex items-start gap-1.5 text-rep-label font-semibold ${reasonColor}`}>
-            <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-            <span>{reason.text}</span>
-          </span>
+        ) : reasons.length > 0 ? (
+          <ul data-testid="pending-reason" className={`m-0 flex list-none flex-col gap-1 p-0 text-rep-label font-semibold ${reasonColor}`}>
+            {reasons.map((reason) => (
+              <li key={reason.text} className="inline-flex items-start gap-1.5">
+                <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                <span>{reason.text}</span>
+              </li>
+            ))}
+          </ul>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-warning-ink">
             <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
@@ -133,9 +149,9 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
           </span>
         )}
 
-        {/* H-35: la descripción es lo único que el ciudadano puede completar acá */}
+        {/* H-35: la descripción se completa acá mismo */}
         {canEditDescription && (
-          <div className="mt-2 flex flex-col gap-1.5">
+          <div className="mt-1 flex flex-col gap-1.5">
             <label htmlFor={`pending-desc-${draft.client_side_id}`} className="text-rep-label font-bold text-rep-ink-label">
               Descripción del reporte
             </label>
@@ -176,9 +192,23 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
           </div>
         )}
 
+        {/* H-35 (seguimiento): la ubicación se confirma con el mismo modal que usa el asistente */}
+        {canConfirmLocation && (
+          <button
+            type="button"
+            data-testid="pending-location-btn"
+            onClick={() => onConfirmLocation(draft)}
+            disabled={busy}
+            className="rep-focus inline-flex min-h-touch w-full items-center justify-center gap-2 rounded-xl border border-rep-accent-border bg-rep-surface px-4 text-rep-body font-bold text-rep-accent disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            <MapPin aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            Confirmar ubicación
+          </button>
+        )}
+
         {/* H-35: todo borrador tiene salida. Se pide confirmación porque se pierden las fotos. */}
         {confirming ? (
-          <div className="mt-2 flex flex-col gap-2 rounded-xl border border-rep-danger/30 bg-rep-surface-sunken p-3">
+          <div className="flex flex-col gap-2 rounded-xl border border-rep-danger/30 bg-rep-surface-sunken p-3">
             <p className="m-0 text-rep-label font-bold text-rep-ink">¿Descartar este reporte?</p>
             <p className="m-0 text-rep-label text-rep-ink-muted">
               Vas a perder las fotos y los datos que guardaste en este {deviceWord}. No se puede deshacer.
@@ -207,7 +237,7 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
             type="button"
             data-testid="pending-discard-btn"
             onClick={() => setConfirming(true)}
-            className="rep-focus mt-1 inline-flex min-h-touch items-center gap-1.5 self-start rounded-lg px-1 text-rep-label font-bold text-rep-danger hover:underline"
+            className="rep-focus inline-flex min-h-touch items-center gap-1.5 self-start rounded-lg px-1 text-rep-label font-bold text-rep-danger hover:underline"
           >
             <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
             Descartar
@@ -222,7 +252,7 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onDiscard }) =
  * Pendientes de envío (UJ v3.3 · M20 — REP-3791 Bloque 4).
  * Lista los reportes guardados sin conexión (IndexedDB, PENDING_SYNC) y permite reintentar el envío.
  * El envío automático al volver la conexión lo hace PendingSyncManager.
- * H-35: cada borrador puede descartarse y, si falta la descripción, completarse desde su tarjeta.
+ * H-35: cada borrador puede descartarse y, si falta la descripción o la ubicación, corregirse desde su tarjeta.
  */
 export const PendingReportsPage = () => {
   const navigate = useNavigate();
@@ -230,6 +260,8 @@ export const PendingReportsPage = () => {
   const { isOnline } = useNetworkStatus();
   const [drafts, setDrafts] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  // Borrador cuya ubicación se está confirmando (abre el modal del asistente)
+  const [locationDraft, setLocationDraft] = useState(null);
   const deviceWord = useIsDesktopLayout() ? 'computadora' : 'teléfono';
 
   const loadDrafts = useCallback(async () => {
@@ -260,6 +292,16 @@ export const PendingReportsPage = () => {
     }
   };
 
+  // Después de corregir un dato: se recarga la lista y se reintenta (o se avisa que saldrá sola sin conexión)
+  const retryAfterFix = async (savedLabel) => {
+    await loadDrafts();
+    if (!isOnline) {
+      toast.success(savedLabel, { description: 'El reporte se envía solo apenas vuelva la conexión.' });
+      return;
+    }
+    await handleRetry();
+  };
+
   // H-35: completar la descripción de un pendiente trabado y volver a intentar
   const handleSaveDescription = async (draft, description) => {
     try {
@@ -268,12 +310,20 @@ export const PendingReportsPage = () => {
       toast.error('No pudimos guardar la descripción', { description: 'Probá de nuevo.' });
       return;
     }
-    await loadDrafts();
-    if (!isOnline) {
-      toast.success('Descripción guardada', { description: 'El reporte se envía solo apenas vuelva la conexión.' });
+    await retryAfterFix('Descripción guardada');
+  };
+
+  // H-35 (seguimiento): confirmar la ubicación de un pendiente con el modal del asistente
+  const handleSaveLocation = async (draft, adjustedLocation) => {
+    try {
+      // Una elección manual deja de ser una sugerencia automática, igual que en el asistente
+      await updateDraftReport(draft.client_side_id, { customLocation: { ...adjustedLocation, isAutoSuggested: false } });
+    } catch {
+      toast.error('No pudimos guardar la ubicación', { description: 'Probá de nuevo.' });
       return;
     }
-    await handleRetry();
+    setLocationDraft(null);
+    await retryAfterFix('Ubicación guardada');
   };
 
   // H-35: descartar un pendiente. Devuelve true si se borró.
@@ -351,6 +401,7 @@ export const PendingReportsPage = () => {
                   draft={draft}
                   deviceWord={deviceWord}
                   onSaveDescription={handleSaveDescription}
+                  onConfirmLocation={setLocationDraft}
                   onDiscard={handleDiscard}
                 />
               ))}
@@ -374,6 +425,18 @@ export const PendingReportsPage = () => {
           </>
         )}
       </div>
+
+      {/* H-35 (seguimiento): el mismo modal de ubicación que usa el asistente, para corregir un borrador guardado */}
+      {locationDraft && (
+        <div className="fixed inset-0 z-50 bg-rep-surface">
+          <AdjustLocationModal
+            initialCoordinates={locationDraft.customLocation?.coordinates || locationDraft.geolocation}
+            initialLocalityId={locationDraft.customLocation?.localityId}
+            onClose={() => setLocationDraft(null)}
+            onConfirm={(adjusted) => handleSaveLocation(locationDraft, adjusted)}
+          />
+        </div>
+      )}
     </div>
   );
 };
