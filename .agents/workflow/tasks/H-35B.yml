@@ -1,0 +1,64 @@
+id: H-35B
+external_ref: https://unlz2026.atlassian.net/browse/REP-3787
+title: 'Pendientes: tarjeta a ancho completo y confirmar la ubicacion de un borrador'
+type: fix
+status: READY_FOR_PR
+priority: medium
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/pages/PendingReportsPage.jsx
+    - src/services/pendingSyncService.js
+  environments:
+    - local
+    - staging
+requirements:
+  - >-
+    El texto de la tarjeta de Pendientes ocupa todo el ancho, debajo del icono,
+    en vez de quedar apretado contra el borde derecho
+  - >-
+    Un borrador al que le falta confirmar la ubicacion se puede corregir desde
+    la tarjeta, no solo descartar
+  - >-
+    Reusar el modal de ubicacion del asistente (AdjustLocationModal), con sus
+    mismas reglas; no crear un selector nuevo
+  - >-
+    Una sola lista de problemas del borrador para el envio y para la pantalla,
+    para que no se contradigan
+acceptance_criteria:
+  - >-
+    CA-01: el motivo y las acciones estan en un cuerpo a todo el ancho, fuera
+    del encabezado con el icono
+  - >-
+    CA-02: el titulo y los datos pueden ocupar hasta dos lineas en vez de
+    cortarse en una
+  - 'CA-03: si falta la localidad la tarjeta lo dice y ofrece Confirmar ubicacion'
+  - >-
+    CA-04: el modal recibe las coordenadas del borrador (o el GPS guardado si no
+    tiene ubicacion propia)
+  - >-
+    CA-05: al confirmar se guarda la localidad elegida, se cierra el modal y se
+    reintenta el envio
+  - >-
+    CA-06: sin conexion se guarda y se avisa que el reporte saldra solo; cerrar
+    el modal no guarda nada
+  - >-
+    CA-07: si faltan varias cosas se ofrecen todas las correcciones posibles;
+    sin categoria solo se puede descartar
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build

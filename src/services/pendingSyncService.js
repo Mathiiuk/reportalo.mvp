@@ -35,22 +35,34 @@ const extractLatLng = (coords) => {
 const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
 
 /**
+ * H-35 · Todo lo que le impide a este borrador salir de la cola, en el orden del asistente.
+ * Es la única fuente de estas reglas: la usan la validación previa al envío y la pantalla de Pendientes
+ * (para decir qué falta y qué se puede corregir ahí), así que no pueden contradecirse.
+ * @returns {Array<{ code: 'DESCRIPTION'|'CATEGORY'|'LOCATION'|'PHOTOS', error: string }>} vacío si está completo
+ */
+export const getDraftProblems = (draft) => {
+  const problems = [];
+  const description = validateDescription(draft?.description);
+  if (!description.valid) problems.push({ code: 'DESCRIPTION', error: description.error });
+  if (!draft?.selectedCategory) problems.push({ code: 'CATEGORY', error: 'Falta la categoría del reporte.' });
+  if (!draft?.customLocation?.localityId) {
+    problems.push({ code: 'LOCATION', error: 'Falta confirmar la ubicación del reporte.' });
+  }
+  if (!(draft?.evidenceList || []).some((ev) => ev.blob)) {
+    problems.push({ code: 'PHOTOS', error: 'El borrador no tiene fotos guardadas.' });
+  }
+  return problems;
+};
+
+/**
  * H-35 · ¿Este borrador puede llegar a enviarse? Se valida ANTES de tocar la red: un borrador que nunca va a
  * poder salir (descripción vacía o corta, sin categoría, sin ubicación, sin fotos) no debe procesar las fotos.
  * Hacerlo dejaba, en cada apertura de la app, una copia pública sin reporte en el bucket de evidencias.
- * @returns {{ valid: true } | { valid: false, code: string, error: string }}
+ * @returns {{ valid: true } | { valid: false, code: string, error: string }} con el primer problema
  */
 export const validateDraftForSync = (draft) => {
-  const description = validateDescription(draft?.description);
-  if (!description.valid) return { valid: false, code: 'DESCRIPTION', error: description.error };
-  if (!draft?.selectedCategory) return { valid: false, code: 'CATEGORY', error: 'Falta la categoría del reporte.' };
-  if (!draft?.customLocation?.localityId) {
-    return { valid: false, code: 'LOCATION', error: 'Falta confirmar la ubicación del reporte.' };
-  }
-  if (!(draft?.evidenceList || []).some((ev) => ev.blob)) {
-    return { valid: false, code: 'PHOTOS', error: 'El borrador no tiene fotos guardadas.' };
-  }
-  return { valid: true };
+  const [first] = getDraftProblems(draft);
+  return first ? { valid: false, code: first.code, error: first.error } : { valid: true };
 };
 
 /**
