@@ -1,0 +1,70 @@
+id: H-35
+external_ref: https://unlz2026.atlassian.net/browse/REP-3787
+title: >-
+  Salida para borradores trabados en Pendientes (descartar, completar
+  descripcion, validar antes de procesar fotos)
+type: fix
+status: READY_FOR_PR
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/services/pendingSyncService.js
+    - src/services/offlineStorageService.js
+    - src/pages/PendingReportsPage.jsx
+  environments:
+    - local
+    - staging
+requirements:
+  - >-
+    Un borrador trabado en Pendientes tiene salida - descartarlo (con
+    confirmacion) o completar la descripcion en su tarjeta
+  - >-
+    Validar el borrador ANTES de procesar las fotos, para no dejar copias
+    publicas sin reporte en cada reintento
+  - >-
+    Resolver la categoria ANTES de procesar las fotos (correccion del orden de
+    REP-2204)
+  - >-
+    Guardar el motivo del ultimo fallo y mostrarlo en la tarjeta en lugar de
+    decir siempre «requiere conexion»
+  - >-
+    Reusar la regla de descripcion de REP-2203 (10 a 280 caracteres); no crear
+    una segunda
+acceptance_criteria:
+  - >-
+    CA-01: cada tarjeta de Pendientes ofrece Descartar, con confirmacion, y el
+    descarte actualiza la lista
+  - >-
+    CA-02: si falta o es invalida la descripcion, la tarjeta permite completarla
+    (10 a 280) y reintenta el envio
+  - >-
+    CA-03: sin conexion la descripcion se guarda y el reporte se envia solo al
+    volver, sin intentar enviar
+  - >-
+    CA-04: un borrador invalido (descripcion, categoria, ubicacion o fotos) no
+    procesa fotos ni crea nada
+  - >-
+    CA-05: la categoria se resuelve antes de procesar fotos; si no se puede,
+    queda como reintentable
+  - >-
+    CA-06: el motivo del ultimo fallo se guarda sin cambiar la fecha de
+    actualizacion y se muestra en castellano
+  - 'CA-07: un fallo al guardar el diagnostico nunca rompe la cola de envio'
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build

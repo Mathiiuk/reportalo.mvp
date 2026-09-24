@@ -9,9 +9,10 @@
  * borrar el borrador local. Regla de privacidad: solo se adjuntan fotos cuya URL protegida viene del
  * servidor (http/https). Si la protección no se completó, el borrador queda en la cola (H-30).
  */
-import { getAllPendingSyncReports, deleteDraftReport } from './offlineStorageService';
+import { getAllPendingSyncReports, deleteDraftReport, recordDraftSyncError } from './offlineStorageService';
 import { processAllEvidencesThroughQuarantine } from './quarantinePipelineService';
 import { resolveServiceDbId } from './categoriesService';
+import { validateDescription } from './reportDescription';
 import {
   createCitizenReport,
   attachReportEvidence,
@@ -34,14 +35,60 @@ const extractLatLng = (coords) => {
 const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
 
 /**
- * Envía un borrador pendiente. Nunca lanza: devuelve { success, error?, reportId? }.
+ * H-35 · ¿Este borrador puede llegar a enviarse? Se valida ANTES de tocar la red: un borrador que nunca va a
+ * poder salir (descripción vacía o corta, sin categoría, sin ubicación, sin fotos) no debe procesar las fotos.
+ * Hacerlo dejaba, en cada apertura de la app, una copia pública sin reporte en el bucket de evidencias.
+ * @returns {{ valid: true } | { valid: false, code: string, error: string }}
+ */
+export const validateDraftForSync = (draft) => {
+  const description = validateDescription(draft?.description);
+  if (!description.valid) return { valid: false, code: 'DESCRIPTION', error: description.error };
+  if (!draft?.selectedCategory) return { valid: false, code: 'CATEGORY', error: 'Falta la categoría del reporte.' };
+  if (!draft?.customLocation?.localityId) {
+    return { valid: false, code: 'LOCATION', error: 'Falta confirmar la ubicación del reporte.' };
+  }
+  if (!(draft?.evidenceList || []).some((ev) => ev.blob)) {
+    return { valid: false, code: 'PHOTOS', error: 'El borrador no tiene fotos guardadas.' };
+  }
+  return { valid: true };
+};
+
+/**
+ * Registra por qué falló el envío (para mostrarlo en Pendientes) y devuelve el resultado.
+ * kind: 'invalid' = hay que cambiar el borrador; 'retry' = se puede reintentar tal cual.
+ * Guardar el diagnóstico nunca debe romper la cola: si falla, se ignora.
+ */
+const failWith = async (draft, { code, kind, message }) => {
+  try {
+    await recordDraftSyncError(draft?.client_side_id, { code, kind, message });
+  } catch {
+    // El diagnóstico es accesorio
+  }
+  return { success: false, error: message, code, kind };
+};
+
+/**
+ * Envía un borrador pendiente. Nunca lanza: devuelve { success, error?, code?, kind?, reportId? }.
  */
 export const sendPendingDraft = async (draft, userId) => {
-  const storedEvidence = (draft?.evidenceList || []).filter((ev) => ev.blob);
-  if (storedEvidence.length === 0) {
-    return { success: false, error: 'El borrador no tiene fotos guardadas.' };
+  // H-35: primero se valida; recién después se toca la red
+  const validation = validateDraftForSync(draft);
+  if (!validation.valid) {
+    return failWith(draft, { code: validation.code, kind: 'invalid', message: validation.error });
   }
 
+  // REP-2204: un borrador guardado sin conexión usa las categorías de respaldo (sin dbId). Se resuelve por
+  // código ANTES de procesar las fotos (H-35) y, si no se puede, no se envía sin categoría: queda pendiente.
+  const serviceId = await resolveServiceDbId(draft.selectedCategory);
+  if (!serviceId) {
+    return failWith(draft, {
+      code: 'CATEGORY_UNRESOLVED',
+      kind: 'retry',
+      message: 'No pudimos identificar la categoría. Se reintenta cuando haya conexión.',
+    });
+  }
+
+  const storedEvidence = (draft.evidenceList || []).filter((ev) => ev.blob);
   const previewUrls = [];
   const evidenceList = storedEvidence.map((ev) => {
     const previewUrl =
@@ -53,23 +100,20 @@ export const sendPendingDraft = async (draft, userId) => {
   try {
     const pipeline = await processAllEvidencesThroughQuarantine({ evidenceList, clientSideId: draft.client_side_id });
     if (!pipeline?.success) {
-      return { success: false, error: pipeline?.error || 'No se pudo proteger la foto.' };
+      return failWith(draft, { code: 'PROTECTION', kind: 'retry', message: pipeline?.error || 'No se pudo proteger la foto.' });
     }
 
     const protectedUrls = (pipeline.processedEvidences || []).map((ev) => ev.sanitizedUrl).filter(isServerUrl);
     if (protectedUrls.length !== evidenceList.length) {
       // Privacidad: nunca se adjunta una foto que no pasó por el difuminado del servidor
-      return { success: false, error: 'La protección de las fotos no se completó en el servidor.' };
+      return failWith(draft, {
+        code: 'PROTECTION',
+        kind: 'retry',
+        message: 'La protección de las fotos no se completó en el servidor.',
+      });
     }
 
     const { lat, lng } = extractLatLng(draft.customLocation?.coordinates || draft.geolocation);
-
-    // REP-2204: un borrador guardado sin conexión usa las categorías de respaldo (sin dbId).
-    // Se resuelve por código y, si no se puede, no se envía sin categoría: queda pendiente.
-    const serviceId = await resolveServiceDbId(draft.selectedCategory);
-    if (!serviceId) {
-      return { success: false, error: 'No se pudo identificar la categoría del reporte.' };
-    }
 
     const creation = await createCitizenReport({
       clientSideId: draft.client_side_id,
@@ -81,7 +125,12 @@ export const sendPendingDraft = async (draft, userId) => {
       longitud: lng,
     });
     if (!creation.success) {
-      return { success: false, error: creation.error };
+      // El ciudadano ve el mensaje pensado para él, no el detalle técnico (REP-2204)
+      return failWith(draft, {
+        code: 'CREATE',
+        kind: 'retry',
+        message: creation.userMessage || creation.error || 'No pudimos guardar tu reporte.',
+      });
     }
 
     // El alta es idempotente por client_side_id, pero adjuntar no lo es: si un intento
@@ -93,14 +142,14 @@ export const sendPendingDraft = async (draft, userId) => {
       // eslint-disable-next-line no-await-in-loop
       const attached = await attachReportEvidence({ reportId: creation.data.id, sanitizedUrl });
       if (!attached.success) {
-        return { success: false, error: attached.error };
+        return failWith(draft, { code: 'ATTACH', kind: 'retry', message: attached.error || 'No se pudo adjuntar la foto.' });
       }
     }
 
     await deleteDraftReport(draft.client_side_id);
     return { success: true, reportId: creation.data.id };
   } catch (err) {
-    return { success: false, error: err?.message || 'Error inesperado al enviar el reporte.' };
+    return failWith(draft, { code: 'UNEXPECTED', kind: 'retry', message: err?.message || 'Error inesperado al enviar el reporte.' });
   } finally {
     previewUrls.forEach((url) => URL.revokeObjectURL?.(url));
   }
@@ -128,7 +177,7 @@ export const syncPendingReports = ({ userId } = {}) => {
       // eslint-disable-next-line no-await-in-loop
       const result = await sendPendingDraft(draft, userId);
       if (result.success) sent += 1;
-      else errors.push({ clientSideId: draft.client_side_id, error: result.error });
+      else errors.push({ clientSideId: draft.client_side_id, error: result.error, code: result.code, kind: result.kind });
     }
     return { sent, failed: errors.length, remaining: drafts.length - sent, offline: isOffline(), errors };
   })().finally(() => {
