@@ -1,0 +1,35 @@
+{
+  "_fuente": "Consulta a la base (proyecto yryuhyiujyignkdhiyua) del 24/09/2026: md5 del contenido, ruta y elegibilidad de match_knowledge_fragments por localidad y categoría (modelo gemini-embedding-2@768).",
+  "localidades": {
+    "Avellaneda": "2fe4cf09-c3d9-4514-ae99-cac0256494e4",
+    "CABA": "efb5ca1b-c3e6-49e7-adf0-978f2bab54c4"
+  },
+  "fragmentos": {
+    "20000000-0000-4000-8000-000000000001": { "md5": "8a4d7522225d1d96040deb1ea7b026fb", "ruta": "Constitución de la Provincia de Buenos Aires > Artículo 192 > inciso 4" },
+    "20000000-0000-4000-8000-000000000002": { "md5": "c56efba6194f87f1530da0c373dabf88", "ruta": "Decreto-Ley 6769/58 — Ley Orgánica de las Municipalidades > Artículo 52" },
+    "20000000-0000-4000-8000-000000000003": { "md5": "1aa001f9dcc2c6b1ed561c5d69f35e21", "ruta": "Decreto-Ley 6769/58 — Ley Orgánica de las Municipalidades > Artículo 59" },
+    "20000000-0000-4000-8000-000000000015": { "md5": "f253c022b7390f1aa0609ef87532a043", "ruta": "Decreto-Ley 8031/73 — Código de Faltas de la Provincia de Buenos Aires > Índice" },
+    "20000000-0000-4000-8000-000000000005": { "md5": "58eb75a0b9d02b842bc38ff16177a6e9", "ruta": "Ley 210 (CABA) — Ente Único Regulador de los Servicios Públicos > Artículo 2 (servicios comprendidos) > inciso b)" },
+    "20000000-0000-4000-8000-000000000006": { "md5": "ef24d0957d9c67768bd98ecb6d3ff5a1", "ruta": "Ley 210 (CABA) — Ente Único Regulador de los Servicios Públicos > Artículo 2 (servicios comprendidos) > inciso c)" },
+    "20000000-0000-4000-8000-000000000004": { "md5": "9ceccf2ea0fadd2f605831991ca77147", "ruta": "Ley 210 (CABA) — Ente Único Regulador de los Servicios Públicos > Artículo 3 (funciones) > inciso j)" },
+    "20000000-0000-4000-8000-000000000011": { "md5": "06c07e2aa429dc4b205abf497250b46c", "ruta": "Ley 2148 (CABA) — Código de Tránsito y Transporte > Título VII > Artículo 7.1.8 (prohibiciones especiales)" },
+    "20000000-0000-4000-8000-000000000012": { "md5": "0ae17a316c51675d49bec988dabffba6", "ruta": "Ley 2148 (CABA) — Código de Tránsito y Transporte > Título VII > Artículo 7.1.9 (prohibiciones generales)" },
+    "20000000-0000-4000-8000-000000000007": { "md5": "529b81382d697517b6711a1a08c51336", "ruta": "Ley 24.449 — Ley de Tránsito > Artículo 48 (prohibiciones) > inciso i)" },
+    "20000000-0000-4000-8000-000000000016": { "md5": "c94bd6363eb6d3ec5f8db395565d76ab", "ruta": "Ley 24.449 — Ley de Tránsito > Artículo 48 (prohibiciones) > inciso t) (obstrucción)" },
+    "b6717f77-c30e-4cca-985a-6346d741fe38": { "md5": "75deb452191e802e69bb8f3fcdda40cc", "ruta": "Ley 24.449 — Ley de Tránsito > Artículo 48 (prohibiciones) > inciso t) (venta de productos en el camino)" },
+    "20000000-0000-4000-8000-000000000009": { "md5": "daa6ca434853657a2a529bdb63010f23", "ruta": "Ley 24.449 — Ley de Tránsito > Artículo 49 (estacionamiento) > inciso b) > 1" },
+    "20000000-0000-4000-8000-000000000010": { "md5": "6cf3702edcd990cedfbbe397dc3bc9e4", "ruta": "Ley 24.449 — Ley de Tránsito > Artículo 49 (estacionamiento) > inciso b) > 3" },
+    "20000000-0000-4000-8000-000000000014": { "md5": "8837b7a529bf55cab9ca6dbcad094ef8", "ruta": "Ley 451 (CABA) — Régimen de Faltas > Artículo 6.1.37 (obstrucción de vía)" },
+    "20000000-0000-4000-8000-000000000013": { "md5": "c5a5f6bdd0591bd70628d1226437876a", "ruta": "Ley 451 (CABA) — Régimen de Faltas > Artículo 6.1.52 (estacionamiento o detención prohibida)" }
+  },
+  "elegibles": {
+    "Avellaneda|AMBIENTE": ["20000000-0000-4000-8000-000000000002"],
+    "Avellaneda|INFRAESTRUCTURA": ["20000000-0000-4000-8000-000000000001", "20000000-0000-4000-8000-000000000002", "20000000-0000-4000-8000-000000000003"],
+    "Avellaneda|TRANSITO": ["20000000-0000-4000-8000-000000000007", "20000000-0000-4000-8000-000000000009", "20000000-0000-4000-8000-000000000010", "20000000-0000-4000-8000-000000000016"],
+    "Avellaneda|": ["20000000-0000-4000-8000-000000000001", "20000000-0000-4000-8000-000000000002", "20000000-0000-4000-8000-000000000003", "20000000-0000-4000-8000-000000000007", "20000000-0000-4000-8000-000000000009", "20000000-0000-4000-8000-000000000010", "20000000-0000-4000-8000-000000000015", "20000000-0000-4000-8000-000000000016", "b6717f77-c30e-4cca-985a-6346d741fe38"],
+    "CABA|AMBIENTE": ["20000000-0000-4000-8000-000000000006"],
+    "CABA|INFRAESTRUCTURA": ["20000000-0000-4000-8000-000000000004", "20000000-0000-4000-8000-000000000005"],
+    "CABA|TRANSITO": ["20000000-0000-4000-8000-000000000011", "20000000-0000-4000-8000-000000000012", "20000000-0000-4000-8000-000000000013", "20000000-0000-4000-8000-000000000014"],
+    "CABA|": ["20000000-0000-4000-8000-000000000004", "20000000-0000-4000-8000-000000000005", "20000000-0000-4000-8000-000000000006", "20000000-0000-4000-8000-000000000011", "20000000-0000-4000-8000-000000000012", "20000000-0000-4000-8000-000000000013", "20000000-0000-4000-8000-000000000014"]
+  }
+}
