@@ -80,14 +80,14 @@ describe('REP-2404: Flujo de UI de Cuarentena y Privacidad (ReportProcessingScre
     expect(handleComplete).not.toHaveBeenCalled();
 
     // Textos informativos de privacidad y seguridad para el vecino
-    expect(screen.getByText('No pudimos procesar la foto')).toBeInTheDocument();
+    expect(screen.getByText('No pudimos proteger tu foto')).toBeInTheDocument();
     expect(
       screen.getByText(/por seguridad no la guardamos/i)
     ).toBeInTheDocument();
     expect(screen.getByTestId('fail-safe-badge-indicator')).toBeInTheDocument();
 
     // Botón para volver a sacar la foto
-    const backBtn = screen.getByRole('button', { name: /Sacar otra foto/i });
+    const backBtn = screen.getByRole('button', { name: /Cambiar foto/i });
     fireEvent.click(backBtn);
     expect(handleBack).toHaveBeenCalledTimes(1);
   });

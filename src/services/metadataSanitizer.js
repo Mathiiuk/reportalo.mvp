@@ -412,6 +412,86 @@ export const normalizeImageOrientation = async (file) => {
 };
 
 /**
+ * REP-3793 · Lado mayor máximo de la foto que se sube, en píxeles.
+ * Medido en el Bloque 0 (scripts/rep3793/spike-cpu): la Edge Function decodifica,
+ * pixela y re-codifica una foto de 1600 px en 200–340 ms de CPU, con margen amplio
+ * sobre el límite de Supabase; una foto de celular sin reducir (4032 px) la tira abajo.
+ */
+export const EVIDENCE_MAX_SIDE = 1600;
+
+/** REP-3793 · Calidad JPEG de la foto reducida: buena para evidencia, liviana para subir con poca señal. */
+export const EVIDENCE_JPEG_QUALITY = 0.85;
+
+/**
+ * REP-3793 · Deja la foto lista para el servidor en una sola pasada de canvas:
+ * derecha (aplica la rotación EXIF), en JPEG y con el lado mayor limitado a
+ * EVIDENCE_MAX_SIDE. Nunca agranda una foto chica.
+ *
+ * Si la foto ya es un JPEG derecho y chico, se devuelve tal cual (no se re-comprime).
+ * Sin canvas, o si la decodificación falla, se usa el camino anterior (rotar y
+ * convertir): el servidor rechaza lo que le quede grande y el reporte no se pierde.
+ *
+ * @param {Blob|File} file Foto capturada
+ * @param {{ maxSide?: number, quality?: number }} [options]
+ * @returns {Promise<Blob|File>}
+ */
+export const prepareEvidenceImage = async (
+  file,
+  { maxSide = EVIDENCE_MAX_SIDE, quality = EVIDENCE_JPEG_QUALITY } = {}
+) => {
+  if (!file) return file;
+
+  // Sin canvas (jsdom, navegadores viejos) no se puede reducir: se mantiene el comportamiento previo
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
+    return ensureJpeg(await normalizeImageOrientation(file));
+  }
+
+  try {
+    // 'from-image' aplica la rotación EXIF al decodificar: el bitmap ya viene derecho
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const longestSide = Math.max(bitmap.width, bitmap.height);
+
+    // ¿Hay que tocarla? Solo si es grande, no es JPEG o está rotada por EXIF
+    let needsRotation = false;
+    if (file.type === 'image/jpeg' && typeof file.arrayBuffer === 'function') {
+      needsRotation = readExifOrientation(new Uint8Array(await file.arrayBuffer())) !== 1;
+    }
+    if (longestSide <= maxSide && file.type === 'image/jpeg' && !needsRotation) {
+      if (typeof bitmap.close === 'function') bitmap.close();
+      return file;
+    }
+
+    // Escala para que el lado mayor quede en maxSide; nunca mayor a 1 (no agranda)
+    const scale = Math.min(1, maxSide / longestSide);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      if (typeof bitmap.close === 'function') bitmap.close();
+      return ensureJpeg(await normalizeImageOrientation(file));
+    }
+
+    // JPEG no tiene transparencia: fondo blanco para los PNG
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    // drawImage con ancho y alto destino hace la reducción
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    if (typeof bitmap.close === 'function') bitmap.close();
+
+    const prepared = await new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+    });
+
+    return prepared || ensureJpeg(await normalizeImageOrientation(file));
+  } catch (error) {
+    // Nunca se pierde la evidencia por no poder reducirla: se usa el camino anterior
+    return ensureJpeg(await normalizeImageOrientation(file));
+  }
+};
+
+/**
  * REP-2501 · Convierte a JPEG lo que no lo sea.
  *
  * La Edge Function `quarantine-anonymize` solo acepta JPEG: en PNG o WebP no hay forma de

@@ -125,3 +125,39 @@ export const stripExifMetadata = (buffer: Uint8Array): Uint8Array => {
   }
   return result;
 };
+
+/** Marcadores SOF (inicio de cuadro) que llevan el alto y el ancho: todos salvo DHT, JPG y DAC. */
+const isStartOfFrame = (marker: number): boolean =>
+  marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+
+/**
+ * REP-3793 · Lee el ancho y el alto de un JPEG desde su encabezado, sin decodificarlo.
+ * Sirve para rechazar una foto demasiado grande ANTES de gastar CPU abriéndola: una foto
+ * de celular sin reducir supera el límite de la Edge Function y la corta a la mitad.
+ * @returns { width, height } o null si no encuentra el encabezado
+ */
+export const readJpegSize = (buffer: Uint8Array): { width: number; height: number } | null => {
+  if (!isJpeg(buffer)) return null;
+  let offset = 2;
+  while (offset + 8 < buffer.length) {
+    if (buffer[offset] !== 0xff) return null;
+    const marker = buffer[offset + 1];
+    // Relleno entre marcadores
+    if (marker === 0xff) {
+      offset += 1;
+      continue;
+    }
+    // Llegar a los datos de la imagen sin ver un SOF es un JPEG inválido
+    if (marker === MARKER_SOS || marker === MARKER_EOI) return null;
+    const length = (buffer[offset + 2] << 8) | buffer[offset + 3];
+    if (isStartOfFrame(marker)) {
+      // SOF: longitud (2), precisión (1), alto (2), ancho (2)
+      const height = (buffer[offset + 5] << 8) | buffer[offset + 6];
+      const width = (buffer[offset + 7] << 8) | buffer[offset + 8];
+      return width > 0 && height > 0 ? { width, height } : null;
+    }
+    if (length < 2) return null;
+    offset += 2 + length;
+  }
+  return null;
+};

@@ -137,3 +137,32 @@ describe('H-35: sendPendingDraft valida ANTES de procesar las fotos', () => {
     expect(result).toMatchObject({ success: false, code: 'DESCRIPTION' });
   });
 });
+
+// REP-3793 · Bloque 4 offline: al volver la señal, si el servidor no pudo proteger la foto,
+// el reporte sigue en la cola. No se descarta ni se envía la foto sin proteger.
+describe('REP-3793: un pendiente cuya foto no se pudo proteger queda en la cola', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolveServiceDbId.mockResolvedValue('srv-1');
+    recordDraftSyncError.mockResolvedValue(null);
+    deleteDraftReport.mockResolvedValue(true);
+  });
+
+  it('UT-3793-OFF-01: Vision caído al sincronizar → sigue pendiente, sin reporte y sin adjuntar nada', async () => {
+    processAllEvidencesThroughQuarantine.mockResolvedValue({
+      success: false,
+      failSafeTriggered: true,
+      reason: 'vision_timeout',
+      error: 'No pudimos proteger tu foto. No se guardó ninguna copia.',
+    });
+
+    const result = await sendPendingDraft(draftValido(), 'user-1');
+
+    expect(result).toMatchObject({ success: false, code: 'PROTECTION', kind: 'retry' });
+    expect(createCitizenReport).not.toHaveBeenCalled();
+    expect(attachReportEvidence).not.toHaveBeenCalled();
+    // El borrador y su foto se conservan para el próximo intento
+    expect(deleteDraftReport).not.toHaveBeenCalled();
+    expect(recordDraftSyncError).toHaveBeenCalledWith('draft-1', expect.objectContaining({ code: 'PROTECTION', kind: 'retry' }));
+  });
+});

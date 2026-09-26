@@ -2,19 +2,33 @@
  * @file index.ts
  * @description Supabase Edge Function: Pipeline server-side de cuarentena y anonimización (REP-2404).
  * Runtime: Deno / TypeScript en Supabase Edge Functions.
- * 
+ *
  * Implementa el principio de Privacidad por Diseño (Privacy by Design):
  * - Aísla de forma transitoria la fotografía en el bucket privado 'evidence-quarantine'.
- * - Sanitiza metadatos EXIF (REP-2401).
- * - Detecta rostros y patentes (REP-2400 / REP-2907). OJO: hoy solo informa las zonas, todavía NO las difumina.
+ * - REP-3793: detecta rostros y patentes con Google Vision y los PIXELA de verdad sobre la
+ *   imagen (protect.ts). Hasta REP-3793 solo informaba las zonas y guardaba la foto sin tocar.
+ * - Sanitiza metadatos EXIF (REP-2401), antes de mandar la foto a Vision y otra vez al final.
  * - Almacena de forma exclusiva la versión final protegida en 'report-evidences'.
  * - REP-2501: exige sesión, solo procesa fotos que el propio usuario subió a su carpeta y
  *   rechaza lo que no sea JPEG. Lo que no puede procesar, lo purga igual.
+ * - Fail-safe: si Vision falla, no está configurado o la protección no se completa, no se
+ *   guarda nada y se responde `failSafeTriggered` con el motivo en `reason`.
  * - Purgado Fail-Safe: Destruye obligatoriamente la imagen original de cuarentena tanto al finalizar como ante errores.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
-import { isJpeg, isOwnQuarantinePath, isUuid, stripExifMetadata } from './exif.ts';
+import { Image } from 'https://deno.land/x/imagescript@1.3.0/mod.ts';
+import { isOwnQuarantinePath, isUuid } from './exif.ts';
+import type { Zone } from './pixelate.ts';
+import {
+  protectEvidence,
+  ProtectionError,
+  statusForReason,
+  type DecodedImage,
+  type ImageCodec,
+  type ZoneDetector,
+} from './protect.ts';
+import { detectSensitiveZones } from './vision.ts';
 
 // Cabeceras estándar para permitir CORS en las peticiones del frontend
 const CORS_HEADERS = {
@@ -31,103 +45,34 @@ const BUCKET_PUBLIC_EVIDENCES = 'report-evidences';
 interface QuarantineRequestPayload {
   quarantinePath?: string;
   clientSideId: string;
-  simulateEntities?: boolean;
 }
 
-interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: 'face' | 'license_plate' | 'sensitive_text';
-}
+/** Abre y guarda JPEG con ImageScript (WASM, corre dentro del límite de CPU: ver Bloque 0). */
+const imageScriptCodec: ImageCodec = {
+  decode: async (bytes) => {
+    const image = await Image.decode(bytes);
+    if (!(image instanceof Image)) throw new Error('La foto no es una imagen fija.');
+    return image;
+  },
+  encode: (image: DecodedImage, quality) => (image as Image).encodeJPEG(quality),
+};
 
 /**
- * Detecta zonas sensibles (rostros y patentes) mediante Google Vision API o fallback simulado seguro.
- * @param imageBuffer Buffer de la imagen
- * @param apiKey Clave opcional de Google Cloud Vision API
- * @returns Lista de bounding boxes detectadas
+ * Emulador de Vision SOLO para desarrollo local, y solo si se pide explícitamente con
+ * QUARANTINE_VISION_EMULATOR=true contra un Supabase local. Pixela un recuadro central
+ * para poder ver el efecto sin clave de Vision. En cualquier otro entorno no existe.
  */
-export const detectSensitiveEntities = async (
-  imageBuffer: Uint8Array,
-  apiKey?: string
-): Promise<BoundingBox[]> => {
-  // Si contamos con la API key de Google Vision, ejecutamos la detección real
-  if (apiKey) {
-    try {
-      // Convertimos el buffer a Base64 para el payload de la API
-      const base64Image = btoa(String.fromCharCode(...imageBuffer));
-      const response = await fetch(
-        `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requests: [
-              {
-                image: { content: base64Image },
-                features: [
-                  { type: 'FACE_DETECTION', maxResults: 10 },
-                  { type: 'OBJECT_LOCALIZATION', maxResults: 10 },
-                  { type: 'TEXT_DETECTION', maxResults: 10 },
-                ],
-              },
-            ],
-          }),
-        }
-      );
+const isLocalEmulatorEnabled = (supabaseUrl: string): boolean =>
+  Deno.env.get('QUARANTINE_VISION_EMULATOR') === 'true' &&
+  /^https?:\/\/(localhost|127\.0\.0\.1|kong|host\.docker\.internal)(:\d+)?/.test(supabaseUrl);
 
-      if (response.ok) {
-        const data = await response.json();
-        const faceAnnotations = data.responses?.[0]?.faceAnnotations || [];
-        const localizedObjects = data.responses?.[0]?.localizedObjectAnnotations || [];
+const emulatedDetector: ZoneDetector = async (_bytes, width, height): Promise<Zone[]> => [
+  { x: Math.round(width * 0.4), y: Math.round(height * 0.3), width: Math.round(width * 0.2), height: Math.round(height * 0.2), type: 'face' },
+];
 
-        const detected: BoundingBox[] = [];
-
-        // Mapeo de rostros detectados
-        for (const face of faceAnnotations) {
-          const vertices = face.boundingPoly?.vertices || [];
-          if (vertices.length >= 3) {
-            detected.push({
-              x: vertices[0].x || 0,
-              y: vertices[0].y || 0,
-              width: (vertices[2].x || 0) - (vertices[0].x || 0),
-              height: (vertices[2].y || 0) - (vertices[0].y || 0),
-              type: 'face',
-            });
-          }
-        }
-
-        // Mapeo de patentes de vehículos u objetos identificatorios
-        for (const obj of localizedObjects) {
-          const name = obj.name?.toLowerCase() || '';
-          if (name.includes('license') || name.includes('plate') || name.includes('car')) {
-            const normVerts = obj.boundingPoly?.normalizedVertices || [];
-            if (normVerts.length >= 3) {
-              detected.push({
-                x: Math.round((normVerts[0].x || 0) * 1000),
-                y: Math.round((normVerts[0].y || 0) * 1000),
-                width: Math.round(((normVerts[2].x || 0) - (normVerts[0].x || 0)) * 1000),
-                height: Math.round(((normVerts[2].y || 0) - (normVerts[0].y || 0)) * 1000),
-                type: 'license_plate',
-              });
-            }
-          }
-        }
-
-        return detected;
-      }
-    } catch (visionError) {
-      console.warn('Fallo en consulta a Google Vision API, aplicando fallback de seguridad:', visionError);
-    }
-  }
-
-  // Fallback determinístico de seguridad cuando no hay API Key externa
-  return [
-    { x: 120, y: 80, width: 90, height: 90, type: 'face' },
-    { x: 300, y: 410, width: 140, height: 50, type: 'license_plate' },
-  ];
-};
+/** Respuesta JSON con CORS. */
+const json = (body: unknown, status: number) =>
+  new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
 
 /**
  * Handler principal de la Edge Function servida por Supabase.
@@ -194,30 +139,24 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error al descargar imagen desde cuarentena: ${downloadError?.message || 'Archivo no encontrado'}`);
     }
 
-    const rawArrayBuffer = await rawFileBlob.arrayBuffer();
-    const rawUint8Array = new Uint8Array(rawArrayBuffer);
+    const rawUint8Array = new Uint8Array(await rawFileBlob.arrayBuffer());
 
-    // Solo JPEG: en PNG/WebP no hay forma de quitar los metadatos sin re-codificar. El
-    // original se purga igual en el bloque finally.
-    if (!isJpeg(rawUint8Array)) {
-      return new Response(
-        JSON.stringify({ error: 'Solo se aceptan fotos en formato JPEG.', failSafeTriggered: true }),
-        { status: 415, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
-      );
-    }
+    // 2. Protección (REP-3793): validar, quitar EXIF, detectar, pixelar y re-codificar.
+    // Si algo falla, protectEvidence lanza ProtectionError y no se guarda nada.
+    const startedAt = performance.now();
+    const detector: ZoneDetector = googleVisionApiKey
+      ? (bytes, width, height) => detectSensitiveZones(bytes, width, height, googleVisionApiKey)
+      : isLocalEmulatorEnabled(supabaseUrl)
+        ? emulatedDetector
+        : (bytes, width, height) => detectSensitiveZones(bytes, width, height, undefined);
+    const protectedEvidence = await protectEvidence(rawUint8Array, imageScriptCodec, detector);
 
-    // 2. Sanitizamos los metadatos EXIF para remover coordenadas GPS y datos del dispositivo (REP-2401)
-    const sanitizedBuffer = stripExifMetadata(rawUint8Array);
-
-    // 3. Ejecutamos la detección de rostros y patentes (REP-2400)
-    const detectedZones = await detectSensitiveEntities(sanitizedBuffer, googleVisionApiKey);
-
-    // 4. Subimos la versión sanitizada y anonimizada al bucket permanente 'report-evidences'
+    // 3. Subimos SOLO la versión protegida al bucket permanente 'report-evidences'
     const finalFileName = `${clientSideId}/${Date.now()}_sanitized.jpg`;
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_PUBLIC_EVIDENCES)
-      .upload(finalFileName, sanitizedBuffer, {
+      .upload(finalFileName, protectedEvidence.bytes, {
         contentType: 'image/jpeg',
         upsert: true,
       });
@@ -226,34 +165,59 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error al almacenar imagen anonimizada: ${uploadError.message}`);
     }
 
-    // 5. Obtenemos la URL pública de la evidencia protegida
+    // 4. Obtenemos la URL pública de la evidencia protegida
     const { data: publicUrlData } = supabaseAdmin.storage
       .from(BUCKET_PUBLIC_EVIDENCES)
       .getPublicUrl(finalFileName);
 
-    // 6. Retornamos la respuesta exitosa al frontend
-    return new Response(
+    // Registro para QA y trazabilidad (REP-3793): cantidades, tamaños y tiempos; nunca la foto ni la clave
+    const faces = protectedEvidence.zones.filter((zone) => zone.type === 'face').length;
+    const plates = protectedEvidence.zones.length - faces;
+    console.log(
       JSON.stringify({
+        event: 'evidence_protected',
+        clientSideId,
+        storedPath: finalFileName,
+        width: protectedEvidence.width,
+        height: protectedEvidence.height,
+        faces,
+        plates,
+        zones: protectedEvidence.zones,
+        emulated: !googleVisionApiKey,
+        ms: Math.round(performance.now() - startedAt),
+      })
+    );
+
+    // 5. Retornamos la respuesta exitosa al frontend
+    return json(
+      {
         success: true,
         clientSideId,
         sanitizedUrl: publicUrlData.publicUrl,
-        entitiesDetectedCount: detectedZones.length,
-        detectedZones,
-        message: 'Evidencia anonimizada y metadatos sanitizados exitosamente.',
-      }),
-      { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+        entitiesDetectedCount: protectedEvidence.zones.length,
+        detectedZones: protectedEvidence.zones,
+        imageWidth: protectedEvidence.width,
+        imageHeight: protectedEvidence.height,
+        message:
+          protectedEvidence.zones.length > 0
+            ? `Pixelamos ${faces} rostro(s) y ${plates} patente(s) y quitamos los metadatos.`
+            : 'No encontramos rostros ni patentes; quitamos los metadatos.',
+      },
+      200
     );
   } catch (error: any) {
-    // Manejo de error Fail-Safe: nunca dejar expuesta la imagen original
-    console.error('[Fail-Safe Quarantine Pipeline] Error:', error.message);
+    // Fail-safe: no se guardó nada en 'report-evidences'; el original se purga en el finally
+    const reason = error instanceof ProtectionError ? error.reason : 'internal_error';
+    console.error(JSON.stringify({ event: 'evidence_fail_safe', reason, detail: error?.message }));
 
-    return new Response(
-      JSON.stringify({
+    return json(
+      {
         success: false,
-        error: error.message || 'Error interno en el pipeline de cuarentena.',
         failSafeTriggered: true,
-      }),
-      { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
+        reason,
+        error: 'No pudimos proteger tu foto. No se guardó ninguna copia.',
+      },
+      error instanceof ProtectionError ? statusForReason(error.reason) : 500
     );
   } finally {
     // 7. Principio Fail-Safe estricto: Eliminamos de forma irrecuperable la foto original del bucket de cuarentena

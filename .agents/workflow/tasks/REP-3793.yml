@@ -1,0 +1,71 @@
+id: REP-3793
+external_ref: https://unlz2026.atlassian.net/browse/REP-3793
+title: Implementar y validar anonimizacion real de rostros y patentes (pixelado server-side)
+type: fix
+status: READY_FOR_PR
+priority: high
+owner: Matias Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/functions/quarantine-anonymize/index.ts
+    - supabase/functions/quarantine-anonymize/exif.ts
+    - supabase/functions/quarantine-anonymize/vision.ts
+    - supabase/functions/quarantine-anonymize/pixelate.ts
+    - supabase/functions/quarantine-anonymize/protect.ts
+    - src/services/metadataSanitizer.js
+    - src/services/quarantinePipelineService.js
+    - src/components/report/ReportProcessingScreen.jsx
+    - scripts/rep3793/
+  environments:
+    - local
+    - staging
+requirements:
+  - >-
+    Bloque 0 - medir en una Edge Function real si ImageScript abre, pixela y
+    vuelve a guardar la foto dentro del limite de CPU y fijar el tamano maximo
+  - >-
+    Bloque 1 - el cliente reduce la foto a 1600 px de lado mayor, JPEG 0.85,
+    sin agrandar las chicas, para online y pendientes offline
+  - >-
+    Bloque 2 - deteccion real con Google Vision (Base64 por partes, coordenadas
+    con ancho y alto reales, solo la patente y no el auto, texto con formato de
+    patente argentina asociado al vehiculo, margen de 12 %, sin zonas inventadas)
+  - >-
+    Bloque 3 - pixelado efectivo sobre los pixeles, re-codificacion siempre
+    (aun sin zonas) y EXIF quitado antes de Vision y al final
+  - >-
+    Bloque 4 - fail-safe de punta a punta - sin Vision, con error o timeout no
+    se guarda nada, el cliente muestra No pudimos proteger tu foto con
+    Reintentar y Cambiar foto, y un pendiente offline queda en la cola
+  - >-
+    Bloque 5 - secreto GOOGLE_VISION_API_KEY propio (no el de Gemini) y matriz
+    de QA con evidencia real antes de Done
+  - Fuera de alcance - usar la imagen como entrada del RAG (ticket aparte, post REP-3790)
+acceptance_criteria:
+  - 'CA-01: una foto de 1600 px se protege en la Edge Function sin agotar recursos (Bloque 0)'
+  - 'CA-02: el cliente nunca sube mas de 1600 px de lado mayor cuando hay canvas'
+  - 'CA-03: las zonas de rostro y patente coinciden con la foto real (coordenadas en pixeles)'
+  - 'CA-04: rostros y patentes quedan pixelados en la version guardada y el resto no cambia'
+  - 'CA-05: report-evidences solo recibe la version protegida, sin EXIF'
+  - 'CA-06: con Vision caido o sin clave responde failSafeTriggered con reason y no guarda nada'
+  - 'CA-07: el frontend impide avanzar y ofrece Reintentar o Cambiar foto'
+  - 'CA-08: un pendiente offline cuya proteccion falla sigue en la cola'
+  - 'CA-09: QA (Ivan) registra la matriz con evidencia verificable en staging'
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: true
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: true
+  build: true
+  security: false
+  smoke_tests: true
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build
+  typecheck: deno check supabase/functions/quarantine-anonymize/index.ts
