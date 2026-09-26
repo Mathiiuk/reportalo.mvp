@@ -18,6 +18,22 @@ import {
 // Reexportamos las funciones para trazabilidad de la suite de pruebas y auditoría de QA
 export { sanitizeFileMetadata, hasExifMetadata, stripExifFromJpeg, normalizeImageOrientation };
 
+/**
+ * REP-3793 · Edge Function de anonimización que invoca esta app.
+ * Por defecto es `quarantine-anonymize`. Un preview de rama puede apuntar a una copia
+ * desplegada con otro nombre (por ejemplo `quarantine-anonymize-rep3793`) con
+ * VITE_QUARANTINE_FUNCTION, para probar una versión nueva sin reemplazar la que usan
+ * staging y producción. Solo se aceptan nombres de esa familia.
+ * @param {string} [configured] Valor de VITE_QUARANTINE_FUNCTION
+ * @returns {string}
+ */
+export const resolveQuarantineFunctionName = (configured) =>
+  typeof configured === 'string' && /^quarantine-anonymize(-[a-z0-9]+)*$/.test(configured.trim())
+    ? configured.trim()
+    : 'quarantine-anonymize';
+
+export const QUARANTINE_FUNCTION = resolveQuarantineFunctionName(import.meta.env?.VITE_QUARANTINE_FUNCTION);
+
 // Nombre del bucket de cuarentena temporal y privada
 export const BUCKET_QUARANTINE = 'evidence-quarantine';
 
@@ -323,7 +339,7 @@ export const processEvidenceThroughQuarantine = async ({
   // 3. Paso 2: Ejecución del pipeline de anonimización (Edge Function)
   if (shouldInvokeSupabaseBackend() && !isFallback) {
     try {
-      const { data, error } = await supabase.functions.invoke('quarantine-anonymize', {
+      const { data, error } = await supabase.functions.invoke(QUARANTINE_FUNCTION, {
         body: {
           quarantinePath,
           clientSideId,

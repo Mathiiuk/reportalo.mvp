@@ -26,6 +26,29 @@ pixeladas, JPEG 85. Fotos sintéticas con ruido (peor caso para el códec).
 **Decisión del gate:** entra en la Edge Function, se sigue con ImageScript. El cliente reduce a **1600 px** (margen de ~6×
 sobre el límite de 2 s de CPU) y el servidor rechaza más de **2048 px** antes de abrir la foto.
 
+## 1-bis. Probar desde la rama, sin tocar staging ni producción
+
+La Edge Function es una sola por proyecto de Supabase: desplegar `quarantine-anonymize` desde la rama reemplaza la que
+usan staging y producción. Para probar aislado, se despliega **una copia con otro nombre** y solo el preview de la rama
+la usa (`VITE_QUARANTINE_FUNCTION`; sin esa variable la app sigue llamando a `quarantine-anonymize`).
+
+1. **Desplegar la copia** (PowerShell, desde la raíz del repo en la rama; la carpeta temporal no se commitea):
+   ```powershell
+   Copy-Item -Recurse supabase/functions/quarantine-anonymize supabase/functions/quarantine-anonymize-rep3793
+   supabase functions deploy quarantine-anonymize-rep3793 --project-ref yryuhyiujyignkdhiyua --no-verify-jwt
+   Remove-Item -Recurse supabase/functions/quarantine-anonymize-rep3793
+   ```
+   `--no-verify-jwt` replica la configuración de producción: la función valida la sesión por su cuenta (REP-2501).
+2. **Vercel:** Settings → Environment Variables → `VITE_QUARANTINE_FUNCTION` = `quarantine-anonymize-rep3793`, entorno
+   **Preview**, rama `fix/REP-3793-anonimizacion-real-rostros-patentes`. Después, **Redeploy** del preview de la rama
+   (las variables `VITE_` se fijan al compilar).
+3. **Probar en el preview de Vercel**, no con `pnpm dev`: en desarrollo, si la función falla, la app cae al emulador
+   local y muestra éxito, así que el fail-safe no se ve. En local, usar `pnpm build` y después `pnpm preview`, con la variable en `.env.local`.
+4. La prueba de Vision caído (§3.2) **no corta staging ni producción**: la función vieja (v12), sin clave, sigue
+   aceptando fotos como hasta hoy (sin pixelar). Solo la copia entra en fail-safe.
+5. **Al terminar** (después del merge y del despliegue real): borrar `quarantine-anonymize-rep3793` en el Dashboard
+   (Edge Functions → la función → Delete) y quitar la variable de Vercel.
+
 ## 2. Despliegue (lo corre Matías, en este orden)
 
 > ⚠️ **El orden importa.** La función nueva rechaza fotos de más de 2048 px, y el frontend publicado hoy **no las achica**.
@@ -83,7 +106,8 @@ que `.protegida.jpg`.
 
 ### 3.2 Fail-safe con Vision caído (Q8, Q9)
 
-Mientras dura la prueba, **nadie puede adjuntar fotos**: hacela en un horario sin uso y con aviso al equipo.
+Si se prueba contra la función real `quarantine-anonymize` (después del despliegue de §2), mientras dura la prueba
+**nadie puede adjuntar fotos**: hacela en un horario sin uso y con aviso al equipo. Con la copia de §1-bis no hay ese riesgo.
 
 1. `supabase secrets unset GOOGLE_VISION_API_KEY --project-ref yryuhyiujyignkdhiyua`
 2. **Q8:** enviar un reporte con foto desde staging → captura de la pantalla «No pudimos proteger tu foto» con

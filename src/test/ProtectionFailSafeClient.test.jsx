@@ -9,7 +9,11 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
-import { describeProtectionFailure, readFunctionFailure } from '../services/quarantinePipelineService';
+import {
+  describeProtectionFailure,
+  readFunctionFailure,
+  resolveQuarantineFunctionName,
+} from '../services/quarantinePipelineService';
 
 describe('REP-3793 Bloque 4: motivo del fail-safe en el cliente', () => {
   it('UT-FSC-01: lee el cuerpo de la respuesta de error de la Edge Function', async () => {
@@ -18,6 +22,14 @@ describe('REP-3793 Bloque 4: motivo del fail-safe en el cliente', () => {
     // Sin cuerpo legible no rompe
     expect(await readFunctionFailure({ context: new Response('no es json') })).toBeNull();
     expect(await readFunctionFailure(null)).toBeNull();
+  });
+
+  it('UT-FSC-07: la función se puede cambiar solo por otra de la misma familia (preview de rama)', () => {
+    expect(resolveQuarantineFunctionName(undefined)).toBe('quarantine-anonymize');
+    expect(resolveQuarantineFunctionName('quarantine-anonymize-rep3793')).toBe('quarantine-anonymize-rep3793');
+    // Cualquier otro nombre vuelve al de producción
+    expect(resolveQuarantineFunctionName('analizar-reporte')).toBe('quarantine-anonymize');
+    expect(resolveQuarantineFunctionName('quarantine-anonymize/../x')).toBe('quarantine-anonymize');
   });
 
   it('UT-FSC-02: una falla del servicio no sugiere cambiar la foto; una foto ilegible sí', () => {
