@@ -45,8 +45,12 @@
  * quarantine-anonymize, se despliega de forma autocontenida.
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
 import { redactApiKeys } from './redact.ts';
+
+// Mismo tipo que devuelve createClient(url, key) sin tipos de base generados.
+// ReturnType<typeof createClient> infiere un schema "never" y deno check rechaza pasarle el cliente real
+type SupabaseAdmin = SupabaseClient<any, 'public', any>;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -348,7 +352,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * alguna validación, la respuesta no se acepta como fundamentada").
  */
 const validateOrganismoSugerido = async (
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseAdmin,
   organismoSugeridoId: string | null | undefined
 ): Promise<{ valid: boolean; reason?: string }> => {
   // Defensa adicional: aunque el schema ya marca este campo como nullable,
@@ -417,7 +421,7 @@ const buildEvidenceRows = (analysisId: string, retrievedFragments: RetrievedFrag
  * reintente — es preferible reintentar de más que perder un reporte sin analizar.
  */
 const persistAnalysis = async (
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: SupabaseAdmin,
   reportId: string,
   result: AnalysisResult,
   retrievedFragments: RetrievedFragment[],
