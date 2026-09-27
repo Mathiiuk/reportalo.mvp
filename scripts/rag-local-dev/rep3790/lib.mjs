@@ -50,9 +50,9 @@ const withRetry = async (fn) => {
 /** Igual que embedText de analizar-reporte: sin taskType, 768 dimensiones. */
 export const embedText = async (text) => {
   const { res, latencyMs, attempts } = await withRetry(() =>
-    fetch(`${GEMINI_API_BASE}/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`, {
+    fetch(`${GEMINI_API_BASE}/models/${EMBEDDING_MODEL}:embedContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         model: `models/${EMBEDDING_MODEL}`,
         content: { parts: [{ text }] },
@@ -69,9 +69,9 @@ export const embedText = async (text) => {
 /** Llamada multimodal genérica (extracción de hechos). Devuelve la respuesta cruda. */
 export const callGeminiWithImage = async ({ imageBase64, mimeType, prompt, responseSchema, maxOutputTokens }) => {
   const { res, latencyMs, attempts } = await withRetry(() =>
-    fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent?key=${apiKey}`, {
+    fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ inlineData: { mimeType, data: imageBase64 } }, { text: prompt }] }],
         generationConfig: {
