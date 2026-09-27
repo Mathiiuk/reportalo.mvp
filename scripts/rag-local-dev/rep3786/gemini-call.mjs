@@ -80,9 +80,9 @@ export const callGemini = async ({ prompt, thinkingConfig, maxOutputTokens }) =>
     const started = performance.now();
     let res;
     try {
-      res = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent?key=${apiKey}`, {
+      res = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body,
       });
     } catch (err) {

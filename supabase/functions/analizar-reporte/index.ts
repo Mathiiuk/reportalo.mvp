@@ -46,6 +46,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.0';
+import { redactApiKeys } from './redact.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -152,9 +153,11 @@ const LLM_OUTPUT_SCHEMA = {
  * de reemplazo: si falla, el llamador debe tratarlo como error (fallar cerrado).
  */
 const embedText = async (text: string, apiKey: string): Promise<number[]> => {
-  const response = await fetch(`${GEMINI_API_BASE}/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`, {
+  // La clave va en el header y no en la URL: los errores de red de Deno incluyen la URL
+  // en el mensaje, y ese mensaje se guarda en report_ai_analysis y vuelve en la respuesta
+  const response = await fetch(`${GEMINI_API_BASE}/models/${EMBEDDING_MODEL}:embedContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       model: `models/${EMBEDDING_MODEL}`,
       content: { parts: [{ text }] },
@@ -195,9 +198,10 @@ const generateJustification = async (
     'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
   ].join('\n');
 
-  const response = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent?key=${apiKey}`, {
+  // Clave en el header, igual que en embedText (ver el motivo ahí)
+  const response = await fetch(`${GEMINI_API_BASE}/models/${GENERATION_MODEL}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       model: `models/${GENERATION_MODEL}`,
       contents: [
@@ -624,9 +628,11 @@ Deno.serve(async (req: Request) => {
     }
   } catch (error) {
     // Cualquier error no previsto también falla cerrado: nunca un resultado inventado.
+    // El mensaje se guarda en status_reason y vuelve en la respuesta: se le borra
+    // cualquier clave de API por si un error de red trae una URL con la clave.
     result = {
       estado: 'indeterminado',
-      error: error instanceof Error ? error.message : String(error),
+      error: redactApiKeys(error instanceof Error ? error.message : String(error)),
       embeddingModelCode: embeddingComputed ? EMBEDDING_MODEL_CODE : null,
     };
   }

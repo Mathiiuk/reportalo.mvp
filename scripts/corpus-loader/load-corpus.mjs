@@ -203,10 +203,10 @@ async function activeEmbeddingModel(db) {
 
 async function embedText(model, apiKey, text) {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model.model_name}:embedContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model.model_name}:embedContent`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         model: `models/${model.model_name}`,
         content: { parts: [{ text }] },
