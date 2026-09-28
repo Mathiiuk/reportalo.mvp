@@ -69,14 +69,32 @@ const EMBEDDING_DIMENSIONS = 768;
 const GENERATION_MODEL = 'gemini-3.8-flash';
 // V-11 (REP-2908-VERIF): version de las instrucciones fijas de generateJustification.
 // Incrementar a mano cada vez que cambie el texto de `instructions` ahi abajo.
-const PROMPT_VERSION = 'v1';
-// P-06 (ronda 4): temperature queda en el default de la API (no se fija acá a
-// propósito). Documentado junto a PROMPT_VERSION porque cualquier cambio de
-// temperature necesita volver a correr P-01 antes de tocarse.
+// REP-3795 (punto 5 del diagnóstico): v2 fija temperature en 0 (ver GENERATION_TEMPERATURE)
+// y agrega una regla sobre no exigir más precisión que la que pide la norma. RIESGO
+// ACEPTADO SIN VALIDAR: REP-3786 (P-01) mantuvo temperature en el default de la API en las
+// 360 corridas de su experimento -- nunca se probó temperature 0 con evidencia real. Antes
+// de mergear a staging hace falta correr P-01 (scripts/rag-local-dev/run-p01-post-filtro.mjs)
+// con este cambio para confirmar que no se pierden aciertos ni aparecen citas incorrectas.
+const PROMPT_VERSION = 'v2';
+// P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
+// el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
+// mismo texto ("Auto mal estacionado" con/sin punto final) dando "fundamentado" una vez y
+// "No concluyente" otra -- temperature 0 hace la generación determinística. Pendiente de
+// confirmar con P-01 (ver nota en PROMPT_VERSION) antes de ir a producción.
+const GENERATION_TEMPERATURE = 0;
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
 const DEFAULT_MATCH_COUNT = 6;
 const DEFAULT_SIMILARITY_THRESHOLD = 0.45;
+
+// REP-3795 (punto 4 del diagnóstico): la categoría no tiene corpus cargado a
+// propósito (REP-3764 la dejó pendiente) y nunca lo va a tener -- no es un
+// reclamo con fundamento normativo, es una derivación a asistencia social.
+// La guía de REP-3769 documentaba "devuelve asistencia" pero nadie lo conectó:
+// sin este corte, cae al branch de sin_normativa como cualquier categoría sin
+// leyes. Cortar acá evita además el costo de Gemini (embedding + generación)
+// para un caso que nunca va a citar una norma.
+const VULNERABILIDAD_SOCIAL_SERVICE_CODE = 'VULNERABILIDAD_SOCIAL';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -200,6 +218,7 @@ const generateJustification = async (
     'Nunca mencionés montos ni sanciones al ciudadano; fundamento_ciudadano tiene que ser llano y fundamento_oficial, técnico.',
     'SIEMPRE incluís todos los campos del esquema (estado, es_infraccion, categoria, organismo_sugerido_id, fundamento_ciudadano, fundamento_oficial, confianza, citas), sin importar el estado que declares. Si un campo no aplica, usá null o un array vacío, pero nunca lo omitas.',
     'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
+    'No exijas al reclamo más precisión que la que pide el fragmento citado. Si el hecho descrito encaja en términos generales con lo que el fragmento prohíbe o exige (por ejemplo, "estacionar en forma antirreglamentaria" cubre cualquier forma de mal estacionar, sin que el ciudadano tenga que detallar cuál), fundamentá con ese fragmento — no declares "indeterminado" solo por falta de detalle adicional que la norma no requiere.',
   ].join('\n');
 
   // Clave en el header, igual que en embedText (ver el motivo ahí)
@@ -222,6 +241,8 @@ const generateJustification = async (
         responseMimeType: 'application/json',
         responseSchema: LLM_OUTPUT_SCHEMA,
         thinkingConfig: { thinkingLevel: 'low' },
+        // REP-3795 (punto 5): ver nota junto a GENERATION_TEMPERATURE más arriba.
+        temperature: GENERATION_TEMPERATURE,
         // P-06 (REP-2908-VERIF ronda 4): tope de salida como control de costo.
         // 2048 es holgado para el esquema actual (fundamento + hasta ~6 citas);
         // si algún día lo corta, generateContent devuelve MAX_TOKENS y el JSON
@@ -551,7 +572,19 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (!geminiApiKey) {
+    if (category === VULNERABILIDAD_SOCIAL_SERVICE_CODE) {
+      // Punto 4: corte antes de vectorizar/consultar al LLM (costo cero). El
+      // texto que ve el ciudadano lo decide la pantalla (ReportAiAnalysisPanel,
+      // estado "asistencia"), citizen_feedback acá es solo para trazabilidad.
+      result = {
+        estado: 'asistencia',
+        es_infraccion: false,
+        fundamento_ciudadano: 'Tu reporte va a ser derivado al área de asistencia social correspondiente.',
+        fundamento_oficial: null,
+        confianza: 1,
+        citas: [],
+      };
+    } else if (!geminiApiKey) {
       // Fallar cerrado: sin clave no hay vectorización ni generación real posible.
       // Nunca se cae a un embedding o corpus local de reemplazo.
       result = { estado: 'indeterminado', error: 'GEMINI_API_KEY no configurada en los secrets de la función.' };
@@ -566,12 +599,13 @@ Deno.serve(async (req: Request) => {
       // un reclamo podia matchear por pura similitud lexica con una norma
       // de otra categoria sin ningun fragmento cargado para la suya -- ver
       // Caso F, REP-3764).
+      const serviceCode = category ? category.toUpperCase() : null;
       const { data: fragments, error: rpcError } = await supabaseAdmin.rpc('match_knowledge_fragments', {
         query_embedding: queryEmbedding,
         p_locality_id: localityId,
         p_model_code: EMBEDDING_MODEL_CODE,
         match_count: DEFAULT_MATCH_COUNT,
-        p_service_code: category ? category.toUpperCase() : null,
+        p_service_code: serviceCode,
       });
 
       if (rpcError) {
