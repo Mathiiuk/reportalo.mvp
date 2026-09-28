@@ -32,6 +32,12 @@ function loadEnvVar(name) {
 const FUNCTION_NAME = process.env.FUNCTION_NAME || 'analizar-reporte';
 const FUNCTION_URL = `${loadEnvVar('VITE_SUPABASE_URL')}/functions/v1/${FUNCTION_NAME}`;
 const ANON_KEY = loadEnvVar('VITE_SUPABASE_PUBLISHABLE_KEY');
+// R5-05: la función exige este header (mismo valor que el secreto RAG_DISPATCH_TOKEN
+// de la función / rag_dispatch_token de Vault). Nunca hardcodeado acá.
+const DISPATCH_TOKEN = process.env.RAG_DISPATCH_TOKEN;
+if (!DISPATCH_TOKEN) {
+  throw new Error('Falta RAG_DISPATCH_TOKEN en el entorno (la función lo exige desde R5-05).');
+}
 
 // IDs reales de Supabase (proyecto CiudadAR)
 const LOCALITY = {
@@ -42,13 +48,17 @@ const LOCALITY = {
   WILDE: '094a78f5-ce7b-4e76-8d54-5bb95419fe93', // Avellaneda
 };
 
+// R5-05: la función ignora description/category/localityId del cuerpo y los lee de la
+// base por reportId. Reportes de prueba creados a mano (28/09/2026, marcados
+// "[TEST REP-3795]" en la descripción, mismo user_id que las pruebas de REP-3793) --
+// no son de un ciudadano real, borrar cuando se cierre la prueba.
 const CASES = [
   // --- Punto 4: vulnerabilidad social → asistencia, costo cero ---
   {
     grupo: 'Punto 4',
     id: 'VS-1',
+    reportId: '9a2cf981-6d38-4931-8d9b-da11c23a5880',
     query: 'Persona en situación de calle',
-    localityId: LOCALITY.BALVANERA,
     localityName: 'Balvanera (CABA)',
     category: 'VULNERABILIDAD_SOCIAL',
     runs: 1,
@@ -57,8 +67,8 @@ const CASES = [
   {
     grupo: 'Punto 4',
     id: 'VS-2',
+    reportId: '268f1769-200d-4693-8917-b8736cb5bf62',
     query: 'Refugio improvisado bajo estructura vial',
-    localityId: LOCALITY.WILDE,
     localityName: 'Wilde (Avellaneda)',
     category: 'VULNERABILIDAD_SOCIAL',
     runs: 1,
@@ -68,8 +78,8 @@ const CASES = [
   {
     grupo: 'Punto 5',
     id: 'T-1',
+    reportId: 'eb8e82af-19db-488d-b4d1-308862703daa',
     query: 'Auto mal estacionado',
-    localityId: LOCALITY.PUERTO_MADERO,
     localityName: 'Puerto Madero (CABA)',
     category: 'TRANSITO',
     runs: 5,
@@ -78,8 +88,8 @@ const CASES = [
   {
     grupo: 'Punto 5',
     id: 'T-2',
+    reportId: '558f59b4-7f93-4448-92ea-9ad1ce2c9401',
     query: 'Auto mal estacionado.',
-    localityId: LOCALITY.PUERTO_MADERO,
     localityName: 'Puerto Madero (CABA)',
     category: 'TRANSITO',
     runs: 5,
@@ -88,8 +98,8 @@ const CASES = [
   {
     grupo: 'Punto 5',
     id: 'T-3',
+    reportId: '549dc328-2eb6-4851-a48e-5b719410edce',
     query: 'La camioneta está mal eatacionada',
-    localityId: LOCALITY.ALMAGRO,
     localityName: 'Almagro (CABA)',
     category: 'TRANSITO',
     runs: 5,
@@ -99,8 +109,8 @@ const CASES = [
   {
     grupo: 'Control',
     id: 'T-4',
+    reportId: '4cd77edf-bc66-40a7-8fe2-f2a52a99fff2',
     query: 'Auto estacionado en la mitad de la calle',
-    localityId: LOCALITY.PIÑEYRO,
     localityName: 'Piñeyro (Avellaneda)',
     category: 'TRANSITO',
     runs: 3,
@@ -108,7 +118,7 @@ const CASES = [
   },
 ];
 
-async function callAnalizarReporte({ query, localityId, category }) {
+async function callAnalizarReporte({ reportId }) {
   const started = Date.now();
   const response = await fetch(FUNCTION_URL, {
     method: 'POST',
@@ -116,9 +126,10 @@ async function callAnalizarReporte({ query, localityId, category }) {
       'Content-Type': 'application/json',
       apikey: ANON_KEY,
       Authorization: `Bearer ${ANON_KEY}`,
+      'x-rag-dispatch-token': DISPATCH_TOKEN,
     },
-    // Sin reportId a propósito: la función no persiste nada si no viene.
-    body: JSON.stringify({ description: query, category, localityId }),
+    // Sin queueMessageId: no hay mensaje de pgmq que borrar (no vino de la cola real).
+    body: JSON.stringify({ reportId }),
   });
   const text = await response.text();
   let json;

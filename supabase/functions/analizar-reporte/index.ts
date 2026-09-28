@@ -583,6 +583,14 @@ Deno.serve(async (req: Request) => {
         fundamento_oficial: null,
         confianza: 1,
         citas: [],
+        // embedding_model_code es NOT NULL en report_ai_analysis (mismo hallazgo que en
+        // sin_normativa/rpcError más abajo, con el que este `if` comparte código antes de
+        // este cambio): sin este campo el RPC persist_rag_analysis falla y persistAnalysis
+        // se lo traga en un console.error, sin lanzar -- el reporte queda "analizando" para
+        // siempre en la pantalla del ciudadano. No se calculó ningún embedding para esta
+        // rama (a propósito, es el costo cero del punto 4): el valor acá es la etiqueta de
+        // versión del pipeline, no un registro de que se haya llamado a Gemini.
+        embeddingModelCode: EMBEDDING_MODEL_CODE,
       };
     } else if (!geminiApiKey) {
       // Fallar cerrado: sin clave no hay vectorización ni generación real posible.

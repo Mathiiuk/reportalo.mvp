@@ -37,6 +37,14 @@ describe('Punto 4: vulnerabilidad social devuelve asistencia sin consultar al LL
     expect(block).toMatch(/estado: 'asistencia'/);
     expect(block).toMatch(/citas: \[\]/);
   });
+
+  it('setea embeddingModelCode (NOT NULL en report_ai_analysis, si no el insert falla en silencio)', () => {
+    const block = source.slice(
+      source.indexOf('category === VULNERABILIDAD_SOCIAL_SERVICE_CODE'),
+      source.indexOf('} else if (!geminiApiKey) {')
+    );
+    expect(block).toMatch(/embeddingModelCode: EMBEDDING_MODEL_CODE/);
+  });
 });
 
 describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
