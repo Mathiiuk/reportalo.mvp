@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Shapes, Trash2, ShieldAlert, RefreshCw, Camera, Sun, Focus, Clock } from 'lucide-react';
 import {
   processAllEvidencesThroughQuarantine,
+  describeProtectionFailure,
   PIPELINE_STEPS,
 } from '../../services/quarantinePipelineService';
 
@@ -42,12 +43,10 @@ export const ReportProcessingScreen = ({
   const [progress, setProgress] = useState(15);
   // Bandera de estado de error bajo principio fail-safe
   const [hasError, setHasError] = useState(false);
-  // Mensaje descriptivo del error para el usuario
-  const [errorMessage, setErrorMessage] = useState('');
+  // Motivo de la falla que devolvió el servidor (REP-3793), para explicarla sin detalle técnico
+  const [failureReason, setFailureReason] = useState(null);
   // Contador de reintentos
   const [retryTrigger, setRetryTrigger] = useState(0);
-  // Cantidad de zonas sensibles detectadas
-  const [detectedCount, setDetectedCount] = useState(3);
 
   // Referencia para evitar dobles llamadas a onProcessingComplete
   const hasCompletedRef = useRef(false);
@@ -66,7 +65,7 @@ export const ReportProcessingScreen = ({
     hasCompletedRef.current = false;
     abandonedRef.current = false;
     setHasError(false);
-    setErrorMessage('');
+    setFailureReason(null);
     setProgress(15);
     setCurrentStepIndex(0);
 
@@ -135,9 +134,6 @@ export const ReportProcessingScreen = ({
           // Llevamos la barra al 100%
           setProgress(100);
           setCurrentStepIndex(PIPELINE_STEPS.length - 1);
-          if (pipelineResult.entitiesDetectedCount) {
-            setDetectedCount(pipelineResult.entitiesDetectedCount);
-          }
 
           // Invocamos el callback de éxito una sola vez
           if (onProcessingComplete && !hasCompletedRef.current) {
@@ -145,12 +141,9 @@ export const ReportProcessingScreen = ({
             onProcessingComplete(pipelineResult.processedEvidences || evidenceList);
           }
         } else {
-          // Si el pipeline falló, activamos el estado de error fail-safe
+          // Si el pipeline falló, activamos el estado de error fail-safe: el reporte no avanza
           setHasError(true);
-          setErrorMessage(
-            pipelineResult?.error ||
-              'No se pudo completar la protección de tus fotos de forma segura.'
-          );
+          setFailureReason(pipelineResult?.reason || 'unknown');
         }
       }
     }, 40);
@@ -203,6 +196,8 @@ export const ReportProcessingScreen = ({
 
   // Lista completa: la subida cifrada ya ocurrió y el resto avanza con el progreso del pipeline
   const steps = ['Fotos subidas de forma cifrada', ...PIPELINE_STEPS];
+  // Explicación de la falla para el ciudadano (sin detalle técnico)
+  const failureDescription = describeProtectionFailure(failureReason);
   const activeStep = currentStepIndex + 1;
 
   return (
@@ -289,8 +284,9 @@ export const ReportProcessingScreen = ({
                   className="rep-anim h-1.5 w-1.5 rounded-full bg-[#7FD4FF]"
                   style={{ animation: 'repPulseAnim 1.1s ease-in-out infinite' }}
                 />
+                {/* REP-3793: antes mostraba «3 zonas detectadas» fijo; el conteo real llega recién al terminar */}
                 <span className="text-rep-label font-bold tracking-wide text-[#CFE8FA]">
-                  {`${detectedCount} zonas detectadas`}
+                  Buscando rostros y patentes
                 </span>
               </div>
             </>
@@ -384,13 +380,22 @@ export const ReportProcessingScreen = ({
               </div>
             </>
           ) : (
-            /* Vista fail-safe ante error en cuarentena · UJ v3.3 · M21 «No pudimos procesar la foto» (Bloque 4) */
+            /* Vista fail-safe ante error en cuarentena · UJ v3.3 · M21 (Bloque 4) · REP-3793: texto según el motivo */
             <div data-testid="quarantine-fail-safe-view" className="mt-6 flex flex-1 flex-col desktop:mt-0">
-              <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos procesar la foto</h1>
+              <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos proteger tu foto</h1>
               <p className="m-0 mt-2 text-rep-body text-white/75 desktop:text-rep-body-d">
-                No podemos garantizar el difuminado de la imagen, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
+                No podemos garantizar el pixelado de rostros y patentes, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
               </p>
 
+              <p
+                role="alert"
+                data-testid="fail-safe-reason"
+                className="m-0 mt-4 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label text-white/90"
+              >
+                {failureDescription.detail}
+              </p>
+
+              {failureDescription.photoTips && (
               <ul className="m-0 mt-4 flex list-none flex-col gap-2.5 p-0">
                 <li className="flex items-center gap-2.5 text-rep-body text-white/85">
                   <Sun aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
@@ -401,11 +406,6 @@ export const ReportProcessingScreen = ({
                   Esperá que enfoque antes de disparar
                 </li>
               </ul>
-
-              {errorMessage && (
-                <p role="alert" className="m-0 mt-4 rounded-xl border border-rep-danger/40 bg-rep-danger/20 p-3 text-rep-label text-white/90">
-                  Detalle: {errorMessage}
-                </p>
               )}
 
               <div className="mb-4 mt-auto flex flex-col gap-2 desktop:mt-6">
@@ -415,7 +415,7 @@ export const ReportProcessingScreen = ({
                   className="rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-camera-accent text-rep-button text-rep-camera transition-transform duration-120 active:scale-[0.98] focus-visible:ring-offset-rep-camera"
                 >
                   <Camera aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
-                  Sacar otra foto
+                  Cambiar foto
                 </button>
                 <button
                   type="button"

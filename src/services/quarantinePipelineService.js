@@ -12,11 +12,27 @@ import {
   hasExifMetadata,
   stripExifFromJpeg,
   normalizeImageOrientation,
-  ensureJpeg,
+  prepareEvidenceImage,
 } from './metadataSanitizer';
 
 // Reexportamos las funciones para trazabilidad de la suite de pruebas y auditoría de QA
 export { sanitizeFileMetadata, hasExifMetadata, stripExifFromJpeg, normalizeImageOrientation };
+
+/**
+ * REP-3793 · Edge Function de anonimización que invoca esta app.
+ * Por defecto es `quarantine-anonymize`. Un preview de rama puede apuntar a una copia
+ * desplegada con otro nombre (por ejemplo `quarantine-anonymize-rep3793`) con
+ * VITE_QUARANTINE_FUNCTION, para probar una versión nueva sin reemplazar la que usan
+ * staging y producción. Solo se aceptan nombres de esa familia.
+ * @param {string} [configured] Valor de VITE_QUARANTINE_FUNCTION
+ * @returns {string}
+ */
+export const resolveQuarantineFunctionName = (configured) =>
+  typeof configured === 'string' && /^quarantine-anonymize(-[a-z0-9]+)*$/.test(configured.trim())
+    ? configured.trim()
+    : 'quarantine-anonymize';
+
+export const QUARANTINE_FUNCTION = resolveQuarantineFunctionName(import.meta.env?.VITE_QUARANTINE_FUNCTION);
 
 // Nombre del bucket de cuarentena temporal y privada
 export const BUCKET_QUARANTINE = 'evidence-quarantine';
@@ -129,11 +145,54 @@ const isTestRunner = () => Boolean(import.meta.env?.VITEST || import.meta.env?.M
  * emulador sin que nadie lo revisara.
  *
  * Fuera de DEV el pipeline ahora falla con `failSafeTriggered`, que es lo que la
- * pantalla M21 ya sabe mostrar: «No pudimos procesar la foto».
+ * pantalla M21 ya sabe mostrar: «No pudimos proteger tu foto».
  *
  * @returns {boolean} true solo en desarrollo interactivo o en tests.
  */
 const isLocalEmulatorAllowed = () => Boolean(import.meta.env?.DEV) || isTestRunner();
+
+/**
+ * REP-3793 · Motivo de la falla que devuelve la Edge Function en `reason`.
+ * Con un código HTTP de error, supabase-js no entrega el cuerpo en `data`: lo deja en
+ * `error.context` (la Response). Si no se puede leer, se devuelve null.
+ * @param {any} error Error de `supabase.functions.invoke`
+ * @returns {Promise<{ reason?: string, error?: string } | null>}
+ */
+export const readFunctionFailure = async (error) => {
+  try {
+    const body = await error?.context?.json?.();
+    return body && typeof body === 'object' ? body : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * REP-3793 · Texto para el ciudadano según el motivo del fail-safe. Nunca muestra el detalle
+ * técnico. `photoTips` indica si tiene sentido sugerir otra foto (luz, enfoque) o si el
+ * problema es del servicio y alcanza con reintentar.
+ * @param {string} [reason]
+ * @returns {{ detail: string, photoTips: boolean }}
+ */
+export const describeProtectionFailure = (reason) => {
+  switch (reason) {
+    case 'vision_not_configured':
+    case 'vision_timeout':
+    case 'vision_http_error':
+    case 'vision_response_error':
+      return {
+        detail: 'El servicio que detecta rostros y patentes no respondió. Probá de nuevo en unos minutos.',
+        photoTips: false,
+      };
+    case 'image_too_large':
+      return { detail: 'La foto es demasiado grande para protegerla. Probá con otra.', photoTips: true };
+    case 'not_jpeg':
+    case 'image_unreadable':
+      return { detail: 'No pudimos abrir la foto. Probá sacando otra.', photoTips: true };
+    default:
+      return { detail: 'Algo falló mientras protegíamos la foto. Probá de nuevo.', photoTips: true };
+  }
+};
 
 /**
  * Id del usuario con sesión iniciada, o null si no hay sesión o no se pudo leer.
@@ -246,7 +305,10 @@ export const processEvidenceThroughQuarantine = async ({
   // los dos caminos: el server-side de la Edge Function y el fallback local.
   // REP-2501: además, todo lo que no sea JPEG se convierte, porque el servidor solo
   // acepta JPEG (no puede quitar los metadatos de un PNG/WebP sin re-codificarlo).
-  const uprightFile = await ensureJpeg(await normalizeImageOrientation(file));
+  // REP-3793: y se reduce a EVIDENCE_MAX_SIDE, el tamaño que la Edge Function puede
+  // pixelar dentro de su límite de CPU. Vale para el envío online y para los
+  // pendientes offline, que pasan los dos por esta misma función.
+  const uprightFile = await prepareEvidenceImage(file);
 
   // 1. Paso 1: Subida transitoria al bucket privado de cuarentena
   const uploadResult = await uploadToQuarantine(uprightFile, clientSideId);
@@ -277,7 +339,7 @@ export const processEvidenceThroughQuarantine = async ({
   // 3. Paso 2: Ejecución del pipeline de anonimización (Edge Function)
   if (shouldInvokeSupabaseBackend() && !isFallback) {
     try {
-      const { data, error } = await supabase.functions.invoke('quarantine-anonymize', {
+      const { data, error } = await supabase.functions.invoke(QUARANTINE_FUNCTION, {
         body: {
           quarantinePath,
           clientSideId,
@@ -291,9 +353,12 @@ export const processEvidenceThroughQuarantine = async ({
         if (!isTesting && import.meta.env?.DEV) {
           console.warn('[Quarantine Pipeline] Edge function no disponible en DEV. Usando emulador de seguridad local.');
         } else {
+          // REP-3793: el servidor no guardó nada y dice por qué (reason); el original ya se purgó allá
+          const failure = error ? await readFunctionFailure(error) : data;
           return {
             success: false,
-            error: error?.message || data?.error || 'Error en el procesamiento de la imagen.',
+            error: failure?.error || error?.message || 'Error en el procesamiento de la imagen.',
+            reason: failure?.reason || 'unknown',
             failSafeTriggered: true,
           };
         }
@@ -385,11 +450,12 @@ export const processEvidenceThroughQuarantine = async ({
 /**
  * Pasos descriptivos del pipeline de privacidad para mostrar en la interfaz.
  */
+// REP-3793: los textos describen lo que el servidor hace de verdad (pixelar y quitar metadatos)
 export const PIPELINE_STEPS = [
   'Analizando la foto',
-  'Difuminando rostros',
-  'Difuminando patentes de terceros',
-  'Difuminando datos sensibles',
+  'Pixelando rostros',
+  'Pixelando patentes de terceros',
+  'Quitando ubicación y datos del teléfono',
 ];
 
 /**
@@ -457,6 +523,7 @@ export const processAllEvidencesThroughQuarantine = async ({
         return {
           success: false,
           error: result.error || 'Fallo de protección en una de las fotografías.',
+          reason: result.reason,
           failSafeTriggered: true,
         };
       }

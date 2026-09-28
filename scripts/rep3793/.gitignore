@@ -1,0 +1,3 @@
+# REP-3793: las fotos de la matriz de QA tienen personas y patentes reales: nunca entran al repo.
+fotos/*
+!fotos/LEEME.md
