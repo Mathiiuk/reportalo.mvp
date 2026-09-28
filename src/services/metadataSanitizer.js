@@ -428,12 +428,20 @@ export const EVIDENCE_JPEG_QUALITY = 0.85;
  * EVIDENCE_MAX_SIDE. Nunca agranda una foto chica.
  *
  * Si la foto ya es un JPEG derecho y chico, se devuelve tal cual (no se re-comprime).
- * Sin canvas, o si la decodificación falla, se usa el camino anterior (rotar y
- * convertir): el servidor rechaza lo que le quede grande y el reporte no se pierde.
+ *
+ * REP-3800: Safari/iOS puede fallar al decodificar con `createImageBitmap` fotos grandes
+ * (sobre todo con `imageOrientation: 'from-image'`) — confirmado en staging con un iPhone
+ * 13 Pro real (`docs/BUG_ios-safari-resize-fails-image-too-large.md`). Si eso pasa, en vez
+ * de resignarse a mandar la foto sin reducir (lo que el servidor iba a rechazar siempre),
+ * se prueba `<img>` en vez de `createImageBitmap` (`resizeViaImgFallback`, no repite la
+ * misma API que ya falló). Recién si ni así se puede reducir, y la foto sigue superando el
+ * límite, la función lanza un error explícito en vez de devolver algo que el servidor va a
+ * rechazar en silencio (AC2 de REP-3800).
  *
  * @param {Blob|File} file Foto capturada
  * @param {{ maxSide?: number, quality?: number }} [options]
  * @returns {Promise<Blob|File>}
+ * @throws {Error} con `code: 'IMAGE_TOO_LARGE_CLIENT'` si ningún camino logra bajarla del límite
  */
 export const prepareEvidenceImage = async (
   file,
@@ -445,6 +453,8 @@ export const prepareEvidenceImage = async (
   if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
     return ensureJpeg(await normalizeImageOrientation(file));
   }
+
+  let prepared = null;
 
   try {
     // 'from-image' aplica la rotación EXIF al decodificar: el bitmap ya viene derecho
@@ -468,26 +478,150 @@ export const prepareEvidenceImage = async (
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 
     const context = canvas.getContext('2d');
-    if (!context) {
-      if (typeof bitmap.close === 'function') bitmap.close();
-      return ensureJpeg(await normalizeImageOrientation(file));
+    if (context) {
+      // JPEG no tiene transparencia: fondo blanco para los PNG
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      // drawImage con ancho y alto destino hace la reducción
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      prepared = await new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+      });
+    }
+    if (typeof bitmap.close === 'function') bitmap.close();
+  } catch (error) {
+    // REP-3800: no se pierde la foto por esto — se sigue probando con <img> abajo.
+    // Sin datos de la imagen ni secretos en el log, solo tamaño/tipo para diagnosticar.
+    console.warn('[EvidenceImage] createImageBitmap falló al reducir la foto, se reintenta con <img> (REP-3800).', {
+      message: error?.message,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+  }
+
+  if (!prepared) {
+    prepared = await resizeViaImgFallback(file, maxSide, quality);
+    if (prepared) {
+      console.warn('[EvidenceImage] La foto se redujo con el respaldo <img> (createImageBitmap había fallado, REP-3800).', {
+        fileSize: file.size,
+        fileType: file.type,
+      });
+    }
+  }
+
+  if (!prepared) {
+    console.warn('[EvidenceImage] Tampoco se pudo reducir con <img>; se intenta solo enderezar sin reducir (REP-3800).', {
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    prepared = await ensureJpeg(await normalizeImageOrientation(file));
+  }
+
+  // REP-3800 AC2: verificar el tamaño final ANTES de devolver. Nunca mandar en silencio
+  // algo que el servidor va a rechazar igual — mejor decir explícitamente que no se pudo.
+  const finalDimensions = await measureImageDimensions(prepared);
+  if (finalDimensions && Math.max(finalDimensions.width, finalDimensions.height) > maxSide) {
+    console.warn('[EvidenceImage] La foto preparada sigue superando el límite tras todos los intentos (REP-3800).', {
+      width: finalDimensions.width,
+      height: finalDimensions.height,
+      maxSide,
+    });
+    const error = new Error('No pudimos reducir la foto al tamaño necesario para protegerla.');
+    error.code = 'IMAGE_TOO_LARGE_CLIENT';
+    throw error;
+  }
+
+  return prepared;
+};
+
+/**
+ * REP-3800 · Mide el ancho/alto real de una imagen ya preparada, sin depender de
+ * `createImageBitmap` (que es justo la API que puede fallar en Safari/iOS con fotos
+ * grandes — usarla también acá para "verificar" el resultado no serviría de nada).
+ * Se usa solo para la validación final de `prepareEvidenceImage`, nunca para decodificar
+ * la foto completa original.
+ * @param {Blob} blob
+ * @returns {Promise<{ width: number, height: number } | null>}
+ */
+const measureImageDimensions = async (blob) => {
+  if (!blob || typeof document === 'undefined' || typeof Image === 'undefined' || typeof URL?.createObjectURL !== 'function') {
+    return null;
+  }
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+    return { width: image.naturalWidth, height: image.naturalHeight };
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
+/**
+ * REP-3800 · Reduce la foto con `<img>` en vez de `createImageBitmap`. Camino de
+ * respaldo para cuando `createImageBitmap` falla (Safari/iOS tiene problemas de
+ * compatibilidad conocidos con fotos grandes, sobre todo con `imageOrientation:
+ * 'from-image'`) — a diferencia del respaldo anterior (`normalizeImageOrientation`),
+ * este NO vuelve a llamar a `createImageBitmap`, así que no repite el mismo fallo.
+ *
+ * Reutiliza `bakeExifOrientation` (ya probada, la misma que usa `sanitizeFileMetadata`)
+ * para dejar la foto derecha, y recién después la reduce en un segundo canvas.
+ *
+ * @param {Blob|File} file
+ * @param {number} maxSide
+ * @param {number} quality
+ * @returns {Promise<Blob|null>} null si tampoco se pudo (entorno sin canvas/Image, o la foto no decodifica)
+ */
+const resizeViaImgFallback = async (file, maxSide, quality) => {
+  if (typeof document === 'undefined' || typeof Image === 'undefined' || typeof URL?.createObjectURL !== 'function') {
+    return null;
+  }
+  try {
+    let upright = file;
+    if (typeof file.arrayBuffer === 'function') {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const orientation = readExifOrientation(bytes);
+      if (orientation !== 1) {
+        upright = (await bakeExifOrientation(file, orientation)) || file;
+      }
     }
 
-    // JPEG no tiene transparencia: fondo blanco para los PNG
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    // drawImage con ancho y alto destino hace la reducción
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    if (typeof bitmap.close === 'function') bitmap.close();
+    const objectUrl = URL.createObjectURL(upright);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      const { naturalWidth: width, naturalHeight: height } = image;
+      if (!width || !height) return null;
 
-    const prepared = await new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
-    });
+      const scale = Math.min(1, maxSide / Math.max(width, height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) return null;
 
-    return prepared || ensureJpeg(await normalizeImageOrientation(file));
-  } catch (error) {
-    // Nunca se pierde la evidencia por no poder reducirla: se usa el camino anterior
-    return ensureJpeg(await normalizeImageOrientation(file));
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      return await new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  } catch {
+    return null;
   }
 };
 

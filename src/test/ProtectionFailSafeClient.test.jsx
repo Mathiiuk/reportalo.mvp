@@ -39,6 +39,12 @@ describe('REP-3793 Bloque 4: motivo del fail-safe en el cliente', () => {
     expect(describeProtectionFailure(undefined).detail).toBeTruthy();
   });
 
+  it('UT-FSC-08 (REP-3800): si el dispositivo no pudo reducir la foto, el mensaje manda a elegir otra de la galería', () => {
+    const result = describeProtectionFailure('image_too_large_client');
+    expect(result.detail).toMatch(/galería/i);
+    expect(result.detail).not.toMatch(/createImageBitmap|Safari|iOS/i);
+  });
+
   describe('Integración con la Edge Function mockeada', () => {
     const loadService = async (invoke) => {
       vi.resetModules();

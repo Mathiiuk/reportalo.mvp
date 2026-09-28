@@ -193,6 +193,15 @@ export const describeProtectionFailure = (reason) => {
       // La subida a cuarentena se corta antes de llegar a Vision: casi siempre es la
       // conexión (señal débil), no la foto en sí — mensaje distinto del genérico.
       return { detail: 'No pudimos subir la foto. Revisá tu conexión y probá de nuevo.', photoTips: false };
+    case 'image_too_large_client':
+      // REP-3800: la reducción en el dispositivo falló (Safari/iOS con fotos grandes) y la
+      // foto sigue siendo muy grande para protegerla. photoTips: false porque acá el
+      // problema es el tamaño, no la luz/el enfoque — la acción real es elegir otra foto,
+      // que ya está disponible como botón aparte ("Cambiar foto"/"Sacar otra foto").
+      return {
+        detail: 'No pudimos preparar tu foto en este dispositivo porque es muy grande. Elegí otra ya guardada, más chica, desde tu galería.',
+        photoTips: false,
+      };
     default:
       return { detail: 'Algo falló mientras protegíamos la foto. Probá de nuevo.', photoTips: true };
   }
@@ -312,7 +321,24 @@ export const processEvidenceThroughQuarantine = async ({
   // REP-3793: y se reduce a EVIDENCE_MAX_SIDE, el tamaño que la Edge Function puede
   // pixelar dentro de su límite de CPU. Vale para el envío online y para los
   // pendientes offline, que pasan los dos por esta misma función.
-  const uprightFile = await prepareEvidenceImage(file);
+  // REP-3800: prepareEvidenceImage puede lanzar si, tras probar todos los caminos de
+  // reducción (createImageBitmap y el respaldo con <img>), la foto sigue superando el
+  // límite del servidor — no hay que mandarla igual para que el servidor la rechace en
+  // silencio; se corta acá con un motivo propio, sin reintentos inútiles.
+  let uprightFile;
+  try {
+    uprightFile = await prepareEvidenceImage(file);
+  } catch (error) {
+    if (error?.code === 'IMAGE_TOO_LARGE_CLIENT') {
+      return {
+        success: false,
+        error: error.message,
+        reason: 'image_too_large_client',
+        failSafeTriggered: true,
+      };
+    }
+    throw error;
+  }
 
   // 1. Paso 1: Subida transitoria al bucket privado de cuarentena
   const uploadResult = await uploadToQuarantine(uprightFile, clientSideId);

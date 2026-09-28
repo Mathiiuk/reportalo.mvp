@@ -5,6 +5,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// REP-3800: se mockea solo para el test que fuerza el throw de prepareEvidenceImage;
+// el resto de los tests de este archivo usa el módulo real (importOriginal).
+vi.mock('../services/metadataSanitizer', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, prepareEvidenceImage: vi.fn(actual.prepareEvidenceImage) };
+});
+
 import {
   sanitizeImageMetadataLocally,
   uploadToQuarantine,
@@ -14,6 +22,7 @@ import {
   BUCKET_PUBLIC_EVIDENCES,
   PIPELINE_STEPS,
 } from '../services/quarantinePipelineService';
+import { prepareEvidenceImage } from '../services/metadataSanitizer';
 
 describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio', () => {
   beforeEach(() => {
@@ -116,6 +125,22 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
       expect(result.success).toBe(false);
       expect(result.failSafeTriggered).toBe(true);
       expect(result.error).toContain('Fallo simulado en el procesamiento de privacidad');
+    });
+
+    it('UT-QPS-10b (REP-3800): si prepareEvidenceImage no pudo reducir la foto, corta con reason image_too_large_client sin subir nada', async () => {
+      const tooLargeError = new Error('No pudimos reducir la foto al tamaño necesario para protegerla.');
+      tooLargeError.code = 'IMAGE_TOO_LARGE_CLIENT';
+      prepareEvidenceImage.mockRejectedValueOnce(tooLargeError);
+
+      const mockFile = new File(['mock-img'], 'foto-grande.jpg', { type: 'image/jpeg' });
+      const result = await processEvidenceThroughQuarantine({ file: mockFile, clientSideId: 'rep-too-large-1' });
+
+      expect(result).toMatchObject({
+        success: false,
+        reason: 'image_too_large_client',
+        failSafeTriggered: true,
+      });
+      expect(result.error).toBe(tooLargeError.message);
     });
 
     it('UT-QPS-10: Ejecuta emulador determinístico exitosamente en modo desarrollo', async () => {

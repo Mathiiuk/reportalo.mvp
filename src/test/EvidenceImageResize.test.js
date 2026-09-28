@@ -111,3 +111,79 @@ describe('REP-3793 Bloque 1: prepareEvidenceImage', () => {
     expect(await prepareEvidenceImage(null)).toBeNull();
   });
 });
+
+/**
+ * REP-3800 · Safari/iOS puede fallar al decodificar con createImageBitmap fotos grandes
+ * (confirmado en staging con un iPhone 13 Pro real). Estos tests cubren el respaldo con
+ * <img> (que no repite esa misma API) y la validación final de tamaño.
+ */
+describe('REP-3800: respaldo con <img> cuando createImageBitmap falla', () => {
+  const realJpegBlob = () => new Blob([plainJpegBytes], { type: 'image/jpeg' });
+
+  /**
+   * Reemplaza global.Image por una que "decodifica" al tamaño pedido, sin tocar el DOM real.
+   * jsdom no implementa URL.createObjectURL/revokeObjectURL (a diferencia de un navegador
+   * real): se agregan acá para que prepareEvidenceImage pueda usar el camino con <img>.
+   *
+   * Acepta una secuencia de dimensiones: cada `new Image()` sucesivo devuelve la siguiente
+   * (se repite la última si se piden más de las que se pasaron) — hace falta porque
+   * `prepareEvidenceImage` decodifica dos veces con <img> cuando cae a este respaldo: una
+   * vez para reducir la foto original y otra al final, para verificar el tamaño ya reducido.
+   */
+  const mockImageElement = (...dimsSequence) => {
+    let callIndex = 0;
+    class FakeImage {
+      set src(_value) {
+        const dims = dimsSequence[Math.min(callIndex, dimsSequence.length - 1)];
+        callIndex += 1;
+        queueMicrotask(() => {
+          this.naturalWidth = dims.width;
+          this.naturalHeight = dims.height;
+          this.onload?.();
+        });
+      }
+    }
+    vi.stubGlobal('Image', FakeImage);
+    URL.createObjectURL = vi.fn(() => 'blob:fake-url');
+    URL.revokeObjectURL = vi.fn();
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete global.createImageBitmap;
+    delete URL.createObjectURL;
+    delete URL.revokeObjectURL;
+    vi.restoreAllMocks();
+  });
+
+  it('UT-RSZ-08: si createImageBitmap falla, <img> reduce igual la foto (no se manda a tamaño completo)', async () => {
+    const file = realJpegBlob();
+    global.createImageBitmap = vi.fn().mockRejectedValue(new Error('createImageBitmap no soportado'));
+    // 1ra decodificación (foto original, dentro del respaldo <img>): 4032x3024.
+    // 2da (verificación final del resultado ya reducido): 1600x1200, dentro del límite.
+    mockImageElement({ width: 4032, height: 3024 }, { width: 1600, height: 1200 });
+    const { canvas, outBlob } = mockCanvas();
+
+    const result = await prepareEvidenceImage(file);
+
+    expect(result).toBe(outBlob);
+    expect(canvas.width).toBe(1600);
+    expect(canvas.height).toBe(1200);
+  });
+
+  it('UT-RSZ-09: si ni createImageBitmap ni <img> pueden reducirla, lanza IMAGE_TOO_LARGE_CLIENT en vez de mandarla igual', async () => {
+    const file = realJpegBlob();
+    global.createImageBitmap = vi.fn().mockRejectedValue(new Error('createImageBitmap no soportado'));
+    // <img> "decodifica" pero el canvas de reducción no está disponible (getContext null):
+    // ninguno de los dos caminos logra bajarla del límite.
+    mockImageElement({ width: 4032, height: 3024 });
+    vi.spyOn(document, 'createElement').mockReturnValue({
+      width: 0,
+      height: 0,
+      getContext: () => null,
+      toBlob: vi.fn(),
+    });
+
+    await expect(prepareEvidenceImage(file)).rejects.toMatchObject({ code: 'IMAGE_TOO_LARGE_CLIENT' });
+  });
+});
