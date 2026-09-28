@@ -11,7 +11,10 @@ vi.mock('../services/offlineStorageService', () => ({
   deleteDraftReport: vi.fn().mockResolvedValue(true),
   recordDraftSyncError: vi.fn().mockResolvedValue(null),
 }));
-vi.mock('../services/quarantinePipelineService', () => ({ processAllEvidencesThroughQuarantine: vi.fn() }));
+vi.mock('../services/quarantinePipelineService', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, processAllEvidencesThroughQuarantine: vi.fn() };
+});
 vi.mock('../services/categoriesService', () => ({ resolveServiceDbId: vi.fn() }));
 vi.mock('../services/reportSubmissionService', async (importOriginal) => {
   const actual = await importOriginal();
@@ -164,5 +167,20 @@ describe('REP-3793: un pendiente cuya foto no se pudo proteger queda en la cola'
     // El borrador y su foto se conservan para el próximo intento
     expect(deleteDraftReport).not.toHaveBeenCalled();
     expect(recordDraftSyncError).toHaveBeenCalledWith('draft-1', expect.objectContaining({ code: 'PROTECTION', kind: 'retry' }));
+  });
+
+  it('UT-3793-OFF-02: si la subida a cuarentena falla (señal débil), el mensaje es amigable, no el error crudo del backend', async () => {
+    processAllEvidencesThroughQuarantine.mockResolvedValue({
+      success: false,
+      failSafeTriggered: true,
+      reason: 'upload_failed',
+      error: 'Fallo al subir a cuarentena: No content provided',
+    });
+
+    const result = await sendPendingDraft(draftValido(), 'user-1');
+
+    expect(result).toMatchObject({ success: false, code: 'PROTECTION', kind: 'retry' });
+    expect(result.error).not.toMatch(/No content provided/);
+    expect(result.error).toMatch(/conexión/i);
   });
 });

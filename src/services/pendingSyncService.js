@@ -10,7 +10,7 @@
  * servidor (http/https). Si la protección no se completó, el borrador queda en la cola (H-30).
  */
 import { getAllPendingSyncReports, deleteDraftReport, recordDraftSyncError } from './offlineStorageService';
-import { processAllEvidencesThroughQuarantine } from './quarantinePipelineService';
+import { processAllEvidencesThroughQuarantine, describeProtectionFailure } from './quarantinePipelineService';
 import { resolveServiceDbId } from './categoriesService';
 import { validateDescription } from './reportDescription';
 import {
@@ -112,7 +112,9 @@ export const sendPendingDraft = async (draft, userId) => {
   try {
     const pipeline = await processAllEvidencesThroughQuarantine({ evidenceList, clientSideId: draft.client_side_id });
     if (!pipeline?.success) {
-      return failWith(draft, { code: 'PROTECTION', kind: 'retry', message: pipeline?.error || 'No se pudo proteger la foto.' });
+      // El ciudadano ve el mensaje pensado para él, no el detalle técnico del backend
+      // (mismo criterio que REP-2204 aplica a la creación del reporte, línea ~144).
+      return failWith(draft, { code: 'PROTECTION', kind: 'retry', message: describeProtectionFailure(pipeline?.reason).detail });
     }
 
     const protectedUrls = (pipeline.processedEvidences || []).map((ev) => ev.sanitizedUrl).filter(isServerUrl);
