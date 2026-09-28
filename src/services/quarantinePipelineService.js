@@ -189,6 +189,10 @@ export const describeProtectionFailure = (reason) => {
     case 'not_jpeg':
     case 'image_unreadable':
       return { detail: 'No pudimos abrir la foto. Probá sacando otra.', photoTips: true };
+    case 'upload_failed':
+      // La subida a cuarentena se corta antes de llegar a Vision: casi siempre es la
+      // conexión (señal débil), no la foto en sí — mensaje distinto del genérico.
+      return { detail: 'No pudimos subir la foto. Revisá tu conexión y probá de nuevo.', photoTips: false };
     default:
       return { detail: 'Algo falló mientras protegíamos la foto. Probá de nuevo.', photoTips: true };
   }
@@ -317,6 +321,7 @@ export const processEvidenceThroughQuarantine = async ({
     return {
       success: false,
       error: uploadResult.error || 'No se pudo resguardar la imagen en cuarentena.',
+      reason: 'upload_failed',
       failSafeTriggered: true,
     };
   }
