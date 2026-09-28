@@ -17,7 +17,7 @@ cargada pero inválida.
 | 1 | Un rostro | Persona de frente, situación de calle | La cara aparece con bloques de pixelado reales, no CSS falso | ✅ Pasa |
 | 2 | Varios rostros | Foto nocturna con 3 personas | Los 3 rostros quedaron pixelados, incluida la persona de fondo a la derecha | ✅ Pasa |
 | 3 | Patente cerca | Auto con patente legible | La patente del auto azul quedó cubierta con pixelado | ✅ Pasa |
-| 4 | Patente lejos/ángulo | Autos fotografiados desde atrás/costado | No se ve ninguna patente clara en el encuadre en sí (no es que el sistema falló en cubrirla, es que la foto no muestra ninguna patente legible). No se pudo confirmar el caso límite real con esta imagen | ⚠️ Repetir con una foto con patente visible pero borrosa/angulada |
+| 4 | Patente lejos/ángulo (repetido) | Camioneta estacionada, foto desde atrás en ángulo, patente chica y visible (reporte `22b968a3-4257-4f29-a36a-489eb6a46b13`, 28/09 12:09 UTC) | La patente quedó **sin pixelar**: log `evidence_protected` con `plates: 0, zones: []`. Es un falso negativo real de Vision, no un problema de encuadre — igual que el falso negativo de rostro ya registrado en el run-report | ❌ No pasa — falso negativo confirmado |
 | 5 | Sin datos sensibles | Bache | Se subió sin pixelar nada, sin error | ✅ Pasa |
 | 6 | Baja luz | Obelisco de noche | Se subió sin pixelar nada (no hay caras/patentes), sin error catastrófico | ✅ Pasa |
 | 7 | Vision sin clave configurada | Se sacó `GOOGLE_VISION_API_KEY` del proyecto (28/09, 11:29 UTC) y se envió un reporte con foto desde el preview | Pantalla: "No pudimos proteger tu foto" con Reintentar/Cambiar foto. Log: `evidence_fail_safe`, `reason: "vision_not_configured"`, `detail: "Falta el secreto GOOGLE_VISION_API_KEY."`. Sin archivos nuevos en Storage | ✅ Pasa |
@@ -68,8 +68,30 @@ inocuo.
 
 ## Pendiente además de 7 y 8
 
-- **Caso 4** (patente lejos/ángulo): repetir con una foto que sí tenga una patente visible pero borrosa
-  o angulada — la de ayer no mostraba ninguna patente en el encuadre, así que no probó nada.
 - El resto de la matriz `Q1`–`Q10` original (`scripts/rep3793/LEEME.md` §3) que no se cubrió acá: `Q3`
   (rostro de perfil/lejos, distinto del falso negativo ya registrado en el run-report), `Q10`
   (metadatos con `exiftool`).
+
+## Caso 4 · falso negativo de patente confirmado (28/09/2026)
+
+Se repitió con una foto real: camioneta estacionada, tomada desde atrás en ángulo, patente visible pero
+chica (reporte `22b968a3-4257-4f29-a36a-489eb6a46b13`, `client_side_id` `06672f2f-f83d-4581-a105-0381df156cd8`).
+
+```json
+{"event":"evidence_protected","clientSideId":"06672f2f-f83d-4581-a105-0381df156cd8",
+ "storedPath":"06672f2f-f83d-4581-a105-0381df156cd8/1790597358544_sanitized.jpg",
+ "width":768,"height":437,"faces":0,"plates":0,"zones":[],"emulated":false,"ms":1355}
+```
+
+La foto guardada (revisada directo en Storage) muestra la patente **sin pixelar**. No es un problema de
+encuadre esta vez: Vision no detectó nada (`plates: 0`) con una patente realmente en cuadro, en ángulo y
+a media distancia. Es el mismo tipo de límite que el falso negativo de rostro del run-report original
+(persona detrás de un parabrisas, cara chica) — Vision no siempre resuelve objetos pequeños o angulados,
+sea cara o patente.
+
+**Qué implica para el cierre:** este caso pasa a sumarse al punto 3 de "Pendiente para Done" del
+run-report (`decidir sobre los rostros/objetos no detectados`). La opción ya propuesta ahí —pixelar la
+caja completa de un objeto "vehicle" cuando hay texto parcial de patente cerca, aunque Vision no lo
+etiquete como `license_plate`— serviría también para este caso. Sigue siendo una decisión de alcance
+para el equipo, no un bug de implementación: el código nunca inventa zonas y nunca sube nada sin pasar
+por Vision, así que el fail-safe no se ve comprometido; lo que falla es la cobertura de detección.
