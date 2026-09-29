@@ -252,6 +252,34 @@ Tokens de entrada (promedio por caso, k=6 → k=8): p. ej. 1628 → 2073 en auto
 - Cómo se entregarían los canales por separado.
 - Que estos resultados se sostengan con casos fuera de estos 8 (posible sobreajuste; falta un conjunto independiente, idealmente del PO).
 
+## 3.11 Variante combinada `k=8` sin canales (29/09/2026)
+
+Misma prueba de generación (3 corridas por caso), solo las variantes `k=6 (hoy)` y `k=8 sin canales`. Los canales quedan **fuera** del contexto del modelo.
+
+| Caso | k=6 (hoy) | k=8 sin canales |
+|---|---|---|
+| **Auto mal estacionado** | indeterminado ×3 | **fundamentado ×3** (citó esperado 3/3) |
+| **Luz quemada** | indeterminado ×3 (`asistencia` inválido) | **sin_normativa ×3** |
+| Basural (Avellaneda) | fundamentado ×3 | fundamentado ×3 |
+| Camioneta en la vereda | fundamentado ×3 | fundamentado ×3 |
+| Choripanes (Avellaneda) | fundamentado ×3 | fundamentado ×3 (citó esperado **2/3**; 7 fragmentos al modelo) |
+| Auto abandonado (Avellaneda) | fundamentado ×3 | fundamentado ×3 |
+| Vereda rota por raíces | fundamentado ×3 | fundamentado ×3 |
+| Basura en la vereda (CABA) | fundamentado ×3 | fundamentado ×3 |
+
+**Costo:** tokens de entrada, suma de los 8 casos: 12.656 (k=6) → 14.738 (`k=8` sin canales), **+16,5 %** (por caso, entre −9 % y +28 %).
+
+### Lectura
+- **Arregla las dos regresiones** sin romper ninguno de los otros seis casos, en esta muestra.
+- **La luz vuelve a `sin_normativa`**, la respuesta honesta que tenía antes del lote 2. El PO considera ese resultado incorrecto (la Ley 210 alcanza con art. 2 b + 3 j); **ninguna variante probada logra `fundamentado`**, porque el art. 3 j no llega al modelo.
+- **Choripanes:** una de las tres corridas fundamentó con una cita fuera de la lista de esperados (`citó esperado 2/3`, estado `fundamentado` las tres veces). No se investigó cuál; conviene mirarlo antes de adoptar.
+
+### Lo que NO se puede adoptar tal cual
+En producción, "sin canales" significaría que el ciudadano **no recibe ningún canal** en la respuesta del RAG, contra el principio del PO ("nunca se queda sin canal"). Sería necesario entregarlos por otro camino (determinístico, según categoría y jurisdicción) y eso incluye cambios de código y de pantalla que **no están hechos ni probados**.
+
+### Pendiente
+Muestra de 8 casos (posible sobreajuste), sin conjunto independiente; cita del caso choripanes sin revisar; diseño de la entrega de canales; qué hacer con la luz.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
