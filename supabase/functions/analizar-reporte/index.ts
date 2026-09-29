@@ -75,7 +75,15 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // 360 corridas de su experimento -- nunca se probó temperature 0 con evidencia real. Antes
 // de mergear a staging hace falta correr P-01 (scripts/rag-local-dev/run-p01-post-filtro.mjs)
 // con este cambio para confirmar que no se pierden aciertos ni aparecen citas incorrectas.
-const PROMPT_VERSION = 'v2';
+// v3 (29/09/2026, REP-3795 / REP-3797): agrega la regla de excepciones. Motivo: con el texto completo
+// del art. 49 b.3 de la Ley 24.449 cargado, 2 de 3 respuestas seguían afirmando que estacionar sobre
+// la vereda está prohibido de forma absoluta y ninguna cita incluía la excepción ("No obstante se puede
+// autorizar, señal mediante, a estacionar en la parte externa de la vereda cuando su ancho sea mayor a
+// 2,00 metros"). Prueba de generación (60 corridas): con la regla, la respuesta menciona la excepción
+// en 6 de 6 corridas (antes 4 de 6) y la cita la incluye en 6 de 6 (antes 3 de 6); los otros 8 casos
+// no cambian de estado; costo ≈ +100 tokens de entrada. Ver
+// docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.15.
+const PROMPT_VERSION = 'v3';
 // P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
 // el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
 // mismo texto ("Auto mal estacionado" con/sin punto final) dando "fundamentado" una vez y
@@ -84,7 +92,13 @@ const PROMPT_VERSION = 'v2';
 const GENERATION_TEMPERATURE = 0;
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
-const DEFAULT_MATCH_COUNT = 6;
+// DEFAULT_MATCH_COUNT pasó de 6 a 8 el 29/09/2026 (REP-3795 / REP-3797): con el corpus ampliado
+// (lote 2) la norma que fundamenta "auto mal estacionado" (Ley 451, art. 6.1.52) quedó en el
+// puesto 8 de similitud, fuera de los 6 recuperados, y el caso pasó de fundamentado a
+// indeterminado. Con 8 vuelve a fundamentar (3 de 3 corridas) y no rompió ninguno de los
+// otros 7 casos probados. Costo medido: entre -9 % y +28 % de tokens de entrada por reporte
+// (+16,5 % en total). Ver docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.10-3.11.
+const DEFAULT_MATCH_COUNT = 8;
 const DEFAULT_SIMILARITY_THRESHOLD = 0.45;
 
 // REP-3795 (punto 4 del diagnóstico): la categoría no tiene corpus cargado a
@@ -219,6 +233,7 @@ const generateJustification = async (
     'SIEMPRE incluís todos los campos del esquema (estado, es_infraccion, categoria, organismo_sugerido_id, fundamento_ciudadano, fundamento_oficial, confianza, citas), sin importar el estado que declares. Si un campo no aplica, usá null o un array vacío, pero nunca lo omitas.',
     'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
     'No exijas al reclamo más precisión que la que pide el fragmento citado. Si el hecho descrito encaja en términos generales con lo que el fragmento prohíbe o exige (por ejemplo, "estacionar en forma antirreglamentaria" cubre cualquier forma de mal estacionar, sin que el ciudadano tenga que detallar cuál), fundamentá con ese fragmento — no declares "indeterminado" solo por falta de detalle adicional que la norma no requiere.',
+    'Si un fragmento que citás contiene una excepción, condición o salvedad ("no obstante", "salvo", "excepto", "a excepción de", "siempre que"), tenés que mencionarla en fundamento_ciudadano y en fundamento_oficial, y no afirmar una prohibición u obligación absoluta. Incluí esa parte del texto en la cita_textual. Si ninguno de los fragmentos que citás trae una excepción, no agregues ni supongas ninguna.',
   ].join('\n');
 
   // Clave en el header, igual que en embedText (ver el motivo ahí)
@@ -281,6 +296,22 @@ const generateJustification = async (
   };
 };
 
+/** Tope de la cita del modelo dentro de status_reason: alcanza para ver la diferencia sin inflar la fila. */
+const MAX_REJECTED_CITA_CHARS = 300;
+const truncateForReason = (text: string): string =>
+  text.length > MAX_REJECTED_CITA_CHARS ? `${text.slice(0, MAX_REJECTED_CITA_CHARS)}…` : text;
+
+/**
+ * Colapsa cualquier secuencia de espacios en blanco (espacios, tabs, saltos de línea)
+ * en un único espacio. La cita sigue teniendo que ser texto LITERAL del fragmento: solo
+ * se ignora en qué se separan las palabras, no cuáles son. El modelo suele unir con un
+ * espacio dos líneas que el fragmento separa con un salto de línea (caso basural, Ley
+ * 13.592 art. 9, 29/09/2026); rechazar eso como "no literal" era un falso positivo.
+ * No toca mayúsculas, tildes ni puntuación: una paráfrasis o una cita alterada se
+ * siguen rechazando.
+ */
+const normalizeWhitespace = (text: string): string => text.replace(/\s+/g, ' ').trim();
+
 /**
  * Validación determinística (docx §8, capa 6 — "la más importante: no depende
  * de que el LLM se porte bien"). Nunca confía en el LLM.
@@ -329,8 +360,12 @@ export const validateLlmAnalysis = (
     if (!fragment) {
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
-    if (!fragment.content.includes(cita.cita_textual)) {
-      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento.` };
+    const normalizedQuote = normalizeWhitespace(cita.cita_textual);
+    // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+    if (normalizedQuote === '' || !normalizeWhitespace(fragment.content).includes(normalizedQuote)) {
+      // Se guarda lo que el modelo intentó citar (status_reason): sin eso un rechazo no se
+      // puede diagnosticar, p. ej. saber si difiere solo en saltos de línea o espacios.
+      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };
     }
   }
 
@@ -655,19 +690,22 @@ Deno.serve(async (req: Request) => {
             ? await validateOrganismoSugerido(supabaseAdmin, generation.parsed.organismo_sugerido_id)
             : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
 
+          // Gemini ya respondió (y se pagó) aunque la validación lo rechace: modelo, versión
+          // de prompt y tokens se guardan en los tres desenlaces, no solo en el éxito.
+          const generationMetadata = {
+            embeddingModelCode: EMBEDDING_MODEL_CODE,
+            generationModelCode: GENERATION_MODEL,
+            promptVersion: PROMPT_VERSION,
+            inputTokens: generation.inputTokens,
+            outputTokens: generation.outputTokens,
+          };
+
           if (!validation.valid) {
-            result = { estado: 'indeterminado', error: validation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
+            result = { estado: 'indeterminado', error: validation.reason, ...generationMetadata };
           } else if (!organismoValidation.valid) {
-            result = { estado: 'indeterminado', error: organismoValidation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
+            result = { estado: 'indeterminado', error: organismoValidation.reason, ...generationMetadata };
           } else {
-            result = {
-              ...generation.parsed,
-              embeddingModelCode: EMBEDDING_MODEL_CODE,
-              generationModelCode: GENERATION_MODEL,
-              promptVersion: PROMPT_VERSION,
-              inputTokens: generation.inputTokens,
-              outputTokens: generation.outputTokens,
-            };
+            result = { ...generation.parsed, ...generationMetadata };
           }
         }
       }
