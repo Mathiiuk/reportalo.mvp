@@ -280,6 +280,27 @@ En producción, "sin canales" significaría que el ciudadano **no recibe ningún
 ### Pendiente
 Muestra de 8 casos (posible sobreajuste), sin conjunto independiente; cita del caso choripanes sin revisar; diseño de la entrega de canales; qué hacer con la luz.
 
+## 3.12 `k=8` desplegado y verificado en el pipeline real (función v37, 29/09/2026 14:59 UTC)
+
+Rama `fix/REP-3795-recuperar-8-fragmentos` (commit `b1878e2`, sobre el validador y la observabilidad). Suite completa: 521 tests; el único que falló (UT-CRP-16) lee la fixture `ley_210_caba_ente_regulador.md` y fallaba por la colisión de nombres; con la fixture restaurada pasa (18 de 18). 24 reportes (8 casos × 3), insertar → cola → cron → función real → Gemini.
+
+| Caso | Estados (3 corridas) | Tokens de entrada | Fragmentos guardados por análisis |
+|---|---|---|---|
+| **Auto mal estacionado** | **fundamentado ×3** | 2073 | 8 |
+| Basural (Avellaneda) | fundamentado ×3 | 2021 | 8 |
+| Choripanes (Avellaneda) | fundamentado ×3 | 2092 | 8 |
+| Camioneta en la vereda | fundamentado ×3 | 2097 | 8 |
+| Auto abandonado (Avellaneda) | fundamentado ×3 | 1632 | 8 |
+| Basura en la vereda (CABA) | fundamentado ×3 | 1944 | 8 |
+| Vereda rota por raíces | fundamentado ×3 | 1765 | 8 |
+| **Luz quemada** | indeterminado ×2 (`asistencia` inválido), sin_normativa ×1 | 1814 | 8 |
+
+**Fidelidad:** los tokens de entrada y los estados coinciden con los que predijo la simulación (variante `k=8`): 2073, 2021, 2092, 2097 y 1814 son idénticos. La simulación reproduce al sistema real.
+
+**Resultado:** el auto mal estacionado vuelve a `fundamentado` (3/3) y los otros seis casos siguen `fundamentado`. **La luz sigue sin resolver**: queda en `indeterminado` en 2 de 3 corridas, por el `asistencia` que induce la presencia de los canales en el contexto (ver 3.10). Pendiente para Hernán: decisión sobre la luz y la entrega de canales.
+
+**Reportes de prueba en CiudadAR:** 77 creados desde las 00:12 UTC del 29/09 con el `user_id` de pruebas (a9420d51-…); el usuario acordó borrarlos al cerrar la revisión. Sin borrar todavía.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
