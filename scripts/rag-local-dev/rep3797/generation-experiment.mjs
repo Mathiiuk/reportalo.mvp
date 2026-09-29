@@ -11,6 +11,10 @@
  *   k6         → k=6, como está hoy en producción (línea de base)
  *   k8         → k=8
  *   k6-sin-can → k=6 pero los fragmentos informativos (canales, teléfonos) no compiten
+ *   ctx-k6     → k=6 con vectores calculados sobre `hierarchy_path + contenido`. Los vectores
+ *                se calculan EN MEMORIA (no se guardan): la base sigue con los vectores actuales.
+ *                Hipótesis a probar: el encabezado (ley, artículo) le da contexto a fragmentos
+ *                cortos; ver context-embedding-experiment.mjs para la prueba de recuperación.
  *
  * Para no desviarse de la función real, el prompt, el esquema de salida y las constantes
  * (modelo, temperatura, tope de tokens) se LEEN de supabase/functions/analizar-reporte/index.ts
@@ -18,8 +22,9 @@
  * Si index.ts cambia de forma que no se pueda leer, el script aborta en vez de adivinar.
  *
  * Solo lectura sobre Supabase (RPC match_knowledge_fragments, SELECT a agencies,
- * knowledge_sources y embedding_models). Gasta llamadas a Gemini: 8 embeddings y
- * 8 casos × 3 variantes × RUNS generaciones (RUNS=3 por defecto → 72).
+ * knowledge_sources y embedding_models). Gasta llamadas a Gemini: 8 embeddings de consultas,
+ * unas decenas de embeddings de fragmentos (variante con encabezado) y 8 casos × 4 variantes
+ * × RUNS generaciones (RUNS=3 por defecto → 96).
  *
  * Uso (PowerShell, con las claves cargadas SOLO en esa terminal):
  *   $env:SUPABASE_SERVICE_ROLE_KEY = "..."
@@ -122,7 +127,24 @@ const VARIANTS = [
   { id: 'k6', label: 'k=6 (hoy)', k: 6, excludeInfo: false },
   { id: 'k8', label: 'k=8', k: 8, excludeInfo: false },
   { id: 'k6-sin-can', label: 'k=6 sin canales', k: 6, excludeInfo: true },
+  // Vectores calculados en memoria sobre `hierarchy_path + contenido` (no se guardan en la base)
+  { id: 'ctx-k6', label: 'encabezado k=6', k: 6, excludeInfo: false, contextual: true },
 ];
+
+// --- variante con encabezado (utilidades puras, mismas que context-embedding-experiment.mjs) ---
+
+const cosine = (a, b) => {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+};
+const withContext = (fragment) => `${fragment.hierarchy_path}\n\n${fragment.content}`;
 
 // --- llamadas -------------------------------------------------------------------------
 
@@ -198,7 +220,12 @@ async function validateOrganismo(db, id) {
 
 // Una corrida completa de una variante: devuelve lo que guardaría la función (sin guardarlo)
 async function runOnce(db, config, apiKey, testCase, pool, variant, informativeSourceIds) {
-  const candidates = pool.filter((f) => f.similarity >= config.threshold).filter((f) => !(variant.excludeInfo && informativeSourceIds.has(f.source_id)));
+  // Variante con encabezado: se ordena y se aplica el umbral con la similitud calculada sobre
+  // `hierarchy_path + contenido`; en las demás, con la similitud que devuelve la base.
+  const ranked = variant.contextual
+    ? [...pool].sort((a, b) => b.ctxSimilarity - a.ctxSimilarity).filter((f) => f.ctxSimilarity >= config.threshold)
+    : pool.filter((f) => f.similarity >= config.threshold);
+  const candidates = ranked.filter((f) => !(variant.excludeInfo && informativeSourceIds.has(f.source_id)));
   const eligible = candidates.slice(0, variant.k);
   if (eligible.length === 0) return { estado: 'sin_normativa', citedIds: [], recovered: 0, motivo: 'sin fragmentos sobre el umbral (sin llamada al modelo)' };
 
@@ -227,6 +254,12 @@ async function main() {
     console.log(`  primera: ${config.instructions.split('\n')[0].slice(0, 90)}…`);
     console.log(`  última:  ${config.instructions.split('\n').at(-1).slice(0, 90)}…`);
     console.log(`Esquema de salida: campos ${Object.keys(config.outputSchema.properties).join(', ')} · requeridos ${config.outputSchema.required.length}`);
+    // Autotest de las utilidades de la variante con encabezado (sin red)
+    const close = (x, y) => Math.abs(x - y) < 1e-12;
+    if (!close(cosine([1, 0], [1, 0]), 1) || !close(cosine([1, 0], [0, 1]), 0) || !close(cosine([2, 0], [5, 0]), 1)) throw new Error('autotest de cosine falló');
+    if (withContext({ hierarchy_path: 'Ley X > Art 1', content: 'texto' }) !== 'Ley X > Art 1\n\ntexto') throw new Error('autotest de withContext falló');
+    console.log(`Variantes: ${VARIANTS.map((v) => v.label).join(' · ')}`);
+    console.log('Autotest de coseno y encabezado: OK');
     return;
   }
 
@@ -257,14 +290,28 @@ async function main() {
   console.log(`Casos: ${cases.length} · variantes: ${VARIANTS.length} · corridas por variante: ${runs} · llamadas de generación: ${cases.length * VARIANTS.length * runs}\n`);
 
   const results = [];
+  const contextVectorCache = new Map(); // fragment_id -> vector con encabezado (solo en memoria)
 
   for (const testCase of cases) {
     const queryText = `${testCase.text.trim()} (categoría: ${testCase.category})`;
     const embedding = await embedText(config, geminiKey, queryText);
-    const { data: pool, error } = await db.rpc('match_knowledge_fragments', {
-      query_embedding: embedding, p_locality_id: testCase.locality, p_model_code: config.embeddingModelCode, match_count: 40, p_service_code: testCase.category,
+    // match_count 200: trae TODOS los fragmentos elegibles (cascada + categoría), ordenados por
+    // la similitud actual; k y el umbral se aplican después, por variante.
+    const { data: fetchedPool, error } = await db.rpc('match_knowledge_fragments', {
+      query_embedding: embedding, p_locality_id: testCase.locality, p_model_code: config.embeddingModelCode, match_count: 200, p_service_code: testCase.category,
     });
     if (error) throw new Error(`RPC falló (${testCase.id}): ${error.message}`);
+    let pool = fetchedPool;
+
+    // Vectores con encabezado (en memoria, con caché entre casos): solo si alguna variante los usa
+    if (VARIANTS.some((v) => v.contextual)) {
+      for (const fragment of pool) {
+        if (!contextVectorCache.has(fragment.fragment_id)) {
+          contextVectorCache.set(fragment.fragment_id, await embedText(config, geminiKey, withContext(fragment)));
+        }
+      }
+      pool = pool.map((f) => ({ ...f, ctxSimilarity: cosine(embedding, contextVectorCache.get(f.fragment_id)) }));
+    }
 
     console.log(`=== ${testCase.id}${testCase.regresion ? '  [REGRESIÓN observada]' : ''}`);
     const expectedIds = Object.values(testCase.expected);
@@ -286,6 +333,7 @@ async function main() {
       console.log(
         `    ${variant.label.padEnd(16)} estados: ${Object.entries(byState).map(([k, v]) => `${k}×${v}`).join(', ')}` +
           ` | citó un esperado: ${citedExpected}/${runs}` +
+          ` | fragmentos al modelo: ${outcomes[0].recovered}` +
           `${avgIn ? ` | tokens entrada ~${avgIn}` : ''}`
       );
       for (const reason of reasons) console.log(`        motivo: ${reason}`);
