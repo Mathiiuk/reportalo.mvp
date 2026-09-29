@@ -50,6 +50,21 @@ const CURRENT_K = 6;
 const SIMILARITY_THRESHOLD = 0.45;
 const POOL_SIZE = 40;
 
+// Fragmentos de PROCEDIMIENTO de faltas (Decreto-Ley 8751/77 arts. 1, 18, 35, 38 y Ley 1217
+// Anexo arts. 1, 2, 3, 34): genericos por definicion, mapeados hoy a las 4 categorias con
+// conducta. Son los 8 de la PARTE 11 (interruptor) del lote 2. El art. 4 bis del 8751/77 NO
+// esta en la lista: es fundamento de fondo, no procedimiento.
+const PROCEDURE_FRAGMENT_IDS = new Set([
+  '60000000-0000-4000-8000-000000000001',
+  '60000000-0000-4000-8000-000000000003',
+  '60000000-0000-4000-8000-000000000004',
+  '60000000-0000-4000-8000-000000000005',
+  '60000000-0000-4000-8000-000000000006',
+  '60000000-0000-4000-8000-000000000007',
+  '60000000-0000-4000-8000-000000000008',
+  '60000000-0000-4000-8000-000000000009',
+]);
+
 const LOCALITY = {
   PUERTO_MADERO: 'e025128c-3ec9-46d7-987a-1eaf0cffebb4', // CABA
   BALVANERA: 'ffa721a3-f9a9-4c88-9861-bf907727e4e9', // CABA
@@ -202,22 +217,38 @@ async function main() {
     if (error) throw new Error(`RPC falló (${testCase.id}): ${error.message}`);
 
     const aboveThreshold = data.filter((f) => f.similarity >= SIMILARITY_THRESHOLD);
-    const withoutInfo = aboveThreshold.filter((f) => !informativeSourceIds.has(f.source_id));
+    const isInfo = (f) => informativeSourceIds.has(f.source_id);
+    const isProcedure = (f) => PROCEDURE_FRAGMENT_IDS.has(f.fragment_id);
+    // Variante A: sin canales/telefonos. Variante B: sin canales NI procedimiento.
+    const withoutInfo = aboveThreshold.filter((f) => !isInfo(f));
+    const withoutInfoNorProcedure = aboveThreshold.filter((f) => !isInfo(f) && !isProcedure(f));
     const topCurrent = aboveThreshold.slice(0, CURRENT_K);
-    const infoInTop = topCurrent.filter((f) => informativeSourceIds.has(f.source_id)).length;
+    const infoInTop = topCurrent.filter(isInfo).length;
+    const procedureInTop = topCurrent.filter(isProcedure).length;
+    const expectedIds = new Set(Object.values(testCase.expected));
+    // "Desplaza": hay un esperado que NO entra en el top actual y ocupa un lugar un
+    // fragmento informativo o de procedimiento (los que compiten sin ser fundamento de fondo).
+    const missingExpected = [...expectedIds].filter((id) => rankOf(topCurrent, id) === null);
+    const displacers = infoInTop + procedureInTop;
 
     console.log(`=== ${testCase.id}${testCase.regresion ? '  [REGRESIÓN observada]' : ''}`);
     console.log(`    "${testCase.text}"  · ${testCase.category}`);
-    console.log(`    Recuperados sobre el umbral: ${aboveThreshold.length} (de ${data.length}) · informativos en el top ${CURRENT_K}: ${infoInTop}`);
+    console.log(
+      `    Recuperados sobre el umbral: ${aboveThreshold.length} (de ${data.length}) · ` +
+        `en el top ${CURRENT_K}: ${infoInTop} de canal/teléfono, ${procedureInTop} de procedimiento` +
+        `${missingExpected.length > 0 && displacers > 0 ? '  ← hay un esperado afuera y lugares ocupados por canal/procedimiento' : ''}`
+    );
 
     for (const [label, fragmentId] of Object.entries(testCase.expected)) {
       const full = rankOf(aboveThreshold, fragmentId);
       const noInfo = rankOf(withoutInfo, fragmentId);
+      const noInfoNorProc = rankOf(withoutInfoNorProcedure, fragmentId);
       const similarity = aboveThreshold.find((f) => f.fragment_id === fragmentId)?.similarity;
       console.log(
         `    · ${label}: puesto ${fmtRank(full)}` +
           `${similarity !== undefined ? ` (sim ${similarity.toFixed(2)})` : ''}` +
-          ` | sin informativos: puesto ${fmtRank(noInfo)}`
+          ` | sin canales: puesto ${fmtRank(noInfo)}` +
+          ` | sin canales ni procedimiento: puesto ${fmtRank(noInfoNorProc)}`
       );
       summary.push({
         caso: testCase.id,
@@ -225,26 +256,38 @@ async function main() {
         fragmento: label,
         puestoActual: full,
         puestoSinInformativos: noInfo,
+        puestoSinCanalesNiProcedimiento: noInfoNorProc,
         k6: inTop(full, 6),
         k8: inTop(full, 8),
         k10: inTop(full, 10),
         k6SinInfo: inTop(noInfo, 6),
         k8SinInfo: inTop(noInfo, 8),
+        k6SinInfoProc: inTop(noInfoNorProc, 6),
+        k8SinInfoProc: inTop(noInfoNorProc, 8),
+        infoEnTop6: infoInTop,
+        procedimientoEnTop6: procedureInTop,
       });
     }
     console.log(`    Top ${CURRENT_K} actual: ${topCurrent
-      .map((f) => `${informativeSourceIds.has(f.source_id) ? '[INFO] ' : ''}${f.hierarchy_path.split('>').pop().trim().slice(0, 34)}`)
+      .map((f) => `${isInfo(f) ? '[CANAL] ' : isProcedure(f) ? '[PROC] ' : ''}${f.hierarchy_path.split('>').pop().trim().slice(0, 34)}`)
       .join(' | ')}\n`);
   }
 
   const yes = (value) => (value ? 'sí' : 'no');
   console.log('--- RESUMEN: ¿el fragmento esperado entra en los recuperados? ---');
-  console.log('caso | fragmento | k=6 (hoy) | k=8 | k=10 | k=6 sin informativos | k=8 sin informativos');
+  console.log('caso | fragmento | k=6 (hoy) | k=8 | k=10 | k=6 sin canales | k=8 sin canales | k=6 sin canales ni proc. | canal/proc. en top 6');
   for (const row of summary) {
     console.log(
-      `${row.regresion ? '* ' : ''}${row.caso} | ${row.fragmento} | ${yes(row.k6)} | ${yes(row.k8)} | ${yes(row.k10)} | ${yes(row.k6SinInfo)} | ${yes(row.k8SinInfo)}`
+      `${row.regresion ? '* ' : ''}${row.caso} | ${row.fragmento} | ${yes(row.k6)} | ${yes(row.k8)} | ${yes(row.k10)} | ${yes(row.k6SinInfo)} | ${yes(row.k8SinInfo)} | ${yes(row.k6SinInfoProc)} | ${row.infoEnTop6}/${row.procedimientoEnTop6}`
     );
   }
+  const totalTop = summary.length ? new Set(summary.map((row) => row.caso)).size * CURRENT_K : 0;
+  const perCase = new Map(summary.map((row) => [row.caso, row]));
+  const infoLugares = [...perCase.values()].reduce((sum, row) => sum + row.infoEnTop6, 0);
+  const procLugares = [...perCase.values()].reduce((sum, row) => sum + row.procedimientoEnTop6, 0);
+  console.log(`
+Lugares del top ${CURRENT_K} ocupados en total (${perCase.size} casos, ${totalTop} lugares): ${infoLugares} por canal/teléfono, ${procLugares} por procedimiento.`);
+  console.log('Criterio propuesto por Hernán: si entra 1 de 6 y no desplaza nada, se queda; si entra siempre y empuja afuera una norma de fondo, se corre la PARTE 11.');
   console.log('\n(* = caso que empeoró tras el lote 2)');
   console.log('Este experimento NO genera respuestas ni escribe en la base: mide si el fragmento correcto llega al modelo.');
 }
