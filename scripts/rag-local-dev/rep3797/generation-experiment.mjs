@@ -247,7 +247,9 @@ async function generate(config, apiKey, { reportText, category, fragments, extra
     .map((f, i) => `[${i + 1}] fragment_id=${f.fragment_id}\n${f.hierarchy_path}\n"""${f.content}"""`)
     .join('\n\n');
   // La regla candidata se agrega al final de las instrucciones reales (leídas de index.ts)
-  const instructions = extraInstruction ? `${config.instructions}\n${extraInstruction}` : config.instructions;
+  // Si index.ts ya trae esa regla (prompt v3 adoptado), no se duplica: 'k8-excepciones' pasa a ser igual a 'k8'.
+  const yaIncluida = extraInstruction && config.instructions.includes(extraInstruction);
+  const instructions = extraInstruction && !yaIncluida ? `${config.instructions}\n${extraInstruction}` : config.instructions;
   const text = `${instructions}\n\nCategoría elegida por el ciudadano: ${category ?? 'sin categoría'}\n\nReclamo:\n"""${reportText}"""\n\nFragmentos recuperados:\n${fragmentsBlock}`;
 
   const data = await geminiFetch(

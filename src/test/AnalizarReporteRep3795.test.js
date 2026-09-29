@@ -53,8 +53,8 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
     expect(source).toMatch(/temperature: GENERATION_TEMPERATURE,/);
   });
 
-  it('PROMPT_VERSION se incrementó a v2 (cambió el texto de instructions)', () => {
-    expect(source).toMatch(/const PROMPT_VERSION = 'v2';/);
+  it('PROMPT_VERSION se incrementó a v3 (v2: precisión; v3: regla de excepciones)', () => {
+    expect(source).toMatch(/const PROMPT_VERSION = 'v3';/);
   });
 
   it('la nueva regla de precisión está en las instrucciones', () => {
@@ -64,6 +64,47 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
   it('deja documentado que falta correr P-01 con este cambio antes de producción', () => {
     expect(source).toMatch(/RIESGO[\s\S]{0,10}ACEPTADO SIN VALIDAR/);
     expect(source).toMatch(/run-p01-post-filtro\.mjs/);
+  });
+});
+
+describe('Prompt v3: regla de excepciones (REP-3795 / REP-3797)', () => {
+  const instructionsBlock = source.slice(
+    source.indexOf('const instructions = ['),
+    source.indexOf("].join('\\n');", source.indexOf('const instructions = ['))
+  );
+  // Cada regla es un string entre comillas simples terminado en coma, uno por línea
+  const rules = instructionsBlock.split('\n').filter((line) => line.trim().startsWith("'"));
+
+  it('el prompt tiene 8 reglas: las 7 de v2 más la de excepciones', () => {
+    expect(rules).toHaveLength(8);
+  });
+
+  it('la regla de excepciones es la última y pide mencionar la salvedad sin absolutizar', () => {
+    const last = rules.at(-1);
+    expect(last).toMatch(/excepción, condición o salvedad/);
+    expect(last).toMatch(/no afirmar una prohibición u obligación absoluta/);
+    expect(last).toMatch(/Incluí esa parte del texto en la cita_textual/);
+  });
+
+  it('la regla prohíbe inventar excepciones que el fragmento no trae', () => {
+    expect(rules.at(-1)).toMatch(/no agregues ni supongas ninguna/);
+  });
+
+  it('las reglas de v2 siguen presentes (literalidad de las citas y precisión)', () => {
+    expect(instructionsBlock).toMatch(/SOLO podés fundamentar con el contenido literal/);
+    expect(instructionsBlock).toMatch(/una cita_textual que sea un fragmento literal \(substring\)/);
+    expect(instructionsBlock).toMatch(/No exijas al reclamo más precisión que la que pide el fragmento citado/);
+  });
+
+  it('el texto implementado es EL MISMO que se probó en el experimento (generation-experiment.mjs)', () => {
+    const experiment = readFileSync(
+      resolve(__dirname, '../../scripts/rag-local-dev/rep3797/generation-experiment.mjs'),
+      'utf8'
+    ).replace(/\r\n/g, '\n');
+    const start = experiment.indexOf("const REGLA_EXCEPCIONES =\n  '") + "const REGLA_EXCEPCIONES =\n  '".length;
+    const tested = experiment.slice(start, experiment.indexOf("';", start));
+    expect(tested.length).toBeGreaterThan(100);
+    expect(source.replace(/\r\n/g, '\n')).toContain(`'${tested}',`);
   });
 });
 

@@ -75,7 +75,15 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // 360 corridas de su experimento -- nunca se probó temperature 0 con evidencia real. Antes
 // de mergear a staging hace falta correr P-01 (scripts/rag-local-dev/run-p01-post-filtro.mjs)
 // con este cambio para confirmar que no se pierden aciertos ni aparecen citas incorrectas.
-const PROMPT_VERSION = 'v2';
+// v3 (29/09/2026, REP-3795 / REP-3797): agrega la regla de excepciones. Motivo: con el texto completo
+// del art. 49 b.3 de la Ley 24.449 cargado, 2 de 3 respuestas seguían afirmando que estacionar sobre
+// la vereda está prohibido de forma absoluta y ninguna cita incluía la excepción ("No obstante se puede
+// autorizar, señal mediante, a estacionar en la parte externa de la vereda cuando su ancho sea mayor a
+// 2,00 metros"). Prueba de generación (60 corridas): con la regla, la respuesta menciona la excepción
+// en 6 de 6 corridas (antes 4 de 6) y la cita la incluye en 6 de 6 (antes 3 de 6); los otros 8 casos
+// no cambian de estado; costo ≈ +100 tokens de entrada. Ver
+// docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.15.
+const PROMPT_VERSION = 'v3';
 // P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
 // el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
 // mismo texto ("Auto mal estacionado" con/sin punto final) dando "fundamentado" una vez y
@@ -225,6 +233,7 @@ const generateJustification = async (
     'SIEMPRE incluís todos los campos del esquema (estado, es_infraccion, categoria, organismo_sugerido_id, fundamento_ciudadano, fundamento_oficial, confianza, citas), sin importar el estado que declares. Si un campo no aplica, usá null o un array vacío, pero nunca lo omitas.',
     'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
     'No exijas al reclamo más precisión que la que pide el fragmento citado. Si el hecho descrito encaja en términos generales con lo que el fragmento prohíbe o exige (por ejemplo, "estacionar en forma antirreglamentaria" cubre cualquier forma de mal estacionar, sin que el ciudadano tenga que detallar cuál), fundamentá con ese fragmento — no declares "indeterminado" solo por falta de detalle adicional que la norma no requiere.',
+    'Si un fragmento que citás contiene una excepción, condición o salvedad ("no obstante", "salvo", "excepto", "a excepción de", "siempre que"), tenés que mencionarla en fundamento_ciudadano y en fundamento_oficial, y no afirmar una prohibición u obligación absoluta. Incluí esa parte del texto en la cita_textual. Si ninguno de los fragmentos que citás trae una excepción, no agregues ni supongas ninguna.',
   ].join('\n');
 
   // Clave en el header, igual que en embedText (ver el motivo ahí)
