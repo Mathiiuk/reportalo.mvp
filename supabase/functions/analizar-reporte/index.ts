@@ -84,7 +84,13 @@ const PROMPT_VERSION = 'v2';
 const GENERATION_TEMPERATURE = 0;
 
 // Valores provisorios del Sprint 12 (docx §5): Hernán los fija con evidencia real en REP-2910.
-const DEFAULT_MATCH_COUNT = 6;
+// DEFAULT_MATCH_COUNT pasó de 6 a 8 el 29/09/2026 (REP-3795 / REP-3797): con el corpus ampliado
+// (lote 2) la norma que fundamenta "auto mal estacionado" (Ley 451, art. 6.1.52) quedó en el
+// puesto 8 de similitud, fuera de los 6 recuperados, y el caso pasó de fundamentado a
+// indeterminado. Con 8 vuelve a fundamentar (3 de 3 corridas) y no rompió ninguno de los
+// otros 7 casos probados. Costo medido: entre -9 % y +28 % de tokens de entrada por reporte
+// (+16,5 % en total). Ver docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.10-3.11.
+const DEFAULT_MATCH_COUNT = 8;
 const DEFAULT_SIMILARITY_THRESHOLD = 0.45;
 
 // REP-3795 (punto 4 del diagnóstico): la categoría no tiene corpus cargado a

@@ -67,6 +67,25 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
   });
 });
 
+describe('Recuperación: 8 fragmentos por consulta (REP-3795 / REP-3797)', () => {
+  it('DEFAULT_MATCH_COUNT es 8', () => {
+    expect(source).toMatch(/const DEFAULT_MATCH_COUNT = 8;/);
+  });
+
+  it('el RPC match_knowledge_fragments recibe DEFAULT_MATCH_COUNT (no un número fijo)', () => {
+    expect(source).toMatch(/match_count: DEFAULT_MATCH_COUNT,/);
+    expect(source).not.toMatch(/match_count: \d+/);
+  });
+
+  it('el umbral de similitud no cambió (0.45)', () => {
+    expect(source).toMatch(/const DEFAULT_SIMILARITY_THRESHOLD = 0\.45;/);
+  });
+
+  it('los fragmentos recuperados se filtran por el umbral antes de llamar al modelo', () => {
+    expect(source).toMatch(/f\.similarity >= DEFAULT_SIMILARITY_THRESHOLD/);
+  });
+});
+
 describe('Validador: tolerancia a espacios en blanco (espejo en src/services/validateLlmAnalysis.js)', () => {
   it('normalizeWhitespace solo colapsa espacios en blanco (no toca mayúsculas ni tildes)', () => {
     expect(source).toMatch(/const normalizeWhitespace = \(text: string\): string => text\.replace\(\/\\s\+\/g, ' '\)\.trim\(\);/);
