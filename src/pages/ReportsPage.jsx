@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { ImagePlus, MapPin, CloudOff, ChevronRight, Inbox } from 'lucide-react';
+import { ImagePlus, CloudOff, ChevronRight, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
-import { isClosedState } from '../components/report/reportStatus';
+import { isClosedState, formatReportCode, formatListDate } from '../components/report/reportStatus';
 import { StatusPill } from '../components/report/StatusPill';
 import { EmptyState } from '../components/common/EmptyState';
 import { getAllPendingSyncReports } from '../services/offlineStorageService';
@@ -19,24 +19,21 @@ import { getAllPendingSyncReports } from '../services/offlineStorageService';
 const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
-const formatReportDate = (isoDate) => {
-  if (!isoDate) return '';
-  const date = new Date(isoDate);
-  const formatted = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
-  return formatted.replace('.', '').replace(/^\w/, (c) => c.toUpperCase());
-};
-
-// Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500)
+// Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500).
+// UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila se identifica por número y categoría
+// («#RP-2048 · Tránsito») y abajo va el lugar con la fecha corta («Wilde · 09/08»).
 const mapReportRow = (row) => {
   const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
+  const category = row.services?.service_name || 'Sin categoría';
   return {
     id: row.id,
     stateCode: row.current_state_code,
-    title: row.description,
-    category: row.services?.service_name || 'Sin categoría',
+    title: `${formatReportCode(row.id)} · ${category}`,
+    description: row.description || '',
+    category,
     status: badge.status,
     statusColor: badge.statusColor,
-    date: formatReportDate(row.created_at),
+    date: formatListDate(row.created_at),
     address: row.localities?.name || 'Localidad sin especificar',
   };
 };
@@ -105,16 +102,12 @@ export const ReportsPage = () => {
     <AppLayout activeTab="reportes">
       <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-          {/* Título */}
-          <div>
-            <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
-            <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
-              Seguimiento de lo que enviaste y de lo que todavía está en este dispositivo.
-            </p>
-          </div>
+          {/* Título y filtros: apilados en el teléfono (M17), en una sola fila en escritorio (D18) */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+          <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
 
           {/* Filtros con recuento (M17 · D18) */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
             {[
               { key: 'todos', label: 'Todos', count: countTodos },
               { key: 'en curso', label: 'En curso', count: countEnCurso },
@@ -134,6 +127,7 @@ export const ReportsPage = () => {
                 {filter.label} · {filter.count}
               </button>
             ))}
+          </div>
           </div>
 
           {/* Borradores sin enviar, arriba y con borde ámbar */}
@@ -189,15 +183,11 @@ export const ReportsPage = () => {
                     data-testid="report-row"
                     className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
                   >
-                    <span className="flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:gap-4">
-                      <span className="min-w-0 md:w-[320px] md:shrink-0">
-                        <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{report.title}</span>
-                        <span className="block truncate text-rep-label text-rep-ink-muted">{report.category}</span>
-                      </span>
-                      <span className="flex min-w-0 flex-1 items-center gap-1 text-rep-label text-rep-ink-muted">
-                        <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-rep-accent" />
-                        <span className="truncate">{report.address}</span>
-                        <span className="shrink-0">· {report.date}</span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5" title={report.description || undefined}>
+                      <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{report.title}</span>
+                      <span className="block truncate text-rep-label text-rep-ink-muted md:text-rep-label-d">
+                        {report.address}
+                        {report.date ? ` · ${report.date}` : ''}
                       </span>
                     </span>
 

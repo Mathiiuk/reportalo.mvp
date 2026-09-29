@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { BrandBar } from '../components/layout/BrandBar';
+import { CityTexture } from '../components/common/CityTexture';
 import { AlertCircle, Shield, Sparkles, Map as MapIcon } from 'lucide-react';
 
 // Las tres promesas de la portada (M01 en columna, D01 en fila)
@@ -14,36 +15,6 @@ const PROMISES = [
 ];
 
 const HERO_GRADIENT = 'linear-gradient(165deg, rgb(42, 123, 214), rgb(21, 83, 158))';
-
-/**
- * Textura de calles para el héroe de D01: «el fondo es el mapa de la ciudad con velo azul,
- * textura urbana sin competir con el texto». Dibujada en SVG para no sumar peso ni depender de
- * una captura de OpenStreetMap (que además exige atribución).
- */
-const CityTexture = () => (
-  <svg
-    aria-hidden="true"
-    className="pointer-events-none absolute inset-0 h-full w-full"
-    viewBox="0 0 1200 640"
-    preserveAspectRatio="xMidYMid slice"
-    fill="none"
-  >
-    <defs>
-      <pattern id="rep-city-grid" width="54" height="54" patternUnits="userSpaceOnUse" patternTransform="rotate(-17)">
-        <path d="M0 0H54M0 0V54" stroke="white" strokeWidth="1.4" />
-      </pattern>
-    </defs>
-    <g opacity="0.09">
-      <rect width="1200" height="640" fill="url(#rep-city-grid)" />
-      <path d="M-40 560L1240 170" stroke="white" strokeWidth="9" />
-      <path d="M180 -40L520 700" stroke="white" strokeWidth="7" />
-      <path d="M760 -40L980 700" stroke="white" strokeWidth="6" />
-      <path d="M-40 180C300 240 520 120 820 210S1120 330 1240 300" stroke="white" strokeWidth="5" />
-      <rect x="590" y="330" width="86" height="58" rx="10" fill="white" opacity="0.5" transform="rotate(-17 633 359)" />
-      <rect x="170" y="120" width="64" height="44" rx="10" fill="white" opacity="0.4" transform="rotate(-17 202 142)" />
-    </g>
-  </svg>
-);
 
 const AuthErrorAlert = ({ message, onClose }) => (
   <div
@@ -94,7 +65,8 @@ export const WelcomePage = () => {
           className="relative flex flex-1 items-center justify-center overflow-hidden px-10 py-16 text-center text-white"
           style={{ background: HERO_GRADIENT }}
         >
-          <CityTexture />
+          {/* D01: «el fondo es el mapa de la ciudad con velo azul: textura urbana sin competir con el texto» */}
+          <CityTexture className="absolute inset-0 h-full w-full text-white" />
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

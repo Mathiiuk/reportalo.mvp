@@ -60,7 +60,10 @@ export const NewsPage = () => {
             </p>
           </div>
 
-          {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación */}
+          {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación.
+              M27 · D35: sin ninguna publicación no hay nada que filtrar, así que no se muestran
+              (REP-3791 Bloque 11-D). Si hay publicaciones y un filtro deja cero, siguen visibles. */}
+          {currentNews.length > 0 && (
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
             {FILTERS.map((filter) => (
               <button
@@ -78,6 +81,7 @@ export const NewsPage = () => {
               </button>
             ))}
           </div>
+          )}
 
           {filteredNews.length > 0 ? (
             <div className="flex flex-col gap-3">
