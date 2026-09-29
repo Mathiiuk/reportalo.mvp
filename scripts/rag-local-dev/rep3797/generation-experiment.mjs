@@ -196,18 +196,35 @@ const withContext = (fragment) => `${fragment.hierarchy_path}\n\n${fragment.cont
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Reintenta ante caídas transitorias de Google (429, 500, 503) y cortes de red, con espera creciente
+// (2, 4, 8, 16 y 30 s: hasta ~1 minuto en total) y avisando, para que una corrida larga no muera por
+// un 503 pasajero (pasó el 29/09/2026 en embedContent). Otros errores (400, 403...) no se reintentan.
+const MAX_ATTEMPTS = 6;
+const RETRYABLE_STATUS = [429, 500, 503];
+
 async function geminiFetch(url, body, apiKey, label) {
   let lastError;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) return res.json();
-    lastError = new Error(`${label} falló (${res.status}): ${(await res.text()).slice(0, 200)}`);
-    if (![429, 500, 503].includes(res.status)) break;
-    await sleep(1500 * attempt);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    let res = null;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify(body),
+      });
+    } catch (networkError) {
+      lastError = new Error(`${label} falló por red: ${networkError.message}`);
+    }
+    if (res?.ok) return res.json();
+    if (res) {
+      lastError = new Error(`${label} falló (${res.status}): ${(await res.text()).slice(0, 200)}`);
+      if (!RETRYABLE_STATUS.includes(res.status)) break;
+    }
+    if (attempt < MAX_ATTEMPTS) {
+      const waitMs = Math.min(30000, 2000 * 2 ** (attempt - 1));
+      console.log(`    … ${label}: intento ${attempt}/${MAX_ATTEMPTS} falló (${res ? res.status : 'red'}); reintento en ${waitMs / 1000} s`);
+      await sleep(waitMs);
+    }
   }
   throw lastError;
 }
