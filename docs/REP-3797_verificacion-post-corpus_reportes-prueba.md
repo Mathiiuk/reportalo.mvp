@@ -167,6 +167,31 @@ Rama `fix/REP-3795-validador-tolerante-espacios` (commit `6bfb08b`, sobre la obs
 
 **Sigue sin resolverse** (dependen de la recuperación, no del validador): auto mal estacionado (CABA) y luz quemada (CABA). Falta el resultado del experimento `scripts/rag-local-dev/rep3797/retrieval-experiment.mjs`.
 
+## 3.8 Experimento de recuperación (solo lectura, 29/09/2026)
+
+Script: `scripts/rag-local-dev/rep3797/retrieval-experiment.mjs`. Reproduce la consulta de `analizar-reporte` (texto + categoría, embedding, RPC, umbral 0,45) y mide en qué puesto entra el fragmento esperado. **Mide recuperación, no generación:** que el fragmento llegue al modelo no garantiza que el modelo fundamente bien.
+
+| Caso | Fragmento esperado | Puesto hoy (k=6) | k=8 | k=10 | Sin canales |
+|---|---|---|---|---|---|
+| Auto mal estacionado (CABA) | Faltas 6.1.52 | **8** (sim 0,69) | entra | entra | sigue afuera (k=6) |
+| Luz quemada (CABA) | Ley 210 art. 3 j | **24** (sim 0,58) | no | no | no (puesto 22) |
+| Luz quemada (CABA) | Ley 210 art. 2 b | 1 | sí | sí | sí |
+| Basural (Avellaneda) | Ley 13.592 art. 9 | 2 | sí | sí | sí |
+| Choripanes (Avellaneda) | DL 8751/77 art. 35 | 3 | sí | sí | sí |
+| Choripanes (Avellaneda) | LOM art. 27 inc. 1 | **7** | entra | entra | entra (puesto 5) |
+| Camioneta, auto abandonado, vereda rota, basura CABA | los esperados | dentro del top 6 | sí | sí | sí |
+
+Lugares del top 6 ocupados en 8 casos (48 lugares): **8 por canales/teléfonos y 4 por procedimiento**. Los canales entran en 5 de 8 casos; los de procedimiento, en 2 de 8 (choripanes: 3; auto abandonado: 1). En choripanes, 5 de los 6 lugares son canal o procedimiento y la LOM art. 27 inc. 1 queda en el puesto 7.
+
+### Lo que el experimento desmiente de las hipótesis anteriores
+1. **Auto mal estacionado NO se explica por canales ni por procedimiento**: en su top 6 hay 0 de cada uno. Lo desplazan **otros fragmentos normativos nuevos** más específicos (Ley 451 1.3.31, Ley 2148 7.1.8 b, 7.1.9 e y c). Quitar los canales no lo arregla; subir `k` a 8 sí lo recupera (en recuperación).
+2. **Luz quemada NO es un problema de canales desplazando al art. 3 j**: el art. 3 j está en el **puesto 24** con similitud 0,58, lejos de cualquier `k` razonable, con o sin canales. La búsqueda por texto (`fts`) tampoco lo resolvería para esta consulta: el art. 3 j no contiene las palabras «luz», «calle» ni «alumbrado» (esas están en el art. 2 b). La regresión (`indeterminado` en vez de `sin_normativa`) viene de que el modelo devolvió `asistencia`, que el validador rechaza para infraestructura, con dos canales (147 y 103) dentro del contexto.
+3. **Comercio en Avellaneda sí muestra saturación real** (5 de 6 lugares sin norma de fondo).
+
+### Lo que NO está probado
+- Que `k=8` mejore la respuesta final: falta una corrida de generación sobre los mismos casos y verificar que los 5 casos que hoy funcionan no cambien.
+- Cualquier solución para la luz: ninguna variante de `k` ni de canales la alcanza.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
