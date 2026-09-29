@@ -114,3 +114,9 @@ commit;
 ```
 
 Verificación de la reversión: `md5(content)` del `20000000-…0010` = `10fb02fda1c43c44a3d2b6ff2c211ce6` y `is_current = true`.
+
+### Estado DESPUÉS de aplicar (29/09/2026 15:35 UTC)
+
+26 fuentes · 124 fragmentos (120 vigentes) · 159 mapeos · 0 con `` · 0 vigentes sin vector.
+`20000000-…0010`: `is_current = false`, `hierarchy_path` con el sufijo «[SUPERADO — apartado incompleto, ver reemplazo]».
+`60000000-…0040`: vigente, categoría `TRANSITO`, reemplaza al anterior, con vector.

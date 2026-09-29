@@ -325,6 +325,19 @@ Notas sobre lo "idéntico": varios fragmentos anteponen el **título del artícu
 
 Además, el **inciso t) del art. 48 de la Ley 24.449** está partido en dos fragmentos (`t.obstruccion` y `t.venta`), ambos trozos literales del mismo inciso.
 
+## 3.14 Lote nuevo del art. 49 b.3 aplicado y verificado (29/09/2026 15:35 UTC)
+
+**Aplicado** solo el bloque corregido de la Parte 8 ter (1 `update`, 1 `insert` de fragmento, 1 `insert` de mapeo), tras ensayarlo solo con rollback. El lote original de Hernán fallaba en ese bloque por el orden de las sentencias (índice único parcial `knowledge_fragments_current_uq`): el `update` va antes del `insert`.
+
+Estado resultante: 26 fuentes · 124 fragmentos (120 vigentes) · 159 mapeos · W-5 = 0 · W-6 = 0 (vectores generados con `embed-pending.mjs`, 1 fragmento). El b.3 viejo quedó con `is_current = false` y el sufijo «[SUPERADO — apartado incompleto, ver reemplazo]»; el nuevo (`60000000-…040`) lo reemplaza. Reversión exacta en el respaldo.
+
+**Verificación (caso «vecino se sube a la vereda», Avellaneda, 3 corridas):**
+- `fundamentado` ×3; el fragmento nuevo es el recuperado y citado en las tres (el viejo ya no aparece).
+- **El texto completo con la excepción NO se refleja en la respuesta.** Las tres corridas citan solo las dos primeras oraciones del b.3 («…Tampoco se admite la detención voluntaria.») y **ninguna cita incluye la excepción** («No obstante se puede autorizar, señal mediante, a estacionar en la parte externa de la vereda cuando su ancho sea mayor a 2,00 metros…»).
+- Texto al ciudadano: 2 de 3 corridas afirman una prohibición absoluta («ese espacio está reservado exclusivamente para la circulación peatonal»); 1 de 3 agrega «salvo que exista señalización expresa que lo autorice». **Ninguna menciona la condición de los 2 metros.**
+
+**Conclusión:** corregir el dato **no alcanzó** para corregir la respuesta. El riesgo que motivó la corrección (afirmar una prohibición más amplia que la norma) sigue en 2 de 3 respuestas, aunque ahora el modelo tiene el texto completo. Arreglarlo exigiría una instrucción explícita en el prompt (p. ej. mencionar excepciones del fragmento citado), es decir un cambio de prompt (v3) que hay que probar antes de adoptar. No se hizo.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
