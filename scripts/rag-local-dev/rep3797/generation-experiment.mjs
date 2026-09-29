@@ -24,7 +24,8 @@
  * Solo lectura sobre Supabase (RPC match_knowledge_fragments, SELECT a agencies,
  * knowledge_sources y embedding_models). Gasta llamadas a Gemini: 8 embeddings de consultas,
  * unas decenas de embeddings de fragmentos (variante con encabezado) y 8 casos × 4 variantes
- * × RUNS generaciones (RUNS=3 por defecto → 96).
+ * × RUNS generaciones (RUNS=3 por defecto → 120 con las 5 variantes). VARIANT="k6,k8-sin-can"
+ * corre solo esas (p. ej. 2 variantes → 48 generaciones).
  *
  * Uso (PowerShell, con las claves cargadas SOLO en esa terminal):
  *   $env:SUPABASE_SERVICE_ROLE_KEY = "..."
@@ -123,13 +124,27 @@ const CASES = [
     expected: { 'Faltas 1.3.13': '40000000-0000-4000-8000-000000000041' } },
 ];
 
-const VARIANTS = [
+const ALL_VARIANTS = [
   { id: 'k6', label: 'k=6 (hoy)', k: 6, excludeInfo: false },
   { id: 'k8', label: 'k=8', k: 8, excludeInfo: false },
   { id: 'k6-sin-can', label: 'k=6 sin canales', k: 6, excludeInfo: true },
   // Vectores calculados en memoria sobre `hierarchy_path + contenido` (no se guardan en la base)
   { id: 'ctx-k6', label: 'encabezado k=6', k: 6, excludeInfo: false, contextual: true },
+  // Combinada: 8 fragmentos y los canales/teléfonos no compiten por los lugares. OJO: en la
+  // prueba los canales quedan FUERA del contexto del modelo; en producción habría que
+  // entregarlos por otro camino (determinístico, según categoría y jurisdicción).
+  { id: 'k8-sin-can', label: 'k=8 sin canales', k: 8, excludeInfo: true },
 ];
+
+// Para no repetir corridas ya hechas: VARIANT="k6,k8-sin-can" corre solo esas (por defecto, todas).
+const selectedIds = process.env.VARIANT ? process.env.VARIANT.split(',').map((id) => id.trim()).filter(Boolean) : null;
+if (selectedIds) {
+  const unknown = selectedIds.filter((id) => !ALL_VARIANTS.some((v) => v.id === id));
+  if (unknown.length > 0) {
+    throw new Error(`VARIANT con ids desconocidos: ${unknown.join(', ')}. Válidos: ${ALL_VARIANTS.map((v) => v.id).join(', ')}`);
+  }
+}
+const VARIANTS = selectedIds ? ALL_VARIANTS.filter((v) => selectedIds.includes(v.id)) : ALL_VARIANTS;
 
 // --- variante con encabezado (utilidades puras, mismas que context-embedding-experiment.mjs) ---
 
