@@ -367,6 +367,25 @@ Regla candidata: «Si un fragmento que citás contiene una excepción, condició
 - Que la respuesta mencione la excepción no garantiza que la redacte bien; conviene que Hernán revise el texto (p. ej. «puede autorizarse… ancho supere los 2,00 [metros]»).
 - Un cambio de prompt es una versión nueva (v3): falta implementarlo, desplegarlo y verificarlo en el pipeline real con los 10 casos antes de darlo por bueno.
 
+## 3.16 Prompt v3 desplegado y verificado en el pipeline real (función v38, 29/09/2026 16:00 UTC)
+
+Rama `fix/REP-3795-prompt-v3-excepciones` (commit `cd58aee`; suite completa de 526 tests en verde). 30 reportes (10 casos × 3), insertar → cola → cron → función real → Gemini. Todos los análisis quedaron con `prompt_version = v3`. Los tokens de entrada coinciden con los de la simulación (p. ej. 2173, 2121, 2192, 2197, 1914, 1848): la simulación reprodujo al sistema real.
+
+| Caso | Estados (3 corridas) |
+|---|---|
+| Auto mal estacionado, basural, camioneta, choripanes, auto abandonado, vereda rota, basura en la vereda, **vecino sube a la vereda**, **sumidero** | **fundamentado ×3 en los 9** |
+| **Luz quemada** | **indeterminado ×3** (`asistencia` inválido para infraestructura) |
+
+**Casos con excepción (respuesta real al ciudadano):**
+- *Vecino se sube a la vereda* (Ley 24.449 art. 49 b.3): **3 de 3 mencionan la excepción y la cita la incluye en 3 de 3**, con la condición completa: «…se puede autorizar, mediante la señalización correspondiente, a estacionar en la parte externa de la vereda cuando su ancho supere los 2,00 metros y la intensidad del tránsito peatonal lo permita». Antes (v2): 0 de 3 citas la incluían y ninguna mencionaba los 2 metros.
+- *Sumidero* (Ley 451 art. 1.3.2.3.4): la cita incluye la excepción en 3 de 3; el texto al ciudadano dice «a excepción de aguas pluviales o superficiales» en 2 de 3 y en la tercera lo expresa de otra forma («únicamente está permitido el paso de aguas pluviales o superficiales»); el fundamento oficial la menciona en las 3.
+
+**Sin regresiones en los otros 9 casos.**
+
+**Pendiente — luz quemada:** `indeterminado` en 3 de 3, igual que en la simulación con la regla. El prompt v2 tenía este caso inestable (4 de 9 corridas `indeterminado`, el resto `sin_normativa`); con v3 en producción se observa `indeterminado` las tres veces. No se puede atribuir con certeza a la regla (la muestra es chica), pero **hoy este caso queda peor que el mejor caso de v2**. Las alternativas siguen siendo las de 3.10/3.11 (tratar un `asistencia` fuera de vulnerabilidad social como `sin_normativa`, o entregar los canales por otro camino) y requieren decisión con Hernán.
+
+**Pendiente — revisión de Hernán:** los textos al ciudadano de los casos con excepción (redacción de la salvedad de los 2 metros).
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
