@@ -386,6 +386,25 @@ Rama `fix/REP-3795-prompt-v3-excepciones` (commit `cd58aee`; suite completa de 5
 
 **Pendiente — revisión de Hernán:** los textos al ciudadano de los casos con excepción (redacción de la salvedad de los 2 metros).
 
+## 3.17 ¿Puede el fundamento venir de algo que no sea el corpus? Grounding externo, búsqueda web y fallbacks (29/09/2026)
+
+Criterio de REP-3795: «comprobar que todo fundamento provenga exclusivamente del corpus autorizado y que, sin respaldo suficiente, exista abstención explícita».
+
+**Camino real (`analizar-reporte`, código leído en el repositorio y en la función desplegada v38):**
+- La llamada a Gemini (`generateContent`) **no declara ninguna herramienta**: sin `tools`, sin búsqueda web y sin grounding. Solo se envían las instrucciones, el reclamo y los fragmentos recuperados de `knowledge_fragments`.
+- La recuperación sale únicamente del RPC `match_knowledge_fragments` (cascada jurisdiccional + categoría, solo fragmentos vigentes con vector).
+- **Fallar cerrado, sin reemplazos:** sin `GEMINI_API_KEY` el resultado es `indeterminado`; si falla el embedding o la generación, `indeterminado`; nunca se cae a un embedding local ni a otro corpus.
+- **Abstención:** sin fragmentos sobre el umbral (0,45) no se llama al modelo y el resultado es `sin_normativa`; cada cita debe ser literal (con la tolerancia a espacios descripta en 3.7) y estar entre los fragmentos recuperados.
+- Vulnerabilidad social corta antes de todo (`asistencia`, sin llamar a Gemini).
+
+**Hallazgo — función heredada `analyze-infraction` (versión 30, abril, `gemini-1.5-flash-002`):**
+- Está desplegada en CiudadAR (`verify_jwt = true`) pero **su código no está en el repositorio** (`supabase/functions` solo trae `analizar-reporte`, `quarantine-anonymize` y `quarantine-purge`).
+- Su prompt le pide al modelo «Normativa infringida (**artículo plausible** del código de tránsito)» y una «sanción sugerida»: **genera normativa de memoria**, exactamente lo que el RAG cerrado debe impedir. Además manda la clave de Gemini en la URL (`?key=`).
+- **Hoy está inerte:** el disparador `audit_ia` de la tabla `infractions` que la invoca está **deshabilitado** (`tgenabled = D`), `infractions` tiene **0 filas**, ningún cron la llama y la app no la invoca (búsqueda en `src`).
+- Riesgo residual: cualquiera con un JWT de usuario válido podría invocarla por HTTP (costo de Gemini). **Recomendación: retirarla (undeploy) y, si hace falta, versionar su código.** No se hizo: es una decisión del equipo.
+
+**Coherencia con el ticket:** el circuito RAG vigente cumple el criterio (todo fundamento sale del corpus; hay abstención explícita). La función heredada es un vector que no se usa pero sigue desplegada.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
