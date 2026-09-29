@@ -338,6 +338,35 @@ Estado resultante: 26 fuentes · 124 fragmentos (120 vigentes) · 159 mapeos · 
 
 **Conclusión:** corregir el dato **no alcanzó** para corregir la respuesta. El riesgo que motivó la corrección (afirmar una prohibición más amplia que la norma) sigue en 2 de 3 respuestas, aunque ahora el modelo tiene el texto completo. Arreglarlo exigiría una instrucción explícita en el prompt (p. ej. mencionar excepciones del fragmento citado), es decir un cambio de prompt (v3) que hay que probar antes de adoptar. No se hizo.
 
+## 3.15 Regla de excepciones para el prompt (candidata a v3): prueba de generación (29/09/2026)
+
+Script: `scripts/rag-local-dev/rep3797/generation-experiment.mjs`, variantes `k8` (producción hoy) contra `k8-excepciones` (mismo `k=8` + la regla agregada al final de las instrucciones reales). 10 casos × 3 corridas × 2 variantes = 60 generaciones. **La regla NO está en `index.ts`.**
+
+Regla candidata: «Si un fragmento que citás contiene una excepción, condición o salvedad ("no obstante", "salvo", "excepto", "a excepción de", "siempre que"), tenés que mencionarla en fundamento_ciudadano y en fundamento_oficial, y no afirmar una prohibición u obligación absoluta. Incluí esa parte del texto en la cita_textual. Si ninguno de los fragmentos que citás trae una excepción, no agregues ni supongas ninguna.»
+
+| Medida (heurística por palabras clave) | `k=8` (hoy) | `k=8` + regla |
+|---|---|---|
+| Corridas donde lo citado trae una excepción real | 6 | 6 |
+| … la respuesta la **menciona** | 4 de 6 | **6 de 6** |
+| … la **cita la incluye** | 3 de 6 | **6 de 6** |
+| Corridas sin excepción en lo citado donde la respuesta menciona una igual | 0 de 24 | 3 de 21 (ver abajo: falso positivo) |
+| Tokens de entrada | base | ≈ +100 por reporte (≈ +5 %) |
+
+**Los dos casos con excepción real (3 corridas cada uno):**
+- *Vecino se sube a la vereda* (Ley 24.449 art. 49 b.3): con la regla, 3/3 mencionan y citan la excepción; el texto al ciudadano pasa de «Está prohibido subir el auto y estacionar… sobre la vereda» a «Está prohibido estacionar… Sin embargo, la norma contempla la salvedad de que puede autorizarse, mediante la correspondiente señalización, a estacionar en la parte externa de la vereda cuando su ancho supere los 2,00 [metros]». Sin la regla: 2/3 mencionan (parcial) y **0/3 citan** la excepción.
+- *Sumidero* (Ley 451 art. 1.3.2.3.4): con la regla 3/3 mencionan y citan «a excepción de aguas pluviales o superficiales»; sin ella 2/3 mencionan y 3/3 citan.
+
+**Los 3 «posibles inventos» son un falso positivo de la heurística.** Ocurren en *vereda rota por raíces*: el art. 7 de la Ley 5902 se titula «Eximición» (es, por definición, una excepción a la obligación del art. 5) y el modelo la describe correctamente («la normativa establece una excepción…»). Verificado leyendo la respuesta. Con la regla, además, el modelo cita el art. 7 completo (ambos párrafos, incluida la frase de las raíces); sin ella cita solo el segundo párrafo.
+
+**Los otros 8 casos no cambian de estado con la regla** (fundamentado ×3, con cita esperada 3/3), incluidos auto mal estacionado, basural, camioneta y choripanes.
+
+**Luz quemada — inestable, no atribuible a la regla:** con la regla, `indeterminado` ×3 (`asistencia` inválido para infraestructura); sin ella, `sin_normativa` ×3 en esta corrida, pero la misma variante base había dado `indeterminado` ×2 en la simulación anterior y ×2 en el pipeline real (4 de 9 corridas base son `indeterminado`). El resultado de este caso fluctúa aun sin la regla.
+
+### Límites
+- Solo **2 casos con excepción real × 3 corridas**; la detección es por palabras clave y **solo leí a mano el texto de la primera corrida por variante**.
+- Que la respuesta mencione la excepción no garantiza que la redacte bien; conviene que Hernán revise el texto (p. ej. «puede autorizarse… ancho supere los 2,00 [metros]»).
+- Un cambio de prompt es una versión nueva (v3): falta implementarlo, desplegarlo y verificarlo en el pipeline real con los 10 casos antes de darlo por bueno.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
