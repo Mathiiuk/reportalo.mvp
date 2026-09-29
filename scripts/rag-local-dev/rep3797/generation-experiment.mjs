@@ -21,6 +21,14 @@
  * al ejecutar; el validador es el espejo testeado (src/services/validateLlmAnalysis.js).
  * Si index.ts cambia de forma que no se pueda leer, el script aborta en vez de adivinar.
  *
+ * Variante k8-excepciones (REGLA_EXCEPCIONES): prueba una regla candidata para el prompt (v3, NO está en
+ * index.ts): si un fragmento citado trae una excepción o condición, la respuesta tiene que mencionarla
+ * y no afirmar una prohibición absoluta; y no inventar excepciones. Se compara contra 'k8' (producción
+ * hoy). Casos con excepción real: vecino-vereda-avellaneda (Ley 24.449 art. 49 b.3) y sumidero-caba
+ * (Ley 451 art. 1.3.2.3.4). Para correr solo la comparación relevante:
+ *   $env:VARIANT = "k8,k8-excepciones"
+ * OJO: la detección de excepciones es por palabras clave (heurística); revisar la muestra impresa a mano.
+ *
  * Solo lectura sobre Supabase (RPC match_knowledge_fragments, SELECT a agencies,
  * knowledge_sources y embedding_models). Gasta llamadas a Gemini: 8 embeddings de consultas,
  * unas decenas de embeddings de fragmentos (variante con encabezado) y 8 casos × 4 variantes
@@ -122,7 +130,27 @@ const CASES = [
     expected: { 'Ley 5902 art. 7': '40000000-0000-4000-8000-000000000003' } },
   { id: 'basura-vereda-caba', regresion: false, text: 'Hay un montón de bolsas de basura tiradas en la vereda y hace días que no las levanta nadie', locality: LOCALITY.BALVANERA, category: 'AMBIENTE',
     expected: { 'Faltas 1.3.13': '40000000-0000-4000-8000-000000000041' } },
+  // Casos cuyo fragmento esperado trae una EXCEPCIÓN real (para la prueba de la regla de excepciones):
+  //  - Ley 24.449 art. 49 b.3 (texto completo): «No obstante se puede autorizar, señal mediante, a estacionar
+  //    en la parte externa de la vereda cuando su ancho sea mayor a 2,00 metros…»
+  //  - Ley 451 art. 1.3.2.3.4: vuelco en sumideros «a excepción de aguas pluviales o superficiales»
+  { id: 'vecino-vereda-avellaneda', regresion: false, conExcepcion: true, text: 'Un vecino se sube con el auto a la vereda todos los días y me tapa la entrada del garage', locality: LOCALITY.PINEYRO, category: 'TRANSITO',
+    expected: { 'Ley 24.449 art. 49 b.3 (con excepción)': '60000000-0000-4000-8000-000000000040', 'Ley 24.449 art. 49 b.1': '20000000-0000-4000-8000-000000000009' } },
+  { id: 'sumidero-caba', regresion: false, conExcepcion: true, text: 'Están tirando aceite y basura por el desagüe de la vereda', locality: LOCALITY.BALVANERA, category: 'AMBIENTE',
+    expected: { 'Faltas 1.3.2.3.4 (vuelco en sumideros)': '40000000-0000-4000-8000-000000000043' } },
 ];
+
+// --- regla de excepciones (candidata a PROMPT_VERSION v3; NO está en index.ts) ---------------
+// Objetivo: cuando un fragmento citado trae una excepción o condición, la respuesta no puede afirmar
+// una prohibición u obligación absoluta; y no debe inventar excepciones que el fragmento no tiene.
+const REGLA_EXCEPCIONES =
+  'Si un fragmento que citás contiene una excepción, condición o salvedad ("no obstante", "salvo", "excepto", "a excepción de", "siempre que"), tenés que mencionarla en fundamento_ciudadano y en fundamento_oficial, y no afirmar una prohibición u obligación absoluta. Incluí esa parte del texto en la cita_textual. Si ninguno de los fragmentos que citás trae una excepción, no agregues ni supongas ninguna.';
+
+// Marcadores (heurística, NO es validación jurídica):
+//  - en el TEXTO DE LOS FRAGMENTOS: excepción real ("sin perjuicio de" es una referencia cruzada, no cuenta)
+const EXCEPCION_EN_FRAGMENTO = /(no obstante|salvo |excepto |a excepci[oó]n|excepci[oó]n)/i;
+//  - en la RESPUESTA del modelo: menciona una salvedad
+const EXCEPCION_EN_RESPUESTA = /(no obstante|salvo|excepto|excepci[oó]n|siempre que|se puede autorizar|puede autorizarse|ancho)/i;
 
 const ALL_VARIANTS = [
   { id: 'k6', label: 'k=6 (hoy)', k: 6, excludeInfo: false },
@@ -134,6 +162,8 @@ const ALL_VARIANTS = [
   // prueba los canales quedan FUERA del contexto del modelo; en producción habría que
   // entregarlos por otro camino (determinístico, según categoría y jurisdicción).
   { id: 'k8-sin-can', label: 'k=8 sin canales', k: 8, excludeInfo: true },
+  // Producción hoy es k=8 con el prompt v2 (variante 'k8'). Esta suma la regla de excepciones al prompt.
+  { id: 'k8-excepciones', label: 'k=8 + regla de excepciones', k: 8, excludeInfo: false, extraInstruction: REGLA_EXCEPCIONES },
 ];
 
 // Para no repetir corridas ya hechas: VARIANT="k6,k8-sin-can" corre solo esas (por defecto, todas).
@@ -195,11 +225,13 @@ async function embedText(config, apiKey, text) {
 }
 
 // Misma construcción que generateJustification de index.ts
-async function generate(config, apiKey, { reportText, category, fragments }) {
+async function generate(config, apiKey, { reportText, category, fragments, extraInstruction }) {
   const fragmentsBlock = fragments
     .map((f, i) => `[${i + 1}] fragment_id=${f.fragment_id}\n${f.hierarchy_path}\n"""${f.content}"""`)
     .join('\n\n');
-  const text = `${config.instructions}\n\nCategoría elegida por el ciudadano: ${category ?? 'sin categoría'}\n\nReclamo:\n"""${reportText}"""\n\nFragmentos recuperados:\n${fragmentsBlock}`;
+  // La regla candidata se agrega al final de las instrucciones reales (leídas de index.ts)
+  const instructions = extraInstruction ? `${config.instructions}\n${extraInstruction}` : config.instructions;
+  const text = `${instructions}\n\nCategoría elegida por el ciudadano: ${category ?? 'sin categoría'}\n\nReclamo:\n"""${reportText}"""\n\nFragmentos recuperados:\n${fragmentsBlock}`;
 
   const data = await geminiFetch(
     `${GEMINI_API_BASE}/models/${config.generationModel}:generateContent`,
@@ -244,14 +276,28 @@ async function runOnce(db, config, apiKey, testCase, pool, variant, informativeS
   const eligible = candidates.slice(0, variant.k);
   if (eligible.length === 0) return { estado: 'sin_normativa', citedIds: [], recovered: 0, motivo: 'sin fragmentos sobre el umbral (sin llamada al modelo)' };
 
-  const generation = await generate(config, apiKey, { reportText: testCase.text, category: testCase.category, fragments: eligible });
+  const generation = await generate(config, apiKey, { reportText: testCase.text, category: testCase.category, fragments: eligible, extraInstruction: variant.extraInstruction });
   const validation = validateLlmAnalysis(generation.parsed, eligible, testCase.category);
   const organismo = validation.valid ? await validateOrganismo(db, generation.parsed.organismo_sugerido_id) : { valid: true };
 
   const base = { recovered: eligible.length, inputTokens: generation.inputTokens, outputTokens: generation.outputTokens, modelEstado: generation.parsed.estado };
   if (!validation.valid) return { ...base, estado: 'indeterminado', citedIds: [], motivo: validation.reason.slice(0, 140) };
   if (!organismo.valid) return { ...base, estado: 'indeterminado', citedIds: [], motivo: organismo.reason.slice(0, 140) };
-  return { ...base, estado: generation.parsed.estado, citedIds: (generation.parsed.citas ?? []).map((c) => c.fragment_id), motivo: null };
+  const citas = generation.parsed.citas ?? [];
+  const citedIds = citas.map((c) => c.fragment_id);
+  const citedFragments = eligible.filter((f) => citedIds.includes(f.fragment_id));
+  const respuesta = `${generation.parsed.fundamento_ciudadano ?? ''} ${generation.parsed.fundamento_oficial ?? ''}`;
+  return {
+    ...base,
+    estado: generation.parsed.estado,
+    citedIds,
+    motivo: null,
+    // Métricas de excepciones (heurística por palabras clave; ver EXCEPCION_EN_*)
+    fragmentoTraeExcepcion: citedFragments.some((f) => EXCEPCION_EN_FRAGMENTO.test(f.content)),
+    citaIncluyeExcepcion: citas.some((c) => EXCEPCION_EN_FRAGMENTO.test(c.cita_textual ?? '')),
+    respuestaMencionaExcepcion: EXCEPCION_EN_RESPUESTA.test(respuesta),
+    muestra: { ciudadano: generation.parsed.fundamento_ciudadano ?? '', oficial: generation.parsed.fundamento_oficial ?? '', citas: citas.map((c) => c.cita_textual) },
+  };
 }
 
 // --- principal -----------------------------------------------------------------------
@@ -273,8 +319,17 @@ async function main() {
     const close = (x, y) => Math.abs(x - y) < 1e-12;
     if (!close(cosine([1, 0], [1, 0]), 1) || !close(cosine([1, 0], [0, 1]), 0) || !close(cosine([2, 0], [5, 0]), 1)) throw new Error('autotest de cosine falló');
     if (withContext({ hierarchy_path: 'Ley X > Art 1', content: 'texto' }) !== 'Ley X > Art 1\n\ntexto') throw new Error('autotest de withContext falló');
+    // Autotest de las heurísticas de excepciones (lo más frágil de la medición)
+    const debe = (condicion, texto) => { if (!condicion) throw new Error(`autotest de excepciones falló: ${texto}`); };
+    debe(EXCEPCION_EN_FRAGMENTO.test('Tampoco se admite la detención voluntaria. No obstante se puede autorizar, señal mediante, a estacionar en la parte externa de la vereda'), 'no detecta la excepción del art. 49 b.3');
+    debe(EXCEPCION_EN_FRAGMENTO.test('vuelco en sumideros, a excepción de aguas pluviales o superficiales'), 'no detecta "a excepción de"');
+    debe(!EXCEPCION_EN_FRAGMENTO.test('Queda prohibido estacionar con carácter general en los siguientes sitios, sin perjuicio de lo establecido en los artículos 7.1.2 y 7.1.3'), '"sin perjuicio de" no es una excepción');
+    debe(!EXCEPCION_EN_FRAGMENTO.test('El/la que venda mercaderías en la vía pública sin permiso o en infracción con la autorización otorgada'), 'la palabra "autorización" no es una excepción');
+    debe(EXCEPCION_EN_RESPUESTA.test('No está permitido estacionar en la vereda salvo que exista señalización expresa que lo autorice'), 'no detecta "salvo" en la respuesta');
+    debe(EXCEPCION_EN_RESPUESTA.test('se puede autorizar a estacionar cuando el ancho de la vereda es mayor a 2 metros'), 'no detecta "se puede autorizar"');
+    debe(!EXCEPCION_EN_RESPUESTA.test('Está prohibido vender mercaderías en la vía pública sin permiso o autorización de la autoridad'), 'la palabra "autorización" sola no es una salvedad');
     console.log(`Variantes: ${VARIANTS.map((v) => v.label).join(' · ')}`);
-    console.log('Autotest de coseno y encabezado: OK');
+    console.log('Autotest de coseno, encabezado y heurísticas de excepciones: OK');
     return;
   }
 
@@ -352,10 +407,45 @@ async function main() {
           `${avgIn ? ` | tokens entrada ~${avgIn}` : ''}`
       );
       for (const reason of reasons) console.log(`        motivo: ${reason}`);
-      results.push({ caso: testCase.id, regresion: testCase.regresion, variante: variant.id, byState, citedExpected, runs, avgIn, reasons });
+
+      // Excepciones: solo cuentan las corridas que llegaron a generar respuesta con citas
+      const generadas = outcomes.filter((o) => o.fragmentoTraeExcepcion !== undefined);
+      const conExc = generadas.filter((o) => o.fragmentoTraeExcepcion);
+      const sinExc = generadas.filter((o) => !o.fragmentoTraeExcepcion);
+      const exc = {
+        conExcepcion: conExc.length,
+        conExcepcionMencionada: conExc.filter((o) => o.respuestaMencionaExcepcion).length,
+        conExcepcionCitada: conExc.filter((o) => o.citaIncluyeExcepcion).length,
+        sinExcepcion: sinExc.length,
+        sinExcepcionMencionada: sinExc.filter((o) => o.respuestaMencionaExcepcion).length,
+      };
+      if (conExc.length > 0 || sinExc.length > 0) {
+        console.log(
+          `        excepciones: lo citado trae una en ${exc.conExcepcion} corrida(s) → la respuesta la menciona ${exc.conExcepcionMencionada}, la cita la incluye ${exc.conExcepcionCitada}` +
+            ` | sin excepción en lo citado ${exc.sinExcepcion} → menciona igual ${exc.sinExcepcionMencionada} (posible invención)`
+        );
+      }
+      // Para revisar a mano: texto al ciudadano de la primera corrida en los casos con excepción
+      if (testCase.conExcepcion) {
+        const muestra = outcomes.find((o) => o.muestra)?.muestra;
+        if (muestra) console.log(`        muestra (ciudadano): ${muestra.ciudadano.slice(0, 330).replace(/\s+/g, ' ')}`);
+      }
+      results.push({ caso: testCase.id, regresion: testCase.regresion, variante: variant.id, byState, citedExpected, runs, avgIn, reasons, exc, muestra: outcomes.find((o) => o.muestra)?.muestra ?? null });
     }
     console.log('');
   }
+
+  // Totales de excepciones por variante (todas las corridas de todos los casos)
+  console.log('--- EXCEPCIONES por variante (heurística por palabras clave; NO es validación jurídica) ---');
+  for (const variant of VARIANTS) {
+    const filas = results.filter((r) => r.variante === variant.id);
+    const suma = (campo) => filas.reduce((total, r) => total + r.exc[campo], 0);
+    console.log(
+      `${variant.label.padEnd(30)} | con excepción en lo citado: ${suma('conExcepcion')} corridas → mencionada ${suma('conExcepcionMencionada')}, citada ${suma('conExcepcionCitada')}` +
+        ` | sin excepción: ${suma('sinExcepcion')} corridas → menciona igual ${suma('sinExcepcionMencionada')} (posible invención)`
+    );
+  }
+  console.log('');
 
   console.log('--- RESUMEN (por caso y variante: estados | citó un esperado) ---');
   console.log('caso | ' + VARIANTS.map((v) => v.label).join(' | '));
