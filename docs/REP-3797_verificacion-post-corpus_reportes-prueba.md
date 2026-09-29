@@ -126,7 +126,8 @@ t) instalarse…`. **El texto es idéntico; difiere solo en el salto de línea (
 
 Conclusión: el **estado** es estable en los 5 casos; el **conjunto de citas** varía en 2 de 5 (coincide con lo visto en REP-3795, `temperature: 0` no es determinismo absoluto). Reportes de la tanda: 10 nuevos, ids en la base (`user_id` a9420d51-…, creados 29/09 00:36 UTC).
 
-## 3.6 Ronda 3 — con el lote 2 aplicado, `
+## 3.6 Ronda 3 — con el lote 2 aplicado, `
+
 ` normalizado y 120 embeddings regenerados (29/09/2026, 12:34 UTC)
 
 Estado de la base tras la carga: 26 fuentes · 123 fragmentos (120 vigentes) · 158 mapeos · W-5 = 0 · W-6 = 0. `analizar-reporte` v35. 16 reportes (choripanes, manteros y auto abandonado ×3; luz ×3; vereda, camioneta, "auto mal estacionado" y basural ×1).
@@ -145,12 +146,26 @@ Estado de la base tras la carga: 26 fuentes · 123 fragmentos (120 vigentes) · 
 ### Causas
 
 1. **Auto mal estacionado.** La recuperación cambió: el puesto 1 pasó a ser Faltas 1.3.31 (vehículo abandonado, fragmento nuevo) y aparecieron Ley 2148 7.1.8 b, 7.1.9 e y 7.1.9 c (incisos nuevos con encabezado). **Faltas 6.1.52 (`estacione en lugar prohibido o en forma antirreglamentaria`), que antes era el puesto 4 y fundamentaba el caso, quedó fuera de los 6 recuperados.** Es el efecto de "crowding" advertido en la sección D del pedido a Hernán: fragmentos nuevos más específicos desplazan al genérico que sí encajaba.
-2. **Basural.** La cita rechazada es `"…en sus respectivas jurisdicciones. Las Autoridades Municipales quedan obligadas a clausurar dichos basurales"`. El fragmento (Ley 13.592 art. 9) tiene un **salto de línea** entre "jurisdicciones." y "Las Autoridades"; el modelo unió con un espacio y el `includes` exacto lo rechazó. Ya no hay ``: **el problema no era solo el `
+2. **Basural.** La cita rechazada es `"…en sus respectivas jurisdicciones. Las Autoridades Municipales quedan obligadas a clausurar dichos basurales"`. El fragmento (Ley 13.592 art. 9) tiene un **salto de línea** entre "jurisdicciones." y "Las Autoridades"; el modelo unió con un espacio y el `includes` exacto lo rechazó. Ya no hay `
+`: **el problema no era solo el `
+
 `, es cualquier diferencia de saltos de línea/espacios entre la cita y el fragmento.** Refuerza la necesidad de normalizar espacios en la validación (cambio 4.2), con el caso negativo de una cita parafraseada.
 3. **Luz quemada.** Los puestos 2 y 3 pasaron a ser los canales «147» y «103» (fragmentos informativos nuevos, mapeados a la categoría) y el art. 3 j de la Ley 210 sigue sin entrar. Con canales y sin norma sustantiva el modelo devolvió `asistencia`, que el validador rechaza para Infraestructura. Resultado: `indeterminado` en vez de `sin_normativa`. Es un segundo caso de fragmentos no normativos desplazando normas.
 
 ### Conclusión de la ronda
 El lote 2 mejora comercio y auto abandonado, pero **degrada tres casos por dos causas técnicas**, no por falta de datos: (a) la recuperación de 6 fragmentos se satura con fragmentos nuevos y canales; (b) la validación literal es sensible a espacios/saltos de línea. Estas regresiones **están hoy en la base compartida**. Ninguna es un error de contenido de Hernán, pero sí confirman el riesgo de mapear fragmentos genéricos o informativos a las categorías de conducta.
+
+## 3.7 Validador tolerante a espacios: desplegado y verificado (función v36, 29/09/2026 12:49 UTC)
+
+Rama `fix/REP-3795-validador-tolerante-espacios` (commit `6bfb08b`, sobre la observabilidad). 73 tests pasan, incluidos los negativos (paráfrasis, mayúsculas, tildes, palabras ausentes, cita solo de espacios).
+
+| Caso | Antes del cambio | Después (v36) | Lectura |
+|---|---|---|---|
+| Basural, Avellaneda (×3) | `indeterminado`, cita rechazada | **`fundamentado` ×3** | Corregido. Cita Ley 13.592 art. 9 (la misma frase que se rechazaba) y Ley 11.723 art. 65 (gestión de residuos comunes = responsabilidad municipal), ambas pertinentes |
+| Camioneta sobre la vereda, CABA | `fundamentado` | `fundamentado` (6.1.37 + 6.1.54) | Sin regresión |
+| Vereda rota por raíces, CABA | `fundamentado` | `fundamentado` (Ley 5902 art. 7) | Sin regresión |
+
+**Sigue sin resolverse** (dependen de la recuperación, no del validador): auto mal estacionado (CABA) y luz quemada (CABA). Falta el resultado del experimento `scripts/rag-local-dev/rep3797/retrieval-experiment.mjs`.
 
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
