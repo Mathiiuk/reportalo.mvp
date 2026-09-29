@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 // Se mockea solo el I/O (getReportDetail / getReportStateHistory). isOwnedBy,
@@ -249,6 +249,83 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     expect(screen.getAllByRole('img')).toHaveLength(3);
     // Tres o más pasan a carrusel horizontal
     expect(gallery).toHaveAttribute('data-layout', 'carousel');
+  });
+
+  it('UT-DET-15: tocar una foto la abre a pantalla completa, y la X la cierra', async () => {
+    getReportDetail.mockResolvedValue({
+      success: true,
+      data: {
+        ...baseReport,
+        report_images: [{ id: 'i1', image_url: 'https://example.test/1.jpg' }],
+      },
+    });
+
+    renderPage();
+
+    expect(screen.queryByTestId('image-viewer')).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver foto 1 completa' }));
+
+    const viewer = await screen.findByTestId('image-viewer');
+    expect(viewer).toBeInTheDocument();
+    expect(within(viewer).getByRole('img', { name: 'Foto 1 del reporte' })).toHaveAttribute('src', 'https://example.test/1.jpg');
+    // Una sola foto: no hay flechas de navegación ni contador
+    expect(screen.queryByTestId('image-viewer-next')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('image-viewer-close'));
+    expect(screen.queryByTestId('image-viewer')).not.toBeInTheDocument();
+  });
+
+  it('UT-DET-16: con varias fotos, las flechas pasan entre ellas y dan la vuelta', async () => {
+    getReportDetail.mockResolvedValue({
+      success: true,
+      data: {
+        ...baseReport,
+        report_images: [
+          { id: 'i1', image_url: 'https://example.test/1.jpg' },
+          { id: 'i2', image_url: 'https://example.test/2.jpg' },
+          { id: 'i3', image_url: 'https://example.test/3.jpg' },
+        ],
+      },
+    });
+
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver foto 1 completa' }));
+
+    const viewer = screen.getByTestId('image-viewer');
+    expect(within(viewer).getByRole('img', { name: 'Foto 1 del reporte' })).toBeInTheDocument();
+    expect(within(viewer).getByText('1 / 3')).toBeInTheDocument();
+
+    fireEvent.click(within(viewer).getByTestId('image-viewer-next'));
+    expect(within(viewer).getByRole('img', { name: 'Foto 2 del reporte' })).toBeInTheDocument();
+
+    // Desde la última, "siguiente" da la vuelta a la primera
+    fireEvent.click(within(viewer).getByTestId('image-viewer-next'));
+    fireEvent.click(within(viewer).getByTestId('image-viewer-next'));
+    expect(within(viewer).getByRole('img', { name: 'Foto 1 del reporte' })).toBeInTheDocument();
+
+    fireEvent.click(within(viewer).getByTestId('image-viewer-prev'));
+    expect(within(viewer).getByRole('img', { name: 'Foto 3 del reporte' })).toBeInTheDocument();
+  });
+
+  it('UT-DET-17: Escape cierra el visor y tocar el fondo también', async () => {
+    getReportDetail.mockResolvedValue({
+      success: true,
+      data: {
+        ...baseReport,
+        report_images: [{ id: 'i1', image_url: 'https://example.test/1.jpg' }],
+      },
+    });
+
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver foto 1 completa' }));
+    expect(await screen.findByTestId('image-viewer')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('image-viewer')).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver foto 1 completa' }));
+    fireEvent.click(screen.getByTestId('image-viewer'));
+    expect(screen.queryByTestId('image-viewer')).not.toBeInTheDocument();
   });
 
   it('UT-DET-14: con una o dos evidencias mantiene la grilla del mockup', async () => {

@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban } from 'lucide-react';
+import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
@@ -54,6 +54,90 @@ const ReportPhoto = ({ src, alt, className }) => {
   return <img src={src} alt={alt} onError={() => setFailed(true)} className={`object-cover ${className}`} />;
 };
 
+/**
+ * Visor de fotos a pantalla completa. Se abre al tocar una foto del detalle (antes solo se
+ * veían miniaturas chicas); se cierra con la X, tocando el fondo oscuro o con Escape. Con más
+ * de una foto deja pasar a la anterior/siguiente, con flechas y contador.
+ */
+const ImageViewerModal = ({ images, index, onClose, onNavigate }) => {
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key === 'ArrowRight') onNavigate(1);
+      if (event.key === 'ArrowLeft') onNavigate(-1);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, onNavigate]);
+
+  const photo = images[index];
+  if (!photo) return null;
+
+  const iconButton =
+    'rep-focus flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-120 hover:bg-white/20';
+
+  return (
+    <div
+      data-testid="image-viewer"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Foto ${index + 1} de ${images.length}`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        data-testid="image-viewer-close"
+        onClick={onClose}
+        aria-label="Cerrar"
+        className={`${iconButton} absolute right-4 top-[max(16px,env(safe-area-inset-top,16px))]`}
+      >
+        <X aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
+      </button>
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            data-testid="image-viewer-prev"
+            onClick={(event) => {
+              event.stopPropagation();
+              onNavigate(-1);
+            }}
+            aria-label="Foto anterior"
+            className={`${iconButton} absolute left-2 desktop:left-4`}
+          >
+            <ChevronLeft aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
+          </button>
+          <button
+            type="button"
+            data-testid="image-viewer-next"
+            onClick={(event) => {
+              event.stopPropagation();
+              onNavigate(1);
+            }}
+            aria-label="Foto siguiente"
+            className={`${iconButton} absolute right-2 desktop:right-4`}
+          >
+            <ChevronRight aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
+          </button>
+          <span className="absolute bottom-[max(16px,env(safe-area-inset-bottom,16px))] rounded-full bg-white/10 px-3 py-1 text-rep-label text-white">
+            {index + 1} / {images.length}
+          </span>
+        </>
+      )}
+
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      <img
+        src={photo.image_url}
+        alt={`Foto ${index + 1} del reporte`}
+        onClick={(event) => event.stopPropagation()}
+        className="max-h-full max-w-full object-contain"
+      />
+    </div>
+  );
+};
+
 const DetailSkeleton = () => (
   <div
     data-testid="detail-loading"
@@ -79,6 +163,11 @@ export const ReportDetailPage = () => {
   const [loadingReport, setLoadingReport] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  // null = visor cerrado; un número = índice de la foto abierta a pantalla completa
+  const [viewerIndex, setViewerIndex] = useState(null);
+  // Se calcula acá (antes de los retornos tempranos de abajo) porque handleNavigateViewer,
+  // un hook, necesita referenciarla — con report todavía null durante la carga, queda [].
+  const images = report?.report_images || [];
 
   // Fundamento jurídico en vivo: Realtime como vía principal, polling de respaldo.
   const {
@@ -112,6 +201,17 @@ export const ReportDetailPage = () => {
   }, [id]);
 
   const handleBack = useCallback(() => navigate('/reportes'), [navigate]);
+
+  const handleCloseViewer = useCallback(() => setViewerIndex(null), []);
+  const handleNavigateViewer = useCallback(
+    (delta) => {
+      setViewerIndex((current) => {
+        if (current === null || images.length === 0) return current;
+        return (current + delta + images.length) % images.length;
+      });
+    },
+    [images.length]
+  );
 
   const handleShare = useCallback(async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -168,7 +268,6 @@ export const ReportDetailPage = () => {
     );
   }
 
-  const images = report.report_images || [];
   const activePhoto = images[activePhotoIndex] ?? images[0] ?? null;
   const state = normalizeReportState(report.current_state_code);
   const timeline = buildTimeline({
@@ -238,28 +337,38 @@ export const ReportDetailPage = () => {
                       }
                     >
                       {images.map((img, idx) => (
-                        <ReportPhoto
+                        <button
                           key={img.id}
-                          src={img.image_url}
-                          alt={`Foto ${idx + 1} del reporte`}
-                          className={
+                          type="button"
+                          onClick={() => setViewerIndex(idx)}
+                          aria-label={`Ver foto ${idx + 1} completa`}
+                          className={`rep-focus block overflow-hidden ${
                             isCarousel
-                              ? 'h-32 w-[45%] shrink-0 snap-start rounded-xl'
-                              : `h-32 w-full rounded-xl ${images.length === 1 ? 'col-span-2' : ''}`
-                          }
-                        />
+                              ? 'w-[45%] shrink-0 snap-start rounded-xl'
+                              : `w-full rounded-xl ${images.length === 1 ? 'col-span-2' : ''}`
+                          }`}
+                        >
+                          <ReportPhoto src={img.image_url} alt={`Foto ${idx + 1} del reporte`} className="h-32 w-full" />
+                        </button>
                       ))}
                     </div>
                   )}
                   {/* Escritorio (D17): foto grande + miniaturas */}
                   {isDesktop && (
                     <div className="flex flex-col gap-2">
-                      <ReportPhoto
-                        key={activePhoto?.id}
-                        src={activePhoto?.image_url}
-                        alt={`Foto ${activePhotoIndex + 1} del reporte`}
-                        className="h-[300px] w-full rounded-2xl"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => activePhoto && setViewerIndex(activePhotoIndex)}
+                        aria-label={`Ver foto ${activePhotoIndex + 1} completa`}
+                        className="rep-focus block overflow-hidden rounded-2xl"
+                      >
+                        <ReportPhoto
+                          key={activePhoto?.id}
+                          src={activePhoto?.image_url}
+                          alt={`Foto ${activePhotoIndex + 1} del reporte`}
+                          className="h-[300px] w-full"
+                        />
+                      </button>
                       <div className="flex items-center gap-2">
                         {images.map((img, idx) => (
                           <button
@@ -390,6 +499,15 @@ export const ReportDetailPage = () => {
           </section>
         </div>
       </div>
+
+      {viewerIndex !== null && (
+        <ImageViewerModal
+          images={images}
+          index={viewerIndex}
+          onClose={handleCloseViewer}
+          onNavigate={handleNavigateViewer}
+        />
+      )}
     </div>
   );
 };
