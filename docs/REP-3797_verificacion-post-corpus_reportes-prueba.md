@@ -192,6 +192,34 @@ Lugares del top 6 ocupados en 8 casos (48 lugares): **8 por canales/teléfonos y
 - Que `k=8` mejore la respuesta final: falta una corrida de generación sobre los mismos casos y verificar que los 5 casos que hoy funcionan no cambien.
 - Cualquier solución para la luz: ninguna variante de `k` ni de canales la alcanza.
 
+## 3.9 Vectores con encabezado (`hierarchy_path` + contenido): experimento en memoria (29/09/2026)
+
+Script: `scripts/rag-local-dev/rep3797/context-embedding-experiment.mjs`. Solo lectura: los vectores se calcularon en memoria y **no se guardó ninguno**; la base no cambió.
+
+**Metodología validada:** la autocomprobación (vector del texto solo de 3 fragmentos contra la similitud que devuelve la base) dio diferencia **0,0000** en los tres. El cálculo reproduce exactamente al sistema.
+
+| Caso | Fragmento esperado | Puesto actual | Con encabezado |
+|---|---|---|---|
+| Auto mal estacionado | Faltas 6.1.52 | 8 | **4** (entra al top 6) |
+| Luz quemada | Ley 210 art. 3 j | 24 | 22 (sin mejora) |
+| Luz quemada | Ley 210 art. 2 b | 1 | 3 |
+| Basural | Ley 13.592 art. 9 | 2 | 3 |
+| Camioneta | Faltas 6.1.37 / 6.1.54 | 1 / 2 | 2 / 4 |
+| Choripanes | DL 8751/77 art. 35 / LOM art. 27 inc. 1 | 3 / 7 | 4 / **3** (LOM entra al top 6) |
+| Auto abandonado | Ley 24.449 art. 49 b.7 | 3 | 2 |
+| Vereda rota por raíces | Ley 5902 art. 7 | 4 | **1** |
+| Basura en la vereda | Faltas 1.3.13 | 2 | 1 |
+
+**Fragmentos esperados dentro del top 6: 8 de 11 (actual) → 10 de 11 (con encabezado).**
+
+### Lectura y límites
+- Mejoran 2 casos que hoy fallan (6.1.52 y LOM art. 27 inc. 1) y varios suben (vereda rota 4→1, basura 2→1, abandonado 3→2). Otros bajan de puesto sin salir del top 6 (art. 2 b 1→3, 6.1.54 2→4, art. 35 3→4).
+- **La luz NO se resuelve:** el art. 3 j sigue en el puesto 22 y los canales 103 y 147 siguen ocupando 2 lugares (el 103 pasa al puesto 1).
+- **Las similitudes absolutas bajan** (p. ej. 0,69 → 0,62 en varios). Con el umbral fijo en 0,45 hay que verificar que ningún fragmento útil quede fuera en consultas más débiles.
+- **Muestra chica y posible sobreajuste:** 8 casos, 11 fragmentos esperados, y 3 de esos casos son los que motivaron la hipótesis. Falta un conjunto de prueba independiente (idealmente armado por el PO).
+- **Mide recuperación, no generación.** Falta probar de punta a punta antes de adoptar.
+- **`k=8` recupera los mismos dos fragmentos sin regenerar vectores**, pero deja a 6.1.52 exactamente en el puesto 8 (el límite); con encabezado queda en el 4, con margen.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
