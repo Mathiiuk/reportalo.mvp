@@ -83,3 +83,34 @@ y se verifica con `md5(content)` contra la columna «md5 original». Los embeddi
 | 40000000-0000-4000-8000-000000000066 | a7c893e3b9830b58d8b7fcb7a172fc22 | 305 | sí |
 | 40000000-0000-4000-8000-000000000067 | 77988f186768f62d18bf5f48c2031af9 | 417 | sí |
 | b6717f77-c30e-4cca-985a-6346d741fe38 | 75deb452191e802e69bb8f3fcdda40cc | 105 | sí |
+
+---
+
+## Respaldo previo a la aplicación del lote nuevo (art. 49 b.3 de la Ley 24.449), 29/09/2026
+
+Estado ANTES (base CiudadAR): 26 fuentes · 123 fragmentos (120 vigentes) · 158 mapeos · 0 fragmentos con `\r`.
+
+Fila que se da de baja: `20000000-0000-4000-8000-000000000010`
+- `is_current = true`
+- `hierarchy_path` = `Ley 24.449 — Ley de Tránsito > Artículo 49 (estacionamiento) > inciso b) > 3`
+- md5 del contenido: `10fb02fda1c43c44a3d2b6ff2c211ce6` (271 caracteres, solo la primera oración del apartado 3)
+- categoría: `TRANSITO` · 14 filas de `report_ai_evidence` apuntan a ella (no se tocan; se conservan como historial)
+
+### Cómo revertir (en este orden; el índice único parcial exige bajar el nuevo antes de subir el viejo)
+
+```sql
+begin;
+  update public.knowledge_fragments set is_current = false
+   where id = '60000000-0000-4000-8000-000000000040';
+  update public.knowledge_fragments
+     set is_current = true,
+         hierarchy_path = replace(hierarchy_path, ' [SUPERADO — apartado incompleto, ver reemplazo]', '')
+   where id = '20000000-0000-4000-8000-000000000010';
+commit;
+-- Si el fragmento nuevo aún no tiene análisis que lo referencien, se puede borrar del todo:
+--   delete from public.fragment_services where fragment_id = '60000000-0000-4000-8000-000000000040';
+--   delete from public.knowledge_fragments where id = '60000000-0000-4000-8000-000000000040';
+-- Con análisis que lo citan NO se borra (report_ai_evidence): se deja con is_current = false.
+```
+
+Verificación de la reversión: `md5(content)` del `20000000-…0010` = `10fb02fda1c43c44a3d2b6ff2c211ce6` y `is_current = true`.
