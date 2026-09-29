@@ -16,6 +16,11 @@ const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', '
  * @param {string|null} [reportCategory]
  * @returns {{ valid: boolean, reason?: string }}
  */
+/** Tope de la cita del modelo dentro de status_reason (espejo de index.ts). */
+const MAX_REJECTED_CITA_CHARS = 300;
+const truncateForReason = (text) =>
+  text.length > MAX_REJECTED_CITA_CHARS ? `${text.slice(0, MAX_REJECTED_CITA_CHARS)}…` : text;
+
 export const validateLlmAnalysis = (llmResponse, retrievedFragments, reportCategory) => {
   if (!llmResponse || typeof llmResponse !== 'object') {
     return { valid: false, reason: 'La respuesta del LLM no es un objeto.' };
@@ -56,7 +61,8 @@ export const validateLlmAnalysis = (llmResponse, retrievedFragments, reportCateg
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
     if (!fragment.content.includes(cita.cita_textual)) {
-      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento.` };
+      // Espejo de supabase/functions/analizar-reporte/index.ts: se guarda lo que el modelo intentó citar.
+      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };
     }
   }
 

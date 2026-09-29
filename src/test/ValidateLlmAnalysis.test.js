@@ -62,6 +62,26 @@ describe('REP-2908-VERIF ronda 6, C-2: validaciones existentes sin regresión', 
     expect(result.reason).toMatch(/no aparece literal/);
   });
 
+  it('el motivo de una cita no literal incluye lo que el modelo intentó citar', () => {
+    const result = validateLlmAnalysis(
+      { ...baseResponse, citas: [{ fragment_id: 'F-1', cita_textual: 'texto que no aparece' }] },
+      retrievedFragments,
+      null
+    );
+    expect(result.reason).toContain('Cita del modelo: "texto que no aparece"');
+  });
+
+  it('trunca la cita del modelo en el motivo para no inflar la fila', () => {
+    const longQuote = 'x'.repeat(500);
+    const result = validateLlmAnalysis(
+      { ...baseResponse, citas: [{ fragment_id: 'F-1', cita_textual: longQuote }] },
+      retrievedFragments,
+      null
+    );
+    expect(result.reason).toContain(`${'x'.repeat(300)}…`);
+    expect(result.reason).not.toContain('x'.repeat(301));
+  });
+
   it('acepta una cita literal de lo recuperado', () => {
     const result = validateLlmAnalysis(
       { ...baseResponse, citas: [{ fragment_id: 'F-1', cita_textual: 'texto literal' }] },

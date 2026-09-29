@@ -281,6 +281,11 @@ const generateJustification = async (
   };
 };
 
+/** Tope de la cita del modelo dentro de status_reason: alcanza para ver la diferencia sin inflar la fila. */
+const MAX_REJECTED_CITA_CHARS = 300;
+const truncateForReason = (text: string): string =>
+  text.length > MAX_REJECTED_CITA_CHARS ? `${text.slice(0, MAX_REJECTED_CITA_CHARS)}…` : text;
+
 /**
  * Validación determinística (docx §8, capa 6 — "la más importante: no depende
  * de que el LLM se porte bien"). Nunca confía en el LLM.
@@ -330,7 +335,9 @@ export const validateLlmAnalysis = (
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
     if (!fragment.content.includes(cita.cita_textual)) {
-      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento.` };
+      // Se guarda lo que el modelo intentó citar (status_reason): sin eso un rechazo no se
+      // puede diagnosticar, p. ej. saber si difiere solo en saltos de línea o espacios.
+      return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };
     }
   }
 
@@ -655,19 +662,22 @@ Deno.serve(async (req: Request) => {
             ? await validateOrganismoSugerido(supabaseAdmin, generation.parsed.organismo_sugerido_id)
             : { valid: true }; // ya va a fallar cerrado por otro motivo; no pisar esa razón
 
+          // Gemini ya respondió (y se pagó) aunque la validación lo rechace: modelo, versión
+          // de prompt y tokens se guardan en los tres desenlaces, no solo en el éxito.
+          const generationMetadata = {
+            embeddingModelCode: EMBEDDING_MODEL_CODE,
+            generationModelCode: GENERATION_MODEL,
+            promptVersion: PROMPT_VERSION,
+            inputTokens: generation.inputTokens,
+            outputTokens: generation.outputTokens,
+          };
+
           if (!validation.valid) {
-            result = { estado: 'indeterminado', error: validation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
+            result = { estado: 'indeterminado', error: validation.reason, ...generationMetadata };
           } else if (!organismoValidation.valid) {
-            result = { estado: 'indeterminado', error: organismoValidation.reason, embeddingModelCode: EMBEDDING_MODEL_CODE };
+            result = { estado: 'indeterminado', error: organismoValidation.reason, ...generationMetadata };
           } else {
-            result = {
-              ...generation.parsed,
-              embeddingModelCode: EMBEDDING_MODEL_CODE,
-              generationModelCode: GENERATION_MODEL,
-              promptVersion: PROMPT_VERSION,
-              inputTokens: generation.inputTokens,
-              outputTokens: generation.outputTokens,
-            };
+            result = { ...generation.parsed, ...generationMetadata };
           }
         }
       }

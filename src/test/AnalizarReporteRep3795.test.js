@@ -66,3 +66,32 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
     expect(source).toMatch(/run-p01-post-filtro\.mjs/);
   });
 });
+
+describe('Observabilidad: un rechazo de la validación conserva lo que se generó', () => {
+  const block = source.slice(
+    source.indexOf('const generationMetadata = {'),
+    source.indexOf("result = { ...generation.parsed, ...generationMetadata };") + 60
+  );
+
+  it('generationMetadata incluye modelo, versión de prompt y tokens', () => {
+    expect(block).toMatch(/generationModelCode: GENERATION_MODEL/);
+    expect(block).toMatch(/promptVersion: PROMPT_VERSION/);
+    expect(block).toMatch(/inputTokens: generation\.inputTokens/);
+    expect(block).toMatch(/outputTokens: generation\.outputTokens/);
+  });
+
+  it('las dos ramas de rechazo y la de éxito usan generationMetadata', () => {
+    expect(block).toMatch(/error: validation\.reason, \.\.\.generationMetadata/);
+    expect(block).toMatch(/error: organismoValidation\.reason, \.\.\.generationMetadata/);
+    expect(block).toMatch(/\.\.\.generation\.parsed, \.\.\.generationMetadata/);
+  });
+
+  it('el rechazo sigue siendo indeterminado (no cambia lo que ve el ciudadano)', () => {
+    expect(block).toMatch(/estado: 'indeterminado', error: validation\.reason/);
+  });
+
+  it('la cita rechazada se guarda en el motivo, truncada', () => {
+    expect(source).toMatch(/MAX_REJECTED_CITA_CHARS = 300/);
+    expect(source).toMatch(/Cita del modelo: "\$\{truncateForReason\(cita\.cita_textual\)\}"/);
+  });
+});
