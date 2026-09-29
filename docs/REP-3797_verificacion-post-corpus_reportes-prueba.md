@@ -220,6 +220,38 @@ Script: `scripts/rag-local-dev/rep3797/context-embedding-experiment.mjs`. Solo l
 - **Mide recuperación, no generación.** Falta probar de punta a punta antes de adoptar.
 - **`k=8` recupera los mismos dos fragmentos sin regenerar vectores**, pero deja a 6.1.52 exactamente en el puesto 8 (el límite); con encabezado queda en el 4, con margen.
 
+## 3.10 Prueba de generación de punta a punta: 4 variantes × 8 casos × 3 corridas (29/09/2026)
+
+Script: `scripts/rag-local-dev/rep3797/generation-experiment.mjs` (96 generaciones; prompt, esquema y constantes leídos de `index.ts`; validador tolerante a espacios). Solo lectura sobre Supabase. Los vectores con encabezado se calcularon en memoria.
+
+| Caso | k=6 (hoy) | k=8 | k=6 sin canales | encabezado k=6 |
+|---|---|---|---|---|
+| **Auto mal estacionado** | indeterminado ×3 | **fundamentado ×3** | indeterminado ×3 | **fundamentado ×3** |
+| **Luz quemada** | indeterminado ×3 | indeterminado ×2, sin_normativa ×1 | **sin_normativa ×3** | indeterminado ×3 |
+| Basural (Avellaneda) | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 |
+| Camioneta en la vereda | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 |
+| **Choripanes (Avellaneda)** | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | **sin_normativa ×3 (citó esperado 0/3)** |
+| Auto abandonado (Avellaneda) | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 |
+| Vereda rota por raíces | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 |
+| Basura en la vereda (CABA) | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 | fundamentado ×3 |
+
+Tokens de entrada (promedio por caso, k=6 → k=8): p. ej. 1628 → 2073 en auto mal estacionado (+27 %); 1829 → 2092 en choripanes (+14 %).
+
+### Lo que quedó verificado
+1. **Auto mal estacionado:** el 6.1.52 llegando al modelo lo arregla (3/3 con `k=8` y con encabezado). Quitar canales **no** lo arregla: no era un problema de canales.
+2. **Luz quemada:** con los canales dentro del contexto el modelo devuelve `asistencia` (rechazado para infraestructura) en las tres corridas; **sin canales, con el mismo `k=6`, devuelve `sin_normativa` las tres veces.** Es un efecto causal medido: los canales inducen el `asistencia`.
+3. **Ninguna variante logra `fundamentado` en la luz.** Coincide con la recuperación: el art. 3 j no llega (puesto 22-24).
+4. **`k=8` no rompió ninguno de los otros 6 casos** (todos `fundamentado`, con citas esperadas) en esta muestra.
+
+### Lo que desmienten los datos
+- **El encabezado NO es seguro:** rompe choripanes (de `fundamentado` a `sin_normativa`, 3/3), aunque en la prueba de recuperación había mejorado (el LOM art. 27 inc. 1 entraba al top 6). **Que mejore la recuperación no garantizó una mejor respuesta**: es la razón para probar generación y no solo recuperación.
+- **"Sin canales" solo funciona si los canales se entregan por otro camino.** Como variante de prueba quita los canales del contexto; en producción el ciudadano se quedaría sin canal, lo que contradice el principio del PO. Requiere código (agregar el canal de forma determinística según categoría y jurisdicción).
+
+### Lo que NO está probado
+- La combinación `k=8` + sin canales (podría arreglar las dos regresiones; no se corrió).
+- Cómo se entregarían los canales por separado.
+- Que estos resultados se sostengan con casos fuera de estos 8 (posible sobreajuste; falta un conjunto independiente, idealmente del PO).
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
