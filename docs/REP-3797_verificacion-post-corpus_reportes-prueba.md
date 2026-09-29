@@ -301,6 +301,30 @@ Rama `fix/REP-3795-recuperar-8-fragmentos` (commit `b1878e2`, sobre el validador
 
 **Reportes de prueba en CiudadAR:** 77 creados desde las 00:12 UTC del 29/09 con el `user_id` de pruebas (a9420d51-…); el usuario acordó borrarlos al cerrar la revisión. Sin borrar todavía.
 
+## 3.13 Verificación del texto de los fragmentos más citados contra la fuente oficial (29/09/2026)
+
+Alcance: los **23 fragmentos vigentes que el sistema citó alguna vez** (de 120 vigentes). Son los que concentran el uso real; el resto no se verificó.
+
+**Método y su fuerza:**
+- **Ley 451 (5 fragmentos): comparación programática contra el texto crudo del PDF oficial** guardado en el repositorio (`ley_451_texto.txt`). Se quitaron solo artefactos del PDF (marcas `es-ES` y anotaciones de leyes modificatorias) y se comparó palabra por palabra. **Es la verificación más fuerte.**
+- **Resto (17 fragmentos): páginas oficiales leídas con WebFetch**, una herramienta que lee la página y responde con un modelo chico. Es una verificación **más débil**: dos lecturas de la misma cláusula pueden discrepar (ver el caso del art. 4 bis). Coincide con lo que Hernán verificó sobre texto crudo, pero no lo reemplaza.
+- La comparación fue programática (palabra por palabra), no a ojo. No es validación jurídica externa.
+
+| Resultado | Fragmentos |
+|---|---|
+| **Cuerpo idéntico al oficial** (19) | Ley 451: 6.1.37, 6.1.52, 6.1.54, 1.3.13, 4.1.2 · Ley 24.449: art. 48 i), 48 t) en sus dos trozos, 49 b.1, 49 b.7 · Ley 5902 art. 7 · DL 8751/77 art. 35 · Ley 13.592 art. 9 y art. 3 inc. 12 · Ley 11.723 art. 65 y 6 · Ley 210 art. 2 b) y 2 c) · Ley 1854 art. 36 |
+| **Con reparo** (3) | ver abajo |
+| **No verificable** (1) | canal de Avellaneda (no es una norma; información de contacto con fecha) |
+
+Notas sobre lo "idéntico": varios fragmentos anteponen el **título del artículo** («Eximición.-», «Arrojar residuos.», etc.) o el encabezado del artículo padre (art. 3 de la Ley 13.592); el cuerpo coincide palabra por palabra. En el 6.1.52 la única diferencia con el PDF es una palabra partida por la extracción del PDF («cie n»).
+
+**Reparos:**
+1. **Ley 24.449 art. 49 b.3** (citado 5 veces): el fragmento cargado es solo la primera oración; el texto oficial sigue con «Tampoco se admite la detención voluntaria. No obstante se puede autorizar, señal mediante, a estacionar en la parte externa de la vereda cuando su ancho sea mayor a 2,00 metros…». **Confirmado contra InfoLEG.** Corrección lista en el lote nuevo de Hernán (pendiente de aplicar).
+2. **DL 8751/77 art. 4 bis inc. c)** (citado 6 veces): el fragmento dice «productos **alimentarios**»; la página del decreto se leyó dos veces como «productos **alimenticios**», y la página de la Ley 11.723 (art. 78, que incorpora el 4 bis) como «alimentarios». Hernán transcribió «alimentarios». **Discrepancia sin resolver**: no se puede zanjar sin el HTML crudo. Es una palabra de un inciso que no es el que fundamenta habilitación comercial (el e), pero el fragmento entero se cita.
+3. **Ley 210 art. 3 inc. j)** (citado 1 vez): el fragmento es literal pero **omite la segunda oración** del inciso («El Ente dicta las normas internas de procedimiento del trámite administrativo»). No cambia el sentido de lo citado.
+
+Además, el **inciso t) del art. 48 de la Ley 24.449** está partido en dos fragmentos (`t.obstruccion` y `t.venta`), ambos trozos literales del mismo inciso.
+
 ## 4. Antes (REP-3795, corpus de 16 fragmentos)
 
 - VS-1/VS-2: `asistencia`, 0 citas, sin llamada a Gemini.
