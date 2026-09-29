@@ -16,6 +16,9 @@ const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', '
  * @param {string|null} [reportCategory]
  * @returns {{ valid: boolean, reason?: string }}
  */
+/** Espejo de index.ts: colapsa espacios en blanco; NO toca mayúsculas, tildes ni puntuación. */
+const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
+
 /** Tope de la cita del modelo dentro de status_reason (espejo de index.ts). */
 const MAX_REJECTED_CITA_CHARS = 300;
 const truncateForReason = (text) =>
@@ -60,7 +63,9 @@ export const validateLlmAnalysis = (llmResponse, retrievedFragments, reportCateg
     if (!fragment) {
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
-    if (!fragment.content.includes(cita.cita_textual)) {
+    const normalizedQuote = normalizeWhitespace(cita.cita_textual);
+    // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+    if (normalizedQuote === '' || !normalizeWhitespace(fragment.content).includes(normalizedQuote)) {
       // Espejo de supabase/functions/analizar-reporte/index.ts: se guarda lo que el modelo intentó citar.
       return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };
     }

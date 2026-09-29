@@ -287,6 +287,17 @@ const truncateForReason = (text: string): string =>
   text.length > MAX_REJECTED_CITA_CHARS ? `${text.slice(0, MAX_REJECTED_CITA_CHARS)}…` : text;
 
 /**
+ * Colapsa cualquier secuencia de espacios en blanco (espacios, tabs, saltos de línea)
+ * en un único espacio. La cita sigue teniendo que ser texto LITERAL del fragmento: solo
+ * se ignora en qué se separan las palabras, no cuáles son. El modelo suele unir con un
+ * espacio dos líneas que el fragmento separa con un salto de línea (caso basural, Ley
+ * 13.592 art. 9, 29/09/2026); rechazar eso como "no literal" era un falso positivo.
+ * No toca mayúsculas, tildes ni puntuación: una paráfrasis o una cita alterada se
+ * siguen rechazando.
+ */
+const normalizeWhitespace = (text: string): string => text.replace(/\s+/g, ' ').trim();
+
+/**
  * Validación determinística (docx §8, capa 6 — "la más importante: no depende
  * de que el LLM se porte bien"). Nunca confía en el LLM.
  */
@@ -334,7 +345,9 @@ export const validateLlmAnalysis = (
     if (!fragment) {
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
-    if (!fragment.content.includes(cita.cita_textual)) {
+    const normalizedQuote = normalizeWhitespace(cita.cita_textual);
+    // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+    if (normalizedQuote === '' || !normalizeWhitespace(fragment.content).includes(normalizedQuote)) {
       // Se guarda lo que el modelo intentó citar (status_reason): sin eso un rechazo no se
       // puede diagnosticar, p. ej. saber si difiere solo en saltos de línea o espacios.
       return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };

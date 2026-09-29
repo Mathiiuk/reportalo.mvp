@@ -67,6 +67,20 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
   });
 });
 
+describe('Validador: tolerancia a espacios en blanco (espejo en src/services/validateLlmAnalysis.js)', () => {
+  it('normalizeWhitespace solo colapsa espacios en blanco (no toca mayúsculas ni tildes)', () => {
+    expect(source).toMatch(/const normalizeWhitespace = \(text: string\): string => text\.replace\(\/\\s\+\/g, ' '\)\.trim\(\);/);
+  });
+
+  it('compara cita y fragmento normalizados y rechaza la cita vacía', () => {
+    expect(source).toMatch(/normalizedQuote === '' \|\| !normalizeWhitespace\(fragment\.content\)\.includes\(normalizedQuote\)/);
+  });
+
+  it('ya no usa el includes exacto sobre el contenido crudo', () => {
+    expect(source).not.toMatch(/fragment\.content\.includes\(cita\.cita_textual\)/);
+  });
+});
+
 describe('Observabilidad: un rechazo de la validación conserva lo que se generó', () => {
   const block = source.slice(
     source.indexOf('const generationMetadata = {'),
