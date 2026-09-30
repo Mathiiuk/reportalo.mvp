@@ -127,24 +127,43 @@ export const AppDesktopHeader = ({ activeTab = null, onReport, className = 'flex
 
 /**
  * Botón central «Reportar» de la barra de pestañas (teléfono): naranja, con ícono de cámara.
- * Abre la captura (/nuevo-reporte), donde se puede sacar la foto o subir una imagen de la galería.
+ * Abre la cámara al instante: es un <label> sobre un <input capture>, que el navegador abre dentro
+ * del toque del usuario (un click() programático después de navegar lo bloquea Safari en iPhone).
+ * Con la foto sacada se pasa a /nuevo-reporte, donde además se puede subir una imagen de la galería.
  * Reemplaza al botón flotante «Reportar» que había sobre el mapa.
  */
 const ReportTabButton = () => {
   const navigate = useNavigate();
+
+  const handleCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      navigate('/nuevo-reporte', { state: { initialCapturedFile: file } });
+    }
+    e.target.value = '';
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => navigate('/nuevo-reporte')}
+    <label
+      htmlFor="tab-report-camera-input"
       aria-label="Reportar"
       data-testid="tab-report-button"
-      className="rep-focus relative -mt-6 flex shrink-0 flex-col items-center gap-0.5 rounded-full border-0 bg-transparent px-2 transition-transform duration-120 active:scale-[0.96]"
+      className="rep-focus relative -mt-6 flex shrink-0 cursor-pointer flex-col items-center gap-0.5 rounded-full px-2 transition-transform duration-120 active:scale-[0.96]"
     >
       <span className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-rep-surface bg-[#E07C1A] text-white shadow-rep-float">
         <Camera aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
       </span>
       <span className="text-[10px] font-bold leading-none text-rep-ink-label">Reportar</span>
-    </button>
+      <input
+        id="tab-report-camera-input"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        className="hidden"
+        onChange={handleCapture}
+        data-testid="tab-report-camera-input"
+      />
+    </label>
   );
 };
 

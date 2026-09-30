@@ -151,7 +151,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(within(nav).getByRole('button', { name: /reportes/i })).toBeInTheDocument();
     // REP-3798: «Reportar» pasa al medio de la barra de pestañas (botón naranja con cámara);
     // ya no hay botón flotante sobre el mapa.
-    expect(within(nav).getByRole('button', { name: /^reportar$/i })).toBeInTheDocument();
+    expect(within(nav).getByTestId('tab-report-button')).toBeInTheDocument();
     expect(screen.queryByLabelText(/tomar foto y reportar/i)).not.toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /alertas/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
@@ -306,7 +306,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     });
   });
 
-  it('UT-MP-11: el botón naranja «Reportar» del medio de la barra abre /nuevo-reporte', () => {
+  it('UT-MP-11: el botón naranja «Reportar» del medio de la barra abre la cámara y, con la foto, va a /nuevo-reporte con el archivo inicial', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <Routes>
@@ -323,9 +323,11 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
       </MemoryRouter>
     );
 
-    // Ya no hay botón flotante sobre el mapa ni captura directa: el acceso es el botón de la barra
+    // Ya no hay botón flotante sobre el mapa: el acceso es el botón de la barra, que abre la cámara
     expect(screen.queryByTestId('direct-camera-trigger')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('tab-report-button'));
+    const cameraInput = screen.getByTestId('tab-report-camera-input');
+    const validFile = new File(['mock image binary'], 'foto_directa.jpg', { type: 'image/jpeg' });
+    fireEvent.change(cameraInput, { target: { files: [validFile] } });
 
     expect(screen.getByText('Pantalla Nuevo Reporte')).toBeInTheDocument();
   });
