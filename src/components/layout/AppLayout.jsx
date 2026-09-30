@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bell, Map as MapIcon, FileText, Camera, User, Megaphone, ImagePlus, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useUnreadNotifications } from '../../hooks/useUnreadNotifications';
 import { getUserInitials } from '../../utils/userUtils';
 import { THEME_TOGGLE_ENABLED, setThemePreference } from '../../lib/themePreference';
 
@@ -36,21 +37,29 @@ const ThemeToggle = ({ className = '' }) => {
 
 /**
  * Campana de notificaciones (UJ v3.3 · M08, D19 y D35). Lleva a /notificaciones (M18 / D19).
- * El contador sigue fijo hasta que se defina cómo viaja el dato de no leídas (H-40).
+ * El contador es el real (H-40): notificaciones sin leer de getMyNotifications. Sin pendientes no se dibuja.
  */
 export const NotificationsBell = ({ ariaLabel = 'Ver alertas y notificaciones', className = '' }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const unread = useUnreadNotifications(user?.id);
   return (
     <button
       type="button"
       onClick={() => navigate('/notificaciones')}
-      aria-label={ariaLabel}
+      aria-label={unread > 0 ? `${ariaLabel}, ${unread} sin leer` : ariaLabel}
       className={`rep-focus relative flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label transition-colors duration-120 hover:bg-rep-divider active:scale-[0.98] ${className}`}
     >
       <Bell aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
-      <span className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-rep-surface bg-rep-danger px-1 text-[10px] font-extrabold text-white">
-        2
-      </span>
+      {unread > 0 && (
+        <span
+          data-testid="notifications-badge"
+          aria-hidden="true"
+          className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-rep-surface bg-rep-danger px-1 text-[10px] font-extrabold text-white"
+        >
+          {unread > 9 ? '9+' : unread}
+        </span>
+      )}
     </button>
   );
 };

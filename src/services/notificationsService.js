@@ -26,9 +26,13 @@ const safeStorage = () => {
 
 export const getLastReadAt = () => safeStorage()?.getItem(READ_AT_KEY) || null;
 
+// Aviso interno para que el contador de la campana se actualice apenas se marcan como leídas
+export const NOTIFICATIONS_READ_EVENT = 'reportalo:notifications-read';
+
 export const markAllNotificationsRead = () => {
   const now = new Date().toISOString();
   safeStorage()?.setItem(READ_AT_KEY, now);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(NOTIFICATIONS_READ_EVENT));
   return now;
 };
 
