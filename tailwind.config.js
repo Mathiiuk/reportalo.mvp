@@ -14,22 +14,6 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
-      // UJ v3.3 §10 «Densidad y breakpoints». Faltaban desde el Bloque 0: sin estas tres
-      // entradas Tailwind no genera ninguna clase tablet:/desktop:/wide:, y las pantallas del
-      // recorrido del reporte (bloques 1-D a 4) se veían con el layout de teléfono en una PC.
-      // Van con nombre propio para no alterar sm/md/lg del código existente.
-      //   ≤ 640 px    teléfono (base, sin prefijo)
-      //   tablet:     641–1024 px, una columna ancha
-      //   desktop:    1025–1440 px, layout de los mockups D (dos columnas / panel lateral)
-      //   wide:       ≥ 1441 px, la columna de lectura no pasa de 720 px
-      // desktop: usa el mismo corte que DESKTOP_MEDIA_QUERY (src/hooks/useMediaQuery.js):
-      // lo que cambia por CSS y lo que cambia por JS se activan en el mismo ancho.
-      // Lo verifica src/test/TailwindBreakpointsUJ33.test.js.
-      screens: {
-        tablet: '641px',
-        desktop: '1025px',
-        wide: '1441px',
-      },
       colors: {
         // Paleta histórica del MVP (se conserva para no romper pantallas que todavía la usan).
         brand: {

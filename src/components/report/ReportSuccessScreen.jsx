@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Landmark, Ban, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Check, Landmark, Ban, ShieldCheck } from 'lucide-react';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 
@@ -22,10 +22,6 @@ const formatClock = (date) =>
  *
  * `consentVersion` / `consentAcceptedAt` (opcionales): la fila de constancia se muestra solo en el
  * envío que originó la aceptación de los términos (REP-3543).
- *
- * `desktopTopBar` (opcional): la barra superior global que D16 muestra sobre el acuse. La pasa
- * quien monta la pantalla (NewReportPage) para que este componente no dependa del router
- * (REP-3791 Bloque 11-B). Aparece con el resto del acuse, después de la tilde y el título.
  */
 export const ReportSuccessScreen = ({
   reportCode = '#RP-2048',
@@ -36,7 +32,6 @@ export const ReportSuccessScreen = ({
   onViewTerms,
   consentVersion = null,
   consentAcceptedAt = null,
-  desktopTopBar = null,
 }) => {
   const isDesktop = useIsDesktopLayout();
   const timeLabel = `Hoy ${formatClock(new Date())}`;
@@ -65,20 +60,13 @@ export const ReportSuccessScreen = ({
         }
       `}</style>
 
-      {/* D16: barra global de la app sobre el acuse (en D15 → D16 todavía no está) */}
-      {isDesktop && desktopTopBar && <div className="rep-success-fade flex-none">{desktopTopBar}</div>}
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {/* D16: la tarjeta queda centrada también en la altura (my-auto no la corta si no entra) */}
-        <div className="mx-auto flex w-full max-w-md flex-col px-4 pb-4 pt-[max(24px,env(safe-area-inset-top,24px))] desktop:my-auto desktop:max-w-[600px] desktop:px-0 desktop:py-12">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-md flex-col px-4 pb-4 pt-[max(24px,env(safe-area-inset-top,24px))] desktop:max-w-[600px] desktop:px-0 desktop:py-12">
           <div className="desktop:rounded-3xl desktop:border desktop:border-rep-border desktop:bg-rep-surface desktop:p-8 desktop:shadow-rep-float">
             {/* Tilde y título (heredan la transición desde M14 / D15) */}
             <div className="rep-success-rise flex flex-col items-center text-center desktop:flex-row desktop:items-center desktop:gap-4 desktop:text-left">
-              {/* M15: círculo verde lleno con la tilde blanca. D16: el mismo círculo, más chico, dentro de un recuadro suave. */}
-              <span className="rep-success-pop flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent desktop:rounded-2xl desktop:bg-rep-success-soft">
-                <span className="flex items-center justify-center desktop:h-7 desktop:w-7 desktop:rounded-full desktop:bg-rep-success">
-                  <Check aria-hidden="true" className="h-8 w-8 desktop:h-4 desktop:w-4" strokeWidth={3} />
-                </span>
+              <span className="rep-success-pop flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rep-success-soft text-rep-success desktop:rounded-2xl">
+                <CheckCircle2 aria-hidden="true" className="h-8 w-8" strokeWidth={2.25} />
               </span>
               <div className="mt-3 desktop:mt-0">
                 <h1 className="rep-success-ink m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">Reporte enviado</h1>

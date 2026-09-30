@@ -1,58 +1,33 @@
 import React from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useNoIndex } from '../hooks/useNoIndex';
-import { ArrowLeft, Unlink } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useIsDesktopLayout } from '../hooks/useMediaQuery';
-import { AppDesktopHeader, AppTabBar } from '../components/layout/AppLayout';
+import { ArrowLeft, Unlink, Map as MapIcon } from 'lucide-react';
 
-/**
- * 404 · reporte inexistente (UJ v3.3 · M30 teléfono / D36 escritorio).
- *
- * «Contenido inexistente, sesión intacta»: la ruta es válida y el reporte no. Con sesión se
- * conserva la navegación de la app (pestañas en el teléfono, barra global en escritorio). Sin
- * sesión (un enlace compartido que abre alguien sin cuenta) queda solo la cabecera con «volver».
- * REP-3791 Bloque 11-B: botón principal «Volver al inicio» y navegación, como pide el diseño.
- */
 export const NotFoundReportPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { session } = useAuth();
-  const isDesktop = useIsDesktopLayout();
-  const hasSession = Boolean(session);
-  useNoIndex();
-
+  
   // Use a default ID if none provided in params
   const displayId = id || 'RP-1907';
 
   return (
-    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-rep-bg font-manrope">
-      {isDesktop && hasSession ? (
-        // D36: barra global completa, con «Mapa» marcado
-        <AppDesktopHeader activeTab="mapa" />
-      ) : (
-        // M30: cabecera con «volver»
-        <div className="flex flex-none items-center gap-[9px] border-b border-rep-divider bg-rep-surface px-[14px] pb-3 pt-[max(16px,env(safe-area-inset-top,16px))]">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label="Volver"
-            className="rep-focus flex cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 transition-transform active:scale-95"
-          >
-            <ArrowLeft aria-hidden="true" className="h-[22px] w-[22px] text-rep-ink-label" strokeWidth={2.25} />
-          </button>
-          <span className="text-[16px] font-extrabold text-rep-ink">Reporte</span>
-        </div>
-      )}
+    <div className="w-full h-[100dvh] bg-rep-bg flex flex-col font-manrope overflow-hidden">
+      {/* Header */}
+      <div className="flex-none bg-rep-surface px-[14px] pt-[max(16px,env(safe-area-inset-top,16px))] pb-3 border-b border-rep-divider flex items-center gap-[9px]">
+        <button 
+          onClick={() => navigate(-1)}
+          className="bg-transparent border-none p-0 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+        >
+          <ArrowLeft className="w-[22px] h-[22px] text-[#5B6A7A]" strokeWidth={2.25} />
+        </button>
+        <span className="font-extrabold text-[16px] text-rep-ink">
+          Reporte
+        </span>
+      </div>
 
       {/* Content */}
-      <div
-        className={`flex flex-1 flex-col items-center justify-center overflow-y-auto bg-rep-bg px-[30px] text-center desktop:px-10 ${
-          hasSession ? 'pb-28 desktop:pb-10' : 'pb-10'
-        }`}
-      >
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-[30px] md:px-10 pb-10 bg-rep-bg">
         <div className="flex items-center justify-center">
-          <svg className="h-[112px] w-[164px] desktop:h-[134px] desktop:w-[196px]" viewBox="0 0 164 112" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <svg className="w-[164px] md:w-[196px] h-[112px] md:h-[134px]" viewBox="0 0 164 112" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="58" width="156" height="48" rx="7" fill="#cfd8e2"></rect>
             <path d="M4 88h156" stroke="#e8edf3" strokeWidth="4" strokeDasharray="14 12"></path>
             <path d="M60 66c11-5 29-6 38 0s11 17 0 21-33 4-42-3 -7-13 4-18Z" fill="#5c6a7a"></path>
@@ -66,40 +41,41 @@ export const NotFoundReportPage = () => {
             <rect x="22" y="62" width="17" height="6" fill="#fff" opacity=".85"></rect>
           </svg>
         </div>
-
-        <h1 className="m-0 mt-3 text-rep-title text-rep-ink desktop:mt-4 desktop:text-rep-title-d">Este reporte ya no está</h1>
-
-        <p className="m-0 mt-2 max-w-[430px] text-pretty text-rep-body text-rep-ink-muted desktop:text-rep-body-d">
+        
+        <div className="font-extrabold text-[17px] md:text-[22px] text-rep-ink mt-3 md:mt-4 tracking-[-0.2px] md:tracking-[-0.3px]">
+          Este reporte ya no está
+        </div>
+        
+        <div className="font-medium text-[12px] md:text-[13px] leading-[1.6] text-rep-ink-muted mt-[7px] md:mt-2 text-pretty md:max-w-[430px]">
           El enlace que abriste apunta a un reporte que se dio de baja o que nunca existió.
-        </p>
-
-        {/* La URL fallida tal cual, para que el usuario confirme que copió bien el enlace */}
-        <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-[12px] border border-rep-border bg-rep-surface px-3 py-2.5 text-left desktop:w-auto desktop:justify-start desktop:px-4">
-          <Unlink aria-hidden="true" className="h-4 w-4 flex-none text-rep-ink-faint" strokeWidth={2.25} />
-          <span className="truncate font-mono text-[11px] font-semibold leading-[1.35] text-rep-ink-muted desktop:text-[12px]">
+        </div>
+        
+        <div className="w-full md:w-auto mt-4 md:mt-3.5 bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[11px] px-3 md:px-3.5 py-2.5 md:py-2.5 flex items-center justify-center md:justify-start gap-2 text-left">
+          <Unlink className="w-[16px] h-[16px] text-rep-ink-faint flex-none" strokeWidth={2.25} />
+          <span className="font-semibold text-[9.5px] md:text-[11px] leading-[1.35] font-mono text-rep-ink-muted truncate">
             reportalo.ar/r/{displayId}
           </span>
         </div>
-
-        <div className="mt-5 flex flex-col items-center gap-3 desktop:flex-row desktop:gap-4">
-          <Link
-            to={hasSession ? '/mapa' : '/'}
-            className="rep-focus flex min-h-touch items-center justify-center rounded-[13px] bg-rep-accent px-6 text-rep-button text-rep-on-accent no-underline shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98]"
+        
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-3.5 mt-5 md:mt-[18px]">
+          <Link 
+            to="/mapa"
+            className="bg-rep-accent hover:bg-[#195CA8] active:scale-95 transition-all rounded-[13px] md:rounded-[11px] px-[22px] md:px-5 py-[12px] md:py-[11px] flex items-center justify-center gap-[7px] shadow-[0_8px_18px_rgba(30,111,203,0.28)] md:shadow-none no-underline"
           >
-            Volver al inicio
+            <MapIcon className="w-[18px] h-[18px] md:w-[17px] md:h-[17px] text-white" strokeWidth={2.25} />
+            <span className="font-extrabold text-[13px] md:text-[12.5px] text-white">
+              Ver el mapa de la zona
+            </span>
           </Link>
-
-          <Link
+          
+          <Link 
             to="/reportes"
-            className="rep-focus rounded text-rep-body font-bold text-rep-ink-muted no-underline transition-colors hover:text-rep-ink-label desktop:text-rep-body-d"
+            className="font-bold text-[12px] text-rep-ink-muted hover:text-[#5B6A7A] transition-colors bg-transparent border-none cursor-pointer no-underline"
           >
             Ir a mis reportes
           </Link>
         </div>
       </div>
-
-      {/* M30: «Conserva la barra de pestañas: es un error de contenido, no de sesión» */}
-      {hasSession && <AppTabBar activeTab="mapa" className="desktop:hidden" />}
     </div>
   );
 };

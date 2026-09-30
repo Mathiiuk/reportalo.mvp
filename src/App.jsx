@@ -43,15 +43,6 @@ if (readStoredSession()) {
   import('./pages/NewReportPage').catch(() => {});
 }
 
-// UJ v3.3 · D16 (REP-3791 Bloque 11-B): «Reportar» desde la barra global del acuse abre un
-// reporte nuevo sin salir de /nuevo-reporte. Esa navegación trae `restartKey` y la clave obliga
-// a montar NewReportPage de cero (estado y clientSideId nuevos). Sin restartKey la clave no
-// cambia, así que ninguna otra navegación reinicia el alta.
-const NewReportRoute = () => {
-  const location = useLocation();
-  return <NewReportPage key={location.state?.restartKey ?? 'nuevo-reporte'} />;
-};
-
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
@@ -207,7 +198,7 @@ export const AppRoutes = () => {
         path="/nuevo-reporte"
         element={
           <ProtectedRoute>
-            <NewReportRoute />
+            <NewReportPage />
           </ProtectedRoute>
         }
       />

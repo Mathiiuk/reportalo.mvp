@@ -4,13 +4,10 @@ import { LockKeyhole, Save, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getActiveDraftReport } from '../services/offlineStorageService';
 import { getSessionMarker, saveResumePath, getResumePath } from '../lib/sessionMarker';
-import { CityTexture } from '../components/common/CityTexture';
 
 /**
  * «Tu sesión venció» (UJ v3.3 · M23 — REP-3791 Bloque 4). Sin contraparte de escritorio en el UJ:
  * en pantallas anchas se muestra la misma tarjeta centrada.
- * Bloque 11-D: la tarjeta queda sobre el mapa atenuado, como en el diseño (la app se ve detrás,
- * no se fue a otra pantalla), y «Continuar con Google» pasa a ser la salida secundaria en texto.
  * Se llega desde ProtectedRoute cuando había una sesión y ya no está (la sesión venció, no se cerró).
  * Reingreso con los mismos dos métodos; al volver se retoma la pantalla donde estaba.
  */
@@ -48,17 +45,10 @@ export const SessionExpiredPage = () => {
   };
 
   return (
-    <div
-      data-testid="session-expired-page"
-      className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-rep-surface-sunken px-4 py-8 font-manrope"
-    >
-      {/* Mapa atenuado de fondo */}
-      <CityTexture className="absolute inset-0 h-full w-full text-rep-ink-muted" opacity={0.22} />
-      <div aria-hidden="true" className="absolute inset-0 bg-rep-ink/20" />
-
-      <div className="relative flex w-full max-w-sm flex-col rounded-3xl border border-rep-border bg-rep-surface p-6 text-left shadow-rep-float desktop:max-w-md desktop:p-10">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rep-accent-soft text-rep-accent">
-          <LockKeyhole aria-hidden="true" className="h-7 w-7" strokeWidth={2} />
+    <div data-testid="session-expired-page" className="flex min-h-[100dvh] w-full items-center justify-center bg-rep-bg px-4 py-8 font-manrope">
+      <div className="flex w-full max-w-md flex-col items-center text-center desktop:rounded-3xl desktop:border desktop:border-rep-border desktop:bg-rep-surface desktop:p-10 desktop:shadow-rep-float">
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rep-accent-soft text-rep-accent">
+          <LockKeyhole aria-hidden="true" className="h-8 w-8" strokeWidth={2} />
         </span>
         <h1 className="m-0 mt-5 text-rep-title text-rep-ink desktop:text-rep-title-d">Tu sesión venció</h1>
         <p className="m-0 mt-2 text-rep-body text-rep-ink-body desktop:text-rep-body-d">
@@ -81,12 +71,12 @@ export const SessionExpiredPage = () => {
           <Mail aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
           {isSending ? 'Enviando…' : 'Enviarme un enlace'}
         </button>
-        {email && <span className="mt-1.5 text-center text-rep-label text-rep-ink-muted">a {email}</span>}
+        {email && <span className="mt-1.5 text-rep-label text-rep-ink-muted">a {email}</span>}
 
         <button
           type="button"
           onClick={() => signInWithGoogle()}
-          className="rep-focus mt-2 min-h-touch w-full rounded-xl text-rep-body font-bold text-rep-ink-muted transition-colors duration-120 hover:text-rep-ink-label desktop:text-rep-body-d"
+          className="rep-focus mt-3 flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-rep-border bg-rep-surface px-4 text-rep-button text-rep-ink transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.98] dark:hover:brightness-[1.06]"
         >
           Continuar con Google
         </button>

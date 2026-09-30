@@ -130,11 +130,8 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getAllByRole('link', { name: /reportalo/i })[0]).toBeInTheDocument();
-    const bell = screen.getByRole('button', { name: /ver alertas y notificaciones/i });
-    expect(bell).toBeInTheDocument();
-    // REP-3791 Bloque 11-B: la barra de escritorio también tiene campana (D19), así que el badge
-    // se busca dentro de la campana del teléfono en lugar de en toda la pantalla.
-    expect(within(bell).getByText('2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ver alertas y notificaciones/i })).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón flotante de reportar', () => {
