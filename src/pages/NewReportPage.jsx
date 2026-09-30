@@ -286,6 +286,13 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     // manual es el ref, que no dispara renders.
   }, [isLocationGranted, coordinates]);
 
+  // REP-3801: con conexión se guarda la lista de localidades en el teléfono, para que el selector
+  // también funcione si la señal se corta más adelante en el flujo. Antes solo se guardaba si había GPS.
+  useEffect(() => {
+    if (!isOnline) return;
+    getSelectableLocalities().catch(() => {});
+  }, [isOnline]);
+
   const activeCoords = customLocation?.coordinates || coordinates;
   const activeAddressLabel = customLocation?.localityLabel || getFriendlyLocationLabel(coordinates);
 
@@ -373,6 +380,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   // Deja el reporte en la cola de pendientes (PENDING_SYNC) y vuelve al mapa. Se usa sin conexión
   // y también cuando hay señal pero no alcanza para enviar: PendingSyncManager lo envía solo después.
   const saveForLaterAndExit = async () => {
+    // REP-3801: sin localidad confirmada el reporte queda guardado pero NO se envía solo; falta completarla
+    const missingLocation = !customLocation?.localityId;
     try {
       await markDraftPendingSync(clientSideId);
     } catch (err) {
@@ -384,7 +393,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     window.dispatchEvent(new Event(PENDING_QUEUED_EVENT));
     // Mensaje coloquial informando que se guardó y enviará solo
     toast.success('Reporte guardado con éxito', {
-      description: 'Se enviará automáticamente apenas recuperes señal.',
+      description: missingLocation
+        ? 'Cuando vuelva la señal, completá la ubicación en Pendientes para enviarlo.'
+        : 'Se enviará automáticamente apenas recuperes señal.',
       // UJ v3.3 · M20: acceso a la cola de pendientes de envío
       action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
     });

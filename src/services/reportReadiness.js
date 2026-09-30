@@ -11,6 +11,9 @@ import { validateDescription } from './reportDescription';
  * @param {object|null} [params.selectedCategory] Categoría elegida
  * @param {string} [params.description] Descripción escrita
  * @param {boolean} [params.hasConfirmedLocality] Si el ciudadano confirmó la localidad
+ * @param {boolean} [params.requireLocation] false sin conexión (REP-3801): el borrador se puede guardar sin
+ *   localidad, porque el selector no siempre puede cargarse sin red. La ubicación se completa desde Pendientes
+ *   y el envío definitivo sigue exigiéndola (getDraftProblems).
  * @returns {{ ready: boolean, missing: Array<{ key: string, label: string }> }}
  */
 export const getSubmissionReadiness = ({
@@ -18,6 +21,7 @@ export const getSubmissionReadiness = ({
   selectedCategory = null,
   description = '',
   hasConfirmedLocality = false,
+  requireLocation = true,
 } = {}) => {
   const missing = [];
 
@@ -31,7 +35,7 @@ export const getSubmissionReadiness = ({
   if (!descriptionCheck.valid) {
     missing.push({ key: 'description', label: descriptionCheck.error });
   }
-  if (!hasConfirmedLocality) {
+  if (requireLocation && !hasConfirmedLocality) {
     missing.push({ key: 'location', label: 'Confirmá la ubicación del reporte.' });
   }
 
