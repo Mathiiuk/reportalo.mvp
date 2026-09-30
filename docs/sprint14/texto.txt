@@ -1,0 +1,23 @@
+Sí, hay información que choca entre tareas, y el RAG no responde «por fuera» de las leyes. Hace lo que se diseñó, pero con una biblioteca de 16 artículos armada para 6 casos de prueba. Solo 15 de 42 reportes (36 %) reciben un fundamento.
+
+Los 8 puntos rotos:
+
+La biblioteca nunca se amplió. REP-3774 terminó la herramienta de carga, pero no cargó ninguna ley nueva. La Ordenanza 27235 de Avellaneda está en el repo y nunca se subió a la base.
+En CABA la app esconde la ley citada. Es la regla de «no mostrar sanciones» (REP-3789), y en CABA casi todo lo que se cita es la Ley 451, que tiene multas. Por eso parece que la IA responde «por fuera». En Avellaneda la ley sí se ve.
+CABA solo tiene leyes de «quién controla», no de qué está prohibido u obligatorio. Por eso un bache en CABA da «Sin normativa» y en Avellaneda da fundamento.
+Vulnerabilidad social: la guía de REP-3769 dice que devuelve «asistencia», pero en los 4 casos devolvió «Sin normativa». Es una contradicción directa entre tareas.
+«Auto mal estacionado» cambia de resultado con el mismo texto, y da «No concluyente» aunque hay una ley que lo cubre.
+Una categoría mal elegida deja a la IA sin leyes, por el filtro que agregó REP-2908-VERIF (V-09).
+El «organismo competente» no aparece nunca (0 de 42 análisis).
+Se midió otra cosa. Las pruebas validaban que se encontrara el artículo, no que el vecino recibiera una respuesta útil. REP-2910 se cerró sin la corrida completa, que quedó en REP-3784, todavía sin empezar.
+
+Qué más trae el documento:
+
+Tabla de resultados por zona y categoría.
+Comparación de los mismos textos en CABA y en Avellaneda.
+Qué leyes tiene cargadas cada zona.
+Tabla de contradicciones entre tareas.
+Lo que se revisó y no está roto: circuito técnico, jurisdicción, citas y ramas sin integrar.
+Línea de tiempo del Sprint 11 al 14.
+Plan de arreglo con responsables y 4 decisiones para el PO y el PM.
+Anexo con los reportes de los últimos 7 días.
