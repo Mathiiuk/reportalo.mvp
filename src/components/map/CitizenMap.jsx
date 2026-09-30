@@ -22,7 +22,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCategoryTone } from '../report/categoryTone';
 import { getStatusConfig, normalizeReportState } from '../report/reportStatus';
-import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 
 // Estados del §10 que pueden aparecer en el mapa. «borrador» no entra: el borrador vive
 // en el dispositivo y nunca llega a la base.
@@ -108,7 +107,6 @@ export const CitizenMap = ({
   reports = [],
   isLoadingReports = false,
 }) => {
-  const isDesktop = useIsDesktopLayout();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -370,15 +368,6 @@ export const CitizenMap = ({
     }
   }, [filteredReports, mapLoaded, selectedReport, userLocation, updateUserMarker]);
 
-  // Resumen de lo que se ve en el mapa (M08 / D09), calculado sobre los reportes mostrados
-  const categorySummary = Object.entries(
-    filteredReports.reduce((acc, report) => {
-      const key = report.category || 'Sin categoría';
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {})
-  );
-
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-rep-surface-sunken">
       {/* Map Container */}
@@ -477,65 +466,42 @@ export const CitizenMap = ({
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-4 left-4 right-18 z-20 max-w-[420px]"
+              // Deja libre la columna de botones de la derecha (filtros y ubicación: 48 px + márgenes):
+              // antes usaba una clase de espaciado que Tailwind no define y el aviso quedaba detrás de los filtros.
+              className="absolute left-4 right-[76px] top-4 z-20 max-w-[420px] desktop:right-[152px]"
             >
-              <div className="flex items-center justify-between gap-2.5 rounded-2xl border border-rep-border bg-rep-surface/95 p-3 shadow-rep-float backdrop-blur-md sm:px-4">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rep-warning" />
+              <div
+                role="status"
+                data-testid="location-banner"
+                className="flex flex-col gap-2 rounded-2xl border border-rep-border bg-rep-surface/95 p-3 shadow-rep-float backdrop-blur-md"
+              >
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-warning" />
                   <div className="min-w-0 text-left">
-                    <div className="truncate text-rep-label font-bold text-rep-ink">
-                      Ubicación desactivada
-                    </div>
-                    <div className="truncate text-rep-label text-rep-ink-muted">
-                      Mostrando CABA y Avellaneda por defecto
-                    </div>
+                    <div className="text-rep-label font-bold text-rep-ink">Ubicación desactivada</div>
+                    <div className="text-rep-label text-rep-ink-muted">Mostrando CABA y Avellaneda por defecto</div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => detectUserLocation(true)}
-                    className="rep-focus flex min-h-touch items-center gap-1 rounded-lg border-0 bg-rep-accent-soft px-2.5 py-1 text-rep-label font-extrabold text-rep-accent transition-colors duration-120"
-                  >
-                    <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
-                    <span>Activar</span>
-                  </button>
                   <button
                     type="button"
                     onClick={() => setShowLocationBanner(false)}
                     aria-label="Cerrar aviso de ubicación"
-                    className="rep-focus flex h-8 w-8 items-center justify-center rounded-md border-0 bg-transparent text-rep-ink-faint transition-colors duration-120 hover:text-rep-ink-label"
+                    className="rep-focus -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-0 bg-transparent text-rep-ink-faint transition-colors duration-120 hover:text-rep-ink-label"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => detectUserLocation(true)}
+                  className="rep-focus flex min-h-touch w-full items-center justify-center gap-1.5 rounded-xl border-0 bg-rep-accent-soft px-3 py-1 text-rep-label font-extrabold text-rep-accent transition-colors duration-120"
+                >
+                  <RefreshCw aria-hidden="true" className={`h-3 w-3 ${isLocating ? 'animate-spin' : ''}`} />
+                  <span>Activar ubicación</span>
+                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Resumen de lo que se ve en el mapa (M08 · D09) */}
-        <div
-          className={`absolute left-4 z-20 w-[150px] rounded-2xl border border-rep-border bg-rep-surface/95 px-3.5 py-3 shadow-rep-float backdrop-blur-md desktop:w-[220px] ${
-            showLocationBanner ? 'top-[92px] desktop:top-[84px]' : 'top-4'
-          }`}
-        >
-          <div className="text-[26px] font-extrabold leading-none text-rep-ink">{filteredReports.length}</div>
-          <div className="mt-1 text-[10px] font-extrabold uppercase tracking-wider text-rep-ink-muted">Reportes visibles</div>
-          {/* El desglose por categoría entra en la tarjeta, sin abrir otra pantalla (D09) */}
-          {isDesktop && categorySummary.length > 0 && (
-            <ul className="m-0 mt-2.5 flex list-none flex-col gap-1 border-t border-rep-divider p-0 pt-2.5">
-              {categorySummary.map(([category, total]) => (
-                <li key={category} className="flex items-center gap-2 text-rep-label">
-                  <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: getCategoryTone({ name: category }).base }} />
-                  <span className="min-w-0 flex-1 truncate font-semibold text-rep-ink-label">{category}</span>
-                  <span className="font-extrabold text-rep-ink">{total}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
 
         {/* Botón Flotante de Filtros (Top Right) */}
         <button
