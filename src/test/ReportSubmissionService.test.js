@@ -65,10 +65,11 @@ describe('REP-2500: createCitizenReport', () => {
         client_side_id: 'csid-1',
         user_id: 'user-1',
         locality_id: 'locality-1',
-        current_state_code: 'RECIBIDO',
       }),
       expect.objectContaining({ onConflict: 'client_side_id' })
     );
+    // El estado no viaja: al insertar la base usa RECIBIDO y un reintento no pisa el estado ya avanzado
+    expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty('current_state_code');
   });
 
   it('rechaza si faltan datos obligatorios, sin llamar a Supabase', async () => {

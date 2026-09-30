@@ -120,7 +120,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     signOut: vi.fn(),
   };
 
-  it('UT-MP-01: Renderiza el Header de AppLayout con logo, título y campana de notificaciones con badge', () => {
+  it('UT-MP-01: Renderiza el Header de AppLayout con logo, título y campana de notificaciones (sin contador inventado)', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -132,9 +132,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     expect(screen.getAllByRole('link', { name: /reportalo/i })[0]).toBeInTheDocument();
     const bell = screen.getByRole('button', { name: /ver alertas y notificaciones/i });
     expect(bell).toBeInTheDocument();
-    // REP-3791 Bloque 11-B: la barra de escritorio también tiene campana (D19), así que el badge
-    // se busca dentro de la campana del teléfono en lugar de en toda la pantalla.
-    expect(within(bell).getByText('2')).toBeInTheDocument();
+    // REP-3798 (H-40): el contador es el real. Sin sesión no hay notificaciones y el badge no se dibuja
+    // (antes mostraba un «2» fijo). El conteo con datos se prueba en Rep3798ContadorNotificaciones.
+    expect(within(bell).queryByTestId('notifications-badge')).not.toBeInTheDocument();
   });
 
   it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón «Reportar» en el medio', () => {

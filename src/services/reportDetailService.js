@@ -87,6 +87,24 @@ export const isOwnedBy = (report, userId) => {
 };
 
 /**
+ * Estado actual de un reporte: una sola fila por id, barata para sondear (REP-3798, estados en vivo).
+ * citizen_reports es de lectura pública, así que sirve también para quien mira un reporte ajeno.
+ *
+ * @param {string} reportId UUID de citizen_reports.id
+ * @returns {Promise<{ snapshot: { current_state_code: string, updated_at: string }|null, error?: string }>}
+ */
+export const getReportStateSnapshot = async (reportId) => {
+  if (!isSupabaseConfigured || !reportId) return { snapshot: null, error: 'Falta el reporte.' };
+  const { data, error } = await supabase
+    .from('citizen_reports')
+    .select('current_state_code, updated_at')
+    .eq('id', reportId)
+    .maybeSingle();
+  if (error) return { snapshot: null, error: error.message };
+  return { snapshot: data ?? null };
+};
+
+/**
  * Historial de estados del reporte, base de la línea de tiempo (REP-3789).
  * Protegido por la policy `read own or attended` de report_state_history: solo
  * lo ve el dueño del reporte o quien lo atiende.

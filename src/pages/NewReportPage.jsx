@@ -747,6 +747,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             className="w-full flex-1 min-h-0 flex flex-col overflow-hidden"
           >
             <ReportSuccessScreen
+              reportId={persistedReport?.id || null}
               reportCode={persistedReport?.reportCode || '#RP-2048'}
               category={selectedCategory}
               agencyName={determinedAgency}

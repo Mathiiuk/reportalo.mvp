@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Landmark, Ban, ShieldCheck } from 'lucide-react';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
+import { useReportStateLive } from '../../hooks/useReportStateLive';
+import { normalizeReportState } from './reportStatus';
+
+// El acuse se entera más rápido que el detalle: el paso a «En revisión» ocurre a los pocos segundos del envío
+const SUCCESS_POLL_INTERVAL_MS = 5000;
 
 // Tracker alineado a la base (UJ v3.3 §10 «Taxonomía de estados»): un paso por estado real
 const TRACKER_STEPS = [
@@ -23,11 +28,15 @@ const formatClock = (date) =>
  * `consentVersion` / `consentAcceptedAt` (opcionales): la fila de constancia se muestra solo en el
  * envío que originó la aceptación de los términos (REP-3543).
  *
+ * `reportId` (opcional): el id del reporte recién creado. Con él, el tracker avanza solo cuando el estado
+ * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Enviado» a «En revisión» (REP-3798).
+ *
  * `desktopTopBar` (opcional): la barra superior global que D16 muestra sobre el acuse. La pasa
  * quien monta la pantalla (NewReportPage) para que este componente no dependa del router
  * (REP-3791 Bloque 11-B). Aparece con el resto del acuse, después de la tilde y el título.
  */
 export const ReportSuccessScreen = ({
+  reportId = null,
   reportCode = '#RP-2048',
   category,
   agencyName = 'Municipio de Avellaneda',
@@ -39,6 +48,17 @@ export const ReportSuccessScreen = ({
   desktopTopBar = null,
 }) => {
   const isDesktop = useIsDesktopLayout();
+  // Estado en vivo: arranca en Enviado y avanza cuando la base lo cambia
+  const [stateCode, setStateCode] = useState('RECIBIDO');
+  useReportStateLive({
+    reportId,
+    stateCode,
+    isOwner: true,
+    intervalMs: SUCCESS_POLL_INTERVAL_MS,
+    onUpdate: ({ stateCode: next }) => setStateCode(next),
+  });
+  // Pasos alcanzados: hasta el estado actual (un cierre como Descartado deja el tracker donde estaba)
+  const reachedIndex = Math.max(0, TRACKER_STEPS.findIndex((step) => step.key === normalizeReportState(stateCode)));
   const timeLabel = `Hoy ${formatClock(new Date())}`;
   const categoryName = (category?.name || 'Tránsito').toUpperCase();
   const tone = getCategoryTone(category || { id: 'transito' });
@@ -110,19 +130,22 @@ export const ReportSuccessScreen = ({
               <section aria-label="Estado del reporte" className="rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:border-0 desktop:px-0 desktop:shadow-none">
                 <ol className="relative m-0 flex list-none flex-col gap-3 p-0 desktop:flex-row desktop:items-start desktop:gap-0">
                   {TRACKER_STEPS.map((step, index) => {
-                    const isDone = index === 0;
+                    const isDone = index <= reachedIndex;
+                    const isCurrent = index === reachedIndex;
                     return (
                       <React.Fragment key={step.key}>
                         {index > 0 && (
                           <li
                             aria-hidden="true"
                             className={`hidden desktop:mt-[11px] desktop:block desktop:h-[2px] desktop:flex-1 desktop:rounded-full ${
-                              index === 1 ? 'bg-rep-success/60' : 'bg-rep-track'
+                              index <= reachedIndex ? 'bg-rep-success/60' : 'bg-rep-track'
                             }`}
                           />
                         )}
                         <li
-                          aria-current={isDone ? 'step' : undefined}
+                          aria-current={isCurrent ? 'step' : undefined}
+                          data-testid={`tracker-step-${step.key}`}
+                          data-done={String(isDone)}
                           className="flex items-start gap-3 desktop:w-[112px] desktop:flex-col desktop:items-center desktop:gap-1.5 desktop:text-center"
                         >
                           {isDone ? (
@@ -136,7 +159,7 @@ export const ReportSuccessScreen = ({
                             <span className={`text-rep-body desktop:text-rep-label-d ${isDone ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}>
                               {step.label}
                             </span>
-                            {isDone && <span className="text-rep-label font-medium text-rep-ink-muted">{timeLabel}</span>}
+                            {index === 0 && <span className="text-rep-label font-medium text-rep-ink-muted">{timeLabel}</span>}
                           </span>
                         </li>
                       </React.Fragment>

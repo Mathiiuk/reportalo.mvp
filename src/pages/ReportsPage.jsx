@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
 import { ImagePlus, CloudOff, ChevronRight, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
+import { refreshUnreadCount } from '../hooks/useUnreadNotifications';
 import { isClosedState, formatReportCode, formatListDate } from '../components/report/reportStatus';
 import { StatusPill } from '../components/report/StatusPill';
 import { EmptyState } from '../components/common/EmptyState';
@@ -18,6 +19,9 @@ import { getAllPendingSyncReports } from '../services/offlineStorageService';
 // pasado antes en este archivo.
 const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
+
+// Cada cuánto se vuelve a pedir la lista mientras haya reportes abiertos (estados en vivo, REP-3798)
+export const REPORTS_POLL_INTERVAL_MS = 20000;
 
 // Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500).
 // UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila muestra el número («#RP-2048»), debajo la
@@ -77,6 +81,46 @@ export const ReportsPage = () => {
       isMounted = false;
     };
   }, [user?.id]);
+
+  // Estados en vivo (REP-3798): los cambia quien atiende el reporte, así que la lista se vuelve a pedir sola
+  // mientras haya reportes abiertos y la pestaña esté visible. Si algo cambió, se refresca también la campana.
+  const myReportsRef = useRef(myReports);
+  myReportsRef.current = myReports;
+  const hasOpenReports = myReports.some((r) => !isClosedState(r.stateCode));
+
+  useEffect(() => {
+    if (!user?.id || !hasOpenReports) return undefined;
+    let isMounted = true;
+
+    const refresh = async () => {
+      try {
+        const result = await getMyReports(user.id);
+        if (!isMounted || !result.success) return;
+        const next = result.reports.map(mapReportRow);
+        const before = new Map(myReportsRef.current.map((r) => [r.id, r.stateCode]));
+        const changed = next.some((r) => before.has(r.id) && before.get(r.id) !== r.stateCode);
+        if (changed) {
+          setMyReports(next);
+          refreshUnreadCount(user.id, { force: true });
+        }
+      } catch {
+        // Sin red: se reintenta en el próximo ciclo
+      }
+    };
+
+    const timer = setInterval(() => {
+      if (document.visibilityState !== 'hidden') refresh();
+    }, REPORTS_POLL_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user?.id, hasOpenReports]);
 
   const currentReports = myReports;
 
