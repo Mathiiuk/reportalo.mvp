@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNoIndex } from '../hooks/useNoIndex';
 import { AlertCircle } from 'lucide-react';
 
 export const NotFoundPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  useNoIndex();
 
   return (
     <div className="w-full h-[100dvh] bg-rep-surface flex flex-col font-manrope overflow-hidden">

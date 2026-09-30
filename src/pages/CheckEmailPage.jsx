@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, MailCheck, Clock, Info, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MailCheck, Clock, Info } from 'lucide-react';
+import { useIsDesktopLayout } from '../hooks/useMediaQuery';
+import { BrandBar } from '../components/layout/BrandBar';
 
 export const CheckEmailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signInWithMagicLink } = useAuth();
+  // D03 (UJ v3.3, REP-3791 Bloque 11-C): en escritorio, tarjeta centrada y la línea cambia a
+  // «Abrilo en esta misma computadora»; sin columna lateral.
+  const isDesktop = useIsDesktopLayout();
 
   // Obtener el email dinámicamente desde el estado de navegación o query params
   const emailParam = new URLSearchParams(location.search).get('email');
@@ -74,44 +79,17 @@ export const CheckEmailPage = () => {
   const formattedTime = `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`;
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-bg md:bg-white">
-      
-      {/* Navbar desktop (>= md) */}
-      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
-        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
-          <img
-            src="/logo-icon.webp"
-            alt="Reportalo"
-            className="w-[20px] h-[26px] object-contain"
-          />
-          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
-            Reportalo
-          </span>
-          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
-            CIUDADANOS
-          </span>
-        </Link>
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-bg">
+      {isDesktop && <BrandBar />}
 
-        <div className="ml-auto flex items-center gap-4">
-          <button
-            onClick={handleGoBack}
-            type="button"
-            className="flex items-center gap-1.5 font-bold text-[13px] text-rep-ink-label hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
-          >
-            <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
-            Volver a opciones de acceso
-          </button>
-        </div>
-      </header>
-
-      {/* Contenedor principal responsive */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[100dvh] md:min-h-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-[100dvh] desktop:min-h-0">
         
         {/* Columna Principal / Vista 'Revisá tu correo' */}
-        <main className="flex-1 flex flex-col px-6 md:px-12 lg:px-16 pt-[max(env(safe-area-inset-top),12px)] md:pt-10 pb-[max(env(safe-area-inset-bottom),16px)] md:pb-10 justify-between md:justify-center md:items-center">
+        <main className="flex-1 flex flex-col px-6 pt-[max(env(safe-area-inset-top),12px)] pb-[max(env(safe-area-inset-bottom),16px)] justify-between desktop:justify-center desktop:items-center desktop:px-10 desktop:py-12">
           
-          {/* Botón de retroceso en móvil (< md) */}
-          <div className="w-full max-w-[420px] mx-auto md:hidden">
+          {/* Botón de retroceso: solo en el teléfono (M03) */}
+          {!isDesktop && (
+          <div className="w-full max-w-[420px] mx-auto">
             <button
               onClick={handleGoBack}
               type="button"
@@ -121,13 +99,14 @@ export const CheckEmailPage = () => {
               <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
             </button>
           </div>
+          )}
 
           {/* Tarjeta central de confirmación con animación */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="w-full max-w-[340px] md:max-w-[420px] mx-auto flex flex-col items-center justify-center text-center my-auto pb-4"
+            className="w-full max-w-[340px] mx-auto flex flex-col items-center justify-center text-center my-auto pb-4 desktop:my-0 desktop:max-w-[400px] desktop:rounded-3xl desktop:border desktop:border-rep-border desktop:bg-rep-surface desktop:p-8 desktop:shadow-rep-float"
           >
             {/* Icono central de buzón / email enviado */}
             <div className="w-[82px] h-[82px] rounded-[26px] bg-rep-accent-soft flex items-center justify-center mb-[22px] shadow-sm">
@@ -135,20 +114,22 @@ export const CheckEmailPage = () => {
             </div>
 
             {/* Título */}
-            <h1 className="font-extrabold text-[22px] md:text-[28px] text-rep-ink tracking-[-0.4px] leading-tight m-0">
+            <h1 className="font-extrabold text-[22px] desktop:text-[24px] text-rep-ink tracking-[-0.4px] leading-tight m-0">
               Revisá tu correo
             </h1>
 
             {/* Bajada con email en tiempo real */}
-            <p className="font-medium text-[13px] md:text-[14px] leading-[1.55] text-rep-ink-muted mt-2 mb-0">
+            <p className="font-medium text-[13px] desktop:text-[14px] leading-[1.55] text-rep-ink-muted mt-2 mb-0">
               Te enviamos un enlace de acceso a
             </p>
-            <div className="font-extrabold text-[13.5px] md:text-[15px] text-rep-accent mt-[3px] break-all max-w-[300px]">
+            <div className="font-extrabold text-[13.5px] desktop:text-[15px] text-rep-accent mt-[3px] break-all max-w-[300px]">
               {userEmail}
             </div>
 
-            <p className="font-medium text-[12.5px] md:text-[13px] leading-[1.5] text-rep-ink-muted mt-3.5 max-w-[230px] md:max-w-[280px]">
-              Tocá el enlace desde este teléfono y entrás directo.
+            <p className="font-medium text-[12.5px] desktop:text-[13px] leading-[1.5] text-rep-ink-muted mt-3.5 max-w-[230px] desktop:max-w-[280px]">
+              {isDesktop
+                ? 'Abrilo en esta misma computadora y entrás directo.'
+                : 'Tocá el enlace desde este teléfono y entrás directo.'}
             </p>
 
             {/* Botón: Abrir mi correo */}
@@ -182,86 +163,30 @@ export const CheckEmailPage = () => {
                 </button>
               )}
             </div>
+
+            {/* D03: el vencimiento del enlace va dentro de la tarjeta */}
+            {isDesktop && (
+              <div className="mt-4 flex w-full items-start gap-2 rounded-[12px] bg-rep-surface-sunken p-[11px_12px] text-left">
+                <Info className="mt-[1px] h-[17px] w-[17px] flex-shrink-0 text-rep-ink-muted" strokeWidth={2.25} />
+                <span className="text-[12px] font-medium leading-[1.45] text-rep-ink-muted">
+                  El enlace vence en 15 minutos y sirve una sola vez.
+                </span>
+              </div>
+            )}
           </motion.div>
 
-          {/* Tarjeta inferior informativa: Vencimiento en 15 min */}
-          <div className="w-full max-w-[340px] md:max-w-[420px] mx-auto mb-2 flex items-start gap-2 bg-rep-surface border border-rep-border rounded-[12px] p-[11px_12px] shadow-sm text-left">
+          {/* Tarjeta inferior informativa: Vencimiento en 15 min (M03) */}
+          {!isDesktop && (
+          <div className="w-full max-w-[340px] mx-auto mb-2 flex items-start gap-2 bg-rep-surface border border-rep-border rounded-[12px] p-[11px_12px] shadow-sm text-left">
             <Info className="w-[17px] h-[17px] text-rep-ink-muted flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
             <span className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted">
               El enlace vence en 15 minutos y sirve una sola vez.
             </span>
           </div>
+          )}
 
         </main>
 
-        {/* Sidebar desktop (>= md) armonizada con el resto de la app */}
-        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
-          <div>
-            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
-              Cómo ingresar con Magic Link
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <motion.div
-                whileHover={{ y: -2 }}
-                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
-              >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
-                  1
-                </span>
-                <div>
-                  <div className="font-bold text-[13px] text-rep-ink">
-                    Revisá tu bandeja de entrada
-                  </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
-                    Buscá el correo enviado por Reportalo (si no lo ves, chequeá la carpeta de Spam).
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ y: -2 }}
-                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
-              >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
-                  2
-                </span>
-                <div>
-                  <div className="font-bold text-[13px] text-rep-ink">
-                    Hacé clic en el enlace
-                  </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
-                    El botón dentro del email te redirigirá de manera segura a la plataforma.
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ y: -2 }}
-                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
-              >
-                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
-                  3
-                </span>
-                <div>
-                  <div className="font-bold text-[13px] text-rep-ink">
-                    Acceso instantáneo y seguro
-                  </div>
-                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
-                    Tu sesión quedará iniciada automáticamente sin contraseñas.
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
-            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
-            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
-              Tu identidad se mantiene resguardada ante el municipio al reportar.
-            </span>
-          </div>
-        </aside>
 
       </div>
 

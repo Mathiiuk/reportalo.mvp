@@ -65,21 +65,21 @@ export const NotificationsPage = () => {
 
   return (
     <AppLayout activeTab="alertas">
-      <div className="flex-1 overflow-y-auto bg-rep-bg pb-28 md:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg pb-28 desktop:pb-10">
         <div className="mx-auto w-full max-w-lg px-4 pt-3 md:max-w-3xl md:px-10 md:pt-8">
           <header className="flex items-center gap-1 pb-3">
             <button
               type="button"
               onClick={() => navigate(-1)}
               aria-label="Volver"
-              className="rep-focus -ml-2 flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label hover:bg-rep-divider md:hidden"
+              className="rep-focus -ml-2 flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink-label hover:bg-rep-divider desktop:hidden"
             >
               <ArrowLeft aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
             </button>
             <div className="flex-1">
               <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Notificaciones</h1>
               {unreadCount > 0 && (
-                <p className="m-0 hidden text-rep-label-d text-rep-ink-muted md:block">
+                <p className="m-0 hidden text-rep-label-d text-rep-ink-muted desktop:block">
                   {unreadCount === 1 ? '1 sin leer' : `${unreadCount} sin leer`}
                 </p>
               )}
@@ -91,8 +91,8 @@ export const NotificationsPage = () => {
                 disabled={unreadCount === 0}
                 className="rep-focus min-h-touch rounded-lg px-1 text-rep-label font-bold text-rep-accent transition-opacity duration-120 disabled:opacity-45 md:text-rep-label-d"
               >
-                <span className="md:hidden">Marcar leídas</span>
-                <span className="hidden md:inline">Marcar todas como leídas</span>
+                <span className="desktop:hidden">Marcar leídas</span>
+                <span className="hidden desktop:inline">Marcar todas como leídas</span>
               </button>
             )}
           </header>

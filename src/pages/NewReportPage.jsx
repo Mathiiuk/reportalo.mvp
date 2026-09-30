@@ -10,6 +10,7 @@ import { ReportReviewStep } from '../components/report/ReportReviewStep';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
 import { ReportSuccessScreen } from '../components/report/ReportSuccessScreen';
+import { AppDesktopHeader } from '../components/layout/AppLayout';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { resolveServiceDbId, getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
@@ -763,6 +764,18 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               onViewTerms={() => setShowTermsModal(true)}
               consentVersion={consentRecord?.version}
               consentAcceptedAt={consentRecord?.acceptedAt}
+              // D16 (REP-3791 Bloque 11-B): barra global sobre el acuse. «Reportar» empieza un
+              // reporte nuevo en la misma ruta: restartKey hace que App monte la página de cero,
+              // con un clientSideId nuevo (si no, el upsert pisaría el reporte recién enviado).
+              desktopTopBar={
+                <AppDesktopHeader
+                  activeTab="reportes"
+                  onReport={() => {
+                    clearEvidence();
+                    navigate('/nuevo-reporte', { replace: true, state: { restartKey: Date.now() } });
+                  }}
+                />
+              }
             />
           </motion.div>
         )}
