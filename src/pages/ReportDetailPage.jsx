@@ -184,7 +184,7 @@ export const ReportDetailPage = () => {
 
     // El historial se pide en paralelo: si RLS no lo deja leer, la pantalla sigue
     // sirviendo (la línea de tiempo se deriva igual del estado actual del reporte).
-    Promise.all([getReportDetail(id), getReportStateHistory(id)]).then(([detail, historyResult]) => {
+    Promise.all([getReportDetail(id, user?.id), getReportStateHistory(id)]).then(([detail, historyResult]) => {
       if (!isMounted) return;
       if (detail.success) {
         setReport(detail.data);
@@ -198,9 +198,13 @@ export const ReportDetailPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, user?.id]);
 
-  const handleBack = useCallback(() => navigate('/reportes'), [navigate]);
+  // Un reporte ajeno se abre desde el mapa, así que se vuelve al mapa; el propio, a Mis reportes.
+  const handleBack = useCallback(
+    () => navigate(report && !isOwnedBy(report, user?.id) ? '/mapa' : '/reportes'),
+    [navigate, report, user?.id]
+  );
 
   const handleCloseViewer = useCallback(() => setViewerIndex(null), []);
   const handleNavigateViewer = useCallback(
@@ -244,10 +248,10 @@ export const ReportDetailPage = () => {
     );
   }
 
-  // Sin reporte, o el reporte no es del usuario en sesión. La policy de
-  // citizen_reports es de lectura pública (la necesita el mapa), así que la
-  // pertenencia se valida acá: el detalle con el fundamento jurídico es privado.
-  if (loadError || !report || !isOwnedBy(report, user?.id)) {
+  // Sin reporte. Cualquier ciudadano con sesión puede ver el resumen de un reporte ajeno
+  // (categoría, descripción, localidad y estado); solo el dueño ve las fotos, el fundamento
+  // jurídico y el historial (ver reportDetailService).
+  if (loadError || !report) {
     return (
       <div
         data-testid="detail-not-found"
@@ -255,7 +259,7 @@ export const ReportDetailPage = () => {
       >
         <h1 className="m-0 text-rep-title text-rep-ink">No encontramos este reporte</h1>
         <p className="m-0 max-w-[320px] text-rep-body text-rep-ink-muted">
-          Puede que el enlace sea incorrecto o que el reporte pertenezca a otra cuenta.
+          Puede que el enlace sea incorrecto o que el reporte ya no exista.
         </p>
         <button
           type="button"
@@ -268,6 +272,7 @@ export const ReportDetailPage = () => {
     );
   }
 
+  const isOwner = isOwnedBy(report, user?.id);
   const activePhoto = images[activePhotoIndex] ?? images[0] ?? null;
   const state = normalizeReportState(report.current_state_code);
   const timeline = buildTimeline({
@@ -317,6 +322,8 @@ export const ReportDetailPage = () => {
         <div className="mt-2 flex flex-col gap-3 desktop:mt-0 desktop:grid desktop:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] desktop:grid-rows-[auto_auto_1fr] desktop:items-start desktop:gap-x-8 desktop:gap-y-4">
           {/* Columna izquierda en escritorio: fotos, ubicación, acciones */}
           <div className="contents desktop:col-start-1 desktop:row-span-3 desktop:row-start-1 desktop:flex desktop:flex-col desktop:gap-4">
+            {/* Reporte de otra persona: sin fotos, ni siquiera el recuadro vacío */}
+            {isOwner && (
             <section aria-label="Fotos del reporte" className="flex flex-col gap-2">
               {images.length === 0 ? (
                 <div data-testid="detail-no-images">
@@ -389,6 +396,16 @@ export const ReportDetailPage = () => {
               )}
               <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">{photoCaption(images)}</span>
             </section>
+            )}
+            {!isOwner && (
+              <p
+                data-testid="detail-public-notice"
+                role="note"
+                className="m-0 rounded-2xl border border-dashed border-rep-border px-4 py-3 text-rep-label text-rep-ink-muted desktop:text-rep-label-d"
+              >
+                Este reporte es de otra persona. Ves el resumen público: las fotos y el análisis son privados.
+              </p>
+            )}
 
             {/* Categoría y descripción. El mockup de M16 no las dibuja, pero sin
                 ellas el ciudadano no puede leer lo que él mismo reportó: se
@@ -409,7 +426,7 @@ export const ReportDetailPage = () => {
               </span>
             </div>
 
-            {!isClosed && (
+            {isOwner && !isClosed && (
               <div className="order-6 flex items-start gap-2.5 rounded-2xl border border-dashed border-rep-border px-4 py-3 desktop:order-none">
                 <FileText aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-ink-faint" strokeWidth={2} />
                 <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
@@ -439,9 +456,11 @@ export const ReportDetailPage = () => {
             </div>
           )}
 
-          <div className="order-3 desktop:order-none desktop:col-start-2 desktop:row-start-2">
-            <ReportAiAnalysisPanel analysis={analysis} loading={loadingAnalysis} error={analysisError} />
-          </div>
+          {isOwner && (
+            <div className="order-3 desktop:order-none desktop:col-start-2 desktop:row-start-2">
+              <ReportAiAnalysisPanel analysis={analysis} loading={loadingAnalysis} error={analysisError} />
+            </div>
+          )}
 
           <section
             data-testid="report-timeline"
