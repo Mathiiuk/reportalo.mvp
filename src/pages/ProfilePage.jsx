@@ -17,7 +17,8 @@ import {
   isNotificationsEnabled,
   setNotificationPreference,
 } from '../services/notificationService';
-import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast, FileText } from 'lucide-react';
+import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { THEME_TOGGLE_ENABLED, setThemePreference } from '../lib/themePreference';
 
 /**
@@ -183,6 +184,9 @@ export const ProfilePage = () => {
     }
   };
 
+  // D20 dice «Permisos del sitio»: en una PC los permisos son del navegador, no de una app
+  const isDesktop = useIsDesktopLayout();
+
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
@@ -200,26 +204,23 @@ export const ProfilePage = () => {
       <div className="flex-1 overflow-y-auto bg-rep-bg px-4 sm:px-6 md:px-10 py-4 md:py-6">
         <div className="max-w-5xl mx-auto flex flex-col gap-4 md:gap-6">
           
-          {/* Header de Sección */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-extrabold text-[24px] sm:text-[28px] text-rep-ink tracking-[-0.4px] m-0">
-                Mi perfil
-              </h1>
-              <p className="text-[12px] md:text-[13px] text-rep-ink-muted font-medium mt-0.5 md:mt-1 mb-0">
-                Gestión de cuenta, notificaciones y consentimientos legales
-              </p>
-            </div>
-          </div>
+          {/* M19 · D20 no tienen título de sección: arranca con la identidad. El h1 queda para
+              lectores de pantalla (REP-3791 Bloque 11-D). */}
+          <h1 className="sr-only">Mi perfil</h1>
 
           {/* Grid Responsivo: 1 columna en móvil, 2 columnas en Desktop */}
           <div className="w-full max-w-[340px] md:max-w-none mx-auto grid grid-cols-1 md:grid-cols-12 gap-3.5 md:gap-6">
             
-            {/* Columna Izquierda: Identidad + Métricas + Términos (md:col-span-5) */}
-            <div className="md:col-span-5 flex flex-col gap-3.5 md:gap-4">
+            {/* Columna Izquierda: Identidad + Métricas + Términos (md:col-span-5).
+                En el teléfono la columna se «disuelve» (contents) para que los términos queden
+                después del menú, como en M19; en escritorio vuelve a ser una columna (D20). */}
+            <div className="contents md:col-span-5 md:flex md:flex-col md:gap-4">
+
+              {/* D20: identidad y contadores en una misma tarjeta */}
+              <div className="contents md:flex md:flex-col md:gap-4 md:rounded-[18px] md:border md:border-rep-border md:bg-rep-surface md:p-5 md:shadow-xs">
               
               {/* Tarjeta de Identidad de Usuario */}
-              <div className="bg-rep-surface border border-rep-border rounded-[16px] md:rounded-[18px] p-4 md:p-5 flex items-center gap-3.5 md:gap-4 shadow-2xs md:shadow-xs">
+              <div className="order-1 bg-rep-surface border border-rep-border rounded-[16px] p-4 flex items-center gap-3.5 shadow-2xs md:order-none md:rounded-none md:border-0 md:p-0 md:gap-4 md:shadow-none">
                 <div className="w-[52px] h-[52px] md:w-[56px] md:h-[56px] rounded-full bg-rep-accent-soft flex items-center justify-center font-extrabold text-[19px] md:text-[20px] text-rep-accent flex-shrink-0 select-none shadow-2xs">
                   {userInitials}
                 </div>
@@ -237,8 +238,8 @@ export const ProfilePage = () => {
               </div>
 
               {/* 3 Métricas de Reportes */}
-              <div className="grid grid-cols-3 gap-2 md:gap-2.5">
-                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+              <div className="order-2 grid grid-cols-3 gap-2 md:order-none md:gap-2.5">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:border-0 md:bg-rep-surface-sunken md:shadow-none">
                   <div data-testid="profile-stat-total" className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-accent">
                     {formatStat(reportStats.total)}
                   </div>
@@ -247,7 +248,7 @@ export const ProfilePage = () => {
                   </div>
                 </div>
 
-                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:border-0 md:bg-rep-surface-sunken md:shadow-none">
                   <div data-testid="profile-stat-closed" className="font-extrabold text-[19px] md:text-[20px] leading-none text-rep-success">
                     {formatStat(reportStats.closed)}
                   </div>
@@ -256,7 +257,7 @@ export const ProfilePage = () => {
                   </div>
                 </div>
 
-                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:shadow-xs">
+                <div className="bg-rep-surface border border-rep-border rounded-[12px] md:rounded-[14px] p-[11px] md:p-3 text-center shadow-2xs md:border-0 md:bg-rep-surface-sunken md:shadow-none">
                   <div data-testid="profile-stat-pending" className="font-extrabold text-[19px] md:text-[20px] leading-none text-[#F78E35]">
                     {formatStat(reportStats.pending)}
                   </div>
@@ -266,15 +267,25 @@ export const ProfilePage = () => {
                 </div>
               </div>
 
-              {/* Términos: la versión y la fecha reales de la aceptación, o que todavía no se aceptaron */}
-              <div className="bg-rep-surface border border-rep-border rounded-[13px] md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
+              </div>
+
+              {/* Términos: la versión y la fecha reales de la aceptación, o que todavía no se aceptaron.
+                  M19: dos estados. Aceptados (tilde verde) o «SIN ACEPTAR» (ícono neutro y píldora ámbar). */}
+              <div className="order-4 bg-rep-surface border border-rep-border rounded-[13px] md:order-none md:rounded-[16px] p-[12px_13px] md:p-5 shadow-2xs md:shadow-xs flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
-                  {hasAcceptedTerms && (
+                  {hasAcceptedTerms ? (
                     <BadgeCheck className="w-[18px] h-[18px] text-rep-success select-none" strokeWidth={2} />
+                  ) : (
+                    <FileText aria-hidden="true" className="w-[18px] h-[18px] text-rep-ink-muted select-none" strokeWidth={2} />
                   )}
                   <span className="font-bold text-[11.5px] md:text-[12.5px] text-rep-ink">
                     {hasAcceptedTerms ? 'Términos aceptados' : 'Términos y condiciones'}
                   </span>
+                  {!hasAcceptedTerms && (
+                    <span className="ml-auto rounded-md bg-rep-warning-soft px-2 py-0.5 text-rep-pill uppercase tracking-wide text-rep-warning-ink">
+                      Sin aceptar
+                    </span>
+                  )}
                 </div>
                 <div
                   data-testid="profile-terms-detail"
@@ -297,11 +308,12 @@ export const ProfilePage = () => {
 
             </div>
 
-            {/* Columna Derecha: Menú de Acciones y Seguridad (md:col-span-7) */}
-            <div className="md:col-span-7 flex flex-col gap-3.5 md:gap-4">
+            {/* Columna Derecha: Menú de Acciones y Seguridad (md:col-span-7). Mismo recurso: en el
+                teléfono sus bloques se intercalan con los de la izquierda por `order`. */}
+            <div className="contents md:col-span-7 md:flex md:flex-col md:gap-4">
               
               {/* Menú de Configuración y Navegación */}
-              <div className="bg-rep-surface border border-rep-border rounded-[13px] md:rounded-[18px] overflow-hidden shadow-2xs md:shadow-xs">
+              <div className="order-3 bg-rep-surface border border-rep-border rounded-[13px] md:order-none md:rounded-[18px] overflow-hidden shadow-2xs md:shadow-xs">
                 
                 {/* Control Propio: Notificaciones con Toggle */}
                 <div className="flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 border-b border-rep-divider">
@@ -357,7 +369,7 @@ export const ProfilePage = () => {
                 >
                   <ShieldCheck className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
                   <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink flex-1">
-                    Permisos de la app
+                    {isDesktop ? 'Permisos del sitio' : 'Permisos de la app'}
                   </span>
                   <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
                 </button>
@@ -411,19 +423,19 @@ export const ProfilePage = () => {
                 </button>
               </div>
 
-              {/* Acciones de Sesión y Cuenta */}
-              <div className="bg-transparent md:bg-white md:border md:border-rep-border rounded-[18px] md:p-5 md:shadow-xs flex flex-col gap-2 md:gap-3 mt-auto md:mt-0 pt-1 pb-3 md:py-5">
+              {/* Acciones de Sesión y Cuenta. D20: los dos botones lado a lado, al pie de la columna. */}
+              <div className="order-5 flex flex-col gap-2 pt-1 pb-3 md:order-none md:mt-auto md:flex-row md:gap-3 md:py-0">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full text-center p-[11px] md:p-3 border-[1.5px] border-rep-track rounded-[12px] font-bold text-[12.5px] md:text-[13px] text-rep-ink-label hover:bg-rep-surface-sunken active:scale-98 transition-all cursor-pointer bg-rep-surface"
+                  className="w-full text-center p-[11px] md:p-3 border-[1.5px] border-rep-track rounded-[12px] font-bold text-[12.5px] md:text-[13px] text-rep-ink-label hover:bg-rep-surface-sunken active:scale-98 transition-all cursor-pointer bg-rep-surface md:flex-1"
                 >
                   Cerrar sesión
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
-                  className="w-full text-center font-semibold text-[10.5px] md:text-[11px] text-rep-danger hover:underline cursor-pointer bg-transparent border-0 py-1"
+                  className="w-full text-center font-semibold text-[10.5px] md:text-[13px] md:font-bold text-rep-danger hover:underline cursor-pointer bg-transparent border-0 py-1 md:flex-1 md:rounded-[12px] md:border-[1.5px] md:border-solid md:border-rep-danger/40 md:bg-rep-surface md:p-3 md:hover:no-underline md:hover:bg-rep-danger-soft"
                 >
                   Eliminar mi cuenta y mis datos
                 </button>

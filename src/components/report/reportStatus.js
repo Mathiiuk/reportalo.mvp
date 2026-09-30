@@ -64,6 +64,20 @@ export const formatShortDateTime = (value) => {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} · ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
+// «hoy 14:32» · «ayer 19:40» · «09/08»: fecha corta de las filas de Mis reportes (M17 · D18)
+export const formatListDate = (value, now = new Date()) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === now.toDateString()) return `hoy ${time}`;
+  if (date.toDateString() === yesterday.toDateString()) return `ayer ${time}`;
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
+};
+
 /**
  * Arma la línea de tiempo del detalle (M16 / D17) a partir del estado actual, la fecha de envío
  * y el historial (`report_state_history`). Si el historial no está disponible, igual marca como
