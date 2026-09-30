@@ -18,6 +18,8 @@
 -- que ya estaban en «Enviado» o «En revisión» no se tocan.
 --
 -- Probada en la base descartable, dentro de una transacción que se deshace.
+-- APLICADA en producción (CiudadAR) el 30/09/2026, con aprobación de Matías. La versión quedó registrada como
+-- 20260930202450; el archivo se renombró para coincidir.
 
 create or replace function public.persist_rag_analysis(p_analysis jsonb, p_evidence jsonb)
 returns uuid
