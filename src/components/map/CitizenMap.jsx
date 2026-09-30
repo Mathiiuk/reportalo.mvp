@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, createElement } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback, createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Map, Marker, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
@@ -49,12 +49,32 @@ const MARKER_ICON_MAP = {
   assist: HeartHandshake,
 };
 
+// Hay solo unas 7 variantes de ícono y ~200 reportes: el HTML de cada ícono se arma una
+// vez y se reutiliza, en vez de llamar a renderToStaticMarkup por cada marcador.
+// Objeto simple y no `Map`: en este archivo `Map` puede ser el constructor de MapLibre.
+const markerIconCache = {};
+
 const renderMarkerIcon = (categoryIcon) => {
-  const IconComponent = MARKER_ICON_MAP[categoryIcon] || MapPin;
-  return renderToStaticMarkup(
-    createElement(IconComponent, { size: 20, color: '#ffffff', strokeWidth: 2.25 })
-  );
+  const key = MARKER_ICON_MAP[categoryIcon] ? categoryIcon : 'pin';
+  if (!(key in markerIconCache)) {
+    const IconComponent = MARKER_ICON_MAP[categoryIcon] || MapPin;
+    markerIconCache[key] = renderToStaticMarkup(
+      createElement(IconComponent, { size: 20, color: '#ffffff', strokeWidth: 2.25 })
+    );
+  }
+  return markerIconCache[key];
 };
+
+// Lo que hace distinto a un marcador de otro. Si no cambia entre renders, el marcador
+// existente se conserva tal cual en lugar de destruirlo y volver a crearlo.
+const markerSignature = (report) =>
+  [
+    report.pinColor,
+    report.categoryIcon,
+    report.title,
+    report.coordinates?.[0],
+    report.coordinates?.[1],
+  ].join('|');
 import {
   getUserCoordinates,
   LOCATION_STATUS,
@@ -109,7 +129,8 @@ export const CitizenMap = ({
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
+  // id del reporte -> { marker, signature }, para actualizar los marcadores por diferencia
+  const markersRef = useRef({});
   const userMarkerRef = useRef(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -125,10 +146,16 @@ export const CitizenMap = ({
   // no contra la etiqueta visible: los datos traen los códigos reales de la base
   // (RECIBIDO, EN_ANALISIS, DERIVADO, RESUELTO, DESESTIMADO) y la traducción vive en
   // un solo lugar.
-  const filteredReports = reports.filter((report) => {
-    if (activeFilter === 'todos') return true;
-    return normalizeReportState(report.stateCode) === activeFilter;
-  });
+  // Memoizado: sin esto era un array nuevo en cada render y disparaba el efecto que
+  // dibuja los marcadores, así que cualquier re-render los reconstruía todos.
+  const filteredReports = useMemo(
+    () =>
+      reports.filter((report) => {
+        if (activeFilter === 'todos') return true;
+        return normalizeReportState(report.stateCode) === activeFilter;
+      }),
+    [reports, activeFilter]
+  );
 
   // Renderizar o actualizar el marcador de posición del usuario (punto azul GPS con halo)
   const updateUserMarker = useCallback((coords) => {
@@ -282,6 +309,9 @@ export const CitizenMap = ({
         if (mapInstanceRef.current && typeof mapInstanceRef.current.remove === 'function') {
           mapInstanceRef.current.remove();
         }
+        // Los marcadores viven dentro del mapa que se acaba de destruir
+        markersRef.current = {};
+        userMarkerRef.current = null;
       };
     } catch (e) {
       console.warn('[OpenFreeMap Init Warning]:', e);
@@ -296,23 +326,38 @@ export const CitizenMap = ({
     }
   }, [mapLoaded, autoLocate, detectUserLocation]);
 
-  // Actualización y renderizado reactivo de marcadores en el mapa
+  // Si el reporte seleccionado ya no coincide con el filtro, cerrarlo
   useEffect(() => {
-    if (!mapInstanceRef.current || !mapLoaded) return;
-
-    // Limpiar marcadores anteriores de reportes
-    markersRef.current.forEach((m) => {
-      if (m && typeof m.remove === 'function') m.remove();
-    });
-    markersRef.current = [];
-
-    // Si el reporte seleccionado ya no coincide con el filtro, cerrarlo
     if (selectedReport && !filteredReports.some((r) => r.id === selectedReport.id)) {
       setSelectedReport(null);
     }
+  }, [filteredReports, selectedReport]);
 
-    // Agregar marcadores para los reportes filtrados
+  // Actualización reactiva de marcadores en el mapa, por diferencia: solo se quitan los que
+  // ya no están o cambiaron y solo se crean los nuevos. Antes se destruían y recreaban todos
+  // en cada render, incluso al tocar un pin o al moverse el punto de GPS.
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapLoaded) return;
+
+    const current = markersRef.current;
+    const wanted = {};
     filteredReports.forEach((report) => {
+      wanted[report.id] = report;
+    });
+
+    // Quitar los marcadores de reportes que ya no se muestran o que cambiaron
+    Object.keys(current).forEach((id) => {
+      const entry = current[id];
+      const report = wanted[id];
+      if (!report || entry.signature !== markerSignature(report)) {
+        if (entry.marker && typeof entry.marker.remove === 'function') entry.marker.remove();
+        delete current[id];
+      }
+    });
+
+    // Agregar marcadores para los reportes que todavía no tienen uno
+    filteredReports.forEach((report) => {
+      if (current[report.id]) return;
       try {
         const el = document.createElement('button');
         el.className = 'report-map-marker group';
@@ -355,18 +400,20 @@ export const CitizenMap = ({
           const marker = new Marker({ element: el })
             .setLngLat(report.coordinates)
             .addTo(mapInstanceRef.current);
-          markersRef.current.push(marker);
+          current[report.id] = { marker, signature: markerSignature(report) };
         }
       } catch (err) {
         console.warn('[Error adding marker]:', err);
       }
     });
+  }, [filteredReports, mapLoaded]);
 
-    // Re-dibujar marcador de usuario si existe
-    if (userLocation) {
+  // Marcador de posición del usuario: se redibuja solo cuando cambia su ubicación
+  useEffect(() => {
+    if (mapLoaded && userLocation) {
       updateUserMarker(userLocation);
     }
-  }, [filteredReports, mapLoaded, selectedReport, userLocation, updateUserMarker]);
+  }, [mapLoaded, userLocation, updateUserMarker]);
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-rep-surface-sunken">

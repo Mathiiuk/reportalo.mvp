@@ -296,6 +296,42 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     });
   });
 
+  it('UT-MP-13: tocar un pin no destruye ni recrea los marcadores (se actualizan por diferencia)', async () => {
+    const { Marker } = await import('maplibre-gl');
+    render(<CitizenMap reports={MAP_REPORTS} />);
+
+    const markerRep1 = await screen.findByTestId('marker-rep-1');
+    const markerRep2 = await screen.findByTestId('marker-rep-2');
+    const creadosAntes = Marker.mock.calls.length;
+
+    // Seleccionar un pin re-renderiza el mapa (abre la ficha), pero los marcadores siguen
+    fireEvent.click(markerRep1);
+    await screen.findByRole('button', { name: /cerrar detalle de reporte/i });
+
+    expect(Marker.mock.calls.length).toBe(creadosAntes);
+    expect(screen.getByTestId('marker-rep-1')).toBe(markerRep1);
+    expect(screen.getByTestId('marker-rep-2')).toBe(markerRep2);
+  });
+
+  it('UT-MP-14: al filtrar solo se quitan los marcadores que sobran; los que quedan se conservan', async () => {
+    const { Marker } = await import('maplibre-gl');
+    render(<CitizenMap reports={MAP_REPORTS} />);
+
+    const markerRep1 = await screen.findByTestId('marker-rep-1');
+    await screen.findByTestId('marker-rep-2');
+    const creadosAntes = Marker.mock.calls.length;
+
+    // Solo rep-1 y rep-3 están «En revisión»
+    fireEvent.click(screen.getByRole('button', { name: /filtros del mapa/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^En revisión$/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('marker-rep-2')).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId('marker-rep-1')).toBe(markerRep1);
+    expect(Marker.mock.calls.length).toBe(creadosAntes);
+  });
+
   it('UT-MP-12: sin reportes no inventa marcadores', async () => {
     // H-36: antes el mapa leia mockReports y siempre mostraba cinco reclamos, existieran
     // o no. Ahora, sin datos, no dibuja nada.
