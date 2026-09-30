@@ -70,12 +70,32 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     expect(await screen.findByTestId('detail-not-found')).toBeInTheDocument();
   });
 
-  it('UT-DET-03: no muestra el detalle de un reporte ajeno, aunque RLS permita leerlo', async () => {
-    // citizen_reports tiene lectura pública (la necesita el mapa): la pertenencia
-    // se valida en el cliente para no exponer el fundamento jurídico de otro.
-    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, user_id: 'otro-usuario' } });
+  it('UT-DET-03: un reporte ajeno se ve como resumen público, sin fotos ni fundamento jurídico', async () => {
+    // Decisión de visibilidad (Matías, 30/09/2026): cualquier ciudadano ve el resumen de cualquier
+    // reporte; las fotos y el análisis del RAG siguen siendo del dueño.
+    getReportDetail.mockResolvedValue({
+      success: true,
+      data: { ...baseReport, user_id: 'otro-usuario', report_images: [{ id: 'i1', image_url: 'https://example.test/1.jpg' }] },
+    });
     renderPage();
-    expect(await screen.findByTestId('detail-not-found')).toBeInTheDocument();
+    expect(await screen.findByTestId('detail-public-notice')).toBeInTheDocument();
+    expect(screen.queryByTestId('detail-not-found')).not.toBeInTheDocument();
+    expect(screen.getByText('Camión de gran porte estacionado sobre la rampa.')).toBeInTheDocument();
+    expect(screen.getByText('Avellaneda')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Fotos del reporte')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('detail-images')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('detail-no-images')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rag-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rag-panel-pending')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rag-panel-loading')).not.toBeInTheDocument();
+  });
+
+  it('UT-DET-03b: el dueño no ve el aviso de resumen público y sí sus fotos', async () => {
+    getReportDetail.mockResolvedValue({ success: true, data: baseReport });
+    renderPage();
+    expect(await screen.findByTestId('report-detail-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('detail-public-notice')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Fotos del reporte')).toBeInTheDocument();
   });
 
   it('UT-DET-04: con análisis fundamentado muestra fundamento, norma y organismo', async () => {
