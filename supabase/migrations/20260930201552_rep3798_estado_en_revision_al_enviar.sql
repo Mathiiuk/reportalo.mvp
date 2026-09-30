@@ -12,8 +12,9 @@
 -- El paso a «Notificado al responsable» NO se automatiza: la notificación al organismo no está implementada.
 -- «En revisión» no significa que una persona del municipio lo esté mirando: lo dice el texto del historial.
 --
--- Esta migración NO está aplicada: requiere aprobación antes de correr en producción. Sin ella el reporte
--- sigue quedando en «Enviado» (el frontend ya escucha el cambio de estado en vivo).
+-- APLICADA en producción (CiudadAR) el 30/09/2026, con aprobación de Matías. La versión quedó registrada como
+-- 20260930201552; el archivo se renombró para coincidir. Probada antes en la base descartable, en transacción.
+-- Solo afecta a los reportes nuevos: los que ya estaban en «Enviado» no se tocan.
 
 create or replace function public.enqueue_rag_analysis()
 returns trigger
