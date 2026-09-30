@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -68,7 +68,12 @@ describe('REP-3791 Bloque 11-D · Ajustes finos', () => {
     withAuth(<ReportsPage />);
 
     const row = await screen.findByTestId('report-row');
-    expect(row).toHaveTextContent('#RP-A1B2C3D4 · Tránsito');
+    // La categoría va debajo del número de reporte, cada uno en su propia línea
+    const code = within(row).getByTestId('report-row-code');
+    const category = within(row).getByTestId('report-row-category');
+    expect(code).toHaveTextContent('#RP-A1B2C3D4');
+    expect(category).toHaveTextContent('Tránsito');
+    expect(code.compareDocumentPosition(category) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(row).toHaveTextContent('Wilde · 09/08');
     // La descripción no es el título de la fila (queda como texto de ayuda)
     expect(row).not.toHaveTextContent('Bache profundo en la esquina');

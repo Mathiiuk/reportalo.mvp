@@ -20,14 +20,15 @@ const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
 // Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500).
-// UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila se identifica por número y categoría
-// («#RP-2048 · Tránsito») y abajo va el lugar con la fecha corta («Wilde · 09/08»).
+// UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila muestra el número («#RP-2048»), debajo la
+// categoría (destacada para que se lea de un vistazo) y abajo el lugar con la fecha corta («Wilde · 09/08»).
 const mapReportRow = (row) => {
   const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
   const category = row.services?.service_name || 'Sin categoría';
   return {
     id: row.id,
     stateCode: row.current_state_code,
+    code: formatReportCode(row.id),
     title: `${formatReportCode(row.id)} · ${category}`,
     description: row.description || '',
     category,
@@ -184,7 +185,12 @@ export const ReportsPage = () => {
                     className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5" title={report.description || undefined}>
-                      <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{report.title}</span>
+                      <span data-testid="report-row-code" className="block truncate text-rep-label font-semibold text-rep-ink-muted md:text-rep-label-d">
+                        {report.code}
+                      </span>
+                      <span data-testid="report-row-category" className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">
+                        {report.category}
+                      </span>
                       <span className="block truncate text-rep-label text-rep-ink-muted md:text-rep-label-d">
                         {report.address}
                         {report.date ? ` · ${report.date}` : ''}
