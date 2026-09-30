@@ -200,8 +200,8 @@ Deno.serve(async (req: Request) => {
         imageHeight: protectedEvidence.height,
         message:
           protectedEvidence.zones.length > 0
-            ? `Pixelamos ${faces} rostro(s) y ${plates} patente(s) y quitamos los metadatos.`
-            : 'No encontramos rostros ni patentes; quitamos los metadatos.',
+            ? `Pixelamos ${faces} rostro(s)${plates > 0 ? ` y ${plates} patente(s)` : ''} y quitamos los metadatos.`
+            : 'No encontramos rostros; quitamos los metadatos.',
       },
       200
     );

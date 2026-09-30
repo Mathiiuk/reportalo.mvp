@@ -11,6 +11,7 @@ import {
   buildVisionRequest,
   parseVisionResponse,
   detectSensitiveZones,
+  PIXELATE_LICENSE_PLATES,
   findPlateBoxesInText,
   normalizePlateText,
   ARGENTINE_PLATE,
@@ -123,9 +124,21 @@ describe('REP-3793 Bloque 2: detección con Google Vision', () => {
     expect(Buffer.from(base64, 'base64').equals(Buffer.from(big))).toBe(true);
   });
 
-  it('UT-VIS-02: pide rostros, objetos y texto', () => {
+  it('UT-VIS-02: por política solo pide rostros; con patentes activadas suma objetos y texto', () => {
     const types = buildVisionRequest('xx').requests[0].features.map((f) => f.type);
-    expect(types).toEqual(['FACE_DETECTION', 'OBJECT_LOCALIZATION', 'TEXT_DETECTION']);
+    expect(types).toEqual(['FACE_DETECTION']);
+    const withPlates = buildVisionRequest('xx', true).requests[0].features.map((f) => f.type);
+    expect(withPlates).toEqual(['FACE_DETECTION', 'OBJECT_LOCALIZATION', 'TEXT_DETECTION']);
+  });
+
+  it('UT-VIS-02b: la política de patentes está apagada (las patentes no se pixelan)', () => {
+    expect(PIXELATE_LICENSE_PLATES).toBe(false);
+  });
+
+  it('UT-VIS-02c: con la política por defecto la foto de prueba solo devuelve el rostro, sin patente', () => {
+    const zones = parseVisionResponse(visionFixture(), 1600, 1200);
+    expect(zones).toHaveLength(1);
+    expect(zones[0].type).toBe('face');
   });
 
   it('UT-VIS-03: los rostros salen en píxeles, con la caja envolvente de todos los vértices', () => {
@@ -133,21 +146,21 @@ describe('REP-3793 Bloque 2: detección con Google Vision', () => {
     expect(zones).toContainEqual({ x: 100, y: 80, width: 160, height: 200, type: 'face' });
   });
 
-  it('UT-VIS-04: la patente usa el ancho y alto reales (no ×1000)', () => {
-    const zones = parseVisionResponse(visionFixture(), 1600, 1200);
+  it('UT-VIS-04: la patente (si se activa) usa el ancho y alto reales (no ×1000)', () => {
+    const zones = parseVisionResponse(visionFixture(), 1600, 1200, true);
     // 0.65 × 1600 = 1040 · 0.8 × 1200 = 960 · ancho 0.1 × 1600 = 160 · alto 0.05 × 1200 = 60
     expect(zones).toContainEqual({ x: 1040, y: 960, width: 160, height: 60, type: 'license_plate' });
   });
 
-  it('UT-VIS-05: el auto no se pixela entero, solo su patente', () => {
-    const zones = parseVisionResponse(visionFixture(), 1600, 1200);
+  it('UT-VIS-05: el auto no se pixela entero, solo su patente (si se activa)', () => {
+    const zones = parseVisionResponse(visionFixture(), 1600, 1200, true);
     // El auto ocupa 640×480 px: ninguna zona puede tener ese tamaño
     expect(zones.some((z) => z.width >= 600 && z.height >= 450)).toBe(false);
     expect(zones.every((z) => z.type === 'face' || z.type === 'license_plate')).toBe(true);
   });
 
-  it('UT-VIS-06: arma la patente con palabras separadas ("AB" "123" "CD") y no toca carteles', () => {
-    const zones = parseVisionResponse(visionFixture(), 1600, 1200);
+  it('UT-VIS-06: arma la patente con palabras separadas ("AB" "123" "CD") y no toca carteles (si se activa)', () => {
+    const zones = parseVisionResponse(visionFixture(), 1600, 1200, true);
     expect(zones).toContainEqual({ x: 1040, y: 960, width: 120, height: 40, type: 'license_plate' });
     expect(zones.some((z) => z.x === 50 && z.y === 700)).toBe(false);
   });
@@ -204,7 +217,7 @@ describe('REP-3793 Bloque 2: detección con Google Vision', () => {
 
   it('UT-VIS-14: con respuesta correcta devuelve las zonas y manda la foto en Base64', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify(visionFixture()), { status: 200 }));
-    const zones = await detectSensitiveZones(new Uint8Array([1, 2, 3]), 1600, 1200, 'k', fetchImpl);
+    const zones = await detectSensitiveZones(new Uint8Array([1, 2, 3]), 1600, 1200, 'k', fetchImpl, undefined, true);
     expect(zones.length).toBeGreaterThanOrEqual(3);
     const [url, init] = fetchImpl.mock.calls[0];
     expect(JSON.parse(init.body).requests[0].image.content).toBe('AQID');
