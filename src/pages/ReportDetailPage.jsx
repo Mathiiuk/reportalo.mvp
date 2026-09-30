@@ -22,8 +22,9 @@ import { useAuth } from '../hooks/useAuth';
 import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
 import { StatusPill } from '../components/report/StatusPill';
-import { buildTimeline, formatReportCode, normalizeReportState } from '../components/report/reportStatus';
+import { buildTimeline, formatReportCode, getStatusConfig, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
+import { useReportStateLive } from '../hooks/useReportStateLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { AppDesktopHeader } from '../components/layout/AppLayout';
 
@@ -202,6 +203,22 @@ export const ReportDetailPage = () => {
   }, [id, user?.id]);
 
   // Un reporte ajeno se abre desde el mapa, así que se vuelve al mapa; el propio, a Mis reportes.
+  // Estado en vivo (REP-3798): si el municipio cambia el estado mientras el ciudadano mira el reporte, la pantalla
+  // se actualiza sola y, si es el dueño, se lo avisa. `history` llega null si no se pudo leer y no pisa el actual.
+  const reportOwned = Boolean(report && user?.id && report.user_id === user.id);
+  useReportStateLive({
+    reportId: id,
+    stateCode: report?.current_state_code,
+    isOwner: reportOwned,
+    onUpdate: ({ stateCode, history }) => {
+      setReport((prev) => (prev ? { ...prev, current_state_code: stateCode } : prev));
+      if (history) setStateHistory(history);
+      if (reportOwned) {
+        toast.info('Tu reporte cambió de estado', { description: getStatusConfig(stateCode).label });
+      }
+    },
+  });
+
   const handleBack = useCallback(
     () => navigate(report && !isOwnedBy(report, user?.id) ? '/mapa' : '/reportes'),
     [navigate, report, user?.id]
