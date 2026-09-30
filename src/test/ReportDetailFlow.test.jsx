@@ -90,6 +90,38 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     expect(screen.queryByTestId('rag-panel-loading')).not.toBeInTheDocument();
   });
 
+  it('UT-DET-03c: en un reporte ajeno «Volver» lleva al mapa', async () => {
+    getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, user_id: 'otro-usuario' } });
+    render(
+      <MemoryRouter initialEntries={[`/reportes/${REPORT_ID}`]}>
+        <Routes>
+          <Route path="/reportes/:id" element={<ReportDetailPage />} />
+          <Route path="/mapa" element={<div data-testid="pantalla-mapa" />} />
+          <Route path="/reportes" element={<div data-testid="pantalla-mis-reportes" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await screen.findByTestId('detail-public-notice');
+    fireEvent.click(screen.getAllByRole('button', { name: /^volver$/i })[0]);
+    expect(await screen.findByTestId('pantalla-mapa')).toBeInTheDocument();
+  });
+
+  it('UT-DET-03d: en un reporte propio «Volver» sigue llevando a Mis reportes', async () => {
+    getReportDetail.mockResolvedValue({ success: true, data: baseReport });
+    render(
+      <MemoryRouter initialEntries={[`/reportes/${REPORT_ID}`]}>
+        <Routes>
+          <Route path="/reportes/:id" element={<ReportDetailPage />} />
+          <Route path="/mapa" element={<div data-testid="pantalla-mapa" />} />
+          <Route path="/reportes" element={<div data-testid="pantalla-mis-reportes" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await screen.findByTestId('report-detail-page');
+    fireEvent.click(screen.getAllByRole('button', { name: /^volver$/i })[0]);
+    expect(await screen.findByTestId('pantalla-mis-reportes')).toBeInTheDocument();
+  });
+
   it('UT-DET-03b: el dueño no ve el aviso de resumen público y sí sus fotos', async () => {
     getReportDetail.mockResolvedValue({ success: true, data: baseReport });
     renderPage();

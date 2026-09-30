@@ -200,7 +200,11 @@ export const ReportDetailPage = () => {
     };
   }, [id, user?.id]);
 
-  const handleBack = useCallback(() => navigate('/reportes'), [navigate]);
+  // Un reporte ajeno se abre desde el mapa, así que se vuelve al mapa; el propio, a Mis reportes.
+  const handleBack = useCallback(
+    () => navigate(report && !isOwnedBy(report, user?.id) ? '/mapa' : '/reportes'),
+    [navigate, report, user?.id]
+  );
 
   const handleCloseViewer = useCallback(() => setViewerIndex(null), []);
   const handleNavigateViewer = useCallback(
