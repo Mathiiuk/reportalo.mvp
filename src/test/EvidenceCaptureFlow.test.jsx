@@ -349,7 +349,7 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       expect(enviado.description).toBe('Bache enorme en la calle');
       expect(enviado.locality_id).toBe('loc-almagro');
       expect(Object.keys(enviado).sort()).toEqual(
-        ['client_side_id', 'current_state_code', 'description', 'latitud', 'locality_id', 'longitud', 'service_id', 'user_id']
+        ['client_side_id', 'description', 'latitud', 'locality_id', 'longitud', 'service_id', 'user_id']
       );
     }, 15000);
 
