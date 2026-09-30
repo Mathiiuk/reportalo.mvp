@@ -49,7 +49,7 @@ export const NewsDetailPage = () => {
 
   return (
     <AppLayout activeTab="novedades">
-      <div className="flex-1 overflow-y-auto bg-rep-bg pb-28 md:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg pb-28 desktop:pb-10">
         <div className="mx-auto w-full max-w-2xl px-4 pt-3 md:px-10 md:pt-8">
           <header className="flex items-center justify-between gap-2 pb-2">
             <button

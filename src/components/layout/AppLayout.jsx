@@ -63,7 +63,7 @@ export const NotificationsBell = ({ ariaLabel = 'Ver alertas y notificaciones', 
  *
  * @param {string|null} activeTab  Pestaña marcada ('mapa' | 'reportes' | 'alertas'); null = ninguna.
  * @param {Function} [onReport]    Acción de «Reportar». Por defecto abre /nuevo-reporte.
- * @param {string} [className]     Controla la visibilidad (por ejemplo, 'hidden md:flex').
+ * @param {string} [className]     Controla la visibilidad (por ejemplo, 'hidden desktop:flex').
  */
 export const AppDesktopHeader = ({ activeTab = null, onReport, className = 'flex' }) => {
   const navigate = useNavigate();
@@ -130,7 +130,7 @@ export const AppDesktopHeader = ({ activeTab = null, onReport, className = 'flex
  * que la conservan porque la sesión sigue siendo válida.
  *
  * @param {string|null} activeTab Pestaña marcada; null = ninguna.
- * @param {string} [className]    Controla la visibilidad (por ejemplo, 'md:hidden').
+ * @param {string} [className]    Controla la visibilidad (por ejemplo, 'desktop:hidden').
  */
 export const AppTabBar = ({ activeTab = null, className = '' }) => {
   const navigate = useNavigate();
@@ -210,7 +210,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
   return (
     <div className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-rep-bg font-manrope">
       {/* Cabecera en teléfono (M08) */}
-      <header className="z-30 flex-none border-b border-rep-divider bg-rep-surface pt-[max(12px,env(safe-area-inset-top,12px))] md:hidden">
+      <header className="z-30 flex-none border-b border-rep-divider bg-rep-surface pt-[max(12px,env(safe-area-inset-top,12px))] desktop:hidden">
         <div className="flex items-center justify-between px-4 pb-2 pt-1">
           <Link to="/mapa" className="flex items-center gap-2.5 text-inherit no-underline">
             <img src="/logo-icon.webp" alt="" aria-hidden="true" className="h-7 w-6 select-none object-contain" />
@@ -227,13 +227,13 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       </header>
 
       {/* Cabecera en escritorio (D09): la navegación vive acá */}
-      <AppDesktopHeader activeTab={currentTab} onReport={handleCameraClick} className="hidden md:flex" />
+      <AppDesktopHeader activeTab={currentTab} onReport={handleCameraClick} className="hidden desktop:flex" />
 
       <main className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-rep-bg">{children}</main>
 
       {/* Botón «Reportar» sobre el mapa (M08) */}
       {currentTab === 'mapa' && (
-        <div className="pointer-events-none fixed bottom-[max(92px,calc(env(safe-area-inset-bottom,12px)+80px))] right-4 z-30 md:hidden">
+        <div className="pointer-events-none fixed bottom-[max(92px,calc(env(safe-area-inset-bottom,12px)+80px))] right-4 z-30 desktop:hidden">
           <label
             htmlFor="mobile-direct-camera-trigger"
             aria-label="Tomar foto y reportar"
@@ -255,7 +255,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
       )}
 
       {/* Barra de pestañas en teléfono (M08): cuatro accesos */}
-      <AppTabBar activeTab={currentTab} className="md:hidden" />
+      <AppTabBar activeTab={currentTab} className="desktop:hidden" />
     </div>
   );
 };

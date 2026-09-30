@@ -100,7 +100,7 @@ export const ReportsPage = () => {
 
   return (
     <AppLayout activeTab="reportes">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
           {/* Título y filtros: apilados en el teléfono (M17), en una sola fila en escritorio (D18) */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">

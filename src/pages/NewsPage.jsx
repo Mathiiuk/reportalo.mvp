@@ -51,7 +51,7 @@ export const NewsPage = () => {
 
   return (
     <AppLayout activeTab="novedades">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
           <div>
             <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Novedades</h1>
