@@ -156,6 +156,22 @@ const EvidenceCaptureMobile = ({
           Sacá la foto normal. Los rostros y patentes se difuminan al procesarla, antes de guardarse.
         </p>
 
+        {/* Subir una imagen de la galería: siempre disponible mientras no se llegue al máximo de fotos.
+            Antes solo había un ícono chico y mudo, y desaparecía apenas se sacaba la primera foto. */}
+        {photoCount < MAX_PHOTOS && (
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={isProcessing}
+            aria-label="Elegir foto de la galería"
+            data-testid="gallery-upload-button"
+            className={`${CAMERA_FOCUS} mx-auto mb-4 flex min-h-touch items-center gap-2 rounded-full border border-white/30 px-4 text-rep-label font-bold text-white transition-colors duration-120 hover:bg-white/10 disabled:opacity-45`}
+          >
+            <ImagePlus className="h-4 w-4" aria-hidden="true" />
+            <span>Subir imagen de la galería</span>
+          </button>
+        )}
+
         <div className="flex items-center justify-between gap-3">
           {/* A. Fotos tomadas (abre el visor de gestión) o acceso a galería */}
           <div className="flex w-[76px] justify-start">
@@ -194,16 +210,7 @@ const EvidenceCaptureMobile = ({
                   <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                aria-label="Elegir foto de la galería"
-                className={`${CAMERA_FOCUS} flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/70 transition-colors duration-120 hover:text-white`}
-              >
-                <ImagePlus className="h-5 w-5" aria-hidden="true" />
-              </button>
-            )}
+            ) : null}
           </div>
 
           {/* B. Disparador */}
