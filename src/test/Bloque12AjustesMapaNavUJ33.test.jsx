@@ -22,8 +22,18 @@ describe('REP-3798 · barra de pestañas con «Reportar» en el medio', () => {
   it('UT-B12-01: el botón «Reportar» queda entre la segunda y la tercera pestaña', () => {
     render(<MemoryRouter><AppTabBar activeTab="mapa" /></MemoryRouter>);
     const nav = screen.getByRole('navigation', { name: 'Navegación principal' });
-    const labels = within(nav).getAllByRole('button').map((button) => button.getAttribute('aria-label'));
-    expect(labels).toEqual(['Mapa', 'Mis reportes', 'Reportar', 'Alertas y novedades', 'Perfil']);
+    const tabs = within(nav).getAllByRole('button');
+    expect(tabs.map((button) => button.getAttribute('aria-label'))).toEqual(['Mapa', 'Mis reportes', 'Alertas y novedades', 'Perfil']);
+    const report = within(nav).getByTestId('tab-report-button');
+    expect(tabs[1].compareDocumentPosition(report) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(report.compareDocumentPosition(tabs[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('UT-B12-01b: abre la cámara al instante: es un input con capture dentro del toque, sin navegar antes', () => {
+    render(<MemoryRouter><AppTabBar activeTab="mapa" /></MemoryRouter>);
+    const input = screen.getByTestId('tab-report-camera-input');
+    expect(input).toHaveAttribute('capture', 'environment');
+    expect(screen.getByTestId('tab-report-button')).toHaveAttribute('for', 'tab-report-camera-input');
   });
 
   it('UT-B12-02: el botón es naranja y lleva un ícono de cámara', () => {
@@ -49,9 +59,13 @@ describe('REP-3798 · captura con subida de imagen', () => {
       </MemoryRouter>
     );
 
-  it('UT-B12-03: sin fotos hay un botón de texto para subir una imagen de la galería', () => {
+  it('UT-B12-03: sin fotos hay un botón «Subir imagen» abajo a la izquierda, junto al obturador', () => {
     renderCapture();
-    expect(screen.getByTestId('gallery-upload-button')).toHaveTextContent(/subir imagen/i);
+    const upload = screen.getByTestId('gallery-upload-button');
+    const shutter = screen.getByRole('button', { name: 'Tomar fotografía' });
+    expect(screen.getByText('Subir imagen')).toBeInTheDocument();
+    // Va antes que el obturador en el DOM: queda a su izquierda en la fila de controles
+    expect(upload.compareDocumentPosition(shutter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('UT-B12-04: con una foto ya sacada el botón para subir otra sigue disponible', () => {
