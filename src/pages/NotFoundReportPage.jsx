@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNoIndex } from '../hooks/useNoIndex';
 import { ArrowLeft, Unlink } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
@@ -19,6 +20,7 @@ export const NotFoundReportPage = () => {
   const { session } = useAuth();
   const isDesktop = useIsDesktopLayout();
   const hasSession = Boolean(session);
+  useNoIndex();
 
   // Use a default ID if none provided in params
   const displayId = id || 'RP-1907';

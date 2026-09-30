@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNoIndex } from '../hooks/useNoIndex';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
@@ -53,6 +54,7 @@ const ForbiddenIllustration = ({ className = '' }) => (
  * (nombre de la sección, para la cabecera del teléfono; por defecto «Acceso restringido»).
  */
 export const ForbiddenPage = () => {
+  useNoIndex();
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
