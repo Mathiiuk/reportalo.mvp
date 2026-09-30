@@ -126,8 +126,31 @@ export const AppDesktopHeader = ({ activeTab = null, onReport, className = 'flex
 };
 
 /**
- * Barra de pestañas de teléfono (UJ v3.3 · M08): cuatro accesos. También la usan M30 y M32,
- * que la conservan porque la sesión sigue siendo válida.
+ * Botón central «Reportar» de la barra de pestañas (teléfono): naranja, con ícono de cámara.
+ * Abre la captura (/nuevo-reporte), donde se puede sacar la foto o subir una imagen de la galería.
+ * Reemplaza al botón flotante «Reportar» que había sobre el mapa.
+ */
+const ReportTabButton = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/nuevo-reporte')}
+      aria-label="Reportar"
+      data-testid="tab-report-button"
+      className="rep-focus relative -mt-6 flex shrink-0 flex-col items-center gap-0.5 rounded-full border-0 bg-transparent px-2 transition-transform duration-120 active:scale-[0.96]"
+    >
+      <span className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-rep-surface bg-[#E07C1A] text-white shadow-rep-float">
+        <Camera aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
+      </span>
+      <span className="text-[10px] font-bold leading-none text-rep-ink-label">Reportar</span>
+    </button>
+  );
+};
+
+/**
+ * Barra de pestañas de teléfono (UJ v3.3 · M08): cuatro accesos y, en el medio, el botón naranja
+ * «Reportar». También la usan M30 y M32, que la conservan porque la sesión sigue siendo válida.
  *
  * @param {string|null} activeTab Pestaña marcada; null = ninguna.
  * @param {string} [className]    Controla la visibilidad (por ejemplo, 'desktop:hidden').
@@ -140,12 +163,14 @@ export const AppTabBar = ({ activeTab = null, className = '' }) => {
         aria-label="Navegación principal"
         className="pointer-events-auto flex w-full max-w-[390px] items-center justify-between rounded-[28px] border border-rep-border bg-rep-surface px-2 py-1.5 shadow-rep-float"
       >
-        {TABS.map((tab) => {
+        {TABS.map((tab, index) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
           return (
+            <React.Fragment key={tab.key}>
+              {/* El botón «Reportar» va en el centro: dos pestañas a cada lado */}
+              {index === TABS.length / 2 && <ReportTabButton />}
             <button
-              key={tab.key}
               type="button"
               onClick={() => navigate(tab.path)}
               aria-label={tab.ariaLabel}
@@ -163,6 +188,7 @@ export const AppTabBar = ({ activeTab = null, className = '' }) => {
               </span>
               <span className="text-[10px] font-bold leading-none">{tab.label}</span>
             </button>
+            </React.Fragment>
           );
         })}
       </nav>
@@ -199,14 +225,6 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
     navigate('/nuevo-reporte');
   };
 
-  const handleDirectCapture = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      navigate('/nuevo-reporte', { state: { initialCapturedFile: file } });
-    }
-    e.target.value = '';
-  };
-
   return (
     <div className="relative flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-rep-bg font-manrope">
       {/* Cabecera en teléfono (M08) */}
@@ -231,30 +249,7 @@ export const AppLayout = ({ children, activeTab = 'mapa', onCameraClick }) => {
 
       <main className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-rep-bg">{children}</main>
 
-      {/* Botón «Reportar» sobre el mapa (M08) */}
-      {currentTab === 'mapa' && (
-        <div className="pointer-events-none fixed bottom-[max(92px,calc(env(safe-area-inset-bottom,12px)+80px))] right-4 z-30 desktop:hidden">
-          <label
-            htmlFor="mobile-direct-camera-trigger"
-            aria-label="Tomar foto y reportar"
-            className="rep-focus pointer-events-auto flex min-h-touch cursor-pointer items-center gap-2 rounded-full bg-rep-accent px-5 py-3.5 text-rep-button text-rep-on-accent shadow-rep-accent transition-transform duration-120 active:scale-[0.97]"
-          >
-            <Camera aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
-            <span>Reportar</span>
-            <input
-              id="mobile-direct-camera-trigger"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              className="hidden"
-              onChange={handleDirectCapture}
-              data-testid="direct-camera-trigger"
-            />
-          </label>
-        </div>
-      )}
-
-      {/* Barra de pestañas en teléfono (M08): cuatro accesos */}
+      {/* Barra de pestañas en teléfono (M08): cuatro accesos y «Reportar» en el centro */}
       <AppTabBar activeTab={currentTab} className="desktop:hidden" />
     </div>
   );
