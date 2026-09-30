@@ -398,7 +398,7 @@ export const CitizenMap = ({
             cargando, no hay ningún reporte en la zona, o hay pero los filtros los
             dejaron afuera. Solo la última ofrece limpiar filtros. */}
         {filteredReports.length === 0 && (
-          <div className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-[420px] -translate-y-1/2 rounded-2xl border border-rep-border bg-rep-surface p-5 text-center shadow-rep-float desktop:left-1/2 desktop:right-auto desktop:-translate-x-1/2">
+          <div className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-[420px] -translate-y-1/2 rounded-2xl border border-rep-border bg-rep-surface p-5 text-center shadow-rep-float md:left-1/2 md:right-auto md:-translate-x-1/2">
             {isLoadingReports ? (
               <p className="m-0 text-rep-body text-rep-ink-muted">Cargando reportes…</p>
             ) : reports.length === 0 ? (
@@ -517,8 +517,8 @@ export const CitizenMap = ({
 
         {/* Resumen de lo que se ve en el mapa (M08 · D09) */}
         <div
-          className={`absolute left-4 z-20 w-[150px] rounded-2xl border border-rep-border bg-rep-surface/95 px-3.5 py-3 shadow-rep-float backdrop-blur-md desktop:w-[220px] ${
-            showLocationBanner ? 'top-[92px] desktop:top-[84px]' : 'top-4'
+          className={`absolute left-4 z-20 w-[150px] rounded-2xl border border-rep-border bg-rep-surface/95 px-3.5 py-3 shadow-rep-float backdrop-blur-md md:w-[220px] ${
+            showLocationBanner ? 'top-[92px] md:top-[84px]' : 'top-4'
           }`}
         >
           <div className="text-[26px] font-extrabold leading-none text-rep-ink">{filteredReports.length}</div>
@@ -545,14 +545,14 @@ export const CitizenMap = ({
             setShowFiltersModal((prev) => !prev);
             if (onFilterClick) onFilterClick();
           }}
-          className="rep-focus absolute right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] desktop:right-[76px]"
+          className="rep-focus absolute right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] md:right-[76px]"
         >
           <SlidersHorizontal className="h-5 w-5" strokeWidth={2.25} />
         </button>
 
         {/* Menú de Filtros emergente */}
         {showFiltersModal && (
-          <div className="absolute right-4 top-[124px] z-30 flex w-52 flex-col gap-1 rounded-2xl border border-rep-border bg-rep-surface p-3 shadow-rep-float desktop:right-[76px] desktop:top-[68px]">
+          <div className="absolute right-4 top-[124px] z-30 flex w-52 flex-col gap-1 rounded-2xl border border-rep-border bg-rep-surface p-3 shadow-rep-float md:right-[76px] md:top-[68px]">
             <div className="mb-1 px-1 text-[11px] font-extrabold uppercase tracking-wider text-rep-ink-muted">
               Filtrar reclamos
             </div>
@@ -588,7 +588,7 @@ export const CitizenMap = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute inset-x-4 bottom-[104px] z-30 rounded-[22px] border border-rep-border bg-rep-surface p-4 shadow-rep-float desktop:inset-x-auto desktop:bottom-6 desktop:right-6 desktop:w-[380px] desktop:p-5"
+              className="absolute inset-x-4 bottom-[104px] z-30 rounded-[22px] border border-rep-border bg-rep-surface p-4 shadow-rep-float md:inset-x-auto md:bottom-6 md:right-6 md:w-[380px] md:p-5"
             >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
@@ -641,7 +641,7 @@ export const CitizenMap = ({
         </AnimatePresence>
 
         {/* Leyenda Menos / Más (Bottom Left at 104px) */}
-        <div className="absolute bottom-[104px] left-4 z-20 flex select-none items-center gap-2 rounded-full border border-rep-border bg-rep-surface/95 px-3.5 py-1.5 text-rep-label font-bold text-rep-ink-muted shadow-rep-float backdrop-blur-md desktop:bottom-6 desktop:left-1/2 desktop:-translate-x-1/2">
+        <div className="absolute bottom-[104px] left-4 z-20 flex select-none items-center gap-2 rounded-full border border-rep-border bg-rep-surface/95 px-3.5 py-1.5 text-rep-label font-bold text-rep-ink-muted shadow-rep-float backdrop-blur-md md:bottom-6 md:left-1/2 md:-translate-x-1/2">
           <span>Menos</span>
           <div className="h-2 w-14 rounded-full bg-gradient-to-r from-rep-success via-rep-warning to-rep-danger" />
           <span>Más</span>
@@ -653,7 +653,7 @@ export const CitizenMap = ({
           aria-label="Centrar en mi ubicación"
           title="Centrar en mi ubicación"
           onClick={() => detectUserLocation(true)}
-          className="rep-focus absolute right-4 top-[68px] z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] desktop:top-4"
+          className="rep-focus absolute right-4 top-[68px] z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-rep-border bg-rep-surface text-rep-accent shadow-rep-float transition-[transform,filter] duration-120 hover:brightness-[.96] active:scale-[0.97] dark:hover:brightness-[1.06] md:top-4"
         >
           <Navigation className={`h-5 w-5 ${isLocating ? 'motion-safe:animate-spin' : ''}`} strokeWidth={2.25} />
         </button>

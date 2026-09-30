@@ -51,7 +51,7 @@ export const NewsPage = () => {
 
   return (
     <AppLayout activeTab="novedades">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
           <div>
             <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Novedades</h1>
@@ -60,10 +60,7 @@ export const NewsPage = () => {
             </p>
           </div>
 
-          {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación.
-              M27 · D35: sin ninguna publicación no hay nada que filtrar, así que no se muestran
-              (REP-3791 Bloque 11-D). Si hay publicaciones y un filtro deja cero, siguen visibles. */}
-          {currentNews.length > 0 && (
+          {/* Filtros por origen (M24). «Cerca mío» muestra las que tienen ubicación */}
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
             {FILTERS.map((filter) => (
               <button
@@ -81,7 +78,6 @@ export const NewsPage = () => {
               </button>
             ))}
           </div>
-          )}
 
           {filteredNews.length > 0 ? (
             <div className="flex flex-col gap-3">

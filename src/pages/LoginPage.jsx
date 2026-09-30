@@ -7,9 +7,7 @@ import {
   getTermsRejectionRecord,
   formatRejectionDate,
 } from '../services/termsService';
-import { ArrowLeft, Gavel, AlertCircle, Shield, Mail } from 'lucide-react';
-import { useIsDesktopLayout } from '../hooks/useMediaQuery';
-import { BrandBar } from '../components/layout/BrandBar';
+import { ArrowLeft, Gavel, AlertCircle, Shield, ShieldCheck } from 'lucide-react';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -18,9 +16,6 @@ export const LoginPage = () => {
   const [isSubmittingGoogle, setIsSubmittingGoogle] = useState(false);
   const [isSubmittingMagicLink, setIsSubmittingMagicLink] = useState(false);
   const [emailInput, setEmailInput] = useState('');
-  // D02 (UJ v3.3, REP-3791 Bloque 11-C): en escritorio, tarjeta centrada de 400 px, sin columna
-  // lateral ni ilustración de relleno. Mismo orden que M02: Google arriba, correo abajo.
-  const isDesktop = useIsDesktopLayout();
 
   // Verificación de estado de rechazo: solo se activa si proviene de una acción explícita de rechazo
   const isRejected = Boolean(location.state?.rejected);
@@ -79,19 +74,47 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface desktop:bg-rep-bg">
-      {isDesktop && <BrandBar />}
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
+      
+      {/* Navbar desktop (>= md) */}
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
+        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
+          <img
+            src="/logo-icon.webp"
+            alt="Reportalo"
+            className="w-[20px] h-[26px] object-contain"
+          />
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
+            Reportalo
+          </span>
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
+            CIUDADANOS
+          </span>
+        </Link>
 
-      <div className="flex-1 flex flex-col overflow-hidden min-h-[100dvh] desktop:min-h-0">
+        <div className="ml-auto flex items-center gap-4">
+          <button
+            onClick={handleGoBack}
+            type="button"
+            className="flex items-center gap-1.5 font-bold text-[13px] text-rep-ink-label hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
+          >
+            <ArrowLeft className="w-[18px] h-[18px]" strokeWidth={2.25} />
+            Volver al inicio
+          </button>
+        </div>
+      </header>
+
+      {/* Contenedor principal responsive */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[100dvh] md:min-h-0">
         
         {/* Columna Principal / Formulario de Login */}
-        <main className="flex-1 flex flex-col px-6 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),20px)] justify-between desktop:justify-center desktop:items-center desktop:px-10 desktop:py-12">
+        <main className="flex-1 flex flex-col px-6 md:px-12 lg:px-16 pt-[max(env(safe-area-inset-top),16px)] md:pt-10 pb-[max(env(safe-area-inset-bottom),20px)] md:pb-10 justify-between md:justify-center md:items-center">
           
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-[420px] mx-auto desktop:max-w-[400px] desktop:rounded-3xl desktop:border desktop:border-rep-border desktop:bg-rep-surface desktop:p-8 desktop:shadow-rep-float"
+            className="w-full max-w-[420px] mx-auto md:mx-0"
           >
             {/* Si proviene de rechazo de términos, mostrar el banner de alerta */}
             {isRejected && (
@@ -118,45 +141,42 @@ export const LoginPage = () => {
                     className="w-[38px] h-[50px] object-contain"
                   />
                 </div>
-                <h1 className="font-extrabold text-[20px] desktop:text-[22px] text-rep-ink tracking-[-0.3px] m-0">
+                <h1 className="font-extrabold text-[20px] md:text-[24px] text-rep-ink tracking-[-0.3px] m-0">
                   Entrar a Reportalo
                 </h1>
-                <p className="font-medium text-[11.5px] desktop:text-[12.5px] leading-[1.5] text-rep-ink-muted mt-[8px] max-w-[210px] m-0">
+                <p className="font-medium text-[11.5px] md:text-[12.5px] leading-[1.5] text-rep-ink-muted mt-[8px] max-w-[210px] m-0">
                   Te mandamos un enlace de acceso. No hace falta contraseña.
                 </p>
               </div>
             ) : (
               <>
-                {/* Botón de retroceso y logo: solo en el teléfono (M02). En escritorio están en la barra. */}
-                {!isDesktop && (
-                <>
+                {/* Botón de retroceso móvil (< md) */}
                 <button
                   onClick={handleGoBack}
                   type="button"
                   aria-label="Volver a la pantalla de bienvenida"
-                  className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-rep-ink-label hover:bg-rep-divider active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
+                  className="md:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-rep-ink-label hover:bg-rep-divider active:scale-95 transition-all cursor-pointer border-0 bg-transparent"
                 >
                   <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={2.25} />
                 </button>
 
-                <div className="flex items-center gap-2 mt-2">
+                {/* Logo en móvil (< md) */}
+                <div className="flex md:hidden items-center gap-2 mt-2">
                   <img
                     src="/logo-icon.webp"
                     alt="Reportalo Icon"
                     className="w-[18px] h-[24px] object-contain"
                   />
                   <span className="font-extrabold text-[17px] text-rep-ink">
-                    Reportalo<span className="align-super text-[9px] font-bold text-rep-ink-muted">™</span>
+                    Reportalo
                   </span>
                 </div>
-                </>
-                )}
 
                 {/* Encabezado y bajada estándar */}
-                <h1 className="font-extrabold text-[23px] desktop:text-[24px] text-rep-ink mt-[18px] desktop:mt-0 tracking-[-0.5px] leading-tight">
-                  Ingresá a Reportalo<span className="align-super text-[11px] font-bold text-rep-ink-muted">™</span>
+                <h1 className="font-extrabold text-[23px] md:text-[30px] text-rep-ink mt-[18px] md:mt-0 tracking-[-0.5px] leading-tight">
+                  Ingresá a Reportalo
                 </h1>
-                <p className="font-medium text-[13px] desktop:text-[14px] leading-[1.45] text-rep-ink-muted mt-[5px]">
+                <p className="font-medium text-[13px] md:text-[14px] leading-[1.45] text-rep-ink-muted mt-[5px]">
                   Sin contraseñas. Elegí cómo querés entrar.
                 </p>
               </>
@@ -198,13 +218,9 @@ export const LoginPage = () => {
                     </span>
                   ) : (
                     <>
-                      {/* Logo «G» de Google (M02 · D02; lo piden también sus pautas de marca para este botón) */}
-                      <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5 flex-shrink-0">
-                        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
-                        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-                        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-                        <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
-                      </svg>
+                      <span className="w-5 h-5 rounded-full bg-rep-surface border border-rep-divider flex items-center justify-center font-extrabold text-[12px] text-[#4285F4] flex-shrink-0">
+                        G
+                      </span>
                       <span className="font-bold text-[14px] text-rep-ink-body">
                         Continuar con Google
                       </span>
@@ -238,7 +254,6 @@ export const LoginPage = () => {
                     : 'border-rep-track'
                 } rounded-[13px] py-[13px] px-[14px] transition-all`}
               >
-                <Mail aria-hidden="true" className="h-[18px] w-[18px] flex-shrink-0 text-rep-ink-faint" strokeWidth={2} />
                 <input
                   id="email"
                   type="email"
@@ -248,7 +263,7 @@ export const LoginPage = () => {
                   disabled={isSubmittingMagicLink}
                   autoComplete="email"
                   required
-                  className="font-medium text-rep-input text-rep-ink-body placeholder:text-rep-ink-faint flex-1 bg-transparent border-0 outline-none p-0"
+                  className="font-medium text-[12px] md:text-[13px] text-rep-ink-body placeholder:text-rep-ink-faint flex-1 bg-transparent border-0 outline-none p-0"
                 />
               </div>
 
@@ -257,7 +272,7 @@ export const LoginPage = () => {
                 whileTap={isValidEmail && !isSubmittingMagicLink ? { scale: 0.98 } : {}}
                 type="submit"
                 disabled={!isValidEmail || isSubmittingMagicLink}
-                className={`w-full mt-3 rounded-[13px] py-[14px] px-4 text-center border-0 font-extrabold text-[14px] desktop:text-[15px] text-white transition-all ${
+                className={`w-full mt-3 rounded-[13px] py-[14px] px-4 text-center border-0 font-extrabold text-[14px] md:text-[15px] text-white transition-all ${
                   isValidEmail && !isSubmittingMagicLink
                     ? 'bg-rep-accent shadow-[0px_8px_18px_rgba(30,111,203,0.3)] hover:bg-rep-accent-strong cursor-pointer'
                     : 'bg-rep-accent/70 opacity-80 cursor-not-allowed shadow-none'
@@ -287,29 +302,85 @@ export const LoginPage = () => {
                 </div>
               )}
             </form>
-
-            {/* D02: la nota de identidad va dentro de la tarjeta, debajo del botón */}
-            {isDesktop && (
-              <div className="mt-5 flex items-start gap-2 rounded-[12px] border border-rep-accent-border bg-rep-accent-soft p-[12px]">
-                <Shield className="mt-[1px] h-[17px] w-[17px] flex-shrink-0 text-rep-accent" strokeWidth={2.25} />
-                <p className="m-0 text-[12px] font-medium leading-[1.45] text-rep-ink-body">
-                  Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
-                </p>
-              </div>
-            )}
           </motion.div>
 
-          {/* Tarjeta de resguardo de identidad en el teléfono (M02) */}
-          {!isDesktop && (
-          <div className="mt-8 mb-2 flex items-start gap-2 bg-rep-accent-soft border border-rep-accent-border rounded-[12px] p-[12px] max-w-[420px] w-full mx-auto">
+          {/* Tarjeta de resguardo de identidad en móvil (< md) */}
+          <div className="md:hidden mt-8 mb-2 flex items-start gap-2 bg-rep-accent-soft border border-rep-accent-border rounded-[12px] p-[12px] max-w-[420px] w-full mx-auto">
             <Shield className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-[1px]" strokeWidth={2.25} />
             <p className="font-medium text-[11.5px] leading-[1.45] text-rep-ink-body m-0">
               Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
             </p>
           </div>
-          )}
         </main>
 
+        {/* Sidebar desktop (>= md) */}
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
+          <div>
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
+              Seguridad y Privacidad
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  1
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Tu identidad nunca se comparte
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    El organismo receptor únicamente recibe la evidencia técnica y la ubicación.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  2
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Sin necesidad de contraseñas
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Recibí un enlace directo en tu correo de un solo uso o entrá con Google.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  3
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Historial centralizado
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Seguí la evolución de todos tus reclamos en un solo lugar.
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
+              Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
+            </span>
+          </div>
+        </aside>
 
       </div>
 

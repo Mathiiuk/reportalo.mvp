@@ -25,7 +25,6 @@ import { StatusPill } from '../components/report/StatusPill';
 import { buildTimeline, formatReportCode, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
-import { AppDesktopHeader } from '../components/layout/AppLayout';
 
 const CARD = 'rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:p-5';
 
@@ -238,7 +237,6 @@ export const ReportDetailPage = () => {
   if (loadingReport) {
     return (
       <div className="flex min-h-[100dvh] w-full flex-col bg-rep-bg font-manrope">
-        {isDesktop && <AppDesktopHeader activeTab="reportes" className="sticky top-0 flex" />}
         <div className="mx-auto w-full max-w-lg flex-1 px-4 py-6 desktop:max-w-[1200px] desktop:px-10">
           <DetailSkeleton />
         </div>
@@ -251,11 +249,9 @@ export const ReportDetailPage = () => {
   // pertenencia se valida acá: el detalle con el fundamento jurídico es privado.
   if (loadError || !report || !isOwnedBy(report, user?.id)) {
     return (
-      <div className="flex min-h-[100dvh] w-full flex-col bg-rep-bg font-manrope">
-      {isDesktop && <AppDesktopHeader activeTab="reportes" className="sticky top-0 flex" />}
       <div
         data-testid="detail-not-found"
-        className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center"
+        className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-rep-bg px-6 text-center font-manrope"
       >
         <h1 className="m-0 text-rep-title text-rep-ink">No encontramos este reporte</h1>
         <p className="m-0 max-w-[320px] text-rep-body text-rep-ink-muted">
@@ -268,7 +264,6 @@ export const ReportDetailPage = () => {
         >
           Volver a mis reportes
         </button>
-      </div>
       </div>
     );
   }
@@ -309,9 +304,6 @@ export const ReportDetailPage = () => {
       data-live-mode={mode}
       className="flex h-full min-h-[100dvh] w-full flex-col bg-rep-bg font-manrope"
     >
-      {/* D17 (REP-3791 Bloque 11-B): barra global de la app. En teléfono (M16) no va: la pantalla
-          tiene su propia cabecera con «volver». */}
-      {isDesktop && <AppDesktopHeader activeTab="reportes" className="sticky top-0 flex" />}
       <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-6 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:max-w-[1200px] desktop:px-10 desktop:py-8">
         {/* Cabecera de teléfono (M16): volver + número + estado */}
         {!isDesktop && (

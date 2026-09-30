@@ -1,170 +1,275 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import { useIsDesktopLayout } from '../hooks/useMediaQuery';
-import { BrandBar } from '../components/layout/BrandBar';
-import { CityTexture } from '../components/common/CityTexture';
-import { AlertCircle, Shield, Sparkles, Map as MapIcon } from 'lucide-react';
-
-// Las tres promesas de la portada (M01 en columna, D01 en fila)
-const PROMISES = [
-  { icon: Shield, label: 'Anónimo ante el organismo receptor' },
-  { icon: Sparkles, label: 'La IA encuentra a quién corresponde' },
-  { icon: MapIcon, label: 'Seguimiento hasta resolverse' },
-];
-
-const HERO_GRADIENT = 'linear-gradient(165deg, rgb(42, 123, 214), rgb(21, 83, 158))';
-
-const AuthErrorAlert = ({ message, onClose }) => (
-  <div
-    role="alert"
-    className="mt-4 flex w-full max-w-[480px] items-center gap-2 rounded-xl border border-white/30 bg-red-500/20 p-3 text-xs font-medium text-white"
-  >
-    <AlertCircle className="h-4 w-4 flex-shrink-0 text-white" strokeWidth={2.25} />
-    <span className="flex-1 text-left">{message}</span>
-    <button onClick={onClose} type="button" className="ml-1 cursor-pointer border-0 bg-transparent font-bold text-white hover:opacity-80">
-      ✕
-    </button>
-  </div>
-);
+import { AlertCircle, Shield, Sparkles, Map as MapIcon, ShieldCheck } from 'lucide-react';
 
 export const WelcomePage = () => {
   const navigate = useNavigate();
   const { authError, clearError } = useAuth();
-  const isDesktop = useIsDesktopLayout();
 
   // Transición a la pantalla de acceso
   const handleStart = () => {
     navigate('/login');
   };
 
-  // D01 · Landing en navegador (UJ v3.3, REP-3791 Bloque 11-C): barra blanca con la marca e
-  // «Ingresar»; héroe azul con el isotipo, el titular, un solo CTA y las tres promesas en fila.
-  if (isDesktop) {
-    return (
-      <div className="flex min-h-[100dvh] w-full select-none flex-col bg-rep-surface font-manrope">
-        <BrandBar>
-          {/* No está en D01: se conserva para no dejar sin entrada la portada de municipios (ver README 11-C) */}
-          <Link
-            to="/municipios"
-            className="rep-focus flex min-h-touch items-center rounded px-2 text-rep-label-d font-semibold text-rep-ink-muted no-underline transition-colors hover:text-rep-accent"
+  return (
+    <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
+      
+      {/* Navbar visible únicamente en desktop */}
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/logo-icon.webp"
+            alt="Reportalo"
+            className="w-[20px] h-[26px] object-contain"
+          />
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
+            Reportalo
+          </span>
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1">
+            CIUDADANOS
+          </span>
+        </div>
+
+        <nav className="flex items-center gap-6 ml-4">
+          <span className="font-semibold text-[13px] text-rep-ink-muted hover:text-rep-accent cursor-pointer transition-colors">
+            Cómo funciona
+          </span>
+          <span className="font-semibold text-[13px] text-rep-ink-muted hover:text-rep-accent cursor-pointer transition-colors">
+            Privacidad y Seguridad
+          </span>
+          <button
+            onClick={() => navigate('/municipios')}
+            type="button"
+            className="rep-focus min-h-touch font-semibold text-[13px] text-rep-accent hover:text-rep-accent-strong cursor-pointer bg-transparent border-0 transition-colors p-0"
           >
-            Para municipios
-          </Link>
+            Para Municipios →
+          </button>
+        </nav>
+
+        <div className="ml-auto flex items-center gap-3">
           <button
             onClick={handleStart}
             type="button"
-            className="rep-focus min-h-touch cursor-pointer rounded border-0 bg-transparent px-3 text-rep-body-d font-bold text-rep-accent transition-colors hover:text-rep-accent-strong"
+            className="rep-focus min-h-touch font-bold text-[13px] text-rep-accent hover:text-rep-accent-strong px-3 py-2 cursor-pointer bg-transparent border-0"
           >
             Ingresar
           </button>
-        </BrandBar>
-
-        <main
-          className="relative flex flex-1 items-center justify-center overflow-hidden px-10 py-16 text-center text-white"
-          style={{ background: HERO_GRADIENT }}
-        >
-          {/* D01: «el fondo es el mapa de la ciudad con velo azul: textura urbana sin competir con el texto» */}
-          <CityTexture className="absolute inset-0 h-full w-full text-white" />
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="relative flex max-w-[760px] flex-col items-center"
-          >
-            <span className="flex h-[84px] w-[84px] items-center justify-center rounded-[24px] bg-white shadow-[0_12px_30px_rgba(10,40,90,0.25)]">
-              <img src="/logo-icon.webp" alt="Reportalo" className="h-[54px] w-[42px] object-contain" />
-            </span>
-
-            <h1 className="m-0 mt-7 text-[44px] font-extrabold leading-[1.1] tracking-[-1px] text-white">
-              Reportá lo que ves en tu ciudad
-            </h1>
-            <p className="m-0 mt-4 max-w-[540px] text-[17px] font-medium leading-[1.55] text-white/85">
-              Con evidencia verificada y tu identidad protegida. Entrás con tu correo, sin crear contraseña.
-            </p>
-
-            {authError && <AuthErrorAlert message={authError} onClose={clearError} />}
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleStart}
-              type="button"
-              className="rep-focus mt-8 min-h-touch cursor-pointer rounded-[14px] border-0 bg-white px-12 py-4 text-rep-button text-rep-accent shadow-[0px_8px_18px_rgba(0,0,0,0.14)] hover:opacity-95"
-            >
-              Comenzar
-            </motion.button>
-
-            <ul className="m-0 mt-14 grid list-none grid-cols-3 gap-12 p-0">
-              {PROMISES.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex flex-col items-center gap-2.5">
-                  <Icon aria-hidden="true" className="h-[22px] w-[22px] text-[#9FD0FF]" strokeWidth={2.25} />
-                  <span className="max-w-[180px] text-rep-body-d font-semibold leading-snug text-white/95">{label}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
-
-  // M01 · Bienvenida en el teléfono (sin cambios de diseño en este bloque)
-  return (
-    <div className="flex min-h-[100dvh] w-full select-none flex-col bg-rep-surface font-manrope">
-      <main
-        className="flex min-h-[100dvh] flex-1 flex-col justify-between px-6 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),28px)] text-white"
-        style={{ background: HERO_GRADIENT }}
-      >
-        {/* Zona superior / Hero con animación Framer Motion */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex max-w-[560px] flex-1 flex-col items-center justify-center py-4 text-center"
-        >
-          {/* Logo oficial de Reportalo sin fondo */}
-          <img src="/logo-icon.webp" alt="Reportalo Logo" className="mb-4 h-[62px] w-[48px] object-contain" />
-
-          {/* Título principal */}
-          <h1 className="text-[32px] font-extrabold leading-tight tracking-[-0.6px] text-white">Reportalo</h1>
-
-          {/* Bajada explicativa */}
-          <p className="mt-[11px] max-w-[280px] text-[14px] font-medium leading-[1.55] text-white/90">
-            Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
-          </p>
-
-          {/* Mensaje de error si la autenticación con OAuth falla */}
-          {authError && <AuthErrorAlert message={authError} onClose={clearError} />}
-
-          {/* Lista de beneficios diferenciales */}
-          <div className="mt-[26px] flex w-full max-w-[300px] flex-col gap-[12px]">
-            {PROMISES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-[10px]">
-                <Icon className="h-[19px] w-[19px] flex-shrink-0 text-[#9FD0FF]" strokeWidth={2.25} />
-                <span className="text-left text-[12.5px] font-semibold leading-snug text-white/95">{label}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Zona inferior de acción */}
-        <div className="mx-auto flex w-full max-w-[320px] flex-col gap-[10px] pt-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleStart}
             type="button"
-            className="w-full cursor-pointer rounded-[14px] border-0 bg-rep-surface px-6 py-[16px] text-center text-[15px] font-extrabold text-rep-accent shadow-[0px_8px_18px_rgba(0,0,0,0.14)] hover:opacity-95"
+            className="bg-rep-accent text-white px-4 py-2.5 rounded-[10px] font-bold text-[13px] hover:bg-rep-accent-strong cursor-pointer border-0 shadow-sm"
           >
             Comenzar
           </motion.button>
-          <p className="m-0 px-[10px] text-center text-[11px] font-medium leading-[1.4] text-white/75">
-            Entrás con tu correo, sin crear contraseña.
-          </p>
         </div>
-      </main>
+      </header>
+
+      {/* Contenedor principal responsive */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[100dvh] md:min-h-0">
+        
+        {/* Columna / Cuerpo principal:
+            - En móvil (< md): gradiente azul de Reportalo, centrado vertical.
+            - En desktop (>= md): fondo blanco limpio, hero y métricas al pie. */}
+        <main
+          className="flex-1 flex flex-col justify-between px-6 md:px-12 lg:px-16 pt-[max(env(safe-area-inset-top),24px)] md:pt-10 pb-[max(env(safe-area-inset-bottom),28px)] md:pb-8 text-white md:text-slate-800"
+          style={{
+            background:
+              typeof window !== 'undefined' && window.innerWidth >= 768
+                ? 'transparent'
+                : 'linear-gradient(165deg, rgb(42, 123, 214), rgb(21, 83, 158))',
+          }}
+        >
+          {/* Zona superior / Hero con animación Framer Motion */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left py-4 md:py-0 max-w-[560px]"
+          >
+            
+            {/* Logo oficial de Reportalo sin fondo */}
+            <img
+              src="/logo-icon.webp"
+              alt="Reportalo Logo"
+              className="w-[48px] h-[62px] md:w-[56px] md:h-[72px] object-contain mb-4 md:mb-5"
+            />
+
+            {/* Título principal */}
+            <h1 className="font-extrabold text-[32px] md:text-[38px] lg:text-[42px] leading-tight md:leading-[1.18] text-white md:text-rep-ink tracking-[-0.6px] md:tracking-[-1px]">
+              Reportalo
+            </h1>
+
+            {/* Bajada explicativa */}
+            <p className="font-medium text-[14px] md:text-[15.5px] leading-[1.55] md:leading-[1.6] text-white/90 md:text-rep-ink-muted mt-[11px] md:mt-3 max-w-[280px] md:max-w-[480px]">
+              Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida.
+            </p>
+
+            {/* Mensaje de error si la autenticación con OAuth falla */}
+            {authError && (
+              <div
+                role="alert"
+                className="mt-4 p-3 rounded-xl bg-red-500/20 md:bg-red-50 border border-white/30 md:border-red-200 text-white md:text-red-700 text-xs font-medium flex items-center gap-2 max-w-[480px] w-full"
+              >
+                <AlertCircle className="w-4 h-4 text-white md:text-red-600 flex-shrink-0" strokeWidth={2.25} />
+                <span className="flex-1">{authError}</span>
+                <button
+                  onClick={clearError}
+                  type="button"
+                  className="text-white md:text-red-500 hover:opacity-80 font-bold ml-1 bg-transparent border-0 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Lista de beneficios diferenciales */}
+            <div className="flex flex-col gap-[12px] md:gap-[14px] mt-[26px] md:mt-7 w-full max-w-[300px] md:max-w-none">
+              <div className="flex items-center gap-[10px]">
+                <Shield className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
+                  Anónimo ante el organismo receptor
+                </span>
+              </div>
+
+              <div className="flex items-center gap-[10px]">
+                <Sparkles className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
+                  La IA encuentra a quién corresponde
+                </span>
+              </div>
+
+              <div className="flex items-center gap-[10px]">
+                <MapIcon className="w-[19px] h-[19px] text-[#9FD0FF] md:text-rep-accent flex-shrink-0" strokeWidth={2.25} />
+                <span className="font-semibold text-[12.5px] md:text-[13.5px] text-white/95 md:text-rep-ink-body text-left leading-snug">
+                  Seguimiento hasta resolverse
+                </span>
+              </div>
+            </div>
+
+          </motion.div>
+
+          {/* Zona inferior de acción */}
+          <div className="flex flex-col gap-[10px] pt-4 md:pt-6 max-w-[320px] md:max-w-[440px] w-full mx-auto md:mx-0">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleStart}
+              type="button"
+              className="w-full bg-rep-surface md:bg-rep-accent text-rep-accent md:text-white rounded-[14px] py-[16px] px-6 text-center font-extrabold text-[15px] md:text-[15.5px] shadow-[0px_8px_18px_rgba(0,0,0,0.14)] md:shadow-[0px_8px_18px_rgba(30,111,203,0.28)] hover:opacity-95 cursor-pointer border-0"
+            >
+              Comenzar
+            </motion.button>
+            <p className="text-center md:text-left font-medium text-[11px] leading-[1.4] text-white/75 md:text-rep-ink-muted px-[10px] md:px-1 m-0">
+              Entrás con tu correo, sin crear contraseña.
+            </p>
+          </div>
+
+          {/* Fila de Métricas / Garantías exclusiva de Desktop */}
+          <div className="hidden md:flex items-center gap-8 lg:gap-12 pt-8 border-t border-rep-divider mt-8">
+            <div>
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
+                100%
+              </div>
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
+                Identidad Protegida
+              </div>
+            </div>
+
+            <div>
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
+                IA Inteligente
+              </div>
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
+                Encuadre de Organismo
+              </div>
+            </div>
+
+            <div>
+              <div className="font-extrabold text-[24px] leading-none text-rep-accent">
+                Tiempo Real
+              </div>
+              <div className="font-bold text-[10.5px] tracking-wider text-rep-ink-muted mt-1.5 uppercase">
+                Seguimiento de Estado
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* Sidebar exclusiva de Desktop (>= md) basada en el diseño de municipios */}
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
+          <div>
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
+              Cómo Funciona
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  1
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Reportás lo que ves
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Subís foto y ubicación exacta con total resguardo de tu anonimato.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  2
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    La IA encuentra a quién corresponde
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Determina el organismo competente y la categoría del caso.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                className="bg-rep-surface border border-rep-border rounded-[13px] p-3.5 flex gap-3 shadow-sm"
+              >
+                <span className="w-[28px] h-[28px] rounded-[8px] bg-rep-accent-soft text-rep-accent font-extrabold text-[12px] flex items-center justify-center flex-shrink-0">
+                  3
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Seguimiento hasta resolverse
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Recibís notificaciones y ves los avances de resolución de tu caso.
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
+              Tu cuenta sirve para seguir tus reportes; tu identidad nunca se comparte con el organismo.
+            </span>
+          </div>
+        </aside>
+
+      </div>
+
     </div>
   );
 };

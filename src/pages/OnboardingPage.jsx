@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImagePlus, ScanFace, ArrowRight, Shield, Check, Eye } from 'lucide-react';
-import { useIsDesktopLayout } from '../hooks/useMediaQuery';
-import { BrandBar } from '../components/layout/BrandBar';
+import { ImagePlus, ScanFace, ArrowRight, Shield, Check, Eye, ShieldCheck } from 'lucide-react';
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
-  // D04 a D06 (UJ v3.3, REP-3791 Bloque 11-C): «el carrusel se vuelve horizontal».
-  const isDesktop = useIsDesktopLayout();
 
   // Finalizar onboarding y continuar a la activación de permisos por única vez
   const handleFinish = () => {
@@ -46,11 +42,8 @@ export const OnboardingPage = () => {
       title: 'Una foto es un reclamo',
       description:
         'Sacás la foto de lo que está mal en tu barrio y Reportalo la convierte en un reclamo formal ante quien tiene que resolverlo.',
-      // D04: «El copy dice "Subís la foto", no "Sacás la foto": en escritorio no hay cámara».
-      descriptionDesktop:
-        'Subís la foto de lo que está mal en tu barrio y Reportalo la convierte en un reclamo formal ante quien tiene que resolverlo.',
-      renderIllustration: (heightClass) => (
-        <div className={`${heightClass} rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col items-center justify-center gap-3 shadow-inner`}>
+      renderIllustration: () => (
+        <div className="h-[250px] rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col items-center justify-center gap-3 shadow-inner">
           {/* Pictograma (decisión de UX, REP-3791 Bloque 7-B): reemplaza el marcador de ilustración */}
           <span aria-hidden="true" data-testid="onboarding-pictogram-1" className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-rep-surface shadow-rep-card">
             <ImagePlus className="h-12 w-12 text-rep-accent" strokeWidth={1.75} />
@@ -66,8 +59,8 @@ export const OnboardingPage = () => {
       title: 'Tu foto se protege sola',
       description:
         'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
-      renderIllustration: (heightClass) => (
-        <div className={`${heightClass} rounded-[20px] bg-[#E9F5EF] border border-[#D5EBE0] flex flex-col items-center justify-center gap-3.5 shadow-inner`}>
+      renderIllustration: () => (
+        <div className="h-[250px] rounded-[20px] bg-[#E9F5EF] border border-[#D5EBE0] flex flex-col items-center justify-center gap-3.5 shadow-inner">
           <ScanFace className="w-[52px] h-[52px] text-rep-success" strokeWidth={1.5} />
           <div className="flex items-center gap-2 bg-rep-surface rounded-[10px] py-2 px-3 shadow-[0px_3px_10px_rgba(20,40,80,0.08)]">
             <span className="w-[26px] h-[26px] rounded-[7px] bg-[repeating-linear-gradient(45deg,#C9D5E2_0px,#C9D5E2_3px,#E2E9F0_3px,#E2E9F0_6px)] flex-shrink-0" />
@@ -84,8 +77,8 @@ export const OnboardingPage = () => {
       title: 'Seguí cada reporte',
       description:
         'Vas viendo en qué estado está tu reclamo, quién lo tiene que resolver y qué fundamento legal lo respalda.',
-      renderIllustration: (heightClass) => (
-        <div className={`${heightClass} rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left`}>
+      renderIllustration: () => (
+        <div className="h-[250px] rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left">
           {/* 1. Enviado */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full bg-rep-success flex items-center justify-center text-white flex-shrink-0">
@@ -131,88 +124,44 @@ export const OnboardingPage = () => {
 
   const current = steps[currentStep];
 
-  // Paginador de puntos (el mismo en teléfono y escritorio)
-  const Dots = ({ className = '' }) => (
-    <div className={`flex items-center gap-1.5 ${className}`}>
-      {[0, 1, 2].map((index) => (
-        <button
-          key={index}
-          onClick={() => setCurrentStep(index)}
-          aria-label={`Ir al paso ${index + 1}`}
-          type="button"
-          className={`h-[6px] rounded-[3px] transition-all cursor-pointer border-0 p-0 ${
-            currentStep === index ? 'w-[22px] bg-rep-accent' : 'w-[6px] bg-rep-track hover:bg-slate-300'
-          }`}
-        />
-      ))}
-    </div>
-  );
-
-  // D04 a D06: tarjeta horizontal centrada. Ilustración a la izquierda; a la derecha, paso,
-  // título, texto y una sola fila con el CTA, el paginador y «Saltar».
-  if (isDesktop) {
-    return (
-      <div className="flex min-h-[100dvh] w-full select-none flex-col bg-rep-bg font-manrope">
-        <BrandBar showUser />
-        <main className="flex flex-1 items-center justify-center px-10 py-12">
-          <AnimatePresence mode="wait">
-            <motion.section
-              key={current.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
-              aria-label={`Paso ${currentStep + 1} de 3`}
-              className="grid w-full max-w-[860px] grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-10 rounded-3xl border border-rep-border bg-rep-surface p-8 shadow-rep-float"
-            >
-              <div>{current.renderIllustration('h-[260px]')}</div>
-              <div className="flex flex-col">
-                <span className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-rep-ink-faint">
-                  Paso {currentStep + 1} de 3
-                </span>
-                <h1 className="m-0 mt-2 text-rep-title-d text-rep-ink">{current.title}</h1>
-                <p className="m-0 mt-3 text-rep-body-d text-rep-ink-muted">{current.descriptionDesktop || current.description}</p>
-                <div className="mt-8 flex items-center gap-6">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleNext}
-                    type="button"
-                    className="rep-focus min-h-touch cursor-pointer rounded-[14px] border-0 bg-rep-accent px-8 py-[14px] text-rep-button text-rep-on-accent shadow-rep-accent transition-colors hover:bg-rep-accent-strong"
-                  >
-                    {currentStep === 2 ? 'Empezar' : 'Siguiente'}
-                  </motion.button>
-                  <Dots />
-                  {currentStep < 2 ? (
-                    <button
-                      onClick={handleFinish}
-                      type="button"
-                      className="rep-focus ml-auto min-h-touch cursor-pointer rounded border-0 bg-transparent px-2 text-rep-body-d font-bold text-rep-ink-faint transition-colors hover:text-rep-accent"
-                    >
-                      Saltar
-                    </button>
-                  ) : (
-                    <span aria-hidden="true" className="ml-auto select-none px-2 text-rep-body-d font-bold text-rep-divider">
-                      Saltar
-                    </span>
-                  )}
-                </div>
-              </div>
-            </motion.section>
-          </AnimatePresence>
-        </main>
-      </div>
-    );
-  }
-
-  // M04 a M06: carrusel vertical en el teléfono (sin cambios de diseño en este bloque)
   return (
     <div className="min-h-[100dvh] w-full font-manrope select-none flex flex-col bg-rep-surface">
-      <div className="flex-1 flex flex-col overflow-hidden min-h-[100dvh]">
-        <main className="flex-1 flex flex-col px-6 pt-[max(env(safe-area-inset-top),10px)] pb-[max(env(safe-area-inset-bottom),18px)] justify-between items-center">
+      
+      {/* Header superior desktop (>= md) */}
+      <header className="hidden md:flex flex-shrink-0 border-b border-rep-divider px-8 lg:px-12 py-4 items-center gap-6 bg-rep-surface">
+        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
+          <img
+            src="/logo-icon.webp"
+            alt="Reportalo"
+            className="w-[20px] h-[26px] object-contain"
+          />
+          <span className="font-extrabold text-[19px] text-rep-ink tracking-[-0.4px]">
+            Reportalo
+          </span>
+          <span className="font-bold text-[9px] text-rep-accent bg-rep-accent-soft px-2 py-1 rounded-[7px] ml-1 uppercase">
+            CIUDADANOS
+          </span>
+        </Link>
+
+        <div className="ml-auto flex items-center gap-4">
+          <button
+            onClick={handleFinish}
+            type="button"
+            className="font-bold text-[13px] text-rep-ink-faint hover:text-rep-accent px-3 py-2 cursor-pointer bg-transparent border-0 transition-colors"
+          >
+            Saltar onboarding
+          </button>
+        </div>
+      </header>
+
+      {/* Contenedor principal responsive */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[100dvh] md:min-h-0">
+        
+        {/* Columna Principal / Onboarding */}
+        <main className="flex-1 flex flex-col px-6 md:px-12 lg:px-16 pt-[max(env(safe-area-inset-top),10px)] md:pt-8 pb-[max(env(safe-area-inset-bottom),18px)] md:pb-10 justify-between items-center">
           
           {/* Barra superior de acción (Botón Saltar en móvil) */}
-          <div className="w-full max-w-[340px] flex justify-end">
+          <div className="w-full max-w-[340px] md:max-w-[440px] flex justify-end">
             {currentStep < 2 ? (
               <button
                 onClick={handleFinish}
@@ -229,7 +178,7 @@ export const OnboardingPage = () => {
           </div>
 
           {/* Tarjeta del paso con animación Framer Motion */}
-          <div className="w-full max-w-[340px] my-auto">
+          <div className="w-full max-w-[340px] md:max-w-[440px] my-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={current.id}
@@ -240,17 +189,17 @@ export const OnboardingPage = () => {
                 className="flex flex-col"
               >
                 {/* Ilustración */}
-                <div className="mt-2.5">
-                  {current.renderIllustration('h-[250px]')}
+                <div className="mt-2.5 md:mt-4">
+                  {current.renderIllustration()}
                 </div>
 
                 {/* Título */}
-                <h1 className="font-extrabold text-[24px] text-rep-ink mt-7 tracking-[-0.5px] leading-tight">
+                <h1 className="font-extrabold text-[24px] md:text-[28px] text-rep-ink mt-7 tracking-[-0.5px] leading-tight">
                   {current.title}
                 </h1>
 
                 {/* Descripción */}
-                <p className="font-medium text-[13.5px] leading-[1.6] text-rep-ink-muted mt-2.5">
+                <p className="font-medium text-[13.5px] md:text-[14.5px] leading-[1.6] text-rep-ink-muted mt-2.5">
                   {current.description}
                 </p>
               </motion.div>
@@ -258,10 +207,24 @@ export const OnboardingPage = () => {
           </div>
 
           {/* Zona inferior: Paginador y Botón Siguiente/Empezar */}
-          <div className="w-full max-w-[340px] pt-4">
+          <div className="w-full max-w-[340px] md:max-w-[440px] pt-4">
             
             {/* Paginador de puntos interactivo */}
-            <Dots className="justify-center mb-4" />
+            <div className="flex items-center justify-center gap-1.5 mb-4">
+              {[0, 1, 2].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentStep(index)}
+                  aria-label={`Ir al paso ${index + 1}`}
+                  type="button"
+                  className={`h-[6px] rounded-[3px] transition-all cursor-pointer border-0 p-0 ${
+                    currentStep === index
+                      ? 'w-[22px] bg-rep-accent'
+                      : 'w-[6px] bg-rep-track hover:bg-slate-300'
+                  }`}
+                />
+              ))}
+            </div>
 
             {/* Botón CTA: Siguiente o Empezar */}
             <motion.button
@@ -275,7 +238,111 @@ export const OnboardingPage = () => {
             </motion.button>
           </div>
         </main>
+
+        {/* Sidebar desktop (>= md) armonizada con el Home y /municipios */}
+        <aside className="hidden md:flex w-[380px] lg:w-[420px] flex-shrink-0 bg-rep-bg border-l border-rep-divider p-8 flex-col justify-between gap-4">
+          <div>
+            <div className="font-extrabold text-[11px] text-rep-ink-muted tracking-[0.5px] mb-4 uppercase">
+              Cómo funciona Reportalo
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <motion.div
+                whileHover={{ y: -2 }}
+                onClick={() => setCurrentStep(0)}
+                className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
+                  currentStep === 0
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
+                }`}
+              >
+                <span
+                  className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                    currentStep === 0
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
+                  }`}
+                >
+                  1
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Una foto es un reclamo
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Sacás la foto y la IA de Reportalo encuadra el organismo responsable.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                onClick={() => setCurrentStep(1)}
+                className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
+                  currentStep === 1
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
+                }`}
+              >
+                <span
+                  className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                    currentStep === 1
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
+                  }`}
+                >
+                  2
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Privacidad y Anonimización
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Difuminado automático de rostros y patentes antes de almacenarse.
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -2 }}
+                onClick={() => setCurrentStep(2)}
+                className={`border rounded-[13px] p-3.5 flex gap-3 shadow-sm cursor-pointer transition-all ${
+                  currentStep === 2
+                    ? 'bg-white border-rep-accent ring-1 ring-[#1E6FCB]/20'
+                    : 'bg-white/80 border-rep-border hover:bg-white'
+                }`}
+              >
+                <span
+                  className={`w-[28px] h-[28px] rounded-[8px] font-extrabold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                    currentStep === 2
+                      ? 'bg-rep-accent text-white'
+                      : 'bg-rep-accent-soft text-rep-accent'
+                  }`}
+                >
+                  3
+                </span>
+                <div>
+                  <div className="font-bold text-[13px] text-rep-ink">
+                    Seguimiento en tiempo real
+                  </div>
+                  <div className="font-medium text-[11px] leading-[1.45] text-rep-ink-muted mt-0.5">
+                    Consultá el estado y las notas oficiales de tu caso hasta resolverse.
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-3 border-t border-rep-divider">
+            <ShieldCheck className="w-[17px] h-[17px] text-rep-accent flex-shrink-0 mt-0.5" strokeWidth={2.25} />
+            <span className="font-semibold text-[11px] leading-[1.5] text-rep-ink-label">
+              Tu identidad nunca se comparte con el organismo receptor.
+            </span>
+          </div>
+        </aside>
+
       </div>
+
     </div>
   );
 };
