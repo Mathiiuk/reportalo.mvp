@@ -26,10 +26,11 @@ export const STATE_POLL_INTERVAL_MS = 15000;
  * @param {string|undefined} params.reportId UUID de citizen_reports.id
  * @param {string|undefined} params.stateCode Estado que la pantalla muestra ahora (código de la base)
  * @param {boolean} params.isOwner Si el reporte es del usuario en sesión (solo el dueño recibe el historial)
+ * @param {number} [params.intervalMs] Cada cuánto sondea (por defecto 15 s; el acuse de envío usa menos)
  * @param {(update: { stateCode: string, history: Array<object>|null }) => void} params.onUpdate
  *   Se llama cuando el estado cambió; `history` es null si no se pudo leer (reporte ajeno o error).
  */
-export const useReportStateLive = ({ reportId, stateCode, isOwner, onUpdate }) => {
+export const useReportStateLive = ({ reportId, stateCode, isOwner, onUpdate, intervalMs = STATE_POLL_INTERVAL_MS }) => {
   // Refs para no recrear la suscripción en cada render
   const stateRef = useRef(stateCode);
   const onUpdateRef = useRef(onUpdate);
@@ -65,7 +66,7 @@ export const useReportStateLive = ({ reportId, stateCode, isOwner, onUpdate }) =
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       check();
-    }, STATE_POLL_INTERVAL_MS);
+    }, intervalMs);
 
     // Al volver a la pestaña se consulta enseguida, sin esperar al próximo ciclo
     const onVisible = () => {
@@ -96,7 +97,7 @@ export const useReportStateLive = ({ reportId, stateCode, isOwner, onUpdate }) =
       document.removeEventListener('visibilitychange', onVisible);
       if (channel && typeof supabase?.removeChannel === 'function') supabase.removeChannel(channel);
     };
-  }, [reportId, isOwner, closed, Boolean(stateCode)]);
+  }, [reportId, isOwner, closed, intervalMs, Boolean(stateCode)]);
 };
 
 export default useReportStateLive;
