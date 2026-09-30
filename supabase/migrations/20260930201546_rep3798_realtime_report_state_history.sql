@@ -14,8 +14,8 @@
 -- que tiene `lectura_publica`, sigue fuera de la publicacion: el sondeo de respaldo cubre a quien mira un
 -- reporte ajeno sin abrir el stream completo.
 --
--- Esta migracion NO esta aplicada: requiere aprobacion antes de correr en produccion. Sin ella el detalle
--- igual se actualiza, por sondeo cada 15 s.
+-- APLICADA en produccion (CiudadAR) el 30/09/2026, con aprobacion de Matias. La version quedo registrada como
+-- 20260930201546; el archivo se renombro para coincidir. Probada antes en la base descartable, en transaccion.
 
 do $$
 begin
