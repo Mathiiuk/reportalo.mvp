@@ -161,6 +161,36 @@ describe('H-35: Pendientes con borradores trabados', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
+  it('UT-3801-08: si solo falta un dato (ubicación), el aviso es una advertencia y no el error rojo', async () => {
+    getAllPendingSyncReports.mockResolvedValue([draft({ customLocation: null })]);
+    syncPendingReports.mockResolvedValue({
+      sent: 0, failed: 1, remaining: 1, offline: false,
+      errors: [{ clientSideId: 'draft-1', error: 'Falta confirmar la ubicación del reporte.', code: 'LOCATION', kind: 'invalid' }],
+    });
+    renderPage();
+    await screen.findByTestId('pending-report-item');
+
+    fireEvent.click(screen.getByRole('button', { name: /reintentar ahora/i }));
+
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('Falta completar un dato', expect.anything()));
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('UT-3801-09: una falla real de envío sigue avisando en rojo', async () => {
+    getAllPendingSyncReports.mockResolvedValue([draft()]);
+    syncPendingReports.mockResolvedValue({
+      sent: 0, failed: 1, remaining: 1, offline: false,
+      errors: [{ clientSideId: 'draft-1', error: 'No pudimos enviar el reporte.', code: 'NETWORK', kind: 'retry' }],
+    });
+    renderPage();
+    await screen.findByTestId('pending-report-item');
+
+    fireEvent.click(screen.getByRole('button', { name: /reintentar ahora/i }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Algunos reportes no se pudieron enviar', expect.anything()));
+    expect(toast.warning).not.toHaveBeenCalledWith('Falta completar un dato', expect.anything());
+  });
+
   it('UT-H35-25: si no se puede descartar, avisa y el borrador sigue en la lista', async () => {
     deleteDraftReport.mockRejectedValue(new Error('IndexedDB'));
     getAllPendingSyncReports.mockResolvedValue([draft()]);
