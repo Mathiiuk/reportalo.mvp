@@ -53,3 +53,23 @@ html, body, #root {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-rep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-rep-surface;
   }
 }
+
+/* REP-3802 · Deriva lenta de la textura de calles del héroe (CityTexture animated).
+   El SVG se agranda un 16% para que al desplazarse nunca deje un borde vacío. */
+@keyframes rep-city-drift {
+  from { transform: scale(1.16) translate3d(-5%, 3.5%, 0); }
+  to   { transform: scale(1.16) translate3d(5%, -3.5%, 0); }
+}
+.rep-city-drift {
+  animation: rep-city-drift 14s ease-in-out infinite alternate;
+  will-change: transform;
+}
+/* Con «reducir movimiento» no se apaga (el fondo se vería congelado, que era el bug): va más
+   lenta y con menor recorrido, sin cambios bruscos. */
+@keyframes rep-city-drift-soft {
+  from { transform: scale(1.14) translate3d(-4%, 3%, 0); }
+  to   { transform: scale(1.14) translate3d(4%, -3%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rep-city-drift { animation-name: rep-city-drift-soft; animation-duration: 20s; }
+}

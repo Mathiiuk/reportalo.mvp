@@ -66,7 +66,7 @@ export const WelcomePage = () => {
           style={{ background: HERO_GRADIENT }}
         >
           {/* D01: «el fondo es el mapa de la ciudad con velo azul: textura urbana sin competir con el texto» */}
-          <CityTexture className="absolute inset-0 h-full w-full text-white" />
+          <CityTexture animated opacity={0.14} className="absolute inset-0 h-full w-full text-white" />
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
