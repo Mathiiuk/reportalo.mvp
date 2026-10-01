@@ -15,8 +15,6 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { BUCKET_PUBLIC_EVIDENCES } from './quarantinePipelineService';
 import { validateDescription } from './reportDescription';
 
-const INITIAL_STATE_CODE = 'RECIBIDO';
-
 /**
  * E-3: arma la fila de citizen_reports. Idempotente por client_side_id — si
  * el ciudadano reintenta un envío que sí llegó a guardarse (ej. se cortó la
@@ -95,7 +93,9 @@ export const createCitizenReport = async ({
           description: cleanDescription,
           latitud,
           longitud,
-          current_state_code: INITIAL_STATE_CODE,
+          // Sin current_state_code a propósito: al insertar la base usa su valor por defecto (RECIBIDO) y,
+          // si el envío se reintenta (mismo client_side_id), el upsert no pisa el estado que el reporte ya
+          // tenga (al enviarse pasa solo a En revisión, REP-3798).
         },
         { onConflict: 'client_side_id', ignoreDuplicates: false }
       )

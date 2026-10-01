@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { ImagePlus, MapPin, CloudOff, ChevronRight, Inbox } from 'lucide-react';
+import { ImagePlus, CloudOff, ChevronRight, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
-import { isClosedState } from '../components/report/reportStatus';
+import { refreshUnreadCount } from '../hooks/useUnreadNotifications';
+import { isClosedState, formatReportCode, formatListDate } from '../components/report/reportStatus';
 import { StatusPill } from '../components/report/StatusPill';
 import { EmptyState } from '../components/common/EmptyState';
 import { getAllPendingSyncReports } from '../services/offlineStorageService';
@@ -19,24 +20,25 @@ import { getAllPendingSyncReports } from '../services/offlineStorageService';
 const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
-const formatReportDate = (isoDate) => {
-  if (!isoDate) return '';
-  const date = new Date(isoDate);
-  const formatted = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
-  return formatted.replace('.', '').replace(/^\w/, (c) => c.toUpperCase());
-};
+// Cada cuánto se vuelve a pedir la lista mientras haya reportes abiertos (estados en vivo, REP-3798)
+export const REPORTS_POLL_INTERVAL_MS = 20000;
 
-// Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500)
+// Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500).
+// UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila muestra el número («#RP-2048»), debajo la
+// categoría (destacada para que se lea de un vistazo) y abajo el lugar con la fecha corta («Wilde · 09/08»).
 const mapReportRow = (row) => {
   const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
+  const category = row.services?.service_name || 'Sin categoría';
   return {
     id: row.id,
     stateCode: row.current_state_code,
-    title: row.description,
-    category: row.services?.service_name || 'Sin categoría',
+    code: formatReportCode(row.id),
+    title: `${formatReportCode(row.id)} · ${category}`,
+    description: row.description || '',
+    category,
     status: badge.status,
     statusColor: badge.statusColor,
-    date: formatReportDate(row.created_at),
+    date: formatListDate(row.created_at),
     address: row.localities?.name || 'Localidad sin especificar',
   };
 };
@@ -80,6 +82,46 @@ export const ReportsPage = () => {
     };
   }, [user?.id]);
 
+  // Estados en vivo (REP-3798): los cambia quien atiende el reporte, así que la lista se vuelve a pedir sola
+  // mientras haya reportes abiertos y la pestaña esté visible. Si algo cambió, se refresca también la campana.
+  const myReportsRef = useRef(myReports);
+  myReportsRef.current = myReports;
+  const hasOpenReports = myReports.some((r) => !isClosedState(r.stateCode));
+
+  useEffect(() => {
+    if (!user?.id || !hasOpenReports) return undefined;
+    let isMounted = true;
+
+    const refresh = async () => {
+      try {
+        const result = await getMyReports(user.id);
+        if (!isMounted || !result.success) return;
+        const next = result.reports.map(mapReportRow);
+        const before = new Map(myReportsRef.current.map((r) => [r.id, r.stateCode]));
+        const changed = next.some((r) => before.has(r.id) && before.get(r.id) !== r.stateCode);
+        if (changed) {
+          setMyReports(next);
+          refreshUnreadCount(user.id, { force: true });
+        }
+      } catch {
+        // Sin red: se reintenta en el próximo ciclo
+      }
+    };
+
+    const timer = setInterval(() => {
+      if (document.visibilityState !== 'hidden') refresh();
+    }, REPORTS_POLL_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user?.id, hasOpenReports]);
+
   const currentReports = myReports;
 
   const filteredReports = currentReports.filter((r) => {
@@ -103,18 +145,14 @@ export const ReportsPage = () => {
 
   return (
     <AppLayout activeTab="reportes">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 md:pb-10">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-          {/* Título */}
-          <div>
-            <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
-            <p className="m-0 mt-1 text-rep-label text-rep-ink-muted md:text-rep-label-d">
-              Seguimiento de lo que enviaste y de lo que todavía está en este dispositivo.
-            </p>
-          </div>
+          {/* Título y filtros: apilados en el teléfono (M17), en una sola fila en escritorio (D18) */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+          <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
 
           {/* Filtros con recuento (M17 · D18) */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
             {[
               { key: 'todos', label: 'Todos', count: countTodos },
               { key: 'en curso', label: 'En curso', count: countEnCurso },
@@ -134,6 +172,7 @@ export const ReportsPage = () => {
                 {filter.label} · {filter.count}
               </button>
             ))}
+          </div>
           </div>
 
           {/* Borradores sin enviar, arriba y con borde ámbar */}
@@ -189,15 +228,16 @@ export const ReportsPage = () => {
                     data-testid="report-row"
                     className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
                   >
-                    <span className="flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:gap-4">
-                      <span className="min-w-0 md:w-[320px] md:shrink-0">
-                        <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">{report.title}</span>
-                        <span className="block truncate text-rep-label text-rep-ink-muted">{report.category}</span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5" title={report.description || undefined}>
+                      <span data-testid="report-row-code" className="block truncate text-rep-label font-semibold text-rep-ink-muted md:text-rep-label-d">
+                        {report.code}
                       </span>
-                      <span className="flex min-w-0 flex-1 items-center gap-1 text-rep-label text-rep-ink-muted">
-                        <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-rep-accent" />
-                        <span className="truncate">{report.address}</span>
-                        <span className="shrink-0">· {report.date}</span>
+                      <span data-testid="report-row-category" className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">
+                        {report.category}
+                      </span>
+                      <span className="block truncate text-rep-label text-rep-ink-muted md:text-rep-label-d">
+                        {report.address}
+                        {report.date ? ` · ${report.date}` : ''}
                       </span>
                     </span>
 

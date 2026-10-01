@@ -287,8 +287,17 @@ export const PendingReportsPage = () => {
     if (result.sent > 0) {
       toast.success(result.sent === 1 ? 'Se envió 1 reporte' : `Se enviaron ${result.sent} reportes`);
     }
-    if (result.failed > 0) {
-      toast.error('Algunos reportes no se pudieron enviar', { description: result.errors[0]?.error });
+    // REP-3801: un borrador al que le falta un dato (ej. la ubicación cargada sin conexión) no es una
+    // falla: hay que completarlo desde su tarjeta. Solo las fallas reales de envío van en rojo.
+    const realFailures = result.errors.filter((item) => item.kind !== 'invalid');
+    const needsCompleting = result.errors.filter((item) => item.kind === 'invalid');
+    if (realFailures.length > 0) {
+      toast.error('Algunos reportes no se pudieron enviar', { description: realFailures[0]?.error });
+    } else if (needsCompleting.length > 0) {
+      toast.warning(
+        needsCompleting.length === 1 ? 'Falta completar un dato' : 'Faltan completar datos',
+        { description: 'Completalo en la tarjeta del reporte y se envía.' }
+      );
     }
   };
 

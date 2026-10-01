@@ -120,7 +120,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     signOut: vi.fn(),
   };
 
-  it('UT-MP-01: Renderiza el Header de AppLayout con logo, título y campana de notificaciones con badge', () => {
+  it('UT-MP-01: Renderiza el Header de AppLayout con logo, título y campana de notificaciones (sin contador inventado)', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -130,11 +130,14 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     );
 
     expect(screen.getAllByRole('link', { name: /reportalo/i })[0]).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ver alertas y notificaciones/i })).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    const bell = screen.getByRole('button', { name: /ver alertas y notificaciones/i });
+    expect(bell).toBeInTheDocument();
+    // REP-3798 (H-40): el contador es el real. Sin sesión no hay notificaciones y el badge no se dibuja
+    // (antes mostraba un «2» fijo). El conteo con datos se prueba en Rep3798ContadorNotificaciones.
+    expect(within(bell).queryByTestId('notifications-badge')).not.toBeInTheDocument();
   });
 
-  it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón flotante de reportar', () => {
+  it('UT-MP-02: Renderiza las 4 pestañas de navegación (Mapa, Mis reportes, Novedades, Perfil) y el botón «Reportar» en el medio', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <AppLayout activeTab="mapa">
@@ -146,9 +149,10 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     const nav = screen.getByRole('navigation', { name: /navegación principal/i });
     expect(within(nav).getByRole('button', { name: /mapa/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /reportes/i })).toBeInTheDocument();
-    // UJ v3.3 · M08 (REP-3791 Bloque 5): «Reportar» pasa a ser un botón flotante sobre el mapa,
-    // fuera de la barra de pestañas, que queda con cuatro accesos.
-    expect(screen.getByLabelText(/tomar foto y reportar/i)).toBeInTheDocument();
+    // REP-3798: «Reportar» pasa al medio de la barra de pestañas (botón naranja con cámara);
+    // ya no hay botón flotante sobre el mapa.
+    expect(within(nav).getByTestId('tab-report-button')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/tomar foto y reportar/i)).not.toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /alertas/i })).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: /perfil/i })).toBeInTheDocument();
   });
@@ -302,7 +306,7 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     });
   });
 
-  it('UT-MP-11: Al disparar la cámara y capturar foto desde el botón del navbar, navega a /nuevo-reporte con el archivo inicial', () => {
+  it('UT-MP-11: el botón naranja «Reportar» del medio de la barra abre la cámara y, con la foto, va a /nuevo-reporte con el archivo inicial', () => {
     render(
       <MemoryRouter initialEntries={['/mapa']}>
         <Routes>
@@ -319,9 +323,11 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
       </MemoryRouter>
     );
 
-    const directInput = screen.getByTestId('direct-camera-trigger');
+    // Ya no hay botón flotante sobre el mapa: el acceso es el botón de la barra, que abre la cámara
+    expect(screen.queryByTestId('direct-camera-trigger')).not.toBeInTheDocument();
+    const cameraInput = screen.getByTestId('tab-report-camera-input');
     const validFile = new File(['mock image binary'], 'foto_directa.jpg', { type: 'image/jpeg' });
-    fireEvent.change(directInput, { target: { files: [validFile] } });
+    fireEvent.change(cameraInput, { target: { files: [validFile] } });
 
     expect(screen.getByText('Pantalla Nuevo Reporte')).toBeInTheDocument();
   });

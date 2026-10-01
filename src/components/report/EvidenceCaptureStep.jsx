@@ -124,8 +124,46 @@ const EvidenceCaptureMobile = ({
             <span className="text-[13px] font-extrabold">Privacidad activada</span>
           </div>
 
-          {/* Espaciador: mantiene centrado el badge (el flash del mockup no aplica en web) */}
-          <span aria-hidden="true" className="min-w-touch" />
+          {/* Fotos tomadas (abre el visor de gestión). Sin fotos, un espaciador mantiene centrado el
+              badge (el flash del mockup no aplica en web). */}
+          {photoCount > 0 ? (
+            <div className="relative">
+              <button
+                type="button"
+                data-testid="evidence-thumbnail-stack"
+                onClick={() => setShowGalleryModal(true)}
+                aria-label={`Ver y gestionar ${photoCount === 1 ? 'la foto tomada' : `las ${photoCount} fotos tomadas`}`}
+                className={`${CAMERA_FOCUS} relative flex min-h-touch items-center rounded-xl`}
+              >
+                {evidenceList.slice(0, 2).map((item, idx) => (
+                  <span
+                    key={item.id}
+                    className="block h-12 w-12 shrink-0 overflow-hidden rounded-xl border-[1.5px] border-white/60 bg-black/40 shadow-md"
+                    style={{ marginLeft: idx > 0 ? '-18px' : '0px' }}
+                  >
+                    <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
+                  </span>
+                ))}
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-2 -top-2 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-rep-camera bg-rep-accent px-1 text-[11px] font-extrabold text-rep-on-accent"
+                >
+                  {photoCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClearEvidence}
+                aria-label="Eliminar fotos"
+                className={`${CAMERA_FOCUS} absolute -bottom-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/85 text-white before:absolute before:-inset-2.5 before:content-['']`}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <span aria-hidden="true" className="min-w-touch" />
+          )}
         </div>
 
         {/* Coordenadas tomadas al disparar */}
@@ -158,51 +196,23 @@ const EvidenceCaptureMobile = ({
 
         <div className="flex items-center justify-between gap-3">
           {/* A. Fotos tomadas (abre el visor de gestión) o acceso a galería */}
-          <div className="flex w-[76px] justify-start">
-            {photoCount > 0 ? (
-              <div className="relative">
+          {/* A. Subir una imagen de la galería: abajo a la izquierda, con texto y siempre disponible
+              mientras no se llegue al máximo de fotos (el input no lleva `capture`, abre la galería). */}
+          <div className="flex w-[76px] flex-col items-center justify-center gap-1">
+            {photoCount < MAX_PHOTOS && (
+              <>
                 <button
                   type="button"
-                  data-testid="evidence-thumbnail-stack"
-                  onClick={() => setShowGalleryModal(true)}
-                  aria-label={`Ver y gestionar ${photoCount === 1 ? 'la foto tomada' : `las ${photoCount} fotos tomadas`}`}
-                  className={`${CAMERA_FOCUS} relative flex min-h-touch items-center rounded-xl`}
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={isProcessing}
+                  aria-label="Elegir foto de la galería"
+                  data-testid="gallery-upload-button"
+                  className={`${CAMERA_FOCUS} flex h-12 w-12 items-center justify-center rounded-xl border border-white/40 bg-white/10 text-white transition-colors duration-120 hover:bg-white/20 disabled:opacity-45`}
                 >
-                  {evidenceList.slice(0, 2).map((item, idx) => (
-                    <span
-                      key={item.id}
-                      className="block h-12 w-12 shrink-0 overflow-hidden rounded-xl border-[1.5px] border-white/60 bg-black/40 shadow-md"
-                      style={{ marginLeft: idx > 0 ? '-18px' : '0px' }}
-                    >
-                      <img src={item.previewUrl} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
-                    </span>
-                  ))}
-                  <span
-                    aria-hidden="true"
-                    className="absolute -right-2 -top-2 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-rep-camera bg-rep-accent px-1 text-[11px] font-extrabold text-rep-on-accent"
-                  >
-                    {photoCount}
-                  </span>
+                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
                 </button>
-
-                <button
-                  type="button"
-                  onClick={onClearEvidence}
-                  aria-label="Eliminar fotos"
-                  className={`${CAMERA_FOCUS} absolute -bottom-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/85 text-white before:absolute before:-inset-2.5 before:content-['']`}
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => galleryInputRef.current?.click()}
-                aria-label="Elegir foto de la galería"
-                className={`${CAMERA_FOCUS} flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-white/25 text-white/70 transition-colors duration-120 hover:text-white`}
-              >
-                <ImagePlus className="h-5 w-5" aria-hidden="true" />
-              </button>
+                <span aria-hidden="true" className="text-rep-label font-bold text-white/85">Subir imagen</span>
+              </>
             )}
           </div>
 

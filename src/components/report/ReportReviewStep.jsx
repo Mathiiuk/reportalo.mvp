@@ -48,7 +48,11 @@ export const ReportReviewStep = ({
     selectedCategory,
     description,
     hasConfirmedLocality,
+    // REP-3801: sin conexión el borrador se guarda igual, aunque falte la localidad
+    requireLocation: isOnline,
   });
+  // REP-3801: sin conexión y sin localidad confirmada se guarda el borrador y se avisa que falta completarla
+  const isSavingWithoutLocation = !isOnline && !hasConfirmedLocality;
   const isSubmitBlocked = isSubmitting || !isReadyToSubmit;
   const idleLabel = !isOnline ? 'Guardar reporte sin conexión' : 'Enviar reporte';
   const submitLabel = isSubmitting ? 'Enviando…' : idleLabel;
@@ -62,8 +66,9 @@ export const ReportReviewStep = ({
   const handleSendClick = () => {
     // REP-2204: un toque más durante el envío no debe iniciar otro
     if (isSubmitting) return;
-    // R-1/R-2: no se puede enviar sin que el ciudadano confirme la localidad real
-    if (!hasConfirmedLocality) {
+    // R-1/R-2: no se puede enviar sin que el ciudadano confirme la localidad real.
+    // Sin conexión no se abre el modal: el selector puede no cargar y dejaba al ciudadano sin salida (REP-3801).
+    if (!hasConfirmedLocality && isOnline) {
       onOpenAdjustLocation?.();
       return;
     }
@@ -261,6 +266,17 @@ export const ReportReviewStep = ({
               <Send aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
             )}
           </button>
+
+          {/* REP-3801: sin conexión y sin localidad, el borrador se guarda y la ubicación se completa después */}
+          {isSavingWithoutLocation && (
+            <p
+              data-testid="offline-location-pending"
+              role="status"
+              className="m-0 pt-2 text-center text-rep-label font-medium text-rep-warning-ink desktop:pt-0 desktop:text-left desktop:text-rep-label-d"
+            >
+              Sin conexión no podemos confirmar la ubicación. Guardamos tu reporte y la completás en Pendientes cuando vuelva la señal.
+            </p>
+          )}
 
           {/* REP-2204: qué falta para poder enviar */}
           {!isReadyToSubmit && (
