@@ -91,3 +91,31 @@ Quedan abiertas, sin urgencia: H-60 (dos campanas en el DOM), H-63 (tablets en p
 3. Validar el cambio de "rostros y patentes" a "solo rostros" y **aprobar los nuevos textos** de consentimiento y términos antes del despliegue.
 4. Decidir si las fotos deben ser privadas de verdad (migración de RLS y bucket).
 5. Actualizar REP-3793 (criterio de aceptación) y su matriz de QA.
+
+---
+
+## 7. Respuesta de Leo (PM) y estado de cada punto — 01/10/2026
+
+Leo dio su OK a las dos decisiones, con condiciones. Estado de cada una:
+
+### Reportes ajenos visibles (sin fotos)
+| Condición de Leo | Estado |
+|---|---|
+| Agregar el disclaimer en el texto libre | **Hecho** (rama `fix/REP-3798-privacidad-fotos-y-disclaimer`): el campo avisa «Otras personas pueden leer tu descripción. No incluyas nombres, teléfonos, documentos, patentes ni direcciones exactas.» |
+| Migración de RLS y cambio de bucket | **Código y migración listos, sin aplicar.** `report_images` y el bucket `report-evidences` pasan a ser legibles solo por el dueño del reporte o por quien lo atiende. El detalle firma las URLs de las fotos del dueño. Ver «Orden de despliegue». |
+| Que los «no dueños» vean solo categoría y descripción | **Sin cambios, por decisión de Matías:** se mantiene la vista actual (número, estado, categoría, descripción, localidad y línea de tiempo), sin fotos ni análisis de la IA. |
+
+### Las fotos protegen solo los rostros
+| Condición de Leo | Estado |
+|---|---|
+| Actualizar REP-3793 | **A cargo de Leo.** |
+| Desplegar la Edge Function | **Pendiente.** El código está en la rama `fix/REP-3798-patentes-solo-rostros`; se despliega después de mergearla, con aprobación. |
+| Ajustar los textos de Términos y Condiciones | **Hecho** en esa rama: §2.2 dice que solo se difuminan rostros y las patentes pueden verse. Los términos pasan a la **versión 1.4**: todos los ciudadanos deberán volver a aceptar. También se ajustaron consentimiento, onboarding, permisos, captura y «Protegiendo tus fotos». |
+
+### Orden de despliegue (importa)
+1. Mergear la rama de patentes (`fix/REP-3798-patentes-solo-rostros`) y la de fotos privadas (`fix/REP-3798-privacidad-fotos-y-disclaimer`, que se apoya en la anterior).
+2. Desplegar la Edge Function `quarantine-anonymize`: ya solo pixela rostros y devuelve la URL firmada de la vista previa.
+3. Aplicar la migración `20261001000000_rep3798_fotos_privadas.sql`, recién con el frontend nuevo en uso. Si se aplica antes, las apps con caché vieja (PWA) no mostrarán las fotos hasta actualizarse.
+4. Probar un reporte nuevo y el detalle de uno propio y de uno ajeno.
+
+**Riesgos a tener presentes:** (a) el cambio de términos obliga a re-aceptar; (b) las fotos de reportes viejos siguen con la patente pixelada, solo cambia lo nuevo; (c) hay 55 objetos huérfanos en el bucket (sin reporte asociado) que quedan sin lectura para los ciudadanos.

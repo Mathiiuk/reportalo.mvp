@@ -32,10 +32,11 @@ export const EvidencePreviewScreen = ({
 
   // Evidencia seleccionada actualmente
   const currentEvidence = evidenceList[selectedIndex] || evidenceList[0] || {};
-  // URL de la imagen sanitizada (preferente) o URL de previsualización de respaldo
+  // URL para mostrar la foto: la firmada/temporal (previewUrl). La canónica (sanitizedUrl) apunta a un bucket
+  // privado y no se abre sin sesión (REP-3798); queda solo como respaldo.
   const photoUrl =
-    currentEvidence.sanitizedUrl ||
     currentEvidence.previewUrl ||
+    currentEvidence.sanitizedUrl ||
     '/assets/street-scene.png';
 
   // Zonas detectadas en la fotografía actual (rostros)
@@ -135,7 +136,7 @@ export const EvidencePreviewScreen = ({
                     : 'border-white/20 opacity-60 hover:opacity-100'
                 }`}
                 style={{
-                  backgroundImage: `url(${item.sanitizedUrl || item.previewUrl})`,
+                  backgroundImage: `url(${item.previewUrl || item.sanitizedUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}

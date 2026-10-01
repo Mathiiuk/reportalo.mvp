@@ -397,6 +397,8 @@ export const processEvidenceThroughQuarantine = async ({
         return {
           success: true,
           sanitizedUrl: data.sanitizedUrl,
+          // URL firmada y temporal para mostrar la foto: el bucket es privado (REP-3798)
+          previewUrl: data.previewUrl || null,
           clientSideId: data.clientSideId,
           entitiesDetectedCount: data.entitiesDetectedCount || 0,
           detectedZones: data.detectedZones || [],
@@ -574,7 +576,7 @@ export const processAllEvidencesThroughQuarantine = async ({
       processedEvidences.push({
         ...evidence,
         status: 'READY',
-        previewUrl: result.sanitizedUrl || evidence.previewUrl,
+        previewUrl: result.previewUrl || result.sanitizedUrl || evidence.previewUrl,
         sanitizedUrl: result.sanitizedUrl,
         isSanitized: true,
         detectedZones: result.detectedZones || [],

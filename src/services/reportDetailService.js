@@ -19,6 +19,54 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
+const EVIDENCE_BUCKET = 'report-evidences';
+/** Cuánto vive una URL firmada de las fotos del reporte. Se vuelve a pedir cada vez que se abre el detalle. */
+export const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+/**
+ * Ruta dentro del bucket a partir de la URL canónica guardada en report_images.image_url
+ * (`.../object/public/report-evidences/<client_side_id>/<archivo>`).
+ * @param {string} imageUrl
+ * @returns {string|null} `<client_side_id>/<archivo>` o null si la URL no es del bucket de evidencias
+ */
+export const getEvidencePathFromUrl = (imageUrl) => {
+  const marker = `/${EVIDENCE_BUCKET}/`;
+  const url = String(imageUrl ?? '');
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  const path = url.slice(index + marker.length).split('?')[0];
+  try {
+    return decodeURIComponent(path) || null;
+  } catch {
+    return path || null;
+  }
+};
+
+/**
+ * El bucket de evidencias es privado (REP-3798): la URL canónica no se abre sin sesión, así que al dueño se le
+ * entregan URLs firmadas y temporales. Si no se puede firmar una, se deja la original (la pantalla muestra el
+ * marcador de foto no disponible) y nunca se rompe el detalle.
+ * @param {Array<{ id: string, image_url: string }>} images
+ * @returns {Promise<Array<object>>}
+ */
+export const signEvidenceImages = async (images) => {
+  const rows = images ?? [];
+  const paths = rows.map((row) => getEvidencePathFromUrl(row.image_url));
+  const toSign = paths.filter(Boolean);
+  if (toSign.length === 0 || typeof supabase?.storage?.from !== 'function') return rows;
+  try {
+    const { data, error } = await supabase.storage.from(EVIDENCE_BUCKET).createSignedUrls(toSign, SIGNED_URL_TTL_SECONDS);
+    if (error || !Array.isArray(data)) return rows;
+    const signedByPath = new Map(data.filter((item) => item?.signedUrl).map((item) => [item.path, item.signedUrl]));
+    return rows.map((row, index) => {
+      const signed = paths[index] ? signedByPath.get(paths[index]) : null;
+      return signed ? { ...row, image_url: signed } : row;
+    });
+  } catch {
+    return rows;
+  }
+};
+
 /**
  * Trae el reporte con su categoría y localidad. La evidencia (fotos) solo se pide si el
  * reporte es del usuario en sesión: en un reporte ajeno no se descarga ninguna imagen.
@@ -69,7 +117,7 @@ export const getReportDetail = async (reportId, userId) => {
     return { success: false, error: imagesError.message };
   }
 
-  return { success: true, data: { ...data, report_images: images ?? [] } };
+  return { success: true, data: { ...data, report_images: await signEvidenceImages(images ?? []) } };
 };
 
 /**
