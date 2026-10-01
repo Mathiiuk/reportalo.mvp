@@ -42,6 +42,9 @@ const BUCKET_QUARANTINE = 'evidence-quarantine';
 // Nombre del bucket de evidencias públicas protegidas
 const BUCKET_PUBLIC_EVIDENCES = 'report-evidences';
 
+/** Cuánto vive la URL firmada de la vista previa. */
+const PREVIEW_URL_TTL_SECONDS = 60 * 60;
+
 interface QuarantineRequestPayload {
   quarantinePath?: string;
   clientSideId: string;
@@ -165,10 +168,17 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error al almacenar imagen anonimizada: ${uploadError.message}`);
     }
 
-    // 4. Obtenemos la URL pública de la evidencia protegida
+    // 4. URL canónica de la evidencia protegida. Es la que se guarda en report_images.image_url (la policy de
+    //    INSERT exige ese formato). El bucket pasa a ser privado (REP-3798): esa URL ya no se abre sin sesión.
     const { data: publicUrlData } = supabaseAdmin.storage
       .from(BUCKET_PUBLIC_EVIDENCES)
       .getPublicUrl(finalFileName);
+
+    // URL firmada y temporal (1 h) para que el ciudadano vea la vista previa antes de enviar, cuando el reporte
+    // todavía no existe y por lo tanto ninguna policy de lectura lo identifica como dueño.
+    const { data: signedUrlData } = await supabaseAdmin.storage
+      .from(BUCKET_PUBLIC_EVIDENCES)
+      .createSignedUrl(finalFileName, PREVIEW_URL_TTL_SECONDS);
 
     // Registro para QA y trazabilidad (REP-3793): cantidades, tamaños y tiempos; nunca la foto ni la clave
     const faces = protectedEvidence.zones.filter((zone) => zone.type === 'face').length;
@@ -194,6 +204,7 @@ Deno.serve(async (req: Request) => {
         success: true,
         clientSideId,
         sanitizedUrl: publicUrlData.publicUrl,
+        previewUrl: signedUrlData?.signedUrl ?? null,
         entitiesDetectedCount: protectedEvidence.zones.length,
         detectedZones: protectedEvidence.zones,
         imageWidth: protectedEvidence.width,
