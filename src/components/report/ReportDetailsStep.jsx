@@ -195,7 +195,7 @@ export const ReportDetailsStep = ({
               maxLength={DESCRIPTION_MAX_LENGTH}
               aria-required="true"
               aria-invalid={showDescriptionError}
-              aria-describedby="report-description-help report-description-error"
+              aria-describedby="report-description-help report-description-privacy report-description-error"
               className={`block w-full select-text resize-none rounded-2xl border bg-rep-surface px-3.5 py-3 text-rep-input text-rep-ink-body outline-none transition-colors duration-120 placeholder:text-rep-ink-faint focus:ring-2 desktop:h-[320px] ${
                 showDescriptionError
                   ? 'border-rep-danger focus:border-rep-danger focus:ring-rep-danger/15'
@@ -213,6 +213,15 @@ export const ReportDetailsStep = ({
                 {description.length}/{DESCRIPTION_MAX_LENGTH}
               </span>
             </div>
+            {/* Aviso de privacidad (REP-3798): cualquier ciudadano con sesión puede leer la descripción de un
+                reporte ajeno, así que se pide no incluir datos personales en el texto libre. */}
+            <p
+              id="report-description-privacy"
+              data-testid="description-privacy-notice"
+              className="m-0 text-rep-label text-rep-ink-muted"
+            >
+              Otras personas pueden leer tu descripción. No incluyas nombres, teléfonos, documentos, patentes ni direcciones exactas.
+            </p>
             {/* El aviso aparece recién al intentar continuar, no mientras el usuario todavía escribe */}
             <p
               id="report-description-error"
