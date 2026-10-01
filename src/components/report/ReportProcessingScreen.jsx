@@ -286,7 +286,7 @@ export const ReportProcessingScreen = ({
                 />
                 {/* REP-3793: antes mostraba «3 zonas detectadas» fijo; el conteo real llega recién al terminar */}
                 <span className="text-rep-label font-bold tracking-wide text-[#CFE8FA]">
-                  Buscando rostros y patentes
+                  Buscando rostros
                 </span>
               </div>
             </>
@@ -384,7 +384,7 @@ export const ReportProcessingScreen = ({
             <div data-testid="quarantine-fail-safe-view" className="mt-6 flex flex-1 flex-col desktop:mt-0">
               <h1 className="m-0 text-rep-title text-white desktop:text-rep-title-d">No pudimos proteger tu foto</h1>
               <p className="m-0 mt-2 text-rep-body text-white/75 desktop:text-rep-body-d">
-                No podemos garantizar el pixelado de rostros y patentes, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
+                No podemos garantizar el pixelado de rostros, así que por seguridad no la guardamos: la original se descartó de nuestros servidores.
               </p>
 
               <p

@@ -137,7 +137,7 @@ const isTestRunner = () => Boolean(import.meta.env?.VITEST || import.meta.env?.M
  * El emulador limpia el EXIF pero NO difumina: no detecta caras ni patentes, informa
  * un conteo de zonas fijo y devuelve una URL `blob:` local. Es útil para no bloquear
  * a quien desarrolla sin backend, y es inaceptable en cualquier otro lado: devolvía
- * `success: true` sobre una foto sin anonimizar, con caras y patentes de gente real.
+ * `success: true` sobre una foto sin anonimizar, con caras de gente real.
  *
  * El camino peligroso no eran los fallbacks de DEV (esos ya se verificaban) sino el
  * paso final: si `isSupabaseConfigured` es falso en un build de producción —por
@@ -181,7 +181,7 @@ export const describeProtectionFailure = (reason) => {
     case 'vision_http_error':
     case 'vision_response_error':
       return {
-        detail: 'El servicio que detecta rostros y patentes no respondió. Probá de nuevo en unos minutos.',
+        detail: 'El servicio que detecta rostros no respondió. Probá de nuevo en unos minutos.',
         photoTips: false,
       };
     case 'image_too_large':
@@ -485,7 +485,6 @@ export const processEvidenceThroughQuarantine = async ({
 export const PIPELINE_STEPS = [
   'Analizando la foto',
   'Pixelando rostros',
-  'Pixelando patentes de terceros',
   'Quitando ubicación y datos del teléfono',
 ];
 

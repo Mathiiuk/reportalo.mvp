@@ -28,7 +28,7 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       expect(
         screen.getByText(/Tarda unos segundos y no tenés que hacer nada más/i)
       ).toBeInTheDocument();
-      expect(screen.getByText('Buscando rostros y patentes')).toBeInTheDocument();
+      expect(screen.getByText('Buscando rostros')).toBeInTheDocument();
       expect(
         screen.getByText('Fotos subidas de forma cifrada')
       ).toBeInTheDocument();

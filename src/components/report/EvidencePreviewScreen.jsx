@@ -1,7 +1,7 @@
 /**
  * @file EvidencePreviewScreen.jsx
  * @description Pantalla de previsualización e inspección de la evidencia anonimizada (REP-2402).
- * Permite al ciudadano verificar que los rostros y patentes fueron debidamente difuminados
+ * Permite al ciudadano verificar que los rostros fueron debidamente difuminados
  * antes de confirmar el envío definitivo del reporte al municipio.
  */
 
@@ -38,7 +38,7 @@ export const EvidencePreviewScreen = ({
     currentEvidence.previewUrl ||
     '/assets/street-scene.png';
 
-  // Zonas detectadas en la fotografía actual (rostros y patentes)
+  // Zonas detectadas en la fotografía actual (rostros)
   const detectedZones = currentEvidence.detectedZones || [
     { x: '24%', y: '30%', width: '58px', height: '70px', type: 'face' },
     { x: '16%', y: '56%', width: '74px', height: '30px', type: 'license_plate' },
@@ -154,19 +154,19 @@ export const EvidencePreviewScreen = ({
             Tu foto está lista y protegida
           </h2>
           <p className="font-medium text-[12.5px] leading-[1.5] text-[#9AA5B4]">
-            Difuminamos automáticamente los rostros y patentes para cuidar la privacidad de tus vecinos. Revisá que el problema se entienda claramente.
+            Difuminamos automáticamente los rostros para cuidar la privacidad de tus vecinos. Revisá que el problema se entienda claramente.
           </p>
         </div>
 
         {/* 4. Lista de comprobaciones de seguridad */}
         <div className="flex flex-col gap-2 mt-3 bg-white/[0.04] p-3 rounded-2xl border border-white/5">
-          {/* Comprobación 1: Rostros y patentes protegidos */}
+          {/* Comprobación 1: Rostros protegidos */}
           <div className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded-full bg-[#10B981]/15 text-[#10B981] flex items-center justify-center flex-shrink-0">
               <Check className="w-[13px] h-[13px]" strokeWidth={2.5} />
             </span>
             <span className="font-semibold text-[11.5px] text-[#D1D9E2]">
-              Rostros y patentes de terceros ofuscados
+              Rostros de terceros ofuscados
             </span>
           </div>
 

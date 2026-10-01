@@ -265,8 +265,8 @@ export const PermissionsPage = () => {
               <Shield className="w-[17px] h-[17px] desktop:w-[19px] desktop:h-[19px] text-rep-success flex-shrink-0 mt-0.5" strokeWidth={2.25} />
               <span className="font-semibold text-[11px] desktop:text-[12px] leading-[1.5] text-rep-success">
                 {isDesktop
-                  ? 'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.'
-                  : 'Tu foto se procesa de forma segura: los rostros y patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.'}
+                  ? 'Los rostros se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.'
+                  : 'Tu foto se procesa de forma segura: los rostros se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.'}
               </span>
             </div>
 

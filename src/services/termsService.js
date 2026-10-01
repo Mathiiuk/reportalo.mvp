@@ -1,7 +1,7 @@
 // Servicio de Gestión y Auditoría de Consentimiento de Términos y Privacidad (REP-3532)
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
-export const CURRENT_TERMS_VERSION = '1.3';
+export const CURRENT_TERMS_VERSION = '1.4';
 export const TERMS_EFFECTIVE_DATE = '09/2026';
 export const TERMS_STORAGE_KEY = 'reportalo_terms_consent';
 export const TERMS_REJECTION_STORAGE_KEY = 'reportalo_terms_rejection';
@@ -187,7 +187,7 @@ export const getTermsRecord = (userId) => {
 };
 
 /**
- * Verifica si el usuario aceptó la versión vigente actual (v1.2).
+ * Verifica si el usuario aceptó la versión vigente actual.
  * @param {string} [userId]
  * @returns {boolean}
  */
@@ -321,7 +321,7 @@ Reportalo es una plataforma cívica digital diseñada para facilitar el reporte 
 
 2. TRATAMIENTO SERVER-SIDE DE IMÁGENES Y ANONIMIZACIÓN IRREVERSIBLE
 2.1. Las fotografías capturadas o provistas por el ciudadano son transmitidas de forma cifrada mediante protocolos TLS a un entorno seguro de cuarentena.
-2.2. En dicho entorno, modelos automatizados de procesamiento de visión artificial aplican difuminado irreversible sobre rostros y patentes vehiculares, asegurando que ninguna persona u objeto privado sea identificable.
+2.2. En dicho entorno, modelos automatizados de procesamiento de visión artificial aplican difuminado irreversible únicamente sobre los rostros de las personas que aparezcan en la fotografía. Las patentes de los vehículos y el resto de la imagen no se difuminan, por lo que pueden verse en la fotografía.
 2.3. La imagen fotográfica original sin procesar NUNCA es persistida en bases de datos ni almacenada en discos permanentes. Es descartada inmediatamente tras concluir la anonimización. Solo la versión sanitizada y anonimizada es guardada.
 
 3. PRIVACIDAD Y PROTECCIÓN DE DATOS PERSONALES (LEY 25.326)

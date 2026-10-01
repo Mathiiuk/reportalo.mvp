@@ -122,7 +122,7 @@ export const EvidenceUploadDesktop = ({
                 <h3 className="m-0 text-[15px] font-extrabold">Privacidad activada</h3>
               </div>
               <p className="m-0 mt-2 text-rep-label-d font-medium text-rep-ink-body">
-                Subí la foto normal. Los rostros y patentes se difuminan al procesarla, antes de guardarse.
+                Subí la foto normal. Los rostros se difuminan al procesarla, antes de guardarse.
               </p>
             </section>
 

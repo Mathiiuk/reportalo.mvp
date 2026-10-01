@@ -65,7 +65,7 @@ export const OnboardingPage = () => {
       id: 'step-2',
       title: 'Tu foto se protege sola',
       description:
-        'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
+        'Los rostros se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
       renderIllustration: (heightClass) => (
         <div className={`${heightClass} rounded-[20px] bg-[#E9F5EF] border border-[#D5EBE0] flex flex-col items-center justify-center gap-3.5 shadow-inner`}>
           <ScanFace className="w-[52px] h-[52px] text-rep-success" strokeWidth={1.5} />

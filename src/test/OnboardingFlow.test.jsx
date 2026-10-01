@@ -37,7 +37,7 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
     fireEvent.click(nextBtn);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Tu foto se protege sola/i })).toBeInTheDocument();
-      expect(screen.getByText(/Los rostros y las patentes se difuminan automáticamente/i)).toBeInTheDocument();
+      expect(screen.getByText(/Los rostros se difuminan automáticamente/i)).toBeInTheDocument();
     });
 
     // Paso 2 -> Paso 3
