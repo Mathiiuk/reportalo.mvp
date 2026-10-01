@@ -27,6 +27,11 @@
 --
 -- Probada en la base descartable con usuarios simulados, dentro de una transacción que se deshace:
 -- el dueño ve su foto; otro ciudadano y un anónimo no ven nada; el bucket queda privado.
+--
+-- APLICADA en producción (CiudadAR) el 01/10/2026, con aprobación de Matías, después de desplegar la Edge Function
+-- quarantine-anonymize (versión 25) y de verificar que el frontend nuevo estaba publicado en staging. La versión
+-- quedó registrada como 20261001131603; el archivo se renombró para coincidir. Verificado en producción con
+-- usuarios reales (dueño: ve su foto; otro ciudadano y anónimo: no ven nada) y la URL pública vieja devuelve 400.
 
 -- 1) report_images: lectura solo del dueño o de quien atiende el reporte
 drop policy if exists "lectura_publica" on public.report_images;
