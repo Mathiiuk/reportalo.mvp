@@ -37,7 +37,10 @@ export const fetchReportAiAnalysis = async (supabaseClient, reportId) => {
       agencies:suggested_agency_id ( name ),
       report_ai_evidence (
         fragment_id, was_cited, quoted_text,
-        knowledge_fragments ( hierarchy_path, foundation_type_code )
+        knowledge_fragments (
+          hierarchy_path, article, foundation_type_code,
+          knowledge_sources ( title, document_number, issuing_authority )
+        )
       )
     `
     )

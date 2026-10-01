@@ -6,9 +6,17 @@ import { Sparkles, Scale, ShieldQuestion, HeartHandshake, PhoneCall, Clock3, Ale
  * UJ v3.3 · M16 / D17 «Fundamento legal» (REP-3791 Bloque 3): acá aterriza el panel que salió
  * del paso de clasificación. Muestra el resultado del RAG (REP-2908) tal cual quedó guardado en
  * report_ai_analysis. Nunca inventa texto: cada estado tiene su propio mensaje transparente, y
- * jamás se muestra el contenido de un fragmento de tipo "sancion" acá (eso es fundamento para el
+ * jamás se muestra el contenido (ni montos) de un fragmento de tipo "sancion" acá (eso es fundamento para el
  * organismo, no para el ciudadano — docs/REP-1009_RAG_de_punta_a_punta.docx §6).
  */
+
+/**
+ * REP-3796: criterio aprobado por el PO (Hernán): se muestra la referencia (ley, artículo y
+ * jurisdicción) de un fragmento sancionatorio citado, NUNCA su contenido ni montos. Esto
+ * precisa REP-3789 CA-03, que ocultaba también la referencia y dejaba fundamentos sin fuente.
+ * El panel solo renderiza hierarchy_path y jurisdicción; quoted_text jamás llega a pantalla.
+ */
+export const SHOW_SANCTION_REFERENCE = true;
 
 const STATE_CONFIG = {
   fundamentado: {
@@ -127,9 +135,15 @@ export const ReportAiAnalysisPanel = ({ analysis, loading = false, error = null 
 
   const isGrounded = analysis.result_status_code === 'fundamentado';
   const agencyName = analysis.agencies?.name || null;
+  // Solo la referencia viaja a pantalla: el contenido (quoted_text) de una sanción nunca se renderiza.
   const citedEvidence = (analysis.report_ai_evidence || []).filter(
-    (e) => e.was_cited && e.knowledge_fragments?.foundation_type_code !== 'sancion'
+    (e) =>
+      e.was_cited &&
+      e.knowledge_fragments?.hierarchy_path &&
+      (SHOW_SANCTION_REFERENCE || e.knowledge_fragments?.foundation_type_code !== 'sancion')
   );
+  // REP-3796: un fundamento sin fuente visible se declara, no se disimula ni se inventa una fuente.
+  const missingVisibleSource = isGrounded && citedEvidence.length === 0;
 
   // REP-3789 CA-09: la trazabilidad del analisis mostrado (id, modelo y version de
   // prompt) viaja como atributos data-*, disponible para QA y Sprint Review sin
@@ -168,8 +182,15 @@ export const ReportAiAnalysisPanel = ({ analysis, loading = false, error = null 
                 <div data-testid="rag-panel-citations" className="flex flex-col gap-1">
                   <span className={FIELD_LABEL}>Norma detectada</span>
                   {citedEvidence.map((e) => (
-                    <span key={e.fragment_id} className="text-rep-body font-semibold text-rep-ink desktop:text-rep-body-d">
-                      {e.knowledge_fragments?.hierarchy_path}
+                    <span key={e.fragment_id} className="flex flex-col">
+                      <span className="text-rep-body font-semibold text-rep-ink desktop:text-rep-body-d">
+                        {e.knowledge_fragments?.hierarchy_path}
+                      </span>
+                      {e.knowledge_fragments?.knowledge_sources?.issuing_authority && (
+                        <span data-testid="rag-panel-jurisdiction" className="text-rep-label text-rep-ink-label">
+                          {e.knowledge_fragments.knowledge_sources.issuing_authority}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>
@@ -181,6 +202,13 @@ export const ReportAiAnalysisPanel = ({ analysis, loading = false, error = null 
                 </div>
               )}
             </div>
+          )}
+
+          {missingVisibleSource && (
+            <p data-testid="rag-panel-no-source" className="m-0 text-rep-label text-rep-ink-label">
+              No tenemos una norma para mostrarte como fuente de este análisis, así que no lo tomes como
+              fundamento verificado. Un funcionario va a revisar tu reporte.
+            </p>
           )}
         </>
       ) : (
