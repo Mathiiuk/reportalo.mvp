@@ -218,7 +218,7 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       );
 
       expect(screen.getByText(/Privacidad activada/i)).toBeInTheDocument();
-      expect(screen.getByText(/Los rostros y patentes se difuminan/i)).toBeInTheDocument();
+      expect(screen.getByText(/Los rostros se difuminan/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /tomar fotografía/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cerrar cámara/i })).toBeInTheDocument();
     });
@@ -327,7 +327,7 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       // 4. Paso 4: Debe renderizar la pantalla "Protegiendo tus fotos…"
       await waitFor(() => {
         expect(screen.getByText('Protegiendo tus fotos…')).toBeInTheDocument();
-        expect(screen.getByText('Buscando rostros y patentes')).toBeInTheDocument();
+        expect(screen.getByText('Buscando rostros')).toBeInTheDocument();
       });
 
       // UJ v3.3 (REP-3791 Bloque 2): sin paso de vista previa ni «Confirmar y enviar»:

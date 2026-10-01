@@ -36,7 +36,7 @@ describe('REP-3532: Flujo de Activación de Permisos Ciudadanos (Cámara, Ubicac
 
     // Banner verde de privacidad
     expect(
-      screen.getByText(/Tu foto se procesa de forma segura: los rostros y patentes se difuminan automáticamente/i)
+      screen.getByText(/Tu foto se procesa de forma segura: los rostros se difuminan automáticamente/i)
     ).toBeInTheDocument();
 
     // Botones de acción

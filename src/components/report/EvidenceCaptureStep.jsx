@@ -191,7 +191,7 @@ const EvidenceCaptureMobile = ({
         </AnimatePresence>
 
         <p className="m-0 mb-4 text-center text-rep-body text-rep-camera-ink-muted">
-          Sacá la foto normal. Los rostros y patentes se difuminan al procesarla, antes de guardarse.
+          Sacá la foto normal. Los rostros se difuminan al procesarla, antes de guardarse.
         </p>
 
         <div className="flex items-center justify-between gap-3">

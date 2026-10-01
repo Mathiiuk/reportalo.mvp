@@ -40,7 +40,8 @@ describe('REP-2404: Pipeline Server-Side de Cuarentena de Imágenes - Servicio',
     it('UT-QPS-02: Exporta los pasos estándar del pipeline visual', () => {
       expect(PIPELINE_STEPS).toContain('Analizando la foto');
       expect(PIPELINE_STEPS).toContain('Pixelando rostros');
-      expect(PIPELINE_STEPS).toContain('Pixelando patentes de terceros');
+      // Decisión de producto (30/09/2026): solo se pixelan rostros, así que ya no hay un paso de patentes
+      expect(PIPELINE_STEPS).not.toContain('Pixelando patentes de terceros');
       expect(PIPELINE_STEPS).toContain('Quitando ubicación y datos del teléfono');
     });
   });

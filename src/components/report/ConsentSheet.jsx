@@ -5,7 +5,7 @@ import { CURRENT_TERMS_VERSION } from '../../services/termsService';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 
 const CONSENT_POINTS = [
-  { icon: Shield, text: 'Difuminamos rostros y patentes en el servidor, antes de guardar.' },
+  { icon: Shield, text: 'Difuminamos los rostros en el servidor, antes de guardar.' },
   { icon: Trash2, text: 'Guardamos solo la versión anonimizada. El original se descarta.' },
   { icon: Gavel, text: 'Podés pedir acceso, rectificación y supresión (Ley 25.326).' },
 ];

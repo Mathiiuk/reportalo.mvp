@@ -95,7 +95,7 @@ export const TermsAndPermissionsPage = ({ onBackOverride }) => {
             3. Tratamiento de imágenes
           </h2>
           <p className="font-medium text-[10.5px] leading-relaxed text-[#56657A] mt-1 m-0">
-            Las fotos se procesan en nuestros servidores y en los de un proveedor de análisis con la única finalidad de difuminar rostros y patentes y clasificar el reporte. Se conserva la versión anonimizada; el original se descarta al terminar el procesamiento.
+            Las fotos se procesan en nuestros servidores y en los de un proveedor de análisis con la única finalidad de difuminar rostros y clasificar el reporte. Se conserva la versión anonimizada; el original se descarta al terminar el procesamiento.
           </p>
         </div>
 

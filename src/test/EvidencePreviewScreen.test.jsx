@@ -44,12 +44,12 @@ describe('REP-2402: Pantalla de Previsualización de Evidencia Anonimizada (Evid
     expect(screen.getByTestId('privacy-badge')).toHaveTextContent('2 zonas difuminadas');
     expect(screen.getByText('Tu foto está lista y protegida')).toBeInTheDocument();
     expect(
-      screen.getByText(/Difuminamos automáticamente los rostros y patentes/i)
+      screen.getByText(/Difuminamos automáticamente los rostros/i)
     ).toBeInTheDocument();
 
     // Verificamos lista de comprobaciones de seguridad
     expect(
-      screen.getByText('Rostros y patentes de terceros ofuscados')
+      screen.getByText('Rostros de terceros ofuscados')
     ).toBeInTheDocument();
     expect(
       screen.getByText('Metadatos del teléfono y GPS crudo descartados')

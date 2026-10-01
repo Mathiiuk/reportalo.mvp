@@ -12,6 +12,10 @@
  * - Ya no se anonimiza el auto entero por detectar `car`: solo la patente.
  * - Las patentes se buscan también por texto (formatos argentinos), sobre todo el que cae
  *   dentro de un vehículo detectado.
+ * - Política de privacidad (Matías, 30/09/2026): las fotos protegen SOLO los rostros. Las patentes
+ *   ya no se pixelan (PIXELATE_LICENSE_PLATES = false) porque la evidencia sin patente pierde valor
+ *   para el reclamo. Con la política apagada ni siquiera se piden a Vision los objetos ni el texto:
+ *   menos costo y menos CPU. La detección de patentes queda implementada y probada por si se reactiva.
  * - Nunca se inventan zonas: si Vision no está configurado o falla, se lanza un error y el
  *   pipeline activa el fail-safe.
  */
@@ -20,6 +24,13 @@ import type { Zone } from './pixelate.ts';
 
 /** Endpoint de Vision. La clave NUNCA va en la URL (ver detectSensitiveZones). */
 export const VISION_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
+
+/**
+ * Política: ¿se pixelan también las patentes? Apagado por decisión de producto (30/09/2026): la foto
+ * queda con la patente visible, y las fotos no se muestran en los reportes públicos (solo las ve el dueño).
+ * Para reactivarlo alcanza con ponerlo en true; la detección de patentes sigue implementada.
+ */
+export const PIXELATE_LICENSE_PLATES = false;
 
 /** Tiempo máximo de espera de Vision antes de abortar (y activar el fail-safe). */
 export const VISION_TIMEOUT_MS = 12000;
@@ -54,15 +65,19 @@ export const bytesToBase64 = (bytes: Uint8Array): string => {
   return btoa(binary);
 };
 
-/** Cuerpo del pedido a `images:annotate`: rostros, objetos (patentes y vehículos) y texto. */
-export const buildVisionRequest = (base64Image: string) => ({
+/**
+ * Cuerpo del pedido a `images:annotate`: rostros y, solo si se pixelan patentes, también objetos
+ * (patentes y vehículos) y texto.
+ */
+export const buildVisionRequest = (base64Image: string, includePlates: boolean = PIXELATE_LICENSE_PLATES) => ({
   requests: [
     {
       image: { content: base64Image },
       features: [
         { type: 'FACE_DETECTION', maxResults: 50 },
-        { type: 'OBJECT_LOCALIZATION', maxResults: 50 },
-        { type: 'TEXT_DETECTION' },
+        ...(includePlates
+          ? [{ type: 'OBJECT_LOCALIZATION', maxResults: 50 }, { type: 'TEXT_DETECTION' }]
+          : []),
       ],
     },
   ],
@@ -169,7 +184,12 @@ export const findPlateBoxesInText = (words: Word[], vehicles: Box[]): Box[] => {
  * Convierte la respuesta de Vision en zonas a pixelar, en píxeles reales de la imagen.
  * Lanza VisionError si la respuesta trae un error: una detección parcial no es confiable.
  */
-export const parseVisionResponse = (data: any, width: number, height: number): Zone[] => {
+export const parseVisionResponse = (
+  data: any,
+  width: number,
+  height: number,
+  includePlates: boolean = PIXELATE_LICENSE_PLATES
+): Zone[] => {
   const result = data?.responses?.[0];
   if (!result) throw new VisionError('vision_response_error', 'Vision devolvió una respuesta vacía.');
   if (result.error) {
@@ -183,6 +203,9 @@ export const parseVisionResponse = (data: any, width: number, height: number): Z
     const box = boxFromVertices(face.boundingPoly?.vertices);
     if (box) zones.push(toZone(box, 'face'));
   }
+
+  // Política de privacidad: solo rostros. Las patentes se dejan visibles (ver PIXELATE_LICENSE_PLATES)
+  if (!includePlates) return zones;
 
   // Objetos: patentes a pixelar y vehículos para asociar el texto (el vehículo NO se pixela)
   const vehicles: Box[] = [];
@@ -217,7 +240,8 @@ export const detectSensitiveZones = async (
   height: number,
   apiKey: string | undefined,
   fetchImpl: typeof fetch = fetch,
-  timeoutMs = VISION_TIMEOUT_MS
+  timeoutMs = VISION_TIMEOUT_MS,
+  includePlates: boolean = PIXELATE_LICENSE_PLATES
 ): Promise<Zone[]> => {
   if (!apiKey) {
     throw new VisionError('vision_not_configured', 'Falta el secreto GOOGLE_VISION_API_KEY.');
@@ -232,7 +256,7 @@ export const detectSensitiveZones = async (
     response = await fetchImpl(VISION_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(buildVisionRequest(bytesToBase64(imageBytes))),
+      body: JSON.stringify(buildVisionRequest(bytesToBase64(imageBytes), includePlates)),
       signal: controller.signal,
     });
   } catch (error) {
@@ -251,5 +275,5 @@ export const detectSensitiveZones = async (
     throw new VisionError('vision_http_error', `Vision respondió ${response.status}: ${detail.slice(0, 300)}`);
   }
 
-  return parseVisionResponse(await response.json(), width, height);
+  return parseVisionResponse(await response.json(), width, height, includePlates);
 };

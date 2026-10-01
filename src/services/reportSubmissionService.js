@@ -138,7 +138,7 @@ const isAlreadyInPublicBucket = (url) =>
  * falso, o en DEV si falla la Edge Function. Ese camino SOLO limpia el EXIF: no
  * difumina nada, informa 2 zonas ficticias y devuelve exito con una URL blob:
  * local. Adjuntar esa foto significa subir al bucket publico una imagen sin
- * difuminar, con caras y patentes de gente real.
+ * difuminar, con caras de gente real.
  *
  * Una URL http(s) solo puede haberla generado el servidor, asi que es la senal de
  * que la foto si paso por el difuminado. La usan las dos vias de envio: el envio

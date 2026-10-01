@@ -132,6 +132,6 @@ describe('REP-3793 Bloque 4: pantalla «No pudimos proteger tu foto»', () => {
   it('UT-FSC-06: mientras procesa no muestra un conteo de zonas inventado', () => {
     renderWith({ success: true, processedEvidences: [] });
     expect(screen.queryByText(/zonas detectadas/)).not.toBeInTheDocument();
-    expect(screen.getByText('Buscando rostros y patentes')).toBeInTheDocument();
+    expect(screen.getByText('Buscando rostros')).toBeInTheDocument();
   });
 });
