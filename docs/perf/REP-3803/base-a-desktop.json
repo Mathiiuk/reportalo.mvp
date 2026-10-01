@@ -1,0 +1,336 @@
+{
+  "meta": {
+    "label": "base-a",
+    "profile": "desktop",
+    "runs": 5,
+    "dist": ".perf\\dist-base",
+    "fecha": "2026-10-01T15:27:40.502Z",
+    "commit": "7845916",
+    "ramaSucia": false,
+    "navegador": "154.0.4258.37",
+    "node": "v24.15.0",
+    "so": "win32 x64",
+    "emulacionSonda": {
+      "cpu": 1,
+      "red": null,
+      "viewport": {
+        "width": 1350,
+        "height": 940,
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false
+      }
+    },
+    "cache": "fría: perfil de navegador nuevo por corrida, sin service worker registrado, sesión simulada sembrada desde /manifest.json"
+  },
+  "results": [
+    {
+      "n": 1,
+      "lh": {
+        "lighthouseVersion": "13.5.0",
+        "finalUrl": "http://127.0.0.1:4389/mapa",
+        "runtimeError": null,
+        "performance": 81,
+        "fcp": 581.54645,
+        "lcp": 1540.5674999999997,
+        "tbt": 256.99999999999943,
+        "cls": 0,
+        "speedIndex": 1931.572768128044,
+        "tti": 2050.4156000000003,
+        "longTasks": [
+          161,
+          131,
+          112,
+          75,
+          55
+        ],
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ],
+        "anyClientError": [],
+        "emulation": {
+          "formFactor": "desktop",
+          "throttlingMethod": "simulate",
+          "throttling": {
+            "rttMs": 40,
+            "throughputKbps": 10240,
+            "requestLatencyMs": 0,
+            "downloadThroughputKbps": 0,
+            "uploadThroughputKbps": 0,
+            "cpuSlowdownMultiplier": 1
+          },
+          "screen": {
+            "mobile": false,
+            "width": 1350,
+            "height": 940,
+            "deviceScaleFactor": 1,
+            "disabled": false
+          }
+        }
+      },
+      "probe": {
+        "url": "http://127.0.0.1:4389/mapa",
+        "markersFirstMs": 784.8000000715256,
+        "markersAllMs": 784.8000000715256,
+        "markersCount": 187,
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "n": 2,
+      "lh": {
+        "lighthouseVersion": "13.5.0",
+        "finalUrl": "http://127.0.0.1:4389/mapa",
+        "runtimeError": null,
+        "performance": 84,
+        "fcp": 655.8894,
+        "lcp": 1269.8894,
+        "tbt": 279,
+        "cls": 0,
+        "speedIndex": 1563.0401764178532,
+        "tti": 1831.7394,
+        "longTasks": [
+          256,
+          105,
+          91,
+          78,
+          66,
+          60,
+          50
+        ],
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ],
+        "anyClientError": [],
+        "emulation": {
+          "formFactor": "desktop",
+          "throttlingMethod": "simulate",
+          "throttling": {
+            "rttMs": 40,
+            "throughputKbps": 10240,
+            "requestLatencyMs": 0,
+            "downloadThroughputKbps": 0,
+            "uploadThroughputKbps": 0,
+            "cpuSlowdownMultiplier": 1
+          },
+          "screen": {
+            "mobile": false,
+            "width": 1350,
+            "height": 940,
+            "deviceScaleFactor": 1,
+            "disabled": false
+          }
+        }
+      },
+      "probe": {
+        "url": "http://127.0.0.1:4389/mapa",
+        "markersFirstMs": 771.4000000953674,
+        "markersAllMs": 771.4000000953674,
+        "markersCount": 187,
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "lh": {
+        "lighthouseVersion": "13.5.0",
+        "finalUrl": "http://127.0.0.1:4389/mapa",
+        "runtimeError": null,
+        "performance": 90,
+        "fcp": 794.5889999999999,
+        "lcp": 1256.0429999999997,
+        "tbt": 177.77299999999974,
+        "cls": 0.00001020838805708782,
+        "speedIndex": 1625.4954035713595,
+        "tti": 1726.5656999999997,
+        "longTasks": [
+          166,
+          106,
+          80,
+          63,
+          60,
+          56,
+          53
+        ],
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ],
+        "anyClientError": [],
+        "emulation": {
+          "formFactor": "desktop",
+          "throttlingMethod": "simulate",
+          "throttling": {
+            "rttMs": 40,
+            "throughputKbps": 10240,
+            "requestLatencyMs": 0,
+            "downloadThroughputKbps": 0,
+            "uploadThroughputKbps": 0,
+            "cpuSlowdownMultiplier": 1
+          },
+          "screen": {
+            "mobile": false,
+            "width": 1350,
+            "height": 940,
+            "deviceScaleFactor": 1,
+            "disabled": false
+          }
+        }
+      },
+      "probe": {
+        "url": "http://127.0.0.1:4389/mapa",
+        "markersFirstMs": 740.1000000238419,
+        "markersAllMs": 740.1000000238419,
+        "markersCount": 187,
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "n": 4,
+      "lh": {
+        "lighthouseVersion": "13.5.0",
+        "finalUrl": "http://127.0.0.1:4389/mapa",
+        "runtimeError": null,
+        "performance": 80,
+        "fcp": 778.1742749999999,
+        "lcp": 1384.3669249999994,
+        "tbt": 319.4999999999999,
+        "cls": 0.00001020838805708782,
+        "speedIndex": 1681.2165207656517,
+        "tti": 2066.8765574999998,
+        "longTasks": [
+          244,
+          118,
+          90,
+          61,
+          59,
+          53
+        ],
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ],
+        "anyClientError": [],
+        "emulation": {
+          "formFactor": "desktop",
+          "throttlingMethod": "simulate",
+          "throttling": {
+            "rttMs": 40,
+            "throughputKbps": 10240,
+            "requestLatencyMs": 0,
+            "downloadThroughputKbps": 0,
+            "uploadThroughputKbps": 0,
+            "cpuSlowdownMultiplier": 1
+          },
+          "screen": {
+            "mobile": false,
+            "width": 1350,
+            "height": 940,
+            "deviceScaleFactor": 1,
+            "disabled": false
+          }
+        }
+      },
+      "probe": {
+        "url": "http://127.0.0.1:4389/mapa",
+        "markersFirstMs": 1654.7999999523163,
+        "markersAllMs": 1654.7999999523163,
+        "markersCount": 187,
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "n": 5,
+      "lh": {
+        "lighthouseVersion": "13.5.0",
+        "finalUrl": "http://127.0.0.1:4389/mapa",
+        "runtimeError": null,
+        "performance": 78,
+        "fcp": 599.9738,
+        "lcp": 1767.7128749999997,
+        "tbt": 301,
+        "cls": 0.00001020838805708782,
+        "speedIndex": 1588.2209812933686,
+        "tti": 2008.3576975000005,
+        "longTasks": [
+          212,
+          108,
+          92,
+          74,
+          66,
+          61,
+          53,
+          53
+        ],
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ],
+        "anyClientError": [],
+        "emulation": {
+          "formFactor": "desktop",
+          "throttlingMethod": "simulate",
+          "throttling": {
+            "rttMs": 40,
+            "throughputKbps": 10240,
+            "requestLatencyMs": 0,
+            "downloadThroughputKbps": 0,
+            "uploadThroughputKbps": 0,
+            "cpuSlowdownMultiplier": 1
+          },
+          "screen": {
+            "mobile": false,
+            "width": 1350,
+            "height": 940,
+            "deviceScaleFactor": 1,
+            "disabled": false
+          }
+        }
+      },
+      "probe": {
+        "url": "http://127.0.0.1:4389/mapa",
+        "markersFirstMs": 823.6000000238419,
+        "markersAllMs": 823.6000000238419,
+        "markersCount": 187,
+        "reportsRequestStatus": [
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    }
+  ]
+}

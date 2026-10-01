@@ -19,3 +19,4 @@ supabase/backups/
 
 # Salida local de las pruebas del RAG (REP-3797): no se versiona
 scripts/rag-local-dev/rep3797/generation-experiment-results.json
+.perf/

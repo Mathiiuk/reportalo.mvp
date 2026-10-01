@@ -13,6 +13,8 @@
 
 > **Propósito.** Dejar por escrito cómo rinde hoy la pantalla `/mapa` en un celular (medido con Lighthouse), qué se probó para bajar el bloqueo del hilo principal y con qué resultado, y qué técnicas conviene usar para que el mapa siga fluido cuando haya muchos reportes repartidos por toda la ciudad.
 
+> **Actualización del 1 de octubre de 2026 (REP-3803).** Las mediciones de este documento se hicieron con el mapa vacío (la consulta de reportes devolvía 401) y con caché tibia, por lo que **no representan el flujo real**. La medición con 187 reportes reales y caché fría está en [REP-3803_medicion-mapa-datos-reales.md](REP-3803_medicion-mapa-datos-reales.md): Performance mobile 43 y FCP ~2,56 s.
+
 ---
 
 ## 1. Resumen

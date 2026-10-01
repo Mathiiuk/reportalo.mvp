@@ -14,6 +14,8 @@
 
 > **Propósito.** Que el PM pueda decidir si, cuándo y en qué orden se hacen tres mejoras de fondo del mapa (dibujar los reportes como capas del mapa, traer solo lo que se ve, y usar un mapa base propio). Cada una se describe con su objetivo, lo que cambia, lo que puede romper, cuánto cuesta, cómo se despliega y cómo se deshace.
 
+> **Actualización del 1 de octubre de 2026 (REP-3803).** Las mediciones de este documento se hicieron con el mapa vacío (la consulta de reportes devolvía 401) y con caché tibia, por lo que **no representan el flujo real**. La medición con 187 reportes reales y caché fría está en [REP-3803_medicion-mapa-datos-reales.md](REP-3803_medicion-mapa-datos-reales.md): Performance mobile 43 y FCP ~2,56 s.
+
 ---
 
 ## 1. Resumen para decidir
@@ -181,12 +183,12 @@ Se divide en dos porque tienen costos y riesgos muy distintos.
 
 ### 5.1 Punto 4A — Ajustes del motor
 
-**Qué es:** opciones que se pasan al crear el mapa, para que trabaje menos en celulares modestos: sin animación de aparición de tiles (`fadeDuration: 0`), densidad de píxeles acotada en pantallas muy densas (`pixelRatio`), no repetir el mundo (`renderWorldCopies: false`) y una caché de tiles moderada (`maxTileCacheSize`).
+**Qué es:** opciones que se pasan al crear el mapa, para que trabaje menos en celulares modestos: sin desvanecimiento de las etiquetas (`fadeDuration: 0`; en MapLibre 6.6.0 no afecta la aparición de tiles), densidad de píxeles acotada en pantallas muy densas (`pixelRatio`), no repetir el mundo (`renderWorldCopies: false`) y una caché de tiles moderada (`maxTileCacheSize`).
 
 - **Esfuerzo:** medio día, más la medición.
 - **Riesgo:** bajo. Cada opción se ve y se revierte con una línea.
-- **Lo que no se sabe:** cuánto mejora el arranque. **No está medido**; se mide antes de decidir si entra.
-- **Lo que puede notarse:** con `fadeDuration: 0` los tiles aparecen sin transición, y con un `pixelRatio` menor el mapa puede verse un poco menos nítido en pantallas muy densas.
+- **Lo que no se sabe:** cuánto mejora el arranque. **Actualización 1/10 (REP-3803): se midió y ningún ajuste de 4A mejora por encima del ruido; no se incorpora ninguno.** Ver `REP-3803_medicion-mapa-datos-reales.md`.
+- **Lo que puede notarse:** con `fadeDuration: 0` las etiquetas aparecen sin transición, y con un `pixelRatio` menor el mapa puede verse un poco menos nítido en pantallas muy densas.
 
 ### 5.2 Punto 4B — Mapa base propio (PMTiles)
 

@@ -1,0 +1,10 @@
+{
+  "name": "perf-mapa",
+  "private": true,
+  "type": "module",
+  "description": "Arnés de medición de /mapa (REP-3803). Independiente del paquete principal: se instala con npm dentro de esta carpeta.",
+  "dependencies": {
+    "lighthouse": "13.5.0",
+    "puppeteer-core": "25.12.0"
+  }
+}
