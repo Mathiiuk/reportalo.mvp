@@ -61,7 +61,7 @@ html, body, #root {
   to   { transform: scale(1.16) translate3d(5%, -3.5%, 0); }
 }
 .rep-city-drift {
-  animation: rep-city-drift 24s ease-in-out infinite alternate;
+  animation: rep-city-drift 14s ease-in-out infinite alternate;
   will-change: transform;
 }
 @media (prefers-reduced-motion: reduce) {
