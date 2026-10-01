@@ -10,11 +10,12 @@ import React from 'react';
  *
  * @param {string} [className] Posición, tamaño y color (por ejemplo, 'text-white').
  * @param {number} [opacity]   Opacidad del trazo, de 0 a 1.
+ * @param {boolean} [animated] Desplaza la textura despacio (REP-3802); respeta reduced-motion.
  */
-export const CityTexture = ({ className = '', opacity = 0.09 }) => (
+export const CityTexture = ({ className = '', opacity = 0.09, animated = false }) => (
   <svg
     aria-hidden="true"
-    className={`pointer-events-none ${className}`}
+    className={`pointer-events-none ${animated ? 'rep-city-drift' : ''} ${className}`}
     viewBox="0 0 1200 640"
     preserveAspectRatio="xMidYMid slice"
     fill="none"

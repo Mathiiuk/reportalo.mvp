@@ -53,3 +53,17 @@ html, body, #root {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-rep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-rep-surface;
   }
 }
+
+/* REP-3802 · Deriva lenta de la textura de calles del héroe (CityTexture animated).
+   El SVG se agranda un 16% para que al desplazarse nunca deje un borde vacío. */
+@keyframes rep-city-drift {
+  from { transform: scale(1.16) translate3d(-5%, 3.5%, 0); }
+  to   { transform: scale(1.16) translate3d(5%, -3.5%, 0); }
+}
+.rep-city-drift {
+  animation: rep-city-drift 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rep-city-drift { animation: none; }
+}

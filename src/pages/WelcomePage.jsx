@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { BrandBar } from '../components/layout/BrandBar';
-import { HeroMap } from '../components/common/HeroMap';
+import { CityTexture } from '../components/common/CityTexture';
 import { AlertCircle, Shield, Sparkles, Map as MapIcon } from 'lucide-react';
 
 // Las tres promesas de la portada (M01 en columna, D01 en fila)
@@ -65,8 +65,8 @@ export const WelcomePage = () => {
           className="relative flex flex-1 items-center justify-center overflow-hidden px-10 py-16 text-center text-white"
           style={{ background: HERO_GRADIENT }}
         >
-          {/* D01: «el fondo es el mapa de la ciudad con velo azul». REP-3802: mapa real y en movimiento */}
-          <HeroMap />
+          {/* D01: «el fondo es el mapa de la ciudad con velo azul: textura urbana sin competir con el texto» */}
+          <CityTexture animated opacity={0.14} className="absolute inset-0 h-full w-full text-white" />
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
