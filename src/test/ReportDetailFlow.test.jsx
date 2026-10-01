@@ -171,7 +171,7 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     expect(await screen.findByTestId('rag-panel-pending')).toBeInTheDocument();
   });
 
-  it('UT-DET-06: nunca muestra un fragmento de tipo sanción al ciudadano', async () => {
+  it('UT-DET-06: de un fragmento de sanción solo muestra la referencia, nunca el contenido (REP-3796)', async () => {
     getReportDetail.mockResolvedValue({ success: true, data: baseReport });
     useReportAnalysisLive.mockReturnValue({
       loading: false,
@@ -196,7 +196,7 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
 
     await screen.findByText('Fundamento visible.');
     expect(screen.queryByText(/multa de 100/)).not.toBeInTheDocument();
-    expect(screen.queryByText('Ley 13.927 > Artículo 99')).not.toBeInTheDocument();
+    expect(screen.getByText('Ley 13.927 > Artículo 99')).toBeInTheDocument();
   });
 
   it('UT-DET-07: expone el estado real del reporte según report_states de producción', async () => {

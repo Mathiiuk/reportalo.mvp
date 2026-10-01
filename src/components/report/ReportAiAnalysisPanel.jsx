@@ -6,17 +6,17 @@ import { Sparkles, Scale, ShieldQuestion, HeartHandshake, PhoneCall, Clock3, Ale
  * UJ v3.3 · M16 / D17 «Fundamento legal» (REP-3791 Bloque 3): acá aterriza el panel que salió
  * del paso de clasificación. Muestra el resultado del RAG (REP-2908) tal cual quedó guardado en
  * report_ai_analysis. Nunca inventa texto: cada estado tiene su propio mensaje transparente, y
- * jamás se muestra el contenido de un fragmento de tipo "sancion" acá (eso es fundamento para el
+ * jamás se muestra el contenido (ni montos) de un fragmento de tipo "sancion" acá (eso es fundamento para el
  * organismo, no para el ciudadano — docs/REP-1009_RAG_de_punta_a_punta.docx §6).
  */
 
 /**
- * REP-3796: ¿se muestra la referencia (ley y artículo, nunca montos ni contenido) de un fragmento
- * sancionatorio citado? Decisión del PO (Hernán) todavía sin registrar: mientras tanto se conserva
- * el comportamiento de REP-3789 CA-03 (oculto). Cambiar este valor es todo lo que hace falta
- * cuando se registre el criterio aprobado.
+ * REP-3796: criterio aprobado por el PO (Hernán): se muestra la referencia (ley, artículo y
+ * jurisdicción) de un fragmento sancionatorio citado, NUNCA su contenido ni montos. Esto
+ * precisa REP-3789 CA-03, que ocultaba también la referencia y dejaba fundamentos sin fuente.
+ * El panel solo renderiza hierarchy_path y jurisdicción; quoted_text jamás llega a pantalla.
  */
-export const SHOW_SANCTION_REFERENCE = false;
+export const SHOW_SANCTION_REFERENCE = true;
 
 const STATE_CONFIG = {
   fundamentado: {

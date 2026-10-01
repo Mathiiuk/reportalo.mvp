@@ -40,7 +40,7 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
     expect(screen.getByTestId('rag-panel-pending')).toBeInTheDocument();
   });
 
-  it('estado fundamentado: muestra el fundamento y las citas, sin sanciones ni no citadas', () => {
+  it('estado fundamentado: muestra el fundamento y las citas, con la referencia de sanciones (sin contenido) y sin no citadas', () => {
     render(
       <ReportAiAnalysisPanel
         analysis={{
@@ -54,8 +54,8 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
     expect(screen.getByText('No está permitido estacionar sobre la rampa.')).toBeInTheDocument();
     // FRAG-A: obligación, citada -> visible
     expect(screen.getByText('Ley X > Artículo 1')).toBeInTheDocument();
-    // FRAG-B: sanción -> NUNCA visible para el ciudadano, aunque esté citada
-    expect(screen.queryByText('Ley Y > Artículo 2')).not.toBeInTheDocument();
+    // FRAG-B: sanción citada -> se muestra solo la referencia (REP-3796), nunca su contenido
+    expect(screen.getByText('Ley Y > Artículo 2')).toBeInTheDocument();
     expect(screen.queryByText(/multa de 100/)).not.toBeInTheDocument();
     // FRAG-C: no citada -> no se muestra
     expect(screen.queryByText('Ley Z > Artículo 3')).not.toBeInTheDocument();
@@ -121,18 +121,24 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
       expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
     });
 
-    it('solo sanción: no muestra el fragmento y declara la limitación en vez de inventar una fuente', () => {
-      render(fund([cited('S', 'Ley 451 > Art. 6.1.52', 'sancion')]));
-      expect(screen.queryByText(/6\.1\.52/)).not.toBeInTheDocument();
+    it('solo sanción: muestra ley, artículo y jurisdicción, sin contenido ni montos y sin aviso de falta de fuente', () => {
+      render(fund([cited('S', 'Ley 451 > Art. 6.1.52', 'sancion', 'Legislatura de la Ciudad Autónoma de Buenos Aires')]));
+      expect(SHOW_SANCTION_REFERENCE).toBe(true);
+      expect(screen.getByText('Ley 451 > Art. 6.1.52')).toBeInTheDocument();
+      expect(screen.getByTestId('rag-panel-jurisdiction')).toBeInTheDocument();
       expect(screen.queryByText(/multa de 100/)).not.toBeInTheDocument();
-      expect(screen.getByTestId('rag-panel-no-source')).toHaveTextContent(/no lo tomes como fundamento verificado/i);
-      expect(SHOW_SANCTION_REFERENCE).toBe(false);
+      expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
     });
 
-    it('prohibición + sanción: muestra solo la prohibición y no marca limitación', () => {
+    it('fundamentado sin ningún fragmento citado: declara la limitación en vez de inventar una fuente', () => {
+      render(fund([]));
+      expect(screen.getByTestId('rag-panel-no-source')).toHaveTextContent(/no lo tomes como fundamento verificado/i);
+    });
+
+    it('prohibición + sanción: muestra ambas referencias y no marca limitación', () => {
       render(fund([cited('P', 'Ley 24.449 > Art. 48', 'prohibicion'), cited('S', 'Ley 24.449 > Art. 77', 'sancion')]));
       expect(screen.getByText('Ley 24.449 > Art. 48')).toBeInTheDocument();
-      expect(screen.queryByText('Ley 24.449 > Art. 77')).not.toBeInTheDocument();
+      expect(screen.getByText('Ley 24.449 > Art. 77')).toBeInTheDocument();
       expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
     });
 
