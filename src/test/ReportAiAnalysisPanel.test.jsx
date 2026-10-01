@@ -6,7 +6,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
+import { ReportAiAnalysisPanel, SHOW_SANCTION_REFERENCE } from '../components/report/ReportAiAnalysisPanel';
 
 const baseEvidence = [
   {
@@ -95,5 +95,50 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
   it('no rompe si result_status_code no es un valor reconocido', () => {
     const { container } = render(<ReportAiAnalysisPanel analysis={{ result_status_code: 'valor_futuro_desconocido' }} />);
     expect(container.firstChild).toBeNull();
+  });
+
+  describe('REP-3796: visibilidad de la fuente normativa', () => {
+    const fund = (evidence) => (
+      <ReportAiAnalysisPanel
+        analysis={{ result_status_code: 'fundamentado', citizen_feedback: 'Explicación.', report_ai_evidence: evidence }}
+      />
+    );
+    const cited = (id, path, type, authority) => ({
+      fragment_id: id,
+      was_cited: true,
+      quoted_text: 'multa de 100 unidades',
+      knowledge_fragments: {
+        hierarchy_path: path,
+        foundation_type_code: type,
+        knowledge_sources: authority ? { issuing_authority: authority } : null,
+      },
+    });
+
+    it('prohibición: muestra ley, artículo y jurisdicción, sin aviso de falta de fuente', () => {
+      render(fund([cited('P', 'Ley 2148 > Art. 7.1.8', 'prohibicion', 'Legislatura de la Ciudad Autónoma de Buenos Aires')]));
+      expect(screen.getByText('Ley 2148 > Art. 7.1.8')).toBeInTheDocument();
+      expect(screen.getByTestId('rag-panel-jurisdiction')).toHaveTextContent(/Ciudad Autónoma/);
+      expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
+    });
+
+    it('solo sanción: no muestra el fragmento y declara la limitación en vez de inventar una fuente', () => {
+      render(fund([cited('S', 'Ley 451 > Art. 6.1.52', 'sancion')]));
+      expect(screen.queryByText(/6\.1\.52/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/multa de 100/)).not.toBeInTheDocument();
+      expect(screen.getByTestId('rag-panel-no-source')).toHaveTextContent(/no lo tomes como fundamento verificado/i);
+      expect(SHOW_SANCTION_REFERENCE).toBe(false);
+    });
+
+    it('prohibición + sanción: muestra solo la prohibición y no marca limitación', () => {
+      render(fund([cited('P', 'Ley 24.449 > Art. 48', 'prohibicion'), cited('S', 'Ley 24.449 > Art. 77', 'sancion')]));
+      expect(screen.getByText('Ley 24.449 > Art. 48')).toBeInTheDocument();
+      expect(screen.queryByText('Ley 24.449 > Art. 77')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
+    });
+
+    it('ausencia de normativa: mensaje propio, sin la nota de fundamento sin fuente', () => {
+      render(<ReportAiAnalysisPanel analysis={{ result_status_code: 'sin_normativa', report_ai_evidence: [] }} />);
+      expect(screen.queryByTestId('rag-panel-no-source')).not.toBeInTheDocument();
+    });
   });
 });
