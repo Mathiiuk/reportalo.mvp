@@ -24,7 +24,7 @@ vi.mock('../services/reportSubmissionService', async (importOriginal) => {
 import { deleteDraftReport, recordDraftSyncError } from '../services/offlineStorageService';
 import { processAllEvidencesThroughQuarantine } from '../services/quarantinePipelineService';
 import { resolveServiceDbId } from '../services/categoriesService';
-import { createCitizenReport, attachReportEvidence } from '../services/reportSubmissionService';
+import { createCitizenReport, attachReportEvidence, getAttachedEvidenceUrls } from '../services/reportSubmissionService';
 import { sendPendingDraft, validateDraftForSync } from '../services/pendingSyncService';
 
 const draftValido = () => ({
@@ -69,6 +69,7 @@ describe('H-35: sendPendingDraft valida ANTES de procesar las fotos', () => {
     resolveServiceDbId.mockResolvedValue('srv-1');
     recordDraftSyncError.mockResolvedValue(null);
     deleteDraftReport.mockResolvedValue(true);
+    getAttachedEvidenceUrls.mockResolvedValue(new Set());
   });
 
   it('UT-H35-04: con la descripción inválida no procesa fotos, no crea reporte y guarda el motivo', async () => {
@@ -130,6 +131,48 @@ describe('H-35: sendPendingDraft valida ANTES de procesar las fotos', () => {
     // El ciudadano ve el mensaje pensado para él, no el detalle técnico
     expect(recordDraftSyncError).toHaveBeenCalledWith('draft-1', expect.objectContaining({ kind: 'retry', message: expect.stringMatching(/borrador sigue guardado/i) }));
     expect(deleteDraftReport).not.toHaveBeenCalled();
+  });
+
+  it('REP-3810 · regresión: reintentar desde Pendientes un reporte que ya existe lo recupera, adjunta solo lo faltante y limpia el borrador', async () => {
+    processAllEvidencesThroughQuarantine.mockResolvedValue({
+      success: true,
+      processedEvidences: [{ sanitizedUrl: 'https://cdn.example/ya-adjunta.jpg' }, { sanitizedUrl: 'https://cdn.example/falta.jpg' }],
+    });
+    createCitizenReport.mockResolvedValue({ success: true, data: { id: 'rep-1' }, recovered: true });
+    getAttachedEvidenceUrls.mockResolvedValue(new Set(['https://cdn.example/ya-adjunta.jpg']));
+    attachReportEvidence.mockResolvedValue({ success: true });
+    const draft = draftValido();
+    draft.evidenceList.push({ id: 'e2', blob: new Blob(['y'], { type: 'image/jpeg' }), name: 'g.jpg', mimeType: 'image/jpeg' });
+
+    const result = await sendPendingDraft(draft, 'user-1');
+
+    expect(result).toMatchObject({ success: true, reportId: 'rep-1' });
+    expect(attachReportEvidence).toHaveBeenCalledTimes(1);
+    expect(attachReportEvidence).toHaveBeenCalledWith({ reportId: 'rep-1', sanitizedUrl: 'https://cdn.example/falta.jpg' });
+    expect(deleteDraftReport).toHaveBeenCalledWith('draft-1');
+    expect(recordDraftSyncError).not.toHaveBeenCalled();
+  });
+
+  it('REP-3810: el motivo técnico del alta queda en el borrador y no reemplaza el mensaje del ciudadano', async () => {
+    processAllEvidencesThroughQuarantine.mockResolvedValue({ success: true, processedEvidences: [{ sanitizedUrl: 'https://cdn.example/protegida.jpg' }] });
+    const technical = { message: 'new row violates row-level security policy', code: '42501', details: null, hint: null, status: 403 };
+    createCitizenReport.mockResolvedValue({
+      success: false,
+      error: technical.message,
+      technical,
+      userMessage: 'No pudimos guardar tu reporte. Tu borrador sigue guardado: probá de nuevo en unos segundos.',
+    });
+
+    await sendPendingDraft(draftValido(), 'user-1');
+
+    expect(recordDraftSyncError).toHaveBeenCalledWith(
+      'draft-1',
+      expect.objectContaining({
+        code: 'CREATE',
+        message: expect.stringMatching(/borrador sigue guardado/i),
+        technical,
+      })
+    );
   });
 
   it('UT-H35-09: si no se puede guardar el motivo, el envío igual informa el fallo (el diagnóstico nunca rompe la cola)', async () => {
