@@ -10,10 +10,12 @@ const args = Object.fromEntries(
 );
 
 const CONFIGS = {
-  'P-low': { model: 'gemini-3.8-flash', thinkingLevel: 'low', reps: 3 },
-  'P-min': { model: 'gemini-3.8-flash', thinkingLevel: 'minimal', reps: 3 },
-  F1: { model: 'gemini-3.7-flash', thinkingLevel: 'low', reps: 1 },
-  F2: { model: 'gemini-3.5-flash-lite', thinkingLevel: 'low', reps: 1 },
+  'P-low': { model: 'gemini-3.8-flash', thinking: { thinkingLevel: 'low' }, reps: 3 },
+  // Desvío: thinkingLevel 'minimal' no es válido para gemini-3.8-flash (HTTP 400, 42 corridas fallidas guardadas). Se reemplaza por presupuesto 0.
+  'P-min': { model: 'gemini-3.8-flash', thinking: { thinkingLevel: 'minimal' }, reps: 3 },
+  'P-b0': { model: 'gemini-3.8-flash', thinking: { thinkingBudget: 0 }, reps: 3 },
+  F1: { model: 'gemini-3.7-flash', thinking: { thinkingLevel: 'low' }, reps: 1 },
+  F2: { model: 'gemini-3.5-flash-lite', thinking: { thinkingLevel: 'low' }, reps: 1 },
 };
 const configIds = (args.configs ?? Object.keys(CONFIGS).join(',')).split(',');
 const { inputs } = readJson('inputs.json');
@@ -42,7 +44,7 @@ for (const configId of configIds) {
       const imageBytes = fs.readFileSync(photoPath(input.photo));
       const r = await callMultimodal({
         model: cfg.model,
-        thinkingLevel: cfg.thinkingLevel,
+        thinkingConfig: cfg.thinking,
         imageBase64: imageBytes.toString('base64'),
         mimeType: 'image/jpeg',
         prompt: buildPrompt({ description: input.description, categoryCode: input.category }),
@@ -61,7 +63,7 @@ for (const configId of configIds) {
       const validation = output ? validateOutput(output) : { valid: false, reason: failure };
 
       const record = {
-        config: configId, model: cfg.model, thinking: cfg.thinkingLevel, promptVersion: PROMPT_VERSION,
+        config: configId, model: cfg.model, thinking: JSON.stringify(cfg.thinking), promptVersion: PROMPT_VERSION,
         input: id, kind: input.kind, rep,
         ok: r.ok, status: r.status, attempts: r.attempts, latencyMs: Math.round(r.latencyMs),
         finishReason: cand?.finishReason ?? null, failure, error: r.errorText,

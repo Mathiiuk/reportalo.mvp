@@ -39,3 +39,6 @@ P-low y P-min: 3 repeticiones. F1 y F2: 1 repetición.
 
 ## Fuera del spike
 No se modifica el RAG textual, `analizar-reporte` ni el pipeline de anonimización. No se escribe en la base. La clave sale del `.env` y nunca se imprime. Las fotos no se versionan.
+
+## Desvíos (anotados durante la ejecución)
+1. **P-min no es válida:** `thinkingLevel: minimal` devuelve HTTP 400 en `gemini-3.8-flash` («Thinking level MINIMAL is not supported for this model»). Las 42 corridas fallidas se conservan en `raw/runs.ndjson` como evidencia. Se agrega **P-b0** (`gemini-3.8-flash`, `thinkingBudget: 0`, 3 repeticiones) como reemplazo y se evalúa con los mismos criterios.

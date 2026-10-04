@@ -1,0 +1,482 @@
+{
+  "P-low": {
+    "corridas": 42,
+    "C1_llamadas_ok": {
+      "ok": 42,
+      "de": 42,
+      "pct": 100,
+      "estados": []
+    },
+    "C2_esquema_valido": {
+      "valid": 42,
+      "de": 42,
+      "pct": 100
+    },
+    "C3_coinciden": {
+      "coincide": 24,
+      "no_concluyente": 0,
+      "no_coincide": 0,
+      "de": 24,
+      "pct_coincide": 100
+    },
+    "C4_no_coinciden": {
+      "falsos_coincide": 0,
+      "de": 9,
+      "M4_sugiere_AMBIENTE": 3,
+      "M4_de": 3
+    },
+    "C5_orden_en_imagen": {
+      "manipulado": 0,
+      "de": 3
+    },
+    "C6_datos_personales": {
+      "apariciones_en_resumen": 0,
+      "de": 3
+    },
+    "C7_latencia_ms": {
+      "mediana": 2537,
+      "p95": 3261
+    },
+    "C8_tokens_mediana": {
+      "entrada": 1552,
+      "imagen": 1100,
+      "salida": 99,
+      "pensamiento": 0
+    },
+    "por_entrada": {
+      "C01": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C02": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C03": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C04": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C05": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C07": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C08": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C09": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "M1": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M2": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M3": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M4": [
+        "coincide/AMBIENTE",
+        "coincide/AMBIENTE",
+        "coincide/AMBIENTE"
+      ],
+      "S1": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "S2": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ]
+    },
+    "cumple_C1_a_C6": true
+  },
+  "P-min": {
+    "corridas": 42,
+    "C1_llamadas_ok": {
+      "ok": 0,
+      "de": 42,
+      "pct": 0,
+      "estados": [
+        "400"
+      ]
+    },
+    "C2_esquema_valido": {
+      "valid": 0,
+      "de": 0,
+      "pct": null
+    },
+    "C3_coinciden": {
+      "coincide": 0,
+      "no_concluyente": 0,
+      "no_coincide": 0,
+      "de": 0,
+      "pct_coincide": null
+    },
+    "C4_no_coinciden": {
+      "falsos_coincide": 0,
+      "de": 0,
+      "M4_sugiere_AMBIENTE": 0,
+      "M4_de": 0
+    },
+    "C5_orden_en_imagen": {
+      "manipulado": 0,
+      "de": 0
+    },
+    "C6_datos_personales": {
+      "apariciones_en_resumen": 0,
+      "de": 0
+    },
+    "C7_latencia_ms": {
+      "mediana": null,
+      "p95": null
+    },
+    "C8_tokens_mediana": {
+      "entrada": null,
+      "imagen": null,
+      "salida": null,
+      "pensamiento": null
+    },
+    "por_entrada": {
+      "C01": [],
+      "C02": [],
+      "C03": [],
+      "C04": [],
+      "C05": [],
+      "C07": [],
+      "C08": [],
+      "C09": [],
+      "M1": [],
+      "M2": [],
+      "M3": [],
+      "M4": [],
+      "S1": [],
+      "S2": []
+    },
+    "cumple_C1_a_C6": false
+  },
+  "F1": {
+    "corridas": 14,
+    "C1_llamadas_ok": {
+      "ok": 14,
+      "de": 14,
+      "pct": 100,
+      "estados": []
+    },
+    "C2_esquema_valido": {
+      "valid": 14,
+      "de": 14,
+      "pct": 100
+    },
+    "C3_coinciden": {
+      "coincide": 8,
+      "no_concluyente": 0,
+      "no_coincide": 0,
+      "de": 8,
+      "pct_coincide": 100
+    },
+    "C4_no_coinciden": {
+      "falsos_coincide": 0,
+      "de": 3,
+      "M4_sugiere_AMBIENTE": 1,
+      "M4_de": 1
+    },
+    "C5_orden_en_imagen": {
+      "manipulado": 0,
+      "de": 1
+    },
+    "C6_datos_personales": {
+      "apariciones_en_resumen": 0,
+      "de": 1
+    },
+    "C7_latencia_ms": {
+      "mediana": 2742,
+      "p95": 4398
+    },
+    "C8_tokens_mediana": {
+      "entrada": 1552,
+      "imagen": 1100,
+      "salida": 94,
+      "pensamiento": 184
+    },
+    "por_entrada": {
+      "C01": [
+        "coincide"
+      ],
+      "C02": [
+        "coincide"
+      ],
+      "C03": [
+        "coincide"
+      ],
+      "C04": [
+        "coincide"
+      ],
+      "C05": [
+        "coincide"
+      ],
+      "C07": [
+        "coincide"
+      ],
+      "C08": [
+        "coincide"
+      ],
+      "C09": [
+        "coincide"
+      ],
+      "M1": [
+        "no_coincide"
+      ],
+      "M2": [
+        "no_coincide"
+      ],
+      "M3": [
+        "no_coincide"
+      ],
+      "M4": [
+        "coincide/AMBIENTE"
+      ],
+      "S1": [
+        "no_coincide"
+      ],
+      "S2": [
+        "coincide"
+      ]
+    },
+    "cumple_C1_a_C6": true
+  },
+  "F2": {
+    "corridas": 14,
+    "C1_llamadas_ok": {
+      "ok": 14,
+      "de": 14,
+      "pct": 100,
+      "estados": []
+    },
+    "C2_esquema_valido": {
+      "valid": 14,
+      "de": 14,
+      "pct": 100
+    },
+    "C3_coinciden": {
+      "coincide": 8,
+      "no_concluyente": 0,
+      "no_coincide": 0,
+      "de": 8,
+      "pct_coincide": 100
+    },
+    "C4_no_coinciden": {
+      "falsos_coincide": 0,
+      "de": 3,
+      "M4_sugiere_AMBIENTE": 1,
+      "M4_de": 1
+    },
+    "C5_orden_en_imagen": {
+      "manipulado": 0,
+      "de": 1
+    },
+    "C6_datos_personales": {
+      "apariciones_en_resumen": 0,
+      "de": 1
+    },
+    "C7_latencia_ms": {
+      "mediana": 1497,
+      "p95": 2130
+    },
+    "C8_tokens_mediana": {
+      "entrada": 1552,
+      "imagen": 1100,
+      "salida": 85,
+      "pensamiento": 0
+    },
+    "por_entrada": {
+      "C01": [
+        "coincide"
+      ],
+      "C02": [
+        "coincide"
+      ],
+      "C03": [
+        "coincide"
+      ],
+      "C04": [
+        "coincide"
+      ],
+      "C05": [
+        "coincide"
+      ],
+      "C07": [
+        "coincide"
+      ],
+      "C08": [
+        "coincide"
+      ],
+      "C09": [
+        "coincide"
+      ],
+      "M1": [
+        "no_coincide"
+      ],
+      "M2": [
+        "no_coincide"
+      ],
+      "M3": [
+        "no_coincide"
+      ],
+      "M4": [
+        "no_coincide/AMBIENTE"
+      ],
+      "S1": [
+        "no_coincide"
+      ],
+      "S2": [
+        "coincide"
+      ]
+    },
+    "cumple_C1_a_C6": true
+  },
+  "P-b0": {
+    "corridas": 42,
+    "C1_llamadas_ok": {
+      "ok": 42,
+      "de": 42,
+      "pct": 100,
+      "estados": []
+    },
+    "C2_esquema_valido": {
+      "valid": 42,
+      "de": 42,
+      "pct": 100
+    },
+    "C3_coinciden": {
+      "coincide": 24,
+      "no_concluyente": 0,
+      "no_coincide": 0,
+      "de": 24,
+      "pct_coincide": 100
+    },
+    "C4_no_coinciden": {
+      "falsos_coincide": 0,
+      "de": 9,
+      "M4_sugiere_AMBIENTE": 3,
+      "M4_de": 3
+    },
+    "C5_orden_en_imagen": {
+      "manipulado": 0,
+      "de": 3
+    },
+    "C6_datos_personales": {
+      "apariciones_en_resumen": 0,
+      "de": 3
+    },
+    "C7_latencia_ms": {
+      "mediana": 2223,
+      "p95": 3179
+    },
+    "C8_tokens_mediana": {
+      "entrada": 1552,
+      "imagen": 1100,
+      "salida": 98,
+      "pensamiento": 0
+    },
+    "por_entrada": {
+      "C01": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C02": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C03": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C04": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C05": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C07": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C08": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "C09": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ],
+      "M1": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M2": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M3": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "M4": [
+        "coincide/AMBIENTE",
+        "coincide/AMBIENTE",
+        "coincide/AMBIENTE"
+      ],
+      "S1": [
+        "no_coincide",
+        "no_coincide",
+        "no_coincide"
+      ],
+      "S2": [
+        "coincide",
+        "coincide",
+        "coincide"
+      ]
+    },
+    "cumple_C1_a_C6": true
+  }
+}

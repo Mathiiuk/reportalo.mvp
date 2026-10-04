@@ -23,7 +23,7 @@ const withRetry = async (fn) => {
   }
 };
 
-export const callMultimodal = async ({ model, thinkingLevel, imageBase64, mimeType, prompt, responseSchema, maxOutputTokens = 1024 }) => {
+export const callMultimodal = async ({ model, thinkingConfig, imageBase64, mimeType, prompt, responseSchema, maxOutputTokens = 1024 }) => {
   const { res, latencyMs, attempts } = await withRetry(() =>
     fetch(`${API}/models/${model}:generateContent`, {
       method: 'POST',
@@ -33,7 +33,7 @@ export const callMultimodal = async ({ model, thinkingLevel, imageBase64, mimeTy
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema,
-          thinkingConfig: { thinkingLevel },
+          thinkingConfig,
           maxOutputTokens,
         },
       }),
