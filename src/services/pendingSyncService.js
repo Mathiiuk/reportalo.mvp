@@ -70,9 +70,10 @@ export const validateDraftForSync = (draft) => {
  * kind: 'invalid' = hay que cambiar el borrador; 'retry' = se puede reintentar tal cual.
  * Guardar el diagnóstico nunca debe romper la cola: si falla, se ignora.
  */
-const failWith = async (draft, { code, kind, message }) => {
+const failWith = async (draft, { code, kind, message, technical }) => {
   try {
-    await recordDraftSyncError(draft?.client_side_id, { code, kind, message });
+    // REP-3810: `technical` es el motivo real (para el equipo); `message` es lo único que ve el ciudadano
+    await recordDraftSyncError(draft?.client_side_id, { code, kind, message, ...(technical ? { technical } : {}) });
   } catch {
     // El diagnóstico es accesorio
   }
@@ -139,11 +140,13 @@ export const sendPendingDraft = async (draft, userId) => {
       longitud: lng,
     });
     if (!creation.success) {
-      // El ciudadano ve el mensaje pensado para él, no el detalle técnico (REP-2204)
+      // El ciudadano ve el mensaje pensado para él, no el detalle técnico (REP-2204). El motivo real se
+      // guarda aparte en el borrador (REP-3810): antes se descartaba y no se podía diagnosticar.
       return failWith(draft, {
         code: 'CREATE',
         kind: 'retry',
         message: creation.userMessage || creation.error || 'No pudimos guardar tu reporte.',
+        technical: creation.technical,
       });
     }
 

@@ -94,6 +94,65 @@ describe('REP-2500: createCitizenReport', () => {
     expect(result.error).toBe('falló');
   });
 
+  // REP-3810: el motivo técnico de una falla de alta tiene que poder diagnosticarse
+  it('REP-3810: ante un error de la base devuelve el motivo técnico (code, details, hint, status) sin mostrarlo al ciudadano', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockSingle.mockResolvedValue({
+      data: null,
+      status: 403,
+      error: {
+        message: 'new row violates row-level security policy (USING expression) for table "citizen_reports"',
+        code: '42501',
+        details: null,
+        hint: null,
+      },
+    });
+
+    const result = await createCitizenReport({
+      clientSideId: 'csid-1',
+      userId: 'user-1',
+      localityId: 'locality-1',
+      description: 'Bache en la esquina',
+      latitud: 0,
+      longitud: 0,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.technical).toEqual({
+      message: expect.stringMatching(/row-level security/),
+      code: '42501',
+      details: null,
+      hint: null,
+      status: 403,
+    });
+    // El ciudadano sigue viendo la frase genérica, nunca el detalle técnico
+    expect(result.userMessage).not.toMatch(/row-level|42501|policy/i);
+    // Y queda en el log para el equipo, con el código para poder buscarlo
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining('[createCitizenReport]'),
+      expect.objectContaining({ code: '42501', clientSideId: 'csid-1' })
+    );
+    consoleError.mockRestore();
+  });
+
+  it('REP-3810: una excepción de red también deja el motivo técnico', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockSingle.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const result = await createCitizenReport({
+      clientSideId: 'csid-1',
+      userId: 'user-1',
+      localityId: 'locality-1',
+      description: 'Bache en la esquina',
+      latitud: 0,
+      longitud: 0,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.technical).toMatchObject({ message: 'Failed to fetch' });
+    consoleError.mockRestore();
+  });
+
   // REP-2203: el servicio no confía en el formulario y valida la descripción también
   it.each([
     ['muy corta', 'bache'],

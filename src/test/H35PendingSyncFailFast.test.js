@@ -132,6 +132,28 @@ describe('H-35: sendPendingDraft valida ANTES de procesar las fotos', () => {
     expect(deleteDraftReport).not.toHaveBeenCalled();
   });
 
+  it('REP-3810: el motivo técnico del alta queda en el borrador y no reemplaza el mensaje del ciudadano', async () => {
+    processAllEvidencesThroughQuarantine.mockResolvedValue({ success: true, processedEvidences: [{ sanitizedUrl: 'https://cdn.example/protegida.jpg' }] });
+    const technical = { message: 'new row violates row-level security policy', code: '42501', details: null, hint: null, status: 403 };
+    createCitizenReport.mockResolvedValue({
+      success: false,
+      error: technical.message,
+      technical,
+      userMessage: 'No pudimos guardar tu reporte. Tu borrador sigue guardado: probá de nuevo en unos segundos.',
+    });
+
+    await sendPendingDraft(draftValido(), 'user-1');
+
+    expect(recordDraftSyncError).toHaveBeenCalledWith(
+      'draft-1',
+      expect.objectContaining({
+        code: 'CREATE',
+        message: expect.stringMatching(/borrador sigue guardado/i),
+        technical,
+      })
+    );
+  });
+
   it('UT-H35-09: si no se puede guardar el motivo, el envío igual informa el fallo (el diagnóstico nunca rompe la cola)', async () => {
     recordDraftSyncError.mockRejectedValue(new Error('IndexedDB lleno'));
 

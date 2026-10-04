@@ -49,6 +49,28 @@ export const isNetworkFailure = (message) =>
 const toCitizenMessage = (technicalMessage) =>
   isNetworkFailure(technicalMessage) ? MESSAGE_NETWORK : MESSAGE_GENERIC;
 
+/**
+ * REP-3810: el motivo técnico de una falla de alta. Antes solo viajaba el texto y el llamador lo
+ * descartaba, así que con lo que guardaba la app no se podía saber qué rechazó la base (RLS, un
+ * constraint, un límite). Se conservan solo los campos de diagnóstico del error de Supabase: nunca
+ * el contenido del reporte (descripción, coordenadas) ni datos de la cuenta.
+ * @param {object|null} error Error de PostgREST/Supabase o excepción
+ * @param {number} [status] Código HTTP de la respuesta, si lo hubo
+ * @returns {{ message: string, code: string|null, details: string|null, hint: string|null, status: number|null }}
+ */
+const toTechnicalError = (error, status) => ({
+  message: error?.message ?? 'No se pudo guardar el reporte.',
+  code: error?.code ?? null,
+  details: error?.details ?? null,
+  hint: error?.hint ?? null,
+  status: status ?? error?.status ?? null,
+});
+
+/** REP-3810: deja el motivo técnico en el log (consola) para que el equipo pueda diagnosticar el alta fallida. */
+const logCreationFailure = (clientSideId, technical) => {
+  console.error('[createCitizenReport] No se pudo crear el reporte:', { clientSideId, ...technical });
+};
+
 export const createCitizenReport = async ({
   clientSideId,
   userId,
@@ -81,8 +103,9 @@ export const createCitizenReport = async ({
   // REP-2204: una excepción de red no debe romper la pantalla ni perder el borrador
   let data;
   let error;
+  let status;
   try {
-    ({ data, error } = await supabase
+    ({ data, error, status } = await supabase
       .from('citizen_reports')
       .upsert(
         {
@@ -102,16 +125,20 @@ export const createCitizenReport = async ({
       .select('id, client_side_id')
       .single());
   } catch (thrown) {
+    const technical = toTechnicalError(thrown);
+    logCreationFailure(clientSideId, technical);
     return {
       success: false,
-      error: thrown?.message ?? 'No se pudo guardar el reporte.',
+      error: technical.message,
+      technical,
       userMessage: toCitizenMessage(thrown?.message),
     };
   }
 
   if (error || !data) {
-    const technical = error?.message ?? 'No se pudo guardar el reporte.';
-    return { success: false, error: technical, userMessage: toCitizenMessage(technical) };
+    const technical = toTechnicalError(error, status);
+    logCreationFailure(clientSideId, technical);
+    return { success: false, error: technical.message, technical, userMessage: toCitizenMessage(technical.message) };
   }
 
   return { success: true, data };
