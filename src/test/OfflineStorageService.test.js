@@ -114,6 +114,24 @@ describe('REP-2703: Servicio de Almacenamiento Offline en IndexedDB', () => {
     expect(active.description).toBe('Reporte 2 reciente');
   });
 
+  // REP-3811: los borradores ya encolados no se restauran al abrir un reporte nuevo
+  it('UT-REST-01: un borrador PENDING_SYNC no es el «borrador activo» (ya está en la cola de envío)', async () => {
+    await saveDraftReport({ client_side_id: 'draft-encolado', description: 'Ya esta en la cola' });
+    await markDraftPendingSync('draft-encolado');
+
+    expect(await getActiveDraftReport()).toBeNull();
+  });
+
+  it('UT-REST-02: con un encolado más reciente y uno en edición, el activo es el que está en edición', async () => {
+    await saveDraftReport({ client_side_id: 'draft-en-edicion', description: 'En edicion', status: 'DRAFT_LOCAL' });
+    await new Promise((r) => setTimeout(r, 10));
+    await saveDraftReport({ client_side_id: 'draft-encolado', description: 'Ya esta en la cola' });
+    await markDraftPendingSync('draft-encolado');
+
+    const active = await getActiveDraftReport();
+    expect(active.client_side_id).toBe('draft-en-edicion');
+  });
+
   it('UT-OFF-05: Transiciona el estado del borrador y sus fotos a PENDING_SYNC al perder conexión', async () => {
     const fakeBlob = new Blob(['foto evidencia'], { type: 'image/jpeg' });
     const draft = await saveDraftReport({
