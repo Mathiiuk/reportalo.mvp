@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockSingle = vi.fn();
+const mockMaybeSingle = vi.fn();
 const mockSelect = vi.fn(() => ({ single: mockSingle }));
 const mockUpsert = vi.fn(() => ({ select: mockSelect }));
 const mockInsertReportImages = vi.fn(() => ({ select: mockSelect }));
@@ -39,11 +40,11 @@ describe('REP-2500: createCitizenReport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ single: mockSingle });
+    mockSelect.mockReturnValue({ maybeSingle: mockMaybeSingle, eq: mockEq });
   });
 
   it('crea el reporte y devuelve id + client_side_id', async () => {
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: { id: 'report-1', client_side_id: 'csid-1' },
       error: null,
     });
@@ -66,7 +67,8 @@ describe('REP-2500: createCitizenReport', () => {
         user_id: 'user-1',
         locality_id: 'locality-1',
       }),
-      expect.objectContaining({ onConflict: 'client_side_id' })
+      // REP-3810: sin DO UPDATE. El ciudadano no tiene policy de UPDATE, así que un reintento fallaba siempre
+      expect.objectContaining({ onConflict: 'client_side_id', ignoreDuplicates: true })
     );
     // El estado no viaja: al insertar la base usa RECIBIDO y un reintento no pisa el estado ya avanzado
     expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty('current_state_code');
@@ -79,7 +81,7 @@ describe('REP-2500: createCitizenReport', () => {
   });
 
   it('devuelve success:false si Supabase responde error', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: { message: 'falló' } });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'falló' } });
 
     const result = await createCitizenReport({
       clientSideId: 'csid-1',
@@ -95,9 +97,89 @@ describe('REP-2500: createCitizenReport', () => {
   });
 
   // REP-3810: el motivo técnico de una falla de alta tiene que poder diagnosticarse
+  // REP-3810 · regresión: reintentar un reporte que YA existe (el alta llegó al servidor pero se perdió la
+  // respuesta) caía en ON CONFLICT DO UPDATE y la base lo rechazaba siempre con 42501 (no hay policy UPDATE).
+  describe('REP-3810: reintento de un reporte ya creado', () => {
+    const params = {
+      clientSideId: 'csid-1',
+      userId: 'user-1',
+      serviceId: 'service-1',
+      localityId: 'locality-1',
+      description: 'Bache en la esquina',
+      latitud: -34.6,
+      longitud: -58.4,
+    };
+    const mockLookup = vi.fn();
+
+    beforeEach(() => {
+      mockLookup.mockReset();
+      mockEq.mockReturnValue({ maybeSingle: mockLookup });
+    });
+
+    it('si la fila ya existe y es del mismo ciudadano, la recupera sin error', async () => {
+      // ON CONFLICT DO NOTHING no devuelve fila
+      mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+      mockLookup.mockResolvedValue({ data: { id: 'report-1', client_side_id: 'csid-1', user_id: 'user-1' }, error: null });
+
+      const result = await createCitizenReport(params);
+
+      expect(result).toEqual({
+        success: true,
+        data: { id: 'report-1', client_side_id: 'csid-1' },
+        recovered: true,
+      });
+      expect(mockEq).toHaveBeenCalledWith('client_side_id', 'csid-1');
+    });
+
+    it('nunca modifica el reporte existente: el alta no usa DO UPDATE', async () => {
+      mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+      mockLookup.mockResolvedValue({ data: { id: 'report-1', client_side_id: 'csid-1', user_id: 'user-1' }, error: null });
+
+      await createCitizenReport(params);
+
+      expect(mockUpsert).toHaveBeenCalledTimes(1);
+      expect(mockUpsert.mock.calls[0][1]).toMatchObject({ ignoreDuplicates: true });
+    });
+
+    it('si la fila existente es de OTRO usuario, no la devuelve (no se mezclan reportes ajenos)', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+      mockLookup.mockResolvedValue({ data: { id: 'report-9', client_side_id: 'csid-1', user_id: 'otro-usuario' }, error: null });
+
+      const result = await createCitizenReport(params);
+
+      expect(result.success).toBe(false);
+      expect(result.data).toBeUndefined();
+      expect(result.technical).toMatchObject({ code: 'CLIENT_ID_CONFLICT' });
+      expect(consoleError).toHaveBeenCalled();
+      consoleError.mockRestore();
+    });
+
+    it('si no se puede leer la fila existente, falla con el motivo técnico', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+      mockLookup.mockResolvedValue({ data: null, error: { message: 'permission denied', code: '42501' } });
+
+      const result = await createCitizenReport(params);
+
+      expect(result.success).toBe(false);
+      expect(result.technical).toMatchObject({ code: '42501' });
+      consoleError.mockRestore();
+    });
+
+    it('si no hay conflicto, el alta devuelve la fila nueva y no consulta de nuevo', async () => {
+      mockMaybeSingle.mockResolvedValue({ data: { id: 'report-2', client_side_id: 'csid-1' }, error: null });
+
+      const result = await createCitizenReport(params);
+
+      expect(result).toEqual({ success: true, data: { id: 'report-2', client_side_id: 'csid-1' } });
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+  });
+
   it('REP-3810: ante un error de la base devuelve el motivo técnico (code, details, hint, status) sin mostrarlo al ciudadano', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: null,
       status: 403,
       error: {
@@ -137,7 +219,7 @@ describe('REP-2500: createCitizenReport', () => {
 
   it('REP-3810: una excepción de red también deja el motivo técnico', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSingle.mockRejectedValue(new TypeError('Failed to fetch'));
+    mockMaybeSingle.mockRejectedValue(new TypeError('Failed to fetch'));
 
     const result = await createCitizenReport({
       clientSideId: 'csid-1',
@@ -174,7 +256,7 @@ describe('REP-2500: createCitizenReport', () => {
   });
 
   it('REP-2203: guarda la descripción sin espacios en los bordes', async () => {
-    mockSingle.mockResolvedValue({ data: { id: 'r', client_side_id: 'c' }, error: null });
+    mockMaybeSingle.mockResolvedValue({ data: { id: 'r', client_side_id: 'c' }, error: null });
 
     await createCitizenReport({
       clientSideId: 'csid-1',
@@ -297,11 +379,11 @@ describe('REP-2204: createCitizenReport devuelve un mensaje comprensible', () =>
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ single: mockSingle });
+    mockSelect.mockReturnValue({ maybeSingle: mockMaybeSingle, eq: mockEq });
   });
 
   it('UT-SNM-01: un error técnico de la base se traduce a un texto claro que tranquiliza sobre el borrador', async () => {
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValue({
       data: null,
       error: { message: 'new row violates row-level security policy for table "citizen_reports"' },
     });
@@ -316,7 +398,7 @@ describe('REP-2204: createCitizenReport devuelve un mensaje comprensible', () =>
   });
 
   it('UT-SNM-02: un corte de red se explica como problema de conexión', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: { message: 'TypeError: Failed to fetch' } });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'TypeError: Failed to fetch' } });
 
     const result = await createCitizenReport(params);
 
@@ -324,7 +406,7 @@ describe('REP-2204: createCitizenReport devuelve un mensaje comprensible', () =>
   });
 
   it('UT-SNM-03: si la llamada lanza una excepción no se pierde el borrador ni se rompe la pantalla', async () => {
-    mockSingle.mockRejectedValue(new Error('Failed to fetch'));
+    mockMaybeSingle.mockRejectedValue(new Error('Failed to fetch'));
 
     const result = await createCitizenReport(params);
 

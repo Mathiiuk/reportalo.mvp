@@ -12,7 +12,8 @@ import { NewReportPage } from '../pages/NewReportPage';
 const { upsertReportSpy } = vi.hoisted(() => ({
   upsertReportSpy: vi.fn(() => ({
     select: () => ({
-      single: () => Promise.resolve({
+      // REP-3810: el alta usa maybeSingle (ON CONFLICT DO NOTHING no siempre devuelve fila)
+      maybeSingle: () => Promise.resolve({
         data: { id: 'report-e2e-1', client_side_id: 'csid-e2e-1' },
         error: null,
       }),

@@ -120,10 +120,14 @@ export const createCitizenReport = async ({
           // si el envío se reintenta (mismo client_side_id), el upsert no pisa el estado que el reporte ya
           // tenga (al enviarse pasa solo a En revisión, REP-3798).
         },
-        { onConflict: 'client_side_id', ignoreDuplicates: false }
+        // REP-3810: ignoreDuplicates (ON CONFLICT DO NOTHING) en vez de DO UPDATE. El ciudadano solo tiene
+        // policy de INSERT en citizen_reports: ante un client_side_id ya existente, DO UPDATE lo rechazaba
+        // siempre con 42501 y el reintento nunca se resolvía. Con DO NOTHING no devuelve fila y el reporte
+        // existente se recupera abajo, sin modificarlo.
+        { onConflict: 'client_side_id', ignoreDuplicates: true }
       )
       .select('id, client_side_id')
-      .single());
+      .maybeSingle());
   } catch (thrown) {
     const technical = toTechnicalError(thrown);
     logCreationFailure(clientSideId, technical);
@@ -135,13 +139,67 @@ export const createCitizenReport = async ({
     };
   }
 
-  if (error || !data) {
+  if (error) {
     const technical = toTechnicalError(error, status);
     logCreationFailure(clientSideId, technical);
     return { success: false, error: technical.message, technical, userMessage: toCitizenMessage(technical.message) };
   }
 
+  if (!data) {
+    // Sin fila devuelta = ya existía un reporte con este client_side_id (reintento): se recupera
+    return recoverExistingReport({ clientSideId, userId });
+  }
+
   return { success: true, data };
+};
+
+/**
+ * REP-3810: recupera el reporte que ya existe para este client_side_id. Pasa cuando el alta llegó al servidor
+ * pero la respuesta se perdió (corte, timeout) y el borrador se reintenta. Solo lo devuelve si es del mismo
+ * ciudadano: un client_side_id repetido entre cuentas distintas no debe unir el reporte de una con las fotos
+ * de otra. No modifica nada.
+ */
+const recoverExistingReport = async ({ clientSideId, userId }) => {
+  const fail = (technical) => {
+    logCreationFailure(clientSideId, technical);
+    return { success: false, error: technical.message, technical, userMessage: MESSAGE_GENERIC };
+  };
+
+  let existing;
+  let error;
+  let status;
+  try {
+    ({ data: existing, error, status } = await supabase
+      .from('citizen_reports')
+      .select('id, client_side_id, user_id')
+      .eq('client_side_id', clientSideId)
+      .maybeSingle());
+  } catch (thrown) {
+    return fail(toTechnicalError(thrown));
+  }
+
+  if (error) return fail(toTechnicalError(error, status));
+  if (!existing) {
+    // El alta no devolvió fila y tampoco se la encuentra: no se puede dar por creado
+    return fail({
+      message: 'El alta no devolvió el reporte y no se pudo recuperar por client_side_id.',
+      code: 'REPORT_NOT_FOUND',
+      details: null,
+      hint: null,
+      status: status ?? null,
+    });
+  }
+  if (existing.user_id !== userId) {
+    return fail({
+      message: 'El client_side_id ya pertenece al reporte de otra cuenta.',
+      code: 'CLIENT_ID_CONFLICT',
+      details: null,
+      hint: null,
+      status: null,
+    });
+  }
+
+  return { success: true, data: { id: existing.id, client_side_id: existing.client_side_id }, recovered: true };
 };
 
 /**
