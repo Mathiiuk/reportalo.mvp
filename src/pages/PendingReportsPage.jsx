@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, AlertTriangle, CloudOff, Hourglass, Lock, MapPin, RefreshCw, Trash2, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Camera, CloudOff, Hourglass, Lock, MapPin, RefreshCw, Trash2, Construction, Truck, Leaf, Store, HelpCircle, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { getAllPendingSyncReports, deleteDraftReport, updateDraftReport } from '../services/offlineStorageService';
@@ -11,6 +11,7 @@ import { PENDING_SYNC_EVENT } from '../components/common/PendingSyncManager';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { getCategoryTone } from '../components/report/categoryTone';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
+import { createEvidenceItem, ALLOWED_EVIDENCE_MIME_TYPES, MAX_EVIDENCE_SIZE_BYTES } from '../types/evidence';
 
 const ICON_MAP = { construction: Construction, local_shipping: Truck, eco: Leaf, storefront: Store };
 
@@ -28,6 +29,10 @@ const formatWhen = (value) => {
   if (date.toDateString() === yesterday.toDateString()) return `ayer ${time}`;
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} · ${time}`;
 };
+
+// REP-3811: lo que la tarjeta permite completar. «Falta completar un dato» solo se dice para estos códigos:
+// pedir algo que la tarjeta no deja cargar (como la categoría) es un callejón sin salida.
+const CARD_COMPLETABLE_CODES = ['DESCRIPTION', 'LOCATION', 'PHOTOS'];
 
 // Sin blobs guardados no hay nada que enviar: el borrador no puede salir de la cola.
 const hasStoredPhotos = (draft) => (draft?.evidenceList || []).some((ev) => ev.blob);
@@ -60,7 +65,7 @@ const draftReasons = (draft) => {
  * Diseño: el ícono y el título van arriba y todo lo demás ocupa el ancho completo debajo, para que el texto no quede
  * apretado contra el borde derecho.
  */
-const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocation, onDiscard }) => {
+const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocation, onAddPhoto, onDiscard }) => {
   const tone = getCategoryTone(draft.selectedCategory || {});
   const Icon = ICON_MAP[draft.selectedCategory?.icon] || HelpCircle;
   const place = draft.customLocation?.localityLabel || draft.address || 'Ubicación guardada';
@@ -73,11 +78,35 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocat
   const reasons = draftReasons(draft);
   const canEditDescription = photos && problems.some((problem) => problem.code === 'DESCRIPTION');
   const canConfirmLocation = photos && problems.some((problem) => problem.code === 'LOCATION');
+  // REP-3811: sin fotos locales el borrador no puede salir; la salida es agregar una desde acá
+  const canAddPhoto = !photos;
+  const photoInputRef = useRef(null);
 
   const [confirming, setConfirming] = useState(false);
   const [text, setText] = useState(draft.description || '');
   const [fieldError, setFieldError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+
+  // REP-3811: mismas reglas de foto que el asistente (formato y tamaño); el servidor la protege al enviar
+  const handlePhotoChosen = async (event) => {
+    const file = event.target.files?.[0];
+    // Se limpia el input para poder elegir de nuevo el mismo archivo si falló
+    event.target.value = '';
+    if (!file) return;
+    if (!ALLOWED_EVIDENCE_MIME_TYPES.includes(file.type)) {
+      setPhotoError('Formato de imagen no admitido. Usá JPG, PNG o WebP.');
+      return;
+    }
+    if (file.size > MAX_EVIDENCE_SIZE_BYTES) {
+      setPhotoError('La imagen supera el tamaño máximo permitido de 10 MB.');
+      return;
+    }
+    setPhotoError(null);
+    setBusy(true);
+    await onAddPhoto(draft, file);
+    setBusy(false);
+  };
 
   const handleSave = async () => {
     const check = validateDescription(text);
@@ -129,10 +158,12 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocat
             poder enviar nunca: decir «requiere conexión» sería mentir y el
             ciudadano esperaría para siempre un envío que no va a ocurrir. */}
         {!photos ? (
-          <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-danger">
-            <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-            No se puede enviar: las fotos ya no están en este dispositivo.
-          </span>
+          <ul data-testid="pending-reason" className="m-0 flex list-none flex-col gap-1 p-0 text-rep-label font-semibold text-rep-danger">
+            <li className="inline-flex items-start gap-1.5">
+              <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+              <span>Este reporte no tiene fotos en {deviceWord === 'computadora' ? 'esta' : 'este'} {deviceWord}. Agregá una para poder enviarlo.</span>
+            </li>
+          </ul>
         ) : reasons.length > 0 ? (
           <ul data-testid="pending-reason" className={`m-0 flex list-none flex-col gap-1 p-0 text-rep-label font-semibold ${reasonColor}`}>
             {reasons.map((reason) => (
@@ -147,6 +178,37 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocat
             <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
             Falta protegerse la foto: requiere conexión.
           </span>
+        )}
+
+        {/* REP-3811: sin fotos, la foto se agrega acá mismo (en vez de pedir un dato que la tarjeta no deja cargar) */}
+        {canAddPhoto && (
+          <div className="flex flex-col gap-1.5">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept={ALLOWED_EVIDENCE_MIME_TYPES.join(',')}
+              data-testid="pending-photo-input"
+              onChange={handlePhotoChosen}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              data-testid="pending-photo-btn"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={busy}
+              className="rep-focus inline-flex min-h-touch w-full items-center justify-center gap-2 rounded-xl bg-rep-accent px-4 text-rep-body font-bold text-rep-on-accent disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <Camera aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+              Agregar foto
+            </button>
+            {photoError && (
+              <p role="alert" className="m-0 text-rep-label text-rep-danger">
+                {photoError}
+              </p>
+            )}
+          </div>
         )}
 
         {/* H-35: la descripción se completa acá mismo */}
@@ -289,8 +351,9 @@ export const PendingReportsPage = () => {
     }
     // REP-3801: un borrador al que le falta un dato (ej. la ubicación cargada sin conexión) no es una
     // falla: hay que completarlo desde su tarjeta. Solo las fallas reales de envío van en rojo.
-    const realFailures = result.errors.filter((item) => item.kind !== 'invalid');
-    const needsCompleting = result.errors.filter((item) => item.kind === 'invalid');
+    const realFailures = result.errors.filter((item) => item.kind !== 'invalid' || !CARD_COMPLETABLE_CODES.includes(item.code));
+    // REP-3811: solo se pide «completar» lo que la tarjeta permite cargar
+    const needsCompleting = result.errors.filter((item) => item.kind === 'invalid' && CARD_COMPLETABLE_CODES.includes(item.code));
     if (realFailures.length > 0) {
       toast.error('Algunos reportes no se pudieron enviar', { description: realFailures[0]?.error });
     } else if (needsCompleting.length > 0) {
@@ -333,6 +396,22 @@ export const PendingReportsPage = () => {
     }
     setLocationDraft(null);
     await retryAfterFix('Ubicación guardada');
+  };
+
+  // REP-3811: agregar una foto a un borrador que se quedó sin fotos y volver a intentar
+  const handleAddPhoto = async (draft, file) => {
+    let item;
+    try {
+      item = createEvidenceItem(file);
+      await updateDraftReport(draft.client_side_id, { evidenceList: [item] });
+    } catch {
+      toast.error('No pudimos guardar la foto', { description: 'Probá de nuevo.' });
+      return;
+    } finally {
+      // createEvidenceItem crea una URL de vista previa que acá no se usa
+      if (item?.previewUrl) URL.revokeObjectURL?.(item.previewUrl);
+    }
+    await retryAfterFix('Foto agregada');
   };
 
   // H-35: descartar un pendiente. Devuelve true si se borró.
@@ -411,6 +490,7 @@ export const PendingReportsPage = () => {
                   deviceWord={deviceWord}
                   onSaveDescription={handleSaveDescription}
                   onConfirmLocation={setLocationDraft}
+                  onAddPhoto={handleAddPhoto}
                   onDiscard={handleDiscard}
                 />
               ))}
