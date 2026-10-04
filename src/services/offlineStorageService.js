@@ -225,8 +225,12 @@ export const getDraftReport = async (clientSideId) => {
 };
 
 /**
- * Obtiene el borrador activo más reciente que aún no haya sido enviado ni cerrado.
- * Útil para restaurar la sesión ante recarga de página o navegación accidental.
+ * Obtiene el borrador en edición (DRAFT_LOCAL) más reciente, para restaurarlo ante recarga de página o
+ * navegación accidental.
+ *
+ * Los borradores PENDING_SYNC no se restauran: ya están en la cola de envío (Pendientes) y los envía
+ * PendingSyncManager. Restaurarlos hacía que un reporte nuevo adoptara su client_side_id y sus datos y lo
+ * pisara (REP-3811), y que después reutilizara el id de un reporte ya creado.
  * @returns {Promise<object|null>} Borrador activo más reciente o null
  */
 export const getActiveDraftReport = async () => {
@@ -246,8 +250,8 @@ export const getActiveDraftReport = async () => {
           const cursor = event.target.result;
           if (cursor) {
             const draft = cursor.value;
-            // Retornamos el primer borrador no sincronizado encontrado
-            if (draft.status === DRAFT_STATUS.DRAFT_LOCAL || draft.status === DRAFT_STATUS.PENDING_SYNC) {
+            // Retornamos el primer borrador en edición encontrado (los encolados no se restauran)
+            if (draft.status === DRAFT_STATUS.DRAFT_LOCAL) {
               return resolve(draft);
             }
             cursor.continue();
@@ -264,7 +268,7 @@ export const getActiveDraftReport = async () => {
     } catch (err) {
       // Fallback a memoria
       const drafts = Array.from(inMemoryFallbackStore.values())
-        .filter((d) => d.status === DRAFT_STATUS.DRAFT_LOCAL || d.status === DRAFT_STATUS.PENDING_SYNC)
+        .filter((d) => d.status === DRAFT_STATUS.DRAFT_LOCAL)
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       return drafts[0] || null;
     }
@@ -272,7 +276,7 @@ export const getActiveDraftReport = async () => {
 
   // Búsqueda en memoria
   const drafts = Array.from(inMemoryFallbackStore.values())
-    .filter((d) => d.status === DRAFT_STATUS.DRAFT_LOCAL || d.status === DRAFT_STATUS.PENDING_SYNC)
+    .filter((d) => d.status === DRAFT_STATUS.DRAFT_LOCAL)
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   return drafts[0] || null;
 };
