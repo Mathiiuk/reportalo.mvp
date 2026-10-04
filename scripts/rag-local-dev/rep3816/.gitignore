@@ -1,0 +1,3 @@
+# REP-3816: las imágenes de prueba no entran al repo (aunque estén anonimizadas o sean sintéticas).
+fotos/*
+!fotos/.gitkeep
