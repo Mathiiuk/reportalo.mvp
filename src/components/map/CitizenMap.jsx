@@ -59,6 +59,7 @@ import {
   getUserCoordinates,
   LOCATION_STATUS,
   DEFAULT_CITY_COORDINATES,
+  getMinZoomToContainBounds,
 } from '../../services/locationService';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -226,13 +227,24 @@ export const CitizenMap = ({
       return;
     }
 
+    // REP-3812: el mapa sigue cerrado en CABA y Avellaneda (maxBounds), pero el zoom mínimo depende del tamaño
+    // del contenedor: si lo visible supera el ancho del límite, MapLibre bloquea el desplazamiento horizontal
+    const computeMinZoom = () =>
+      getMinZoomToContainBounds({
+        bounds: CABA_AVELLANEDA_BOUNDS,
+        width: mapContainerRef.current?.clientWidth,
+        height: mapContainerRef.current?.clientHeight,
+        baseMinZoom: MIN_ZOOM,
+      });
+    const initialMinZoom = computeMinZoom();
+
     try {
       const map = new Map({
         container: mapContainerRef.current,
         style: OPENFREEMAP_BRIGHT_STYLE,
         center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-        minZoom: MIN_ZOOM,
+        zoom: Math.max(DEFAULT_ZOOM, initialMinZoom),
+        minZoom: initialMinZoom,
         maxZoom: MAX_ZOOM,
         maxBounds: CABA_AVELLANEDA_BOUNDS,
         attributionControl: false,
@@ -277,7 +289,13 @@ export const CitizenMap = ({
       };
 
       map.on('moveend', emitViewport);
-      map.on('resize', emitViewport);
+      // Si cambia el tamaño del mapa (ventana, rotación, panel lateral): se recalcula el zoom mínimo (REP-3812) y se avisa
+      // la nueva zona visible (REP-3805)
+      map.on('resize', () => {
+        map.setMinZoom(computeMinZoom());
+        emitViewport();
+      });
+
       map.on('style.load', markReady);
       map.on('load', markReady);
 
