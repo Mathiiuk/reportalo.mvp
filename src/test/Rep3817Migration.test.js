@@ -7,7 +7,7 @@ import path from 'path';
 // verifica con supabase/tests/REP-3817_verificacion.sql contra una base con la migración aplicada.
 describe('REP-3817: migración del análisis visual (cola y persistencia)', () => {
   const raw = fs.readFileSync(
-    path.resolve(__dirname, '../../supabase/migrations/20261004120000_rep3817_analisis_visual_cola_y_persistencia.sql'),
+    path.resolve(__dirname, '../../supabase/migrations/20261005163523_rep3817_analisis_visual_cola_y_persistencia.sql'),
     'utf8'
   );
   // Sin comentarios: las comprobaciones de «no se toca el RAG» no deben dispararse por el texto explicativo

@@ -1,4 +1,4 @@
--- REP-3817 · Verificación de la migración 20261004120000_rep3817_analisis_visual_cola_y_persistencia.sql
+-- REP-3817 · Verificación de la migración 20261005163523_rep3817_analisis_visual_cola_y_persistencia.sql
 --
 -- Se corre contra una base donde la migración YA está aplicada (o, para probarla sin dejar rastro, se corre la
 -- migración y este script dentro de la misma transacción y se deshace todo).
