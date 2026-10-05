@@ -17,6 +17,8 @@ vi.mock('../services/reportDetailService', async (importOriginal) => {
 });
 vi.mock('../hooks/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('../hooks/useReportAnalysisLive', () => ({ useReportAnalysisLive: vi.fn() }));
+// REP-3820: la verificación visual lee otra tabla; estas pruebas no la necesitan (sin resultados no hay bloque)
+vi.mock('../hooks/useReportImageAnalysis', () => ({ useReportImageAnalysis: vi.fn(() => ({ results: [], loading: false })) }));
 
 import { getReportDetail, getReportStateHistory } from '../services/reportDetailService';
 import { useAuth } from '../hooks/useAuth';

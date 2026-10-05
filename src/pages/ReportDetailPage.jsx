@@ -21,9 +21,11 @@ import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, Chev
 import { useAuth } from '../hooks/useAuth';
 import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
+import { ReportVisualVerification } from '../components/report/ReportVisualVerification';
 import { StatusPill } from '../components/report/StatusPill';
 import { buildTimeline, formatReportCode, getStatusConfig, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
+import { useReportImageAnalysis } from '../hooks/useReportImageAnalysis';
 import { useReportStateLive } from '../hooks/useReportStateLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { AppDesktopHeader } from '../components/layout/AppLayout';
@@ -206,6 +208,9 @@ export const ReportDetailPage = () => {
   // Estado en vivo (REP-3798): si el municipio cambia el estado mientras el ciudadano mira el reporte, la pantalla
   // se actualiza sola y, si es el dueño, se lo avisa. `history` llega null si no se pudo leer y no pisa el actual.
   const reportOwned = Boolean(report && user?.id && report.user_id === user.id);
+  // REP-3820: verificación visual de las fotos. Solo el dueño la lee (RLS de report_image_analysis); aditiva y separada
+  // del fundamento legal: no cambia estados ni el panel de arriba.
+  const { results: imageAnalyses } = useReportImageAnalysis({ reportId: id, imageCount: images.length, enabled: reportOwned });
   useReportStateLive({
     reportId: id,
     stateCode: report?.current_state_code,
@@ -482,8 +487,9 @@ export const ReportDetailPage = () => {
           )}
 
           {isOwner && (
-            <div className="order-3 desktop:order-none desktop:col-start-2 desktop:row-start-2">
+            <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
               <ReportAiAnalysisPanel analysis={analysis} loading={loadingAnalysis} error={analysisError} />
+              <ReportVisualVerification results={imageAnalyses} images={images} categoryName={categoryName} />
             </div>
           )}
 
