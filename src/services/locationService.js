@@ -18,6 +18,35 @@ export const CABA_AVELLANEDA_BOUNDS = [
 ];
 
 /**
+ * REP-3812: zoom mínimo para que el área visible de un mapa quepa dentro de los límites (maxBounds).
+ *
+ * Si lo visible supera el ancho (o el alto) de maxBounds, MapLibre bloquea ese eje y el mapa solo se mueve en
+ * el otro: en un monitor ancho, con el zoom mínimo fijo, la vista alejada era más ancha que la zona piloto
+ * (≈ 22 km) y el desplazamiento horizontal quedaba trabado. Se calcula con la proyección Web Mercator de
+ * MapLibre (teselas de 512 px): a zoom z el mundo mide 512 · 2^z px.
+ *
+ * @param {object} params
+ * @param {[[number, number], [number, number]]} params.bounds [[lngMin, latMin], [lngMax, latMax]]
+ * @param {number} params.width Ancho del contenedor del mapa en px
+ * @param {number} params.height Alto del contenedor del mapa en px
+ * @param {number} [params.baseMinZoom] Zoom mínimo de diseño; el resultado nunca es menor
+ * @param {number} [params.tileSize] Tamaño de tesela de MapLibre
+ * @returns {number} Zoom mínimo, con un margen pequeño para no quedar justo en el borde
+ */
+export const getMinZoomToContainBounds = ({ bounds, width, height, baseMinZoom = 0, tileSize = 512 }) => {
+  if (!(width > 0) || !(height > 0) || !Array.isArray(bounds)) return baseMinZoom;
+  const [[lngMin, latMin], [lngMax, latMax]] = bounds;
+  const toMercatorY = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  // Fracción del mundo que ocupa el límite en cada eje
+  const fractionX = (lngMax - lngMin) / 360;
+  const fractionY = (toMercatorY(latMax) - toMercatorY(latMin)) / (2 * Math.PI);
+  const zoomX = Math.log2(width / (tileSize * fractionX));
+  const zoomY = Math.log2(height / (tileSize * fractionY));
+  const MARGEN = 0.03;
+  return Math.max(baseMinZoom, Math.ceil((Math.max(zoomX, zoomY) + MARGEN) * 100) / 100);
+};
+
+/**
  * Valida si un punto geográfico se encuentra dentro de los límites de CABA o Avellaneda.
  * @param {[number, number] | { lat: number, lng: number } | null} coords
  * @returns {boolean}

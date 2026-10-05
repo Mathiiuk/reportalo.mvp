@@ -7,6 +7,7 @@ import {
   resolveAddressDetails,
   DEFAULT_CITY_COORDINATES,
   CABA_AVELLANEDA_BOUNDS,
+  getMinZoomToContainBounds,
   isCoordinatesInBounds,
 } from '../../services/locationService';
 import { checkLocalityPinMismatch } from '../../services/localityCentroids';
@@ -117,6 +118,15 @@ export const AdjustLocationModal = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
+    // REP-3812: el zoom mínimo depende del tamaño del contenedor (ver getMinZoomToContainBounds)
+    const computeMinZoom = () =>
+      getMinZoomToContainBounds({
+        bounds: CABA_AVELLANEDA_BOUNDS,
+        width: mapContainerRef.current?.clientWidth,
+        height: mapContainerRef.current?.clientHeight,
+        baseMinZoom: MIN_ZOOM,
+      });
+
     let map;
     try {
       map = new Map({
@@ -124,10 +134,15 @@ export const AdjustLocationModal = ({
         style: OPENFREEMAP_BRIGHT_STYLE,
         center: currentCoords,
         zoom: 15.5,
-        minZoom: MIN_ZOOM,
+        minZoom: computeMinZoom(),
         maxZoom: MAX_ZOOM,
         maxBounds: CABA_AVELLANEDA_BOUNDS,
         attributionControl: false,
+      });
+
+      // Si cambia el tamaño del mapa (ventana, rotación, panel lateral) se recalcula el zoom mínimo
+      map.on('resize', () => {
+        map.setMinZoom(computeMinZoom());
       });
 
       map.on('move', () => {
