@@ -1,0 +1,34 @@
+id: REP-3817
+external_ref: ''
+title: Persistir y encolar analisis visual por evidencia
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - Implementar Persistir y encolar analisis visual por evidencia
+acceptance_criteria:
+  - >-
+    Criterio de aceptación 1 para Persistir y encolar analisis visual por
+    evidencia
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: true
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
