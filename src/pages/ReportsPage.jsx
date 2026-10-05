@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { motion } from 'framer-motion';
-import { ImagePlus, CloudOff, ChevronRight, Inbox } from 'lucide-react';
+import { ImagePlus, CloudOff, ChevronRight, Inbox, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getMyReports } from '../services/reportSubmissionService';
 import { refreshUnreadCount } from '../hooks/useUnreadNotifications';
@@ -49,6 +49,9 @@ export const ReportsPage = () => {
   const [activeFilter, setActiveFilter] = useState('todos');
   const [myReports, setMyReports] = useState([]);
   const [isLoadingReports, setIsLoadingReports] = useState(true);
+  // REP-3553: la lectura puede fallar (sin red, error de la base). Eso no es «no tenés reportes» y se dice aparte.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   // UJ v3.3 · M17: los borradores sin enviar encabezan la lista (REP-3791 Bloque 6)
   const [pendingDrafts, setPendingDrafts] = useState([]);
 
@@ -70,17 +73,21 @@ export const ReportsPage = () => {
       setIsLoadingReports(false);
       return undefined;
     }
+    setIsLoadingReports(true);
+    setLoadError(false);
     getMyReports(user.id).then((result) => {
       if (!isMounted) return;
       if (result.success) {
         setMyReports(result.reports.map(mapReportRow));
+      } else {
+        setLoadError(true);
       }
       setIsLoadingReports(false);
     });
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, reloadKey]);
 
   // Estados en vivo (REP-3798): los cambia quien atiende el reporte, así que la lista se vuelve a pedir sola
   // mientras haya reportes abiertos y la pestaña esté visible. Si algo cambió, se refresca también la campana.
@@ -204,6 +211,36 @@ export const ReportsPage = () => {
 
           {isLoadingReports ? (
             <div className="py-10 text-center text-rep-body font-semibold text-rep-ink-muted">Cargando tus reportes…</div>
+          ) : loadError && myReports.length === 0 ? (
+            /* Error de lectura (UJ v3.3 · M26-M28: cargando / vacío / error son tres situaciones distintas).
+               No se dice «todavía no enviaste reportes»: el ciudadano podría creer que los perdió. */
+            <div
+              role="alert"
+              data-testid="reports-error"
+              className="mx-auto mt-6 flex w-full max-w-xl flex-col items-center rounded-[24px] border border-rep-border bg-rep-surface p-8 text-center shadow-rep-card md:mt-12"
+            >
+              <h2 className="m-0 text-rep-section text-rep-ink md:text-rep-section-d">No pudimos cargar tus reportes</h2>
+              <p className="m-0 mt-2 text-rep-body text-rep-ink-muted md:text-rep-body-d">
+                Revisá tu conexión y probá de nuevo. Tus reportes no se perdieron.
+              </p>
+              <div className="mt-4 flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                  className="rep-focus flex min-h-touch w-full items-center justify-center gap-1.5 rounded-xl border-0 bg-rep-accent px-4 text-rep-label font-extrabold text-rep-on-accent transition-colors duration-120 hover:bg-rep-accent-strong md:w-auto"
+                >
+                  <RefreshCw aria-hidden="true" className="h-[17px] w-[17px]" strokeWidth={2.25} />
+                  Reintentar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/mapa')}
+                  className="rep-focus flex min-h-touch w-full items-center justify-center rounded-xl border border-rep-border bg-rep-surface px-4 text-rep-label font-bold text-rep-ink-label transition-[filter] duration-120 hover:brightness-[.96] dark:hover:brightness-[1.06] md:w-auto"
+                >
+                  Ver el mapa de la zona
+                </button>
+              </div>
+            </div>
           ) : filteredReports.length === 0 && !showDrafts ? (
             /* Estado vacío (UJ v3.3 · M26 / D34 — REP-3791 Bloque 9).
                No se dibuja si hay borradores arriba: el ciudadano acaba de cargar un
