@@ -99,6 +99,9 @@ const MAX_ZOOM = 19;
  *
  * @param {Array} [reports] Reportes ya adaptados por mapReportsService
  * @param {boolean} [isLoadingReports] Mientras se resuelve la primera carga
+ * @param {Function} [onViewportChange] REP-3805: recibe la zona visible ({ west, south, east, north }) al terminar de mover o
+ *   acercar el mapa, y una vez al inicio; quien carga los reportes la usa para pedir solo esa zona
+ * @param {boolean} [truncated] REP-3805: la zona visible llegó al tope de reportes; se avisa que acerque el mapa
  */
 export const CitizenMap = ({
   onFilterClick,
@@ -106,11 +109,16 @@ export const CitizenMap = ({
   onOpenReport = null,
   reports = [],
   isLoadingReports = false,
+  onViewportChange = null,
+  truncated = false,
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const userMarkerRef = useRef(null);
+  // REP-3805: referencia estable al callback para no recrear el mapa si el llamador cambia la función
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -243,13 +251,33 @@ export const CitizenMap = ({
         map.dragRotate.disable();
       }
 
+      // REP-3805: avisa la zona visible. Se llama al terminar cada movimiento o zoom (moveend), al cambiar el tamaño y
+      // una vez al inicio; el que carga los reportes aplica el debounce.
+      const emitViewport = () => {
+        if (typeof onViewportChangeRef.current !== 'function' || typeof map.getBounds !== 'function') return;
+        const bounds = map.getBounds();
+        onViewportChangeRef.current({
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        });
+      };
+      let initialViewportSent = false;
+
       const markReady = () => {
         setMapLoaded(true);
+        if (!initialViewportSent) {
+          initialViewportSent = true;
+          emitViewport();
+        }
         if (map && typeof map.resize === 'function') {
           map.resize();
         }
       };
 
+      map.on('moveend', emitViewport);
+      map.on('resize', emitViewport);
       map.on('style.load', markReady);
       map.on('load', markReady);
 
@@ -306,8 +334,9 @@ export const CitizenMap = ({
     });
     markersRef.current = [];
 
-    // Si el reporte seleccionado ya no coincide con el filtro, cerrarlo
-    if (selectedReport && !filteredReports.some((r) => r.id === selectedReport.id)) {
+    // Si el reporte seleccionado ya no coincide con el filtro, cerrarlo. REP-3805: el criterio es el filtro y no la lista
+    // cargada: los reportes ahora se piden por zona, y mover el mapa lejos del seleccionado no debe cerrarle la ficha.
+    if (selectedReport && activeFilter !== 'todos' && normalizeReportState(selectedReport.stateCode) !== activeFilter) {
       setSelectedReport(null);
     }
 
@@ -366,7 +395,7 @@ export const CitizenMap = ({
     if (userLocation) {
       updateUserMarker(userLocation);
     }
-  }, [filteredReports, mapLoaded, selectedReport, userLocation, updateUserMarker]);
+  }, [filteredReports, mapLoaded, selectedReport, activeFilter, userLocation, updateUserMarker]);
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 overflow-hidden bg-rep-surface-sunken">
@@ -502,6 +531,20 @@ export const CitizenMap = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* REP-3805: la zona visible llegó al tope de reportes por consulta. No se corta en silencio: se avisa que acerque el
+            mapa para ver el resto. Va debajo del aviso de ubicación si ese también está a la vista. */}
+        {truncated && (
+          <div
+            role="status"
+            data-testid="map-truncation-notice"
+            className={`absolute left-4 right-[76px] z-20 max-w-[420px] rounded-2xl border border-rep-border bg-rep-surface/95 px-3 py-2.5 text-rep-label font-semibold text-rep-ink shadow-rep-float backdrop-blur-md desktop:right-[152px] ${
+              showLocationBanner ? 'top-[148px]' : 'top-4'
+            }`}
+          >
+            Hay muchos reportes en esta zona. Acercá el mapa para ver todos.
+          </div>
+        )}
 
         {/* Botón Flotante de Filtros (Top Right) */}
         <button

@@ -18,8 +18,52 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { getStatusConfig } from '../components/report/reportStatus';
 import { getCategoryTone } from '../components/report/categoryTone';
 
-/** Tope de marcadores. Dibujar más satura el mapa y no aporta lectura. */
+/**
+ * Tope defensivo de marcadores POR CONSULTA. Dibujar más satura el mapa y no aporta lectura. REP-3805: ya no es un
+ * tope global de «los últimos 200 de todo el mapa» (que ocultaba en silencio los más viejos al crecer el volumen):
+ * aplica a la zona visible, y si esa zona lo alcanza se le avisa al ciudadano que acerque el mapa.
+ */
 export const MAP_REPORTS_LIMIT = 200;
+
+/** Cuánto se agranda, por cada lado, la zona que se pide respecto de la visible (para no reconsultar por cada paneo corto). */
+export const MAP_VIEWPORT_PADDING = 0.2;
+
+/** @typedef {{ west: number, south: number, east: number, north: number }} MapBounds */
+
+/** Agranda una zona un porcentaje de su tamaño por cada lado. */
+export const padBounds = (bounds, ratio = MAP_VIEWPORT_PADDING) => {
+  const dLng = (bounds.east - bounds.west) * ratio;
+  const dLat = (bounds.north - bounds.south) * ratio;
+  return { west: bounds.west - dLng, east: bounds.east + dLng, south: bounds.south - dLat, north: bounds.north + dLat };
+};
+
+/** ¿La zona `outer` contiene por completo a `inner`? */
+export const boundsContain = (outer, inner) =>
+  inner.west >= outer.west && inner.east <= outer.east && inner.south >= outer.south && inner.north <= outer.north;
+
+export const boundsArea = (bounds) => Math.max(0, bounds.east - bounds.west) * Math.max(0, bounds.north - bounds.south);
+
+/** Si la zona visible se achicó por debajo de esta fracción de lo ya cargado, vale la pena reconsultar una zona que se truncó. */
+const ZOOM_IN_REFETCH_RATIO = 0.8;
+
+/**
+ * ¿Hace falta consultar de nuevo al cambiar la zona visible?
+ *  - Sin consulta previa, o si la zona visible se salió de lo cargado: sí.
+ *  - Si lo cargado se había truncado (llegó al tope) y la zona visible ahora es bastante menor (se acercó el mapa): sí,
+ *    para traer los reportes que habían quedado afuera.
+ *  - En cualquier otro caso lo que ya se tiene alcanza.
+ * @param {{ bounds: MapBounds, viewport?: MapBounds, truncated: boolean } | null} previous Última consulta: zona pedida (con
+ *   margen), zona visible que la originó y si se truncó
+ * @param {MapBounds} viewport Zona visible ahora
+ */
+export const shouldRefetchViewport = (previous, viewport) => {
+  if (!previous) return true;
+  if (!boundsContain(previous.bounds, viewport)) return true;
+  // Se compara con la zona VISIBLE de la consulta anterior, no con la pedida (que lleva margen): si no, el mismo viewport
+  // parecería «más chico» y reconsultaría sin que nadie haya acercado nada.
+  const previousVisibleArea = boundsArea(previous.viewport ?? previous.bounds);
+  return Boolean(previous.truncated) && boundsArea(viewport) < previousVisibleArea * ZOOM_IN_REFETCH_RATIO;
+};
 
 /**
  * Ícono del marcador por categoría. Las claves son las de MARKER_ICON_MAP en CitizenMap.
@@ -126,25 +170,35 @@ export const mapRowToMarker = (row) => {
  * Nunca lanza: el mapa tiene que dibujarse igual aunque la consulta falle, porque es la
  * pantalla de inicio. Ante un error devuelve la lista vacía y el motivo.
  *
+ * REP-3805: con `bounds` trae solo los reportes de esa zona (por longitud y latitud). Pide un registro más que el límite
+ * para saber si la zona lo alcanzó y lo informa en `truncated`: nunca se corta en silencio. Mismas columnas, misma policy
+ * (`lectura_publica`) y mismas reglas de visibilidad que antes: no se expone nada nuevo.
+ *
  * @param {object} [options]
  * @param {number} [options.limit] Tope de reportes a traer
- * @returns {Promise<{ success: boolean, reports: Array, error?: string }>}
+ * @param {MapBounds} [options.bounds] Zona a consultar; sin ella se consulta todo el mapa (comportamiento anterior)
+ * @returns {Promise<{ success: boolean, reports: Array, truncated?: boolean, error?: string }>}
  */
-export const getPublicMapReports = async ({ limit = MAP_REPORTS_LIMIT } = {}) => {
+export const getPublicMapReports = async ({ limit = MAP_REPORTS_LIMIT, bounds = null } = {}) => {
   if (!isSupabaseConfigured) {
     return { success: false, reports: [], error: 'Supabase no está configurado.' };
   }
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('citizen_reports')
       .select(
         'id, description, latitud, longitud, current_state_code, created_at, services ( service_name ), localities ( name )'
-      )
-      .not('latitud', 'is', null)
-      .not('longitud', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      );
+    query = bounds
+      ? query
+          .gte('longitud', bounds.west)
+          .lte('longitud', bounds.east)
+          .gte('latitud', bounds.south)
+          .lte('latitud', bounds.north)
+      : query.not('latitud', 'is', null).not('longitud', 'is', null);
+    // Un registro de más: si llega, la zona superó el tope y hay reportes que no se dibujan (se avisa)
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(limit + 1);
 
     if (error) {
       return { success: false, reports: [], error: error.message };
@@ -152,11 +206,14 @@ export const getPublicMapReports = async ({ limit = MAP_REPORTS_LIMIT } = {}) =>
 
     // Una fila sin coordenadas utilizables no se puede dibujar: se descarta en vez de
     // mandar un NaN a MapLibre, que rompe el mapa entero.
-    const reports = (data ?? [])
+    const rows = data ?? [];
+    const truncated = rows.length > limit;
+    const reports = rows
+      .slice(0, limit)
       .map(mapRowToMarker)
       .filter(({ coordinates }) => Number.isFinite(coordinates[0]) && Number.isFinite(coordinates[1]));
 
-    return { success: true, reports };
+    return { success: true, reports, truncated };
   } catch (err) {
     return { success: false, reports: [], error: err?.message || 'Error inesperado al cargar el mapa.' };
   }
