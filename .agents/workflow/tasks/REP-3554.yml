@@ -1,0 +1,34 @@
+id: REP-3554
+external_ref: ''
+title: Consultar preguntas frecuentes (ruta /faq y acceso desde Perfil)
+type: feat
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - Implementar Consultar preguntas frecuentes (ruta /faq y acceso desde Perfil)
+acceptance_criteria:
+  - >-
+    Criterio de aceptación 1 para Consultar preguntas frecuentes (ruta /faq y
+    acceso desde Perfil)
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: true
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
