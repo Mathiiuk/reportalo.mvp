@@ -2,7 +2,7 @@
 
 Guía para validar a mano lo que se mergeó en `staging` (PR #133 a #146). Cada bloque dice **qué probar, cómo y qué tendría que pasar**. Marcá `[x]` lo que pasa y anotá lo que no.
 
-> **Importante:** el bloque de **verificación visual de fotos** (REP-3817, 3818 y 3820) **no se puede probar hasta que se aplique la migración, se despliegue la función y se carguen los secrets**. Está en la sección 9, con los pasos de despliegue y de prueba.
+> **Importante:** el bloque de **verificación visual de fotos** (REP-3817, 3818 y 3820) **no se puede probar hasta que se despliegue la función y se carguen los secrets** (la migración ya está aplicada). Está en la sección 9, con los pasos de despliegue y de prueba.
 
 ## 0. Preparación
 
@@ -136,12 +136,12 @@ No hay pantalla. Revisar el informe `docs/REP-3816_spike-contrato-multimodal.md`
 
 ## 9. Verificación visual de fotos (REP-3817, REP-3818 y REP-3820)
 
-### 9.1 Despliegue previo (a cargo tuyo, en este orden)
-1. Aplicar la migración `supabase/migrations/20261005163523_rep3817_…sql`. [ ]
-2. Correr `supabase/tests/REP-3817_verificacion.sql`: tiene que terminar con el mensaje **«REP-3817 OK»** (se revierte solo). [ ]
+### 9.1 Despliegue previo
+1. Migración de REP-3817: **ya aplicada en CiudadAR el 05/10/2026** (versiones `20261005163523` y `20261005163640`) y verificada. [x]
+2. Script `supabase/tests/REP-3817_verificacion.sql`: **ya corrido sobre lo aplicado, terminó en «OK»**. Se puede volver a correr cuando quieras (se revierte solo). [x]
 3. `deno check supabase/functions/analizar-imagen-reporte/index.ts` sin errores. [ ]
 4. `supabase functions deploy analizar-imagen-reporte` y secret **`VISUAL_DISPATCH_TOKEN`** en la función. [ ]
-5. En Vault: **`visual_dispatch_token`** (mismo valor) y **`visual_analizar_imagen_url`** (URL de la función). **Cargar la URL activa el despacho.** [ ]
+5. En Vault: **`visual_dispatch_token`** (mismo valor) y **`visual_analizar_imagen_url`** (URL de la función). **Cargar la URL activa el despacho** (hoy no hay ninguno de los dos: el despachador no hace nada). [ ]
 
 ### 9.2 Pruebas (REP-3817 + REP-3818)
 Crear un reporte con foto en una categoría que **no** sea Vulnerabilidad social y, en el SQL Editor, esperar ~1 a 2 minutos:
