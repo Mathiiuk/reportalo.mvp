@@ -101,10 +101,13 @@ Abrí `/mapa` con **DevTools → Network** y filtro `citizen_reports`.
 ## 5. REP-3554 · Preguntas frecuentes
 
 1. **Perfil** → fila **«Ayuda y preguntas frecuentes»** → abre `/faq`. [ ]
-2. Se ven 10 preguntas cerradas. Tocar una la abre y volver a tocarla la cierra; se pueden abrir varias. [ ]
+2. Se ven 10 preguntas en una sola tarjeta, con la primera abierta. Tocar otra la abre y cierra la anterior (una respuesta por vez); volver a tocarla la cierra. [ ]
 3. El botón de volver (flecha) lleva a **Perfil**. [ ]
-4. Teléfono y escritorio: se lee bien, sin cortes ni desbordes. [ ]
+4. Teléfono y escritorio, tema claro y oscuro: se lee bien, sin cortes ni desbordes. [ ]
 5. **Revisión de contenido (PO):** leer las 10 respuestas y confirmar que son correctas hoy. [ ]
+   - «¿Qué categorías de reporte hay?» muestra las cinco categorías como tarjetas con ícono. [ ]
+   - «¿Qué hago si es una emergencia?» ofrece llamar al 911, al 107 y al 100 (en el teléfono abren el marcador). [ ]
+   - Al pie, **Contactar** abre la app de correo con `info@reportalo.com.ar`. [ ]
 6. Sin sesión iniciada, `/faq` redirige al login (ruta protegida). [ ]
 
 ## 6. REP-3553 · Mis reportes
