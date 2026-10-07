@@ -38,7 +38,7 @@ Si algo se ve «viejo», forzar recarga (Ctrl+Shift+R): la app es una PWA y pued
 2. Esperado en **Console**: un error `[createCitizenReport] No se pudo crear el reporte:` con `clientSideId`, `message`, `code`, `status`. El ciudadano ve solo el mensaje genérico, nunca ese detalle. [ ]
 3. Si el reporte quedó en Pendientes: en IndexedDB → `draft_reports` → el borrador tiene `lastSyncError.technical`. [ ]
 
-> Pendiente de decisión: el **límite de frecuencia** (5 por hora) no existe en la base; no hay nada que probar sobre eso.
+> El **límite de frecuencia** (5 por hora) **no aplica en este ticket** (decisión del PM del 07/10/2026): no existe en la base y no hay nada que probar. La decisión de producto queda para una tarea aparte del próximo sprint.
 
 ---
 
