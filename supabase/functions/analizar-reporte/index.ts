@@ -561,6 +561,11 @@ Deno.serve(async (req: Request) => {
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+  // RAG-LATENCIA: buildAnalysisRow ya mapea result.latencyMs a latency_ms, pero nadie lo asignaba y
+  // la columna quedaba en NULL en todos los análisis. Mide desde acá hasta tener el resultado
+  // (embedding + recuperación + generación + validación), sin contar la persistencia.
+  const startedAt = Date.now();
+
   let payload: AnalyzeRequestPayload | null = null;
   let retrievedFragments: RetrievedFragment[] = [];
   let result: AnalysisResult;
@@ -720,6 +725,8 @@ Deno.serve(async (req: Request) => {
       embeddingModelCode: embeddingComputed ? EMBEDDING_MODEL_CODE : null,
     };
   }
+
+  result.latencyMs = Date.now() - startedAt;
 
   // Paso 10: persistir SIEMPRE (cualquier estado), y borrar el mensaje de la
   // cola solo si la escritura tuvo éxito. Si no hay reportId (p. ej. una
