@@ -1,0 +1,7 @@
+[
+  { "id": "D2-AVE-4", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venta de mercadería en la calle sin habilitación ni controles de higiene y seguridad", "exploratorio": true },
+  { "id": "D2-AVE-1", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venta ambulante", "exploratorio": true },
+  { "id": "D5-CABA-1", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venden en la calle", "exploratorio": true },
+  { "id": "D4-CABA-INFRA", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "INFRAESTRUCTURA", "descripcion": "Hay un bache grande en la calzada de mi calle", "exploratorio": true },
+  { "id": "D3-AVE-ALUMBRADO", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "INFRAESTRUCTURA", "descripcion": "No funciona el alumbrado público de la cuadra", "exploratorio": true }
+]
