@@ -14,7 +14,7 @@ En el `.env` de la raíz (ya ignorado por git) tienen que estar:
 |---|---|
 | `GEMINI_API_KEY` | vectorizar las frases de prueba |
 | `VITE_SUPABASE_URL` | proyecto al que se consulta: **tiene que ser staging** (el script imprime el host) |
-| `SUPABASE_SERVICE_ROLE_KEY` | el RPC está restringido a `service_role`; agregarla solo en tu máquina, nunca commitearla |
+| `SUPABASE_SERVICE_ROLE_KEY` | el RPC está restringido a `service_role`; agregarla solo en tu máquina, nunca commitearla. Se obtiene en Dashboard → Project Settings → API Keys (`service_role` legacy o una *secret key* `sb_secret_…`) |
 
 ## Correrlo
 ```bash

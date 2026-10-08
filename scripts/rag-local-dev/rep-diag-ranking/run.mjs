@@ -78,7 +78,14 @@ const embed = async (text) => {
 const rest = async (path, init = {}) => {
   const res = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
     ...init,
-    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+    headers: {
+      apikey: serviceKey,
+      // La clave legacy service_role es un JWT y va también como Bearer; las nuevas sb_secret_... no son JWT
+      // y solo van en apikey.
+      ...(serviceKey.startsWith('eyJ') ? { Authorization: `Bearer ${serviceKey}` } : {}),
+      'Content-Type': 'application/json',
+      ...(init.headers ?? {}),
+    },
   });
   if (!res.ok) throw new Error(`Supabase ${path.split('?')[0]} falló (${res.status}): ${(await res.text()).slice(0, 300)}`);
   return res.json();
