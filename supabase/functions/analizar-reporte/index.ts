@@ -83,7 +83,8 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // en 6 de 6 corridas (antes 4 de 6) y la cita la incluye en 6 de 6 (antes 3 de 6); los otros 8 casos
 // no cambian de estado; costo ≈ +100 tokens de entrada. Ver
 // docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.15.
-const PROMPT_VERSION = 'v3';
+// v4 (08/10/2026, RAG-ASISTENCIA-INFRA): el esquema de salida ya no deja elegir el estado "asistencia".
+const PROMPT_VERSION = 'v4';
 // P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
 // el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
 // mismo texto ("Auto mal estacionado" con/sin punto final) dando "fundamentado" una vez y
@@ -161,7 +162,10 @@ const LLM_OUTPUT_SCHEMA = {
   properties: {
     estado: {
       type: 'string',
-      enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance', 'asistencia'],
+      // RAG-ASISTENCIA-INFRA: sin 'asistencia'. Solo es válido para VULNERABILIDAD_SOCIAL, que se resuelve antes de
+      // llamar al modelo; si Gemini lo elegía para otra categoría (13 casos en staging) el validador lo rechazaba
+      // y el reporte terminaba "indeterminado". RAG_RESULT_STATUSES y el validador no cambian (defensa).
+      enum: ['fundamentado', 'indeterminado', 'sin_normativa', 'fuera_de_alcance'],
     },
     es_infraccion: { type: 'boolean' },
     categoria: { type: 'string', nullable: true },

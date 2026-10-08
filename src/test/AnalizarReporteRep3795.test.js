@@ -53,8 +53,8 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
     expect(source).toMatch(/temperature: GENERATION_TEMPERATURE,/);
   });
 
-  it('PROMPT_VERSION se incrementó a v3 (v2: precisión; v3: regla de excepciones)', () => {
-    expect(source).toMatch(/const PROMPT_VERSION = 'v3';/);
+  it('PROMPT_VERSION se incrementó a v4 (v2: precisión; v3: regla de excepciones; v4: sin "asistencia" en el esquema)', () => {
+    expect(source).toMatch(/const PROMPT_VERSION = 'v4';/);
   });
 
   it('la nueva regla de precisión está en las instrucciones', () => {
