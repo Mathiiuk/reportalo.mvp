@@ -1,0 +1,35 @@
+id: RAG-DIAG-GENERACION
+external_ref: ''
+title: Script de diagnostico de repetibilidad de la generacion del RAG
+type: chore
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - Script que congele el contexto de un caso y llame N veces a la generacion con los mismos bytes, para separar variacion de recuperacion de variacion del modelo
+acceptance_criteria:
+  - Prompt, esquema, modelo, temperatura y top-k/umbral se leen del fuente de analizar-reporte, sin copiarlos
+  - Informa sha256 del prompt, estados, conjuntos de citas distintos, validacion y tokens por corrida
+  - No escribe en la base y no imprime claves; los casos se rotulan exploratorios
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  # El proyecto no tiene el script `test:bdd` (la plantilla de agt lo da por hecho).
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
