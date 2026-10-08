@@ -155,7 +155,7 @@ Como hay una foto por llamada, **el costo por foto es real, no promediado**: `in
 
 > **Estado (2026-10-08):**
 > - Migración **aplicada en CiudadAR** (versión `20261008174835`, archivo `supabase/migrations/20261008174835_rep3822_registro_de_intentos_visuales.sql`): tablas `visual_call_log` y `visual_qa_cases` y función `log_visual_call(jsonb)`. Verificado: RLS activa, sin acceso para `anon`/`authenticated`, una fila de prueba guardada y revertida.
-> - Función **v2 desplegada por Mati el 2026-10-08T15:06:05-03:00 (18:06:05Z)** (`ezbr_sha256` `36e4eaf8c2c7be83c564918a6932258df442ace5393450db1020c82555eb31f4`). Código probado con 884 pruebas en verde. Secret `FUNCTION_COMMIT` no cargado: `deployment_id` queda en NULL salvo que se cargue. Humo pendiente.
+> - Función **v2 desplegada por Mati el 2026-10-08T15:06:05-03:00 (18:06:05Z)** (`ezbr_sha256` `36e4eaf8c2c7be83c564918a6932258df442ace5393450db1020c82555eb31f4`). Código probado con 884 pruebas en verde. Secret `FUNCTION_COMMIT` no cargado: `deployment_id` queda en NULL salvo que se cargue. Humo ejecutado y verificado (ver §5.4).
 > - Cambios respecto del borrador: se quitó la columna `pass` (las pasadas se distinguen por `started_at` y `queue_message_id`), y la escritura va por la función `log_visual_call` (la función solo escribe por RPC, regla de REP-3818) en vez de un INSERT directo.
 > - Para desplegar: `supabase functions deploy analizar-imagen-reporte` y, opcional, el secret `FUNCTION_COMMIT` con el commit desplegado (queda en `deployment_id`).
 >
@@ -257,6 +257,24 @@ where c.qa_batch_id = :'qa_batch_id'
 order by l.started_at;
 ```
 
+### 5.4 Resultado del humo (2026-10-08) **[EVIDENCIA]**
+
+| Campo | Valor |
+|---|---|
+| Reporte | `c8692db2-ceb8-4c9b-a19d-34cac7cf3110` (1 foto, `COMERCIO_IRREGULAR`, staging) |
+| Lote / caso | `REP-3822-SMOKE` / `smoke-01` (cargado a mano en `visual_qa_cases`, `expected` nulo) |
+| `call_id` / intento | `83a3d957-b942-44a6-82d9-0ba9ce083b07` / 1 |
+| Modelo pedido / devuelto | `gemini-3.8-flash` / `gemini-3.8-flash` |
+| Inicio / fin | `2026-10-08T15:10:02.519-03:00` / `2026-10-08T15:10:05.766-03:00` (UTC `18:10:02.519Z` / `18:10:05.766Z`) |
+| Duración | 3 247 ms (coincide con `latency_ms` de `report_image_analysis`) |
+| Tokens | entrada 1 586 (texto 486 + imagen 1 100), salida 97, total 1 683 |
+| `thinking_tokens` | NULL: con `thinkingLevel low` la API no informó `thoughtsTokenCount` |
+| Estado / resultado | `ok`, HTTP 200 / `coincide` |
+| Cruce con el resultado final | `report_image_analysis`: `completado`, `coincide`, mismos tokens y latencia |
+| `deployment_id` | NULL (no se cargó el secret `FUNCTION_COMMIT`) |
+
+Lo que demuestra: la foto se relaciona con su reporte, lote, intento, modelo, tokens, uso original, duración y resultado; el registro coincide con el análisis final. **No** probó todavía el registro de un intento fallido ni del fallback (cubierto solo por pruebas unitarias). Útil para el costo: la imagen pesa 1 100 tokens de 1 586 de entrada.
+
 ### 5.3 Export posible **hoy** (solo resultado final, sin intentos)
 
 Sirve para mostrar la línea base y las columnas que ya existen; **no** reemplaza el humo de §5.1.
@@ -328,16 +346,16 @@ Cautela: la clave Gemini es compartida con el RAG textual y con experimentos. Un
 Valores ya confirmados; lo marcado **[PENDIENTE]** requiere acción de Mati.
 
 ```text
-Estado: v1 desplegada (recorrido probado el 2026-10-05); registro de intentos v2 desplegada el 2026-10-08T15:06:05-03:00 (rama feat/REP-3822-registro-de-intentos-visuales, PR pendiente); humo pendiente
+Estado: v1 desplegada (recorrido probado el 2026-10-05); registro de intentos v2 desplegada el 2026-10-08T15:06:05-03:00 (rama feat/REP-3822-registro-de-intentos-visuales, PR pendiente); humo ejecutado el 2026-10-08
 URL staging: https://reportalo-staging.vercel.app/ · Backend: https://yryuhyiujyignkdhiyua.supabase.co (proyecto CiudadAR, única base de datos; no hay producción separada)
 Commit/deployment frontend: [PENDIENTE] (id de deploy de Vercel)
 Commit/deployment backend: analizar-imagen-reporte v1, commit del código dfcc834,
   ezbr_sha256 fa7e518f3a8d05bd2a49a0a1704442a9e46bb119c7c2b3a1d73c2c88d3950999
 Despliegue técnico (fecha, hora, zona): 2026-10-05T18:43:01-03:00 (2026-10-05T21:43:01Z)
 Primera prueba integrada exitosa (fecha, hora, zona): 2026-10-05T18:50:04-03:00 (2026-10-05T21:50:04Z)
-Reporte/llamada de humo: [PENDIENTE] — no existe una llamada marcada como smoke; se hará tras §4 (batch REP-3822-SMOKE)
+Reporte/llamada de humo: reporte c8692db2-ceb8-4c9b-a19d-34cac7cf3110 · call_id 83a3d957-b942-44a6-82d9-0ba9ce083b07 · lote REP-3822-SMOKE / smoke-01 (2026-10-08T15:10:02.519-03:00, staging, resultado coincide)
 Modelo solicitado y versión devuelta: gemini-3.8-flash (nombre fijo, no alias -latest);
-  versión devuelta por la API [PENDIENTE: hoy no se guarda modelVersion]
+  versión devuelta por la API: gemini-3.8-flash (igual al pedido, sin sufijo de revisión; medido en el humo)
 Prompt/configuración/thinking/límite salida: visual-v1 · thinkingLevel low · maxOutputTokens 1024 ·
   responseSchema JSON obligatorio · sin temperature · timeout 20 s · imagen sin redimensionar ni comprimir (base64 inline, tope 10 MB)
 Fotos por llamada y agregación de resultados: 1 foto por llamada; sin agregación por reporte (una tarjeta por foto); costo por foto real, no promediado
@@ -349,11 +367,11 @@ Funciones Vision actuales: FACE_DETECTION siempre; OBJECT_LOCALIZATION + TEXT_DE
 Identificador del lote QA: [PENDIENTE] REP-3822-QA-01 (propuesto) y REP-3822-SMOKE; acordar con Leo e Iván
 Dónde se registra y cómo se exporta: resultado final en report_image_analysis; cada intento en visual_call_log (tablas creadas el 2026-10-08, se llenan al desplegar la v2); lotes en visual_qa_cases; export SQL a CSV (§5.2)
 ¿Se conservan intentos fallidos?: v1 desplegada: NO. v2 (rama): SÍ, incluidos reintentos, fallback, timeouts y 503, con tokens null si no hubo respuesta
-¿Salida incluye thinking?: SÍ. output_tokens = candidatesTokenCount + thoughtsTokenCount; no sumar thinking de nuevo
+¿Salida incluye thinking?: SÍ (con thinkingLevel low el humo no informó thoughtsTokenCount: thinking_tokens queda NULL = no informado, equivale a 0 en output_tokens). output_tokens = candidatesTokenCount + thoughtsTokenCount; no sumar thinking de nuevo
 Campos pendientes: qa_batch_id, case_id, call_id, attempt, deployment_id, model_requested, model_returned (modelVersion),
   started_at/finished_at, thinking_tokens, raw_usage_metadata, error_code
 Inicio/fin del lote (a completar al ejecutar): ______ / ______
-Archivos/evidencias adjuntas: este documento; CSV de humo [PENDIENTE]; CSV del lote [PENDIENTE]
+Archivos/evidencias adjuntas: este documento; docs/export/REP-3822_humo_visual_call_log.csv; CSV del lote [PENDIENTE hasta correr el QA]
 Limitaciones y siguiente acción:
   - Sin identificación de lote ni de intentos no se puede atribuir costo con rigor → implementar §4 antes de la muestra principal.
   - Línea base de §6 mezcla pruebas y QA de sprint; no usarla como muestra.
@@ -374,7 +392,7 @@ Limitaciones y siguiente acción:
 - [x] Función v2 desplegada (2026-10-08T15:06:05-03:00).
 - [ ] Abrir y mergear el PR de la rama (el código desplegado ya es el de la rama).
 - [ ] Acordar `qa_batch_id` y casos con Iván y Leo (§7.2).
-- [ ] CSV de humo que demuestre recuperación de campos (§5.1–5.2).
+- [x] CSV de humo que demuestra recuperación de campos: `docs/export/REP-3822_humo_visual_call_log.csv` (§5.4).
 - [ ] Después del QA: CSV completo del lote y horarios de inicio y fin.
 
 ## 10. Próximos pasos
