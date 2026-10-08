@@ -1,0 +1,36 @@
+id: RAG-ASISTENCIA-INFRA
+external_ref: ''
+title: El LLM no debe poder elegir el estado asistencia
+type: fix
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - El esquema de salida estructurada de analizar-reporte no debe permitir que Gemini elija el estado asistencia
+acceptance_criteria:
+  - El enum de estado del responseSchema no incluye asistencia; el validador sigue rechazandolo fuera de VULNERABILIDAD_SOCIAL
+  - El corte de VULNERABILIDAD_SOCIAL sigue devolviendo asistencia sin llamar al modelo
+  - PROMPT_VERSION pasa a v4 para comparar antes y despues en report_ai_analysis
+  - Tras el despliegue, no aparecen analisis nuevos con el motivo 'estado asistencia no es valido'
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  # El proyecto no tiene el script `test:bdd` (la plantilla de agt lo da por hecho).
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
