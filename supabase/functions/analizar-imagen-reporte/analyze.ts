@@ -31,6 +31,8 @@ import {
   truncateReason,
   validateOutput,
   type AnalysisRow,
+  type CallLogEntry,
+  type CallLogStatus,
   type VisualOutput,
 } from './contract.ts';
 import type { GeminiResult } from './gemini.ts';
@@ -59,6 +61,10 @@ export interface AnalyzeDeps {
   deleteMessage(messageId: number): Promise<void>;
   sleep(ms: number): Promise<void>;
   geminiConfigured: boolean;
+  /** REP-3822: guarda un intento en visual_call_log. Opcional; si falla o lanza, el análisis sigue igual. */
+  logCall?(entry: CallLogEntry): Promise<void>;
+  /** Commit/versión de la función que corre (secret FUNCTION_COMMIT). */
+  deploymentId?: string | null;
 }
 
 export type AnalyzeResponse = { status: number; body: Record<string, unknown> };
@@ -181,24 +187,92 @@ export const analyzeImage = async (
 
     // Modelo principal (con un reintento) y, solo ante indisponibilidad, los respaldos validados en REP-3816
     const models = [PRIMARY_MODEL, ...FALLBACK_MODELS];
-    let answered: { model: string; result: GeminiResult } | null = null;
+    let answered: { model: string; result: GeminiResult; log: CallLogEntry } | null = null;
     let rejected: { model: string; result: GeminiResult } | null = null;
     let unavailableReason = 'sin respuesta';
+    let callNumber = 0;
+
+    /** Guarda un intento en visual_call_log. Nunca rompe el análisis: es observabilidad, no parte del resultado. */
+    const logCall = async (entry: CallLogEntry) => {
+      if (!deps.logCall) return;
+      try {
+        await deps.logCall(entry);
+      } catch (error) {
+        console.error('[analizar-imagen-reporte] No se pudo registrar el intento:', errorMessage(error));
+      }
+    };
+    /** Arma el registro de un intento a partir de lo que devolvió (o no) el proveedor. */
+    const buildLog = (args: {
+      model: string;
+      startedAt: Date;
+      result?: GeminiResult;
+      status: CallLogStatus;
+      errorCode?: string | null;
+      errorText?: string | null;
+    }): CallLogEntry => {
+      const finishedAt = new Date();
+      const usage = args.result?.data?.usageMetadata ?? null;
+      const hasUsage = usage !== null && typeof usage === 'object';
+      const candidates = hasUsage ? usage.candidatesTokenCount : undefined;
+      const thoughts = hasUsage ? usage.thoughtsTokenCount : undefined;
+      return {
+        call_id: globalThis.crypto.randomUUID(),
+        image_id: imageId,
+        report_id: image.report_id,
+        queue_message_id: messageId,
+        attempt: callNumber,
+        stage: 'visual',
+        deployment_id: deps.deploymentId ?? null,
+        prompt_version: PROMPT_VERSION,
+        model_requested: args.model,
+        model_returned: typeof args.result?.data?.modelVersion === 'string' ? args.result.data.modelVersion : null,
+        started_at: args.startedAt.toISOString(),
+        finished_at: finishedAt.toISOString(),
+        duration_ms: Math.max(0, finishedAt.getTime() - args.startedAt.getTime()),
+        http_status: args.result?.status ?? null,
+        status: args.status,
+        error_code: args.errorCode ?? null,
+        error_message: args.errorText ? truncateReason(redactApiKeys(args.errorText)) : null,
+        input_tokens: hasUsage ? (usage.promptTokenCount ?? null) : null,
+        // Misma definición que report_image_analysis.output_tokens: ya incluye el thinking
+        output_tokens: candidates === undefined && thoughts === undefined ? null : (candidates ?? 0) + (thoughts ?? 0),
+        thinking_tokens: thoughts ?? null,
+        raw_usage_metadata: hasUsage ? usage : null,
+        visual_result: null,
+      };
+    };
+
     search: for (let m = 0; m < models.length; m += 1) {
       const attempts = m === 0 ? 2 : 1;
       for (let attempt = 1; attempt <= attempts; attempt += 1) {
         let result: GeminiResult;
+        callNumber += 1;
+        const startedAt = new Date();
         try {
           result = await deps.callModel({ model: models[m], imageBase64, mimeType, prompt });
         } catch (error) {
           unavailableReason = `${models[m]}: ${errorMessage(error)}`;
+          const timedOut = error instanceof Error && error.name === 'AbortError';
+          await logCall(
+            buildLog({
+              model: models[m],
+              startedAt,
+              status: timedOut ? 'timeout' : 'network_error',
+              errorCode: timedOut ? 'TIMEOUT' : 'NETWORK_ERROR',
+              errorText: errorMessage(error),
+            })
+          );
           if (attempt < attempts) await deps.sleep(RETRY_BACKOFF_MS);
           continue;
         }
         if (result.ok) {
-          answered = { model: models[m], result };
+          // Su registro se guarda más abajo, cuando se sabe si la salida fue válida (antes de persistir el análisis)
+          answered = { model: models[m], result, log: buildLog({ model: models[m], startedAt, result, status: 'ok' }) };
           break search;
         }
+        await logCall(
+          buildLog({ model: models[m], startedAt, result, status: 'http_error', errorCode: `HTTP_${result.status}`, errorText: result.errorText })
+        );
         if (UNAVAILABLE_STATUSES.includes(result.status)) {
           unavailableReason = `${models[m]}: HTTP ${result.status}`;
           if (attempt < attempts) await deps.sleep(RETRY_BACKOFF_MS);
@@ -225,7 +299,16 @@ export const analyzeImage = async (
       );
     }
 
-    const { model, result } = answered as { model: string; result: GeminiResult };
+    const { model, result, log: answeredLog } = answered as { model: string; result: GeminiResult; log: CallLogEntry };
+    /** Cierra el registro del intento que respondió con el desenlace final. Va antes de persistir el análisis. */
+    const settle = (status: CallLogStatus, errorCode: string | null, errorText: string | null, visualResult: string | null = null) =>
+      logCall({
+        ...answeredLog,
+        status,
+        error_code: errorCode,
+        error_message: errorText ? truncateReason(redactApiKeys(errorText)) : null,
+        visual_result: visualResult,
+      });
     const usage = result.data?.usageMetadata ?? {};
     const outputTokens =
       usage.candidatesTokenCount === undefined && usage.thoughtsTokenCount === undefined
@@ -241,10 +324,14 @@ export const analyzeImage = async (
     };
 
     const blockReason = result.data?.promptFeedback?.blockReason;
-    if (blockReason) return await finish(emptyRow('fallido', `bloqueado_por_el_modelo (${blockReason})`, metadata));
+    if (blockReason) {
+      await settle('blocked', 'BLOCKED', `bloqueado_por_el_modelo (${blockReason})`);
+      return await finish(emptyRow('fallido', `bloqueado_por_el_modelo (${blockReason})`, metadata));
+    }
 
     const candidate = result.data?.candidates?.[0];
     if (candidate?.finishReason !== 'STOP') {
+      await settle('incomplete', 'FINISH_REASON', `finishReason: ${candidate?.finishReason ?? 'desconocido'}`);
       return await finish(emptyRow('fallido', `respuesta_incompleta (finishReason: ${candidate?.finishReason ?? 'desconocido'})`, metadata));
     }
 
@@ -252,17 +339,24 @@ export const analyzeImage = async (
     try {
       parsed = JSON.parse((candidate.content?.parts ?? []).map((part: { text?: string }) => part.text ?? '').join(''));
     } catch {
+      await settle('invalid_output', 'NOT_JSON', 'respuesta_no_json');
       return await finish(emptyRow('fallido', 'respuesta_no_json', metadata));
     }
 
     const validation = validateOutput(parsed);
-    if (!validation.valid) return await finish(emptyRow('fallido', `validacion: ${validation.reason}`, metadata));
+    if (!validation.valid) {
+      await settle('invalid_output', 'VALIDATION', `validacion: ${validation.reason}`);
+      return await finish(emptyRow('fallido', `validacion: ${validation.reason}`, metadata));
+    }
     const output = parsed as VisualOutput;
 
     // Segunda defensa contra datos personales: si el resumen los trae, no se guarda
     if (containsPersonalData(output.scene_summary)) {
+      await settle('invalid_output', 'PERSONAL_DATA', 'resumen_con_datos_personales');
       return await finish(emptyRow('fallido', 'resumen_con_datos_personales', metadata));
     }
+
+    await settle('ok', null, null, output.coherence);
 
     const suggestedServiceId = output.suggested_service_code === NO_SERVICE ? null : await deps.resolveServiceId(output.suggested_service_code);
 

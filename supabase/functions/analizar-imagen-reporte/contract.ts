@@ -169,6 +169,34 @@ export type AnalysisRow = {
   status_reason: string | null;
 };
 
+export type CallLogStatus = 'ok' | 'http_error' | 'network_error' | 'timeout' | 'blocked' | 'incomplete' | 'invalid_output';
+
+/** Un intento contra el proveedor (REP-3822): una fila de visual_call_log. Los tokens en null significan «desconocido». */
+export type CallLogEntry = {
+  call_id: string;
+  image_id: string;
+  report_id: string;
+  queue_message_id: number | null;
+  attempt: number;
+  stage: 'visual';
+  deployment_id: string | null;
+  prompt_version: string;
+  model_requested: string;
+  model_returned: string | null;
+  started_at: string;
+  finished_at: string;
+  duration_ms: number;
+  http_status: number | null;
+  status: CallLogStatus;
+  error_code: string | null;
+  error_message: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  thinking_tokens: number | null;
+  raw_usage_metadata: Record<string, unknown> | null;
+  visual_result: string | null;
+};
+
 /** Tope del motivo guardado: alcanza para diagnosticar sin inflar la fila ni arrastrar texto largo del modelo. */
 const MAX_REASON_CHARS = 300;
 export const truncateReason = (text: string): string => (text.length > MAX_REASON_CHARS ? `${text.slice(0, MAX_REASON_CHARS)}…` : text);
