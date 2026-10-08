@@ -1,0 +1,11 @@
+[
+  { "id": "D2-AVE-1", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venta ambulante", "esperado": null, "exploratorio": true },
+  { "id": "D2-AVE-2", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "puestos sin habilitación", "esperado": null, "exploratorio": true },
+  { "id": "D2-AVE-3", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "sin permiso municipal", "esperado": null, "exploratorio": true },
+  { "id": "D2-AVE-4", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venta de mercadería en la calle sin habilitación ni controles de higiene y seguridad", "esperado": null, "exploratorio": true },
+  { "id": "D5-CABA-1", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "venden en la calle", "esperado": "4.1.2", "exploratorio": true },
+  { "id": "D5-CABA-2", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "COMERCIO_IRREGULAR", "descripcion": "Venta ambulante en la vereda", "esperado": "4.1.2", "exploratorio": true },
+  { "id": "D4-CABA-INFRA", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "INFRAESTRUCTURA", "descripcion": "Hay un bache grande en la calzada de mi calle", "esperado": null, "exploratorio": true },
+  { "id": "D4-CABA-TRANSITO", "zona": "CABA", "localidad": "Palermo", "provincia": "Ciudad Autónoma de Buenos Aires", "categoria": "TRANSITO", "descripcion": "Hay un bache grande en la calzada de mi calle", "esperado": null, "exploratorio": true },
+  { "id": "D3-AVE-ALUMBRADO", "zona": "Avellaneda", "localidad": "Avellaneda", "provincia": "Buenos Aires", "categoria": "INFRAESTRUCTURA", "descripcion": "No funciona el alumbrado público de la cuadra", "esperado": null, "exploratorio": true }
+]

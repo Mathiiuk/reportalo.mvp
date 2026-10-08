@@ -1,0 +1,36 @@
+id: RAG-DIAG-RANKING
+external_ref: ''
+title: Script de diagnostico del ranking de recuperacion del RAG
+type: chore
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - Script de solo lectura que muestre el ranking completo de recuperacion (incluido lo que queda bajo el umbral) para casos D2-D5
+acceptance_criteria:
+  - Lee top-k y umbral del fuente de analizar-reporte, sin copiarlos
+  - Marca por candidato si supera el umbral, si entra en el top-k y si llega al modelo
+  - No genera texto con el modelo, no escribe en la base y no imprime claves
+  - Los casos se rotulan exploratorios hasta contar con los reportes originales
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  # El proyecto no tiene el script `test:bdd` (la plantilla de agt lo da por hecho).
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
