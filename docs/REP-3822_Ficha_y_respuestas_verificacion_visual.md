@@ -155,7 +155,7 @@ Como hay una foto por llamada, **el costo por foto es real, no promediado**: `in
 
 > **Estado (2026-10-08):**
 > - Migración **aplicada en CiudadAR** (versión `20261008174835`, archivo `supabase/migrations/20261008174835_rep3822_registro_de_intentos_visuales.sql`): tablas `visual_call_log` y `visual_qa_cases` y función `log_visual_call(jsonb)`. Verificado: RLS activa, sin acceso para `anon`/`authenticated`, una fila de prueba guardada y revertida.
-> - Código de la función **escrito y probado (884 pruebas en verde) pero NO desplegado**: sigue corriendo la v1 sin registro de intentos. Mientras no se despliegue la v2, `visual_call_log` queda vacía.
+> - Función **v2 desplegada por Mati el 2026-10-08T15:06:05-03:00 (18:06:05Z)** (`ezbr_sha256` `36e4eaf8c2c7be83c564918a6932258df442ace5393450db1020c82555eb31f4`). Código probado con 884 pruebas en verde. Secret `FUNCTION_COMMIT` no cargado: `deployment_id` queda en NULL salvo que se cargue. Humo pendiente.
 > - Cambios respecto del borrador: se quitó la columna `pass` (las pasadas se distinguen por `started_at` y `queue_message_id`), y la escritura va por la función `log_visual_call` (la función solo escribe por RPC, regla de REP-3818) en vez de un INSERT directo.
 > - Para desplegar: `supabase functions deploy analizar-imagen-reporte` y, opcional, el secret `FUNCTION_COMMIT` con el commit desplegado (queda en `deployment_id`).
 >
@@ -328,7 +328,7 @@ Cautela: la clave Gemini es compartida con el RAG textual y con experimentos. Un
 Valores ya confirmados; lo marcado **[PENDIENTE]** requiere acción de Mati.
 
 ```text
-Estado: v1 desplegada (recorrido probado el 2026-10-05); registro de intentos v2 implementado en rama, tablas creadas, función NO desplegada todavía
+Estado: v1 desplegada (recorrido probado el 2026-10-05); registro de intentos v2 desplegada el 2026-10-08T15:06:05-03:00 (rama feat/REP-3822-registro-de-intentos-visuales, PR pendiente); humo pendiente
 URL staging: https://reportalo-staging.vercel.app/ · Backend: https://yryuhyiujyignkdhiyua.supabase.co (proyecto CiudadAR, única base de datos; no hay producción separada)
 Commit/deployment frontend: [PENDIENTE] (id de deploy de Vercel)
 Commit/deployment backend: analizar-imagen-reporte v1, commit del código dfcc834,
@@ -371,7 +371,8 @@ Limitaciones y siguiente acción:
 - [x] URL de staging (https://reportalo-staging.vercel.app/) y base única CiudadAR.
 - [ ] Deploy del frontend (id de Vercel) — Mati.
 - [x] Tablas `visual_call_log` y `visual_qa_cases` creadas y verificadas (§4).
-- [ ] Mergear la rama y **desplegar la v2** de `analizar-imagen-reporte` (§4); recién ahí se llenan los intentos.
+- [x] Función v2 desplegada (2026-10-08T15:06:05-03:00).
+- [ ] Abrir y mergear el PR de la rama (el código desplegado ya es el de la rama).
 - [ ] Acordar `qa_batch_id` y casos con Iván y Leo (§7.2).
 - [ ] CSV de humo que demuestre recuperación de campos (§5.1–5.2).
 - [ ] Después del QA: CSV completo del lote y horarios de inicio y fin.
