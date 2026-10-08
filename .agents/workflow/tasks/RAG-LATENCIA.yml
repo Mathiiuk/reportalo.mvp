@@ -1,0 +1,35 @@
+id: RAG-LATENCIA
+external_ref: ''
+title: Guardar latency_ms en analizar-reporte
+type: fix
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules: []
+  environments:
+    - local
+requirements:
+  - La Edge Function analizar-reporte debe medir su duración y asignarla a result.latencyMs antes de persistir
+acceptance_criteria:
+  - report_ai_analysis.latency_ms deja de quedar NULL en los análisis nuevos (hoy 0 de 365 lo tienen)
+  - La medición cubre embedding, recuperación, generación y validación, sin contar la persistencia
+  - No cambia ningún estado, citas ni parámetros del RAG; no requiere migración (persist_rag_analysis ya inserta latency_ms)
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  # El proyecto no tiene el script `test:bdd` (la plantilla de agt lo da por hecho); no se inventa uno acá.
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd
