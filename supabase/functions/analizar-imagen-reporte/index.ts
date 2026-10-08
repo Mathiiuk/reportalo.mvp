@@ -15,6 +15,7 @@
  * Secrets de la función (nunca en el repositorio):
  *   - VISUAL_DISPATCH_TOKEN : mismo valor que el secret visual_dispatch_token de Vault.
  *   - GEMINI_API_KEY        : ya configurada para analizar-reporte.
+ *   - FUNCTION_COMMIT       : (opcional, REP-3822) commit que se despliega; queda en visual_call_log.deployment_id.
  *   - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY : los inyecta Supabase.
  */
 
@@ -127,6 +128,13 @@ Deno.serve(async (req: Request) => {
     },
 
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+
+    // REP-3822: un registro por intento contra Gemini. No lanza: el análisis no depende de este registro
+    deploymentId: Deno.env.get('FUNCTION_COMMIT') ?? null,
+    logCall: async (entry) => {
+      const { error } = await admin.rpc('log_visual_call', { p_entry: entry });
+      if (error) console.error('[analizar-imagen-reporte] No se pudo registrar el intento:', redactApiKeys(error.message));
+    },
   };
 
   const { status, body } = await analyzeImage(deps, payload);
