@@ -168,6 +168,18 @@ export const readFunctionFailure = async (error) => {
 };
 
 /**
+ * REP-3827 · Resultado de una tanda cortada porque ya no hace falta (el reporte pasó a la cola o se cerró la
+ * pantalla). No es un fallo del servicio ni de la foto, y quien lo recibe no lo muestra: lo ignora.
+ */
+const abortedResult = () => ({
+  success: false,
+  aborted: true,
+  reason: 'aborted',
+  error: 'El procesamiento se canceló porque el reporte pasó a la cola de pendientes.',
+  failSafeTriggered: true,
+});
+
+/**
  * REP-3793 · Texto para el ciudadano según el motivo del fail-safe. Nunca muestra el detalle
  * técnico. `photoTips` indica si tiene sentido sugerir otra foto (luz, enfoque) o si el
  * problema es del servicio y alcanza con reintentar.
@@ -221,12 +233,49 @@ const getSessionUserId = async () => {
 };
 
 /**
+ * REP-3827 · Esperas (ms) entre los reintentos de la subida a cuarentena: 1 intento + 2 reintentos.
+ * Bajo test no se espera, para no alargar la suite.
+ */
+export const UPLOAD_RETRY_DELAYS_MS = [800, 2000];
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Código HTTP de un error de Storage (supabase-js lo trae en `status`; `statusCode` es un texto), o null si no hay. */
+const uploadErrorStatus = (error) => {
+  const status = Number(error?.status ?? error?.statusCode);
+  return Number.isFinite(status) && status > 0 ? status : null;
+};
+
+/**
+ * REP-3827 · ¿Vale la pena reintentar la subida? Sí ante lo que es transitorio por definición: errores 5xx
+ * (el 520 de Cloudflare es uno), 408, 429 y los cortes de red (sin código HTTP). No ante un 4xx (sin sesión,
+ * política de Storage, archivo inválido): repetirlo no lo arregla.
+ */
+export const isTransientUploadError = (error) => {
+  const status = uploadErrorStatus(error);
+  if (status === null) return true;
+  return status >= 500 || status === 408 || status === 429;
+};
+
+/**
  * Sube una fotografía transitoria al bucket privado de cuarentena.
+ *
+ * REP-3827: ante un error transitorio (ver isTransientUploadError) reintenta hasta 2 veces con una espera
+ * corta, con el MISMO nombre de archivo. Si el primer intento sí llegó a guardarse y solo se perdió la
+ * respuesta, el reintento recibe un 409 («ya existe») y se lo da por bueno: el nombre es único por
+ * reporte y marca de tiempo, y la subida es sin upsert.
+ *
  * @param {Blob|File} file Archivo fotográfico original
  * @param {string} clientSideId Identificador de correlación del reporte
+ * @param {{ retryDelaysMs?: number[], sleepFn?: (ms: number) => Promise<void>, shouldAbort?: () => boolean }} [options]
  * @returns {Promise<{ success: boolean, quarantinePath?: string, error?: string }>}
  */
-export const uploadToQuarantine = async (file, clientSideId) => {
+export const uploadToQuarantine = async (file, clientSideId, options = {}) => {
+  const {
+    retryDelaysMs = isTestRunner() ? [0, 0] : UPLOAD_RETRY_DELAYS_MS,
+    sleepFn = sleep,
+    shouldAbort = () => false,
+  } = options;
   if (!file) {
     return { success: false, error: 'No se suministró ningún archivo para procesar.' };
   }
@@ -247,37 +296,58 @@ export const uploadToQuarantine = async (file, clientSideId) => {
     }
     if (userId) quarantinePath = `${userId}/${fileName}`;
 
-    try {
-      // R5-02 (REP-2908-VERIF ronda 5): sin upsert. quarantinePath ya es
-      // único por clientSideId + timestamp, nunca debería colisionar, y la
-      // política de Storage de cuarentena (migración r5_02) solo permite
-      // INSERT con sesión — con upsert:true hubiera hecho falta también UPDATE.
-      const { data, error } = await supabase.storage
-        .from(BUCKET_QUARANTINE)
-        .upload(quarantinePath, file, {
-          contentType: file.type || 'image/jpeg',
-        });
+    const maxAttempts = retryDelaysMs.length + 1;
+    let lastError = null; // { error } del servicio, o { thrown } si la llamada lanzó
 
-      if (error) {
-        // En desarrollo interactivo en navegador (DEV fuera de test runners), si falla la política RLS
-        // o el bucket remoto no está listo, recurrimos al emulador para no bloquear al desarrollador.
-        const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
-        if (!isTesting && import.meta.env?.DEV) {
-          console.warn(`[Quarantine Pipeline] Advertencia RLS/Storage en DEV (${error.message}). Activando emulador de seguridad local.`);
-          return { success: true, quarantinePath, isFallback: true };
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        // R5-02 (REP-2908-VERIF ronda 5): sin upsert. quarantinePath ya es
+        // único por clientSideId + timestamp, nunca debería colisionar, y la
+        // política de Storage de cuarentena (migración r5_02) solo permite
+        // INSERT con sesión — con upsert:true hubiera hecho falta también UPDATE.
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.storage
+          .from(BUCKET_QUARANTINE)
+          .upload(quarantinePath, file, {
+            contentType: file.type || 'image/jpeg',
+          });
+
+        if (!error) {
+          return { success: true, quarantinePath: data?.path || quarantinePath };
         }
-        return { success: false, error: `Fallo al subir a cuarentena: ${error.message}` };
+        // REP-3827: en un reintento, «ya existe» significa que el intento anterior sí se guardó
+        if (attempt > 1 && uploadErrorStatus(error) === 409) {
+          return { success: true, quarantinePath };
+        }
+        lastError = { error };
+        if (!isTransientUploadError(error)) break;
+      } catch (err) {
+        // Una excepción de red (sin respuesta HTTP) es transitoria
+        lastError = { thrown: err };
       }
 
-      return { success: true, quarantinePath: data?.path || quarantinePath };
-    } catch (err) {
-      const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+      if (attempt === maxAttempts || shouldAbort()) break;
+      // Sin datos de la foto ni del usuario en el log: solo el intento y el código HTTP
+      console.warn(`[Quarantine Pipeline] La subida a cuarentena falló (intento ${attempt} de ${maxAttempts}, HTTP ${uploadErrorStatus(lastError.error) ?? 'sin respuesta'}). Se reintenta.`);
+      // eslint-disable-next-line no-await-in-loop
+      await sleepFn(retryDelaysMs[attempt - 1]);
+    }
+
+    const isTesting = Boolean(import.meta.env?.VITEST || import.meta.env?.MODE === 'test');
+    if (lastError?.error) {
+      // En desarrollo interactivo en navegador (DEV fuera de test runners), si falla la política RLS
+      // o el bucket remoto no está listo, recurrimos al emulador para no bloquear al desarrollador.
       if (!isTesting && import.meta.env?.DEV) {
-        console.warn('[Quarantine Pipeline] Error de red en cuarentena en DEV. Activando emulador local.');
+        console.warn(`[Quarantine Pipeline] Advertencia RLS/Storage en DEV (${lastError.error.message}). Activando emulador de seguridad local.`);
         return { success: true, quarantinePath, isFallback: true };
       }
-      return { success: false, error: err.message || 'Error inesperado al subir a cuarentena.' };
+      return { success: false, error: `Fallo al subir a cuarentena: ${lastError.error.message}` };
     }
+    if (!isTesting && import.meta.env?.DEV) {
+      console.warn('[Quarantine Pipeline] Error de red en cuarentena en DEV. Activando emulador local.');
+      return { success: true, quarantinePath, isFallback: true };
+    }
+    return { success: false, error: lastError?.thrown?.message || 'Error inesperado al subir a cuarentena.' };
   }
 
   // Modo desarrollo local o pruebas sin mock de red: simulamos la subida a cuarentena
@@ -296,6 +366,9 @@ export const processEvidenceThroughQuarantine = async ({
   file,
   clientSideId,
   simulateError = false,
+  // REP-3827 · La pantalla de procesamiento se rindió (pasó a la cola) o se cerró: no hay que seguir
+  // gastando subida, Vision y almacenamiento en una tanda cuyo resultado se va a descartar.
+  shouldAbort = () => false,
   // H-30 · Costura de prueba. Por defecto sale del entorno, pero Vite reemplaza
   // `import.meta.env.DEV` por un literal al compilar, así que no hay forma de
   // simular un build de producción mutando el entorno en un test. Este parámetro
@@ -340,8 +413,11 @@ export const processEvidenceThroughQuarantine = async ({
     throw error;
   }
 
+  // REP-3827: si ya se abandonó esta tanda, ni siquiera se sube
+  if (shouldAbort()) return abortedResult();
+
   // 1. Paso 1: Subida transitoria al bucket privado de cuarentena
-  const uploadResult = await uploadToQuarantine(uprightFile, clientSideId);
+  const uploadResult = await uploadToQuarantine(uprightFile, clientSideId, { shouldAbort });
 
   if (!uploadResult.success) {
     return {
@@ -353,6 +429,15 @@ export const processEvidenceThroughQuarantine = async ({
   }
 
   const { quarantinePath, isFallback } = uploadResult;
+
+  // REP-3827: abandonada durante la subida. La original ya está en cuarentena: se purga y no se
+  // invoca la función, así no se guarda una copia protegida que ningún reporte va a usar.
+  if (shouldAbort()) {
+    if (shouldInvokeSupabaseBackend() && !isFallback) {
+      await supabase.storage.from(BUCKET_QUARANTINE).remove([quarantinePath]).catch(() => {});
+    }
+    return abortedResult();
+  }
 
   // 2. Si se solicitó simulación de error para probar el comportamiento fail-safe
   if (simulateError) {
@@ -504,6 +589,8 @@ export const processAllEvidencesThroughQuarantine = async ({
   clientSideId = null,
   simulateError = false,
   onProgress = null,
+  // REP-3827: se consulta antes de cada foto y dentro de cada una (ver processEvidenceThroughQuarantine)
+  shouldAbort = () => false,
 }) => {
   // Si no hay evidencias, retornamos éxito inmediatamente con lista vacía
   if (!evidenceList || evidenceList.length === 0) {
@@ -524,6 +611,9 @@ export const processAllEvidencesThroughQuarantine = async ({
   try {
     // Iteramos secuencialmente sobre cada fotografía
     for (let index = 0; index < evidenceList.length; index++) {
+      // REP-3827: tanda abandonada (el reporte pasó a la cola) o pantalla cerrada: se corta acá
+      if (shouldAbort()) return abortedResult();
+
       // Obtenemos el elemento de evidencia actual
       const evidence = evidenceList[index];
 
@@ -548,7 +638,11 @@ export const processAllEvidencesThroughQuarantine = async ({
         file: fileToProcess,
         clientSideId: activeReportId,
         simulateError,
+        shouldAbort,
       });
+
+      // REP-3827: se abandonó mientras se procesaba esta foto; no es un fallo de protección
+      if (result.aborted) return result;
 
       // Si falla el procesamiento de alguna foto, abortamos bajo principio fail-safe
       if (!result.success) {

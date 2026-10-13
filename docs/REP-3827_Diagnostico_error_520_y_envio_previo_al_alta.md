@@ -3,7 +3,7 @@
 **Fecha:** 13/10/2026 · **Responsable:** Matías · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
 **Script reproducible (solo lectura):** [`scripts/rep3827/huerfanas_report_evidences.sql`](../scripts/rep3827/huerfanas_report_evidences.sql)
 
-> **Estado:** diagnóstico parcial. **El error 520 en sí NO está reproducido ni su causa confirmada.** En cambio, al revisar el tramo previo al alta aparecieron tres hallazgos **confirmados con datos de la base y con el código**, que explican el comportamiento que Hernán vio en D8 y dejan basura en el bucket. Las correcciones están **propuestas, no aplicadas**: necesito tu decisión (sección 6).
+> **Estado:** diagnóstico parcial. **El error 520 en sí NO está reproducido ni su causa confirmada.** En cambio, al revisar el tramo previo al alta aparecieron hallazgos **confirmados con datos de la base y con el código**, que explican el comportamiento que Hernán vio en D8 y dejan basura en el bucket. **Se aplicaron las correcciones A y B** (sección 6); C, D y E quedan como propuestas para otro ticket.
 
 ---
 
@@ -120,13 +120,29 @@ El ticket dice aplicar una corrección acotada **solo si la causa está confirma
 
 | # | Cambio | Qué resuelve | Riesgo / costo |
 |---|---|---|---|
-| A | **Cancelar la tanda abandonada** cuando la pantalla se rinde: que el procesamiento se detenga después de la foto en curso | Elimina la mayor parte de las fotos huérfanas (quedaría, como máximo, la foto que estaba en vuelo) y el trabajo duplicado | Bajo: es un indicador de cancelación que se revisa entre foto y foto. No cambia la experiencia |
+| A | **Cancelar la tanda abandonada** cuando la pantalla se rinde o se cierra: la tanda deja de procesar fotos | Evita procesar, anonimizar y guardar las fotos que **faltaban** cuando se abandonó. **No elimina** las copias de las fotos que ya se habían terminado (en D8, 3 de 4 más la que estaba en vuelo): esas siguen sin reporte, y la cola las vuelve a procesar | Bajo: es un indicador de cancelación que se revisa entre foto y foto. No cambia la experiencia |
 | B | **Reintento acotado de la subida** a cuarentena ante errores transitorios (5xx como 520, caída de red), 2 reintentos con espera corta | Soluciona D7 **como síntoma** aunque no se conozca la causa del 520. Los 5xx y los cortes son transitorios por definición | Medio: agrega hasta unos segundos de espera en el peor caso. **El ticket pide la causa confirmada antes de corregir**, por eso lo dejo a tu decisión |
 | C | **Temporizador proporcional** a la cantidad de fotos (por ejemplo, base + ~15 s por foto) en lugar de 45 s fijos | Con una buena señal y 4 fotos, el ciudadano ve «Reporte enviado» en vez de caer en la cola | Es una decisión de producto: el temporizador existe para la señal débil; moverlo cambia cuánto espera alguien con mala conexión antes de poder irse |
 | D | **Limpieza de huérfanas** (por ejemplo, borrar las copias protegidas sin reporte con más de 24 h) | Evita que las fotos sin reporte se acumulen | Es **borrar datos**: requiere decisión explícita, criterio de antigüedad y respaldo previo. No lo haría sin tu OK |
 | E | **Aviso al ciudadano** en la pantalla de «Reporte guardado» cuando entra a la cola por demora con buena señal | Evita la confusión «no confirmó» | Cambio de texto/UX; se coordina con UX |
 
 Con **A + B** se cubre el ticket con el menor riesgo. C, D y E son decisiones de producto o de datos.
+
+### 6.1 Qué se aplicó (A y B)
+
+**Archivos:** `src/services/quarantinePipelineService.js`, `src/components/report/ReportProcessingScreen.jsx` y la prueba nueva `src/test/Rep3827TandaAbandonadaYReintentoDeSubida.test.jsx` (17 tests).
+
+| Cambio | Detalle |
+|---|---|
+| **B · reintento de la subida** | `uploadToQuarantine` hace hasta **3 intentos** (1 + 2 reintentos, esperas de 0,8 s y 2 s), con el **mismo nombre** de archivo. Reintenta ante 5xx (incluido el 520), 408, 429 y cortes de red; **no** reintenta un 4xx. Si en un reintento recibe un 409 («ya existe»), lo da por bueno: significa que el intento anterior sí guardó la foto y solo se perdió la respuesta. El log del reintento solo dice el número de intento y el código HTTP |
+| **A · cancelar la tanda** | `processAllEvidencesThroughQuarantine` y `processEvidenceThroughQuarantine` aceptan `shouldAbort`. Se consulta antes de cada foto, antes de subirla, entre reintentos y **después de subirla**: si la tanda se abandonó en ese punto, se purga la original de cuarentena y no se invoca la anonimización. El corte devuelve `aborted: true`, que no se muestra como fallo de protección |
+| **A · la pantalla** | `ReportProcessingScreen` pasa un `shouldAbort` propio de cada ejecución, que se activa cuando vence la espera (el reporte pasa a la cola) y cuando la pantalla se cierra o se reinicia el procesamiento. Es local a cada ejecución a propósito: un reintento manual reinicia el indicador compartido pero no debe reactivar una tanda vieja que sigue en vuelo |
+
+**Verificación:** la suite completa pasa (927 de 927; la rama de staging tenía 910) y el build compila. La prueba nueva **falla 12 de 17 tests sin el cambio y pasa con él**.
+
+**Lo que NO verifiqué:** no probé el recorrido en un dispositivo ni contra un 520 real (nadie pudo reproducirlo); los tests simulan los errores. Tampoco medí si el reintento resuelve el caso de Hernán: eso solo se sabe repitiendo la tanda en staging.
+
+**Lo que sigue sin resolverse:** la cola (`PendingSyncManager`) sigue **volviendo a procesar todas las fotos** desde cero y recién reintenta a los 60 s. Las fotos terminadas antes del abandono siguen quedando sin reporte (D). Reutilizar lo ya procesado es un cambio más grande que no hice.
 
 ---
 
