@@ -93,3 +93,37 @@ select count(*) as mensajes_en_cola,
        round(max(extract(epoch from now() - enqueued_at))::numeric, 1) as mensaje_mas_viejo_s,
        max(read_ct) as lecturas_max
 from pgmq.q_visual_analysis_queue;
+
+-- 5) Tabla del lote de QA (REP-3828-QA-01): una fila por caso, con todo lo que pide el criterio de aceptación --------
+--    Requiere haber registrado el lote con scripts/rep3828/registrar_lote_qa.sql.
+select q.case_id,
+       left(r.id::text, 8)                                                              as reporte,
+       (select count(*) from report_images i where i.report_id = r.id)                  as fotos,
+       to_char(min(ri.created_at) at time zone 'UTC', 'HH24:MI:SS')                     as evidencia_persistida_utc,
+       to_char(min(fc.primer_intento) at time zone 'UTC', 'HH24:MI:SS')                 as primer_intento_utc,
+       to_char(max(ia.created_at) at time zone 'UTC', 'HH24:MI:SS')                     as ultimo_resultado_utc,
+       round(extract(epoch from (min(fc.primer_intento) - max(ri.created_at)))::numeric, 1) as espera_cola_s,
+       round(extract(epoch from (max(ia.created_at) - min(fc.primer_intento)))::numeric, 1) as ejecucion_s,
+       round(extract(epoch from (max(ia.created_at) - min(ri.created_at)))::numeric, 1)     as total_s,
+       sum(fc.intentos)                                                                 as intentos,
+       sum(fc.intentos_fallidos)                                                        as fallidos,
+       sum(fc.tokens_in)                                                                as tokens_entrada,
+       sum(fc.tokens_out)                                                               as tokens_salida,
+       string_agg(distinct fc.modelos, ',')                                             as modelos,
+       q.expected                                                                       as esperado,
+       string_agg(distinct ia.coherence, ',')                                           as resultado_visual,
+       string_agg(distinct ia.status, ',')                                              as estado_analisis
+from visual_qa_cases q
+join citizen_reports r on r.id = q.report_id
+join report_images ri on ri.report_id = r.id
+left join report_image_analysis ia on ia.image_id = ri.id
+left join (
+  select image_id, min(started_at) as primer_intento, count(*) as intentos,
+         count(*) filter (where status <> 'ok') as intentos_fallidos,
+         sum(input_tokens) as tokens_in, sum(output_tokens) as tokens_out,
+         string_agg(distinct coalesce(model_returned, model_requested), ',') as modelos
+  from visual_call_log where stage = 'visual' group by 1
+) fc on fc.image_id = ri.id
+where q.qa_batch_id = 'REP-3828-QA-01'
+group by q.case_id, r.id, q.expected
+order by q.case_id;
