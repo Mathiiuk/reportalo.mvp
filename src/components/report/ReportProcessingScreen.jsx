@@ -426,7 +426,7 @@ export const ReportProcessingScreen = ({
                   Reintentar protección
                 </button>
                 {/* Si la falla fue de señal, el ciudadano puede dejarlo en la cola y seguir */}
-                {onSaveForLater && (
+                {onSaveForLater && failureDescription.retryLater !== false && (
                   <button
                     type="button"
                     onClick={onSaveForLater}

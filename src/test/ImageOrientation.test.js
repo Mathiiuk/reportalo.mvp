@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { normalizeImageOrientation, readExifOrientation, ensureJpeg } from '../services/metadataSanitizer';
+import { normalizeImageOrientation, readExifOrientation, ensureJpeg, isJpegByBytes } from '../services/metadataSanitizer';
 
 /** JPEG minimo con un APP1/EXIF que declara Orientation = 6 (rotar 90 grados). */
 const buildJpegWithOrientation = (orientation) => {
@@ -149,3 +149,51 @@ describe('REP-2501: ensureJpeg', () => {
     expect(await ensureJpeg(webp)).toBe(webp);
   });
 });
+
+// REP-3813: la decisión de convertir se toma por los bytes (FF D8 FF), no por file.type,
+// que el navegador deduce de la extensión del archivo.
+describe('REP-3813: detección de JPEG por bytes', () => {
+  afterEach(() => {
+    delete global.createImageBitmap;
+    vi.restoreAllMocks();
+  });
+
+  /** Archivo con nombre/tipo de JPEG pero contenido WEBP ("RIFF....WEBP"). jsdom no trae Blob.arrayBuffer, por eso es un objeto. */
+  const webpRenombradoAJpg = () => {
+    const bytes = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x10, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20]);
+    return makeFile(bytes);
+  };
+
+  it('UT-JPG-05: isJpegByBytes distingue un JPEG real de un WEBP con tipo image/jpeg', async () => {
+    const jpeg = makeFile(buildJpegWithOrientation(1));
+    expect(await isJpegByBytes(jpeg)).toBe(true);
+    expect(await isJpegByBytes(webpRenombradoAJpg())).toBe(false);
+    expect(await isJpegByBytes(null)).toBe(false);
+  });
+
+  it('UT-JPG-06: un WEBP renombrado a .jpg se convierte a JPEG (no pasa por el tipo declarado)', async () => {
+    const jpegBlob = { type: 'image/jpeg', size: 10 };
+    global.createImageBitmap = vi.fn().mockResolvedValue({ width: 300, height: 200, close: vi.fn() });
+    vi.spyOn(document, 'createElement').mockReturnValue({
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: vi.fn(), fillRect: vi.fn(), fillStyle: '' }),
+      toBlob: (cb) => cb(jpegBlob),
+    });
+
+    const file = webpRenombradoAJpg();
+    const result = await ensureJpeg(file);
+
+    expect(global.createImageBitmap).toHaveBeenCalled();
+    expect(result).toBe(jpegBlob);
+  });
+
+  it('UT-JPG-07: un JPEG real con tipo image/jpeg sigue pasando sin re-codificar', async () => {
+    const jpeg = makeFile(buildJpegWithOrientation(1));
+    global.createImageBitmap = vi.fn();
+
+    expect(await ensureJpeg(jpeg)).toBe(jpeg);
+    expect(global.createImageBitmap).not.toHaveBeenCalled();
+  });
+});
+

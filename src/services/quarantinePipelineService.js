@@ -172,7 +172,7 @@ export const readFunctionFailure = async (error) => {
  * técnico. `photoTips` indica si tiene sentido sugerir otra foto (luz, enfoque) o si el
  * problema es del servicio y alcanza con reintentar.
  * @param {string} [reason]
- * @returns {{ detail: string, photoTips: boolean }}
+ * @returns {{ detail: string, photoTips: boolean, retryLater?: boolean }}
  */
 export const describeProtectionFailure = (reason) => {
   switch (reason) {
@@ -187,6 +187,14 @@ export const describeProtectionFailure = (reason) => {
     case 'image_too_large':
       return { detail: 'La foto es demasiado grande para protegerla. Probá con otra.', photoTips: true };
     case 'not_jpeg':
+      // REP-3813: es un problema de formato, no de luz/enfoque ni de señal: no sirve esperar ni
+      // reintentar, hay que elegir otra foto. `retryLater: false` oculta "Guardar y enviar
+      // cuando haya señal" en la pantalla de fallo.
+      return {
+        detail: 'El formato de esta foto no es compatible. Elegí otra en formato JPG o PNG.',
+        photoTips: false,
+        retryLater: false,
+      };
     case 'image_unreadable':
       return { detail: 'No pudimos abrir la foto. Probá sacando otra.', photoTips: true };
     case 'upload_failed':
