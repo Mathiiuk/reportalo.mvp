@@ -3,7 +3,7 @@
 **Fecha:** 13/10/2026 · **Origen:** devolución de Hernán del 08/10/2026 (`docs/Entrega_Matias_RAG_Sprint15/`, pedidos 1 y 2 de la sección 10)
 **Archivo del lote:** [`RAG-S15_lote3_corpus.sql`](RAG-S15_lote3_corpus.sql) · **Texto fuente:** `docs/Entrega_Matias_RAG_Sprint15/corpus/Corpus_propuesta_lote_S15_para_generador.md`
 
-> **Estado:** el lote está **escrito y probado, pero NO aplicado** en staging. Falta que lo contrastes con las páginas oficiales y lo corras vos (necesita acceso de escritura y la clave de Gemini para los embeddings).
+> **Estado (actualizado el 13/10/2026, Sprint 16):** el lote **está aplicado en staging**, con el texto contrastado contra las fuentes oficiales y los 8 embeddings generados. Ver `docs/RAG-S15_aplicado_en_staging_Sprint16.md`. El texto de abajo describe el procedimiento tal como se escribió en el Sprint 15.
 
 ## 1. Qué hace
 

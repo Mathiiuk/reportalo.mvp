@@ -187,8 +187,9 @@ describe('Prompt v5: permiso no aclarado => fundamentado con salvedad (RAG-D5, d
     expect(source).toMatch(/Nunca mencionés montos ni sanciones al ciudadano/);
   });
 
-  it('deja documentado que falta medirla con el diagnóstico de generación antes de desplegar', () => {
-    expect(source).toMatch(/SIN MEDIR TODAVÍA/);
+  it('deja documentada la medición con el diagnóstico de generación (v4 vs v5, 10 corridas)', () => {
+    expect(source).toMatch(/MEDIDO el 13\/10\/2026/);
     expect(source).toMatch(/rep-diag-generacion/);
+    expect(source).not.toMatch(/SIN MEDIR TODAVÍA/);
   });
 });
