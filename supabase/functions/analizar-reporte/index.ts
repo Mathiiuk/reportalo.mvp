@@ -84,7 +84,14 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // no cambian de estado; costo ≈ +100 tokens de entrada. Ver
 // docs/REP-3797_verificacion-post-corpus_reportes-prueba.md §3.15.
 // v4 (08/10/2026, RAG-ASISTENCIA-INFRA): el esquema de salida ya no deja elegir el estado "asistencia".
-const PROMPT_VERSION = 'v4';
+// v5 (13/10/2026, RAG-D5): regla del permiso no aclarado. Decisión del PO (Hernán, 08/10/2026, opción A):
+// cuando la norma exige un permiso y el reclamo describe la conducta sin decir si lo tienen, el dictamen es
+// "fundamentado con salvedad" (cita la norma y aclara que aplica si no cuentan con el permiso) y no
+// "indeterminado". Es la misma lógica de la regla de excepciones de v3. Criterio de medición del PO: al menos
+// 9 de 10 corridas con el estado esperado, sin romper D4 (baches en CABA: derivación), ni los reclamos sin
+// conducta ni norma aplicable, ni Vulnerabilidad social, y con las mismas citas. SIN MEDIR TODAVÍA: correr
+// scripts/rag-local-dev/rep-diag-generacion (--caso D5-CABA-1 --corridas 10) antes de desplegar.
+const PROMPT_VERSION = 'v5';
 // P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
 // el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
 // mismo texto ("Auto mal estacionado" con/sin punto final) dando "fundamentado" una vez y
@@ -238,6 +245,7 @@ const generateJustification = async (
     'No tenés acceso a los IDs reales de organismos/agencias de Reportalo — nunca inventes un valor para "organismo_sugerido_id" (ni un slug como "caba_transito" ni un UUID inventado). Dejalo en null salvo que se te haya pasado explícitamente la lista de organismos elegibles con sus IDs reales.',
     'No exijas al reclamo más precisión que la que pide el fragmento citado. Si el hecho descrito encaja en términos generales con lo que el fragmento prohíbe o exige (por ejemplo, "estacionar en forma antirreglamentaria" cubre cualquier forma de mal estacionar, sin que el ciudadano tenga que detallar cuál), fundamentá con ese fragmento — no declares "indeterminado" solo por falta de detalle adicional que la norma no requiere.',
     'Si un fragmento que citás contiene una excepción, condición o salvedad ("no obstante", "salvo", "excepto", "a excepción de", "siempre que"), tenés que mencionarla en fundamento_ciudadano y en fundamento_oficial, y no afirmar una prohibición u obligación absoluta. Incluí esa parte del texto en la cita_textual. Si ninguno de los fragmentos que citás trae una excepción, no agregues ni supongas ninguna.',
+    'Si el fragmento que citás prohíbe o exige contar con un permiso, habilitación o autorización previa para una conducta, y el reclamo describe esa conducta pero no aclara si el permiso existe, no declares "indeterminado" solo por eso: declará "fundamentado", citá la norma y aclará en fundamento_ciudadano y en fundamento_oficial que la norma aplica si no cuentan con el permiso y que corresponde que el organismo lo verifique. Si el reclamo dice que el permiso existe, o describe otra conducta, no uses esta regla.',
   ].join('\n');
 
   // Clave en el header, igual que en embedText (ver el motivo ahí)
