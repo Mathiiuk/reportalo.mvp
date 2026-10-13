@@ -6,6 +6,32 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%2017%20%2B%20pgvector-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tests](https://img.shields.io/badge/Vitest-144%20Passing-success)](https://vitest.dev/)
+[![CI](https://github.com/Mathiiuk/reportalo.mvp/actions/workflows/ci.yml/badge.svg?branch=staging)](https://github.com/Mathiiuk/reportalo.mvp/actions/workflows/ci.yml)
+[![Security](https://github.com/Mathiiuk/reportalo.mvp/actions/workflows/security.yml/badge.svg?branch=staging)](https://github.com/Mathiiuk/reportalo.mvp/actions/workflows/security.yml)
+
+---
+
+## 🎯 Sobre el proyecto
+
+**Reportalo** es una plataforma de auditoría ciudadana: el vecino fotografía una infracción o un daño en la vía pública y la app identifica, con IA, **qué norma se incumple y qué organismo es competente**, para enviar un reclamo con evidencia estructurada y fundamento legal.
+
+- 🎓 **Proyecto de tesis** de la Licenciatura en Gestión de la Información (UNLZ). MVP previsto para **diciembre de 2026**, con alcance en CABA y Avellaneda.
+- 👥 Equipo de 5 integrantes con roles formales (PM, líder técnico, QA, datos/RAG, offline/privacidad) y matriz RACI — ver [`wiki/04-roles-y-gobernanza.md`](wiki/04-roles-y-gobernanza.md).
+- 🧑‍💻 **Líder técnico:** [Matias Krepchuk](https://www.linkedin.com/in/krepchuk-matias/) — arquitectura, componentes críticos, code review, CI/CD y despliegues.
+
+### Funcionalidades clave
+
+| Área | Implementación |
+|---|---|
+| **IA jurídica (RAG)** | Corpus de normativa oficial indexado con **pgvector**; recuperación semántica + **Gemini** para citar la norma y el organismo aplicables. |
+| **Privacidad por diseño** | Pipeline de cuarentena en una Edge Function (Deno): detecta rostros y patentes con Google Vision y los pixela, elimina metadatos EXIF y purga el original; si algo falla, no se guarda nada (fail-safe). |
+| **Offline-first (PWA)** | Los reportes se guardan localmente y se sincronizan al recuperar conexión. |
+| **Mapa público** | Mapa de reportes con MapLibre GL y estados trazables por reporte. |
+| **Calidad** | 25 suites / 144 tests en Vitest, escenarios BDD, CI y escaneo de seguridad en GitHub Actions, previews por rama en Vercel. |
+
+**Stack:** React 18 · Vite · Tailwind · Supabase (PostgreSQL 17, Auth, Edge Functions, pgvector) · Gemini · MapLibre GL · Vitest · GitHub Actions · Vercel
+
+> 🚧 **Estado:** en desarrollo activo. La demo pública estará disponible en el lanzamiento del MVP.
 
 ---
 
