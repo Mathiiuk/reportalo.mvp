@@ -53,6 +53,6 @@ describe('RAG-ASISTENCIA-INFRA: el modelo no puede elegir "asistencia"', () => {
   });
 
   it('PROMPT_VERSION se incrementó a v4 para poder comparar antes/después en report_ai_analysis', () => {
-    expect(source).toMatch(/const PROMPT_VERSION = 'v4';/);
+    expect(source).toMatch(/const PROMPT_VERSION = 'v5';/);
   });
 });

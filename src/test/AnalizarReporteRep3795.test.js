@@ -53,8 +53,8 @@ describe('Punto 5: temperature fija y regla de precisión en el prompt', () => {
     expect(source).toMatch(/temperature: GENERATION_TEMPERATURE,/);
   });
 
-  it('PROMPT_VERSION se incrementó a v4 (v2: precisión; v3: regla de excepciones; v4: sin "asistencia" en el esquema)', () => {
-    expect(source).toMatch(/const PROMPT_VERSION = 'v4';/);
+  it('PROMPT_VERSION se incrementó a v5 (v2: precisión; v3: regla de excepciones; v4: sin "asistencia" en el esquema; v5: permiso no aclarado)', () => {
+    expect(source).toMatch(/const PROMPT_VERSION = 'v5';/);
   });
 
   it('la nueva regla de precisión está en las instrucciones', () => {
@@ -75,19 +75,19 @@ describe('Prompt v3: regla de excepciones (REP-3795 / REP-3797)', () => {
   // Cada regla es un string entre comillas simples terminado en coma, uno por línea
   const rules = instructionsBlock.split('\n').filter((line) => line.trim().startsWith("'"));
 
-  it('el prompt tiene 8 reglas: las 7 de v2 más la de excepciones', () => {
-    expect(rules).toHaveLength(8);
+  it('el prompt tiene 9 reglas: las 7 de v2, la de excepciones (v3) y la del permiso no aclarado (v5)', () => {
+    expect(rules).toHaveLength(9);
   });
 
-  it('la regla de excepciones es la última y pide mencionar la salvedad sin absolutizar', () => {
-    const last = rules.at(-1);
+  it('la regla de excepciones (v3) sigue presente y pide mencionar la salvedad sin absolutizar', () => {
+    const last = rules.find((rule) => /excepción, condición o salvedad/.test(rule));
     expect(last).toMatch(/excepción, condición o salvedad/);
     expect(last).toMatch(/no afirmar una prohibición u obligación absoluta/);
     expect(last).toMatch(/Incluí esa parte del texto en la cita_textual/);
   });
 
   it('la regla prohíbe inventar excepciones que el fragmento no trae', () => {
-    expect(rules.at(-1)).toMatch(/no agregues ni supongas ninguna/);
+    expect(rules.find((rule) => /excepción, condición o salvedad/.test(rule))).toMatch(/no agregues ni supongas ninguna/);
   });
 
   it('las reglas de v2 siguen presentes (literalidad de las citas y precisión)', () => {
@@ -167,5 +167,28 @@ describe('Observabilidad: un rechazo de la validación conserva lo que se gener�
   it('la cita rechazada se guarda en el motivo, truncada', () => {
     expect(source).toMatch(/MAX_REJECTED_CITA_CHARS = 300/);
     expect(source).toMatch(/Cita del modelo: "\$\{truncateForReason\(cita\.cita_textual\)\}"/);
+  });
+});
+
+describe('Prompt v5: permiso no aclarado => fundamentado con salvedad (RAG-D5, decisión del PO opción A)', () => {
+  it('la regla del permiso está en las instrucciones, con la salvedad en los dos fundamentos', () => {
+    expect(source).toMatch(/prohíbe o exige contar con un permiso, habilitación o autorización previa/);
+    expect(source).toMatch(/no declares "indeterminado" solo por eso: declará "fundamentado"/);
+    expect(source).toMatch(/aclará en fundamento_ciudadano y en fundamento_oficial que la norma aplica si no cuentan con el permiso/);
+    expect(source).toMatch(/corresponde que el organismo lo verifique/);
+  });
+
+  it('la regla no se activa si el reclamo dice que el permiso existe o describe otra conducta', () => {
+    expect(source).toMatch(/Si el reclamo dice que el permiso existe, o describe otra conducta, no uses esta regla\./);
+  });
+
+  it('no afloja las reglas de base: sigue citando solo literal y sin montos ni sanciones al ciudadano', () => {
+    expect(source).toMatch(/SOLO podés fundamentar con el contenido literal de estos fragmentos/);
+    expect(source).toMatch(/Nunca mencionés montos ni sanciones al ciudadano/);
+  });
+
+  it('deja documentado que falta medirla con el diagnóstico de generación antes de desplegar', () => {
+    expect(source).toMatch(/SIN MEDIR TODAVÍA/);
+    expect(source).toMatch(/rep-diag-generacion/);
   });
 });
