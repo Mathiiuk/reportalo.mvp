@@ -3,7 +3,7 @@
 **Fecha de la medición:** 13/10/2026 · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
 **Responsable:** Matías · **Script reproducible:** [`scripts/rep3828/medicion_cola_visual.sql`](../scripts/rep3828/medicion_cola_visual.sql) (solo lectura)
 
-> **Estado:** primera pasada hecha con los datos que ya existen en staging. **Faltan los casos controlados de 2 y 4 fotos** (hay un solo reporte de 2 fotos y ninguno de 4). Ver «Qué falta».
+> **Estado:** primera pasada hecha con los datos que ya existen en staging. **Faltan los casos controlados de 2 y 4 fotos** (hay 2 reportes de 2 fotos y 1 de 4, todos de la batería de Hernán del 07/10). Ver «Qué falta».
 
 ---
 
@@ -32,7 +32,11 @@ Desglose de la foto más lenta (la que define el tiempo percibido): **~27,7 s** 
 | 1 | 38 | 38 | 28,6 / 1,8 / 30,9 / 60,1 | 3,6 / 9,9 | 32,2 / 62,8 | 1 |
 | 2 | **1** | 2 | 49,1 / 48,9 / 49,1 / 49,3 | 3,5 / 3,5 | 52,6 / 52,7 | 0 |
 | 3 | **2** | 6 | 19,9 / 12,2 / 19,8 / 27,7 | 7,4 / 26,4 | 27,3 / 54,2 | 1 |
-| 4 | **0** | 0 | sin datos | sin datos | sin datos | sin datos |
+| 4 | **1** (D8) | 4 | ver nota | 3,5 / 4,7 (modelo) | 49,5 / 50,1 | 0 |
+
+**Con todo el histórico de `report_image_analysis`** (incluye la batería de Hernán del 07/10, que no tiene registro de intentos y por eso solo permite medir el total): 1 foto 187 reportes, mediana 35,2 s · 2 fotos 2 reportes, 57,9 s promedio (máx. 63,5) · 3 fotos 5 reportes, 24,5 s (máx. 58,7) · **4 fotos 1 reporte, 49,5 s (máx. 50,1)**. Latencia del modelo en todos los tamaños: 3,1–3,5 s promedio. El promedio de 1 foto (195 s) lo distorsiona un caso viejo de ~4 h; por eso se informa la mediana.
+
+**Nota sobre 4 fotos (reporte D8 de Hernán, `3091e5f5…`):** las 4 fotos se guardaron a las 21:26:15–16 UTC y las 4 llamadas arrancaron juntas y terminaron bien (2,8–4,7 s, sin reintentos); el último resultado se guardó a las 21:27:06. Es decir, con 4 fotos **la verificación visual tampoco es el problema**: tarda lo mismo que con 1, más la espera del cron.
 
 - **Espera de cola** = persistencia de la evidencia → primer intento. **Ejecución** = primer intento → resultado guardado. **Total** = persistencia → resultado guardado.
 - La espera de cola se reparte de forma pareja entre 0 y 60 s, que es lo esperable de un cron por minuto. No hay mensajes acumulados: la cola está vacía hoy (0 mensajes).
@@ -61,13 +65,17 @@ La llamada a Gemini es de **~3,4 s**; el 96 % de los intentos termina bien al pr
 
 ## 5. Qué falta (honestamente pendiente)
 
-1. **Casos controlados de 2 y 4 fotos** (criterio de aceptación del ticket). Hay que crear reportes nuevos en staging con la misma categoría, descripción, jurisdicción y juego de imágenes. El frontend **sí admite 4 fotos** (`MAX_PHOTOS = 4` en `EvidenceCaptureStep.jsx` y `EvidenceUploadDesktop.jsx`), así que D10 no es una restricción.
+1. **Casos controlados de 2 y 4 fotos** (criterio de aceptación del ticket). Hoy hay solo 2 reportes de 2 fotos y 1 de 4, todos de otra prueba y sin registro de intentos. Hay que crear reportes nuevos en staging con la misma categoría, descripción, jurisdicción y juego de imágenes. El frontend **sí admite 4 fotos** (`MAX_PHOTOS = 4` en `EvidenceCaptureStep.jsx` y `EvidenceUploadDesktop.jsx`), así que D10 no es una restricción.
 2. **Tiempo antes de persistir la evidencia** (reducción/anonimización/subida en el dispositivo): no hay marcas de tiempo de backend para eso. Los totales de arriba **no incluyen** ese tramo ni el de visualización al ciudadano.
 3. **Cruce de costo con REP-3822:** no se infiere desde Billing sin `qa_batch_id`/`trace_id`. Para los casos nuevos hay que cargar el lote en `visual_qa_cases` **antes** de medir. Solo existe 1 caso cargado hoy.
 4. **Regresión de QA (Iván):** validar que con varias fotos el envío no se rompe y que no cambian fundamento, estado ni categoría.
 5. Hay un reporte (`a83d95f3…`) con 60,1 s de espera y otros con casi 0: la dispersión es la esperable de un cron por minuto, pero un lote de prueba debería correr en una ventana controlada para no mezclar reportes de otras personas.
 
-## 6. Cómo reproducir
+## 6. Sobre D8 (el reporte de 4 fotos que «no confirmó en 120 s»)
+
+La hipótesis de Hernán (la anonimización de 4 fotos tarda más de 2 minutos) **no se puede confirmar ni descartar con estos datos**, pero la verificación visual queda descartada como causa: corre después de enviar. Un indicio a favor de la hipótesis: el reporte figura creado en la base a las **21:26:14 UTC**, mientras que los reportes vecinos de la tanda (B9-71 a las 21:22:02 y B9-73 a las 21:23:00) se crearon con ~1 min de diferencia entre sí. Para cerrarlo hay que medir el tramo previo al alta (reducción + subida + anonimización por foto) con 1, 2 y 4 fotos, con marcas de tiempo en el dispositivo. Está relacionado con REP-3827.
+
+## 7. Cómo reproducir
 
 1. Abrir el SQL Editor de staging y ejecutar `scripts/rep3828/medicion_cola_visual.sql` (las 4 consultas son de solo lectura).
 2. Para un lote de QA, acotar con `visual_qa_cases` (hay una nota en el script).
