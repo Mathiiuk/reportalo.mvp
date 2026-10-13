@@ -136,7 +136,7 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  it('UT-LOC-05: Si el barrio elegido queda lejos del pin, muestra el aviso y bloquea "Confirmar ubicación"', async () => {
+  it('UT-LOC-05 (REP-3814): Si el barrio elegido queda lejos del pin, muestra el aviso pero NO bloquea "Confirmar ubicación"', async () => {
     const handleConfirm = vi.fn();
 
     render(
@@ -156,10 +156,10 @@ describe('REP-2201 / Sprint 10: Ajuste interactivo de ubicación en el reporte (
     expect(screen.getByTestId('locality-pin-mismatch-warning')).toBeInTheDocument();
 
     const confirmBtn = screen.getByRole('button', { name: /confirmar ubicación/i });
-    expect(confirmBtn).toBeDisabled();
+    expect(confirmBtn).not.toBeDisabled();
 
     fireEvent.click(confirmBtn);
-    expect(handleConfirm).not.toHaveBeenCalled();
+    expect(handleConfirm).toHaveBeenCalledTimes(1);
   });
 
   it('UT-LOC-04: Si las coordenadas iniciales están fuera del Bounding Box de CABA/Avellaneda, utiliza el centro por defecto de la zona', () => {

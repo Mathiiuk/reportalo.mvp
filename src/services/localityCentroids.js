@@ -68,16 +68,26 @@ const RAW_CENTROIDS = {
   'Villa Santa Rita': [-58.4762, -34.6172],
   'Villa Soldati': [-58.4386, -34.6668],
   'Villa Urquiza': [-58.4919, -34.5715],
-  // Localidades del partido de Avellaneda (Buenos Aires)
-  'Avellaneda': [-58.3650, -34.6626],
-  'Crucecita': [-58.3550, -34.6600],
-  'Dock Sud': [-58.3467, -34.6467],
-  'Gerli': [-58.3833, -34.6767],
-  'Piñeyro': [-58.3667, -34.6700],
-  'Sarandí': [-58.3500, -34.6833],
-  'Villa Domínico': [-58.3467, -34.6967],
-  'Wilde': [-58.3400, -34.7047],
+  // Localidades del partido de Avellaneda (Buenos Aires).
+  // REP-3814: puntos revisados el 13/10/2026 contra OpenStreetMap (Nominatim). El de Piñeyro
+  // estaba ~2 km al este de su ubicación real y el de Wilde ~2,4 km al oeste.
+  'Avellaneda': [-58.3628, -34.6648],
+  'Crucecita': [-58.3560, -34.6708],
+  'Dock Sud': [-58.3471, -34.6522],
+  'Gerli': [-58.3827, -34.6857],
+  'Piñeyro': [-58.3883, -34.6697],
+  'Sarandí': [-58.3463, -34.6808],
+  'Villa Domínico': [-58.3324, -34.6939],
+  'Wilde': [-58.3146, -34.6984],
 };
+
+// REP-3814: nombres de las localidades de Avellaneda (normalizados), que son bastante más
+// grandes que los barrios de CABA y por eso tienen un umbral de aviso mayor.
+const AVELLANEDA_LOCALITY_NAMES = new Set(
+  ['Avellaneda', 'Crucecita', 'Dock Sud', 'Gerli', 'Piñeyro', 'Sarandí', 'Villa Domínico', 'Wilde'].map(
+    (name) => normalizeForSearch(name)
+  )
+);
 
 // Índice normalizado (sin tildes/mayúsculas) para hacer match robusto con el nombre
 // que llega desde `LocalitySelector` (que a su vez usa `normalizeForSearch`, ver R-5).
@@ -126,6 +136,25 @@ export const distanceInMeters = ([lngA, latA], [lngB, latB]) => {
 export const LOCALITY_MISMATCH_THRESHOLD_METERS = 2500;
 
 /**
+ * REP-3814 · Umbral para las localidades de Avellaneda: miden hasta 5-6 km de punta a punta
+ * (Wilde, Villa Domínico), así que con 2,5 km el aviso saltaba aun con el pin dentro de la
+ * localidad. Los barrios de CABA conservan el umbral original.
+ */
+export const AVELLANEDA_MISMATCH_THRESHOLD_METERS = 4000;
+
+/**
+ * Umbral de aviso que corresponde a una localidad según su label o nombre.
+ * @param {string} localityLabel
+ * @returns {number} metros
+ */
+export const getMismatchThresholdMeters = (localityLabel) => {
+  const namePart = (localityLabel || '').split('—')[0].trim();
+  return AVELLANEDA_LOCALITY_NAMES.has(normalizeForSearch(namePart))
+    ? AVELLANEDA_MISMATCH_THRESHOLD_METERS
+    : LOCALITY_MISMATCH_THRESHOLD_METERS;
+};
+
+/**
  * Distancia máxima para arriesgar una sugerencia de localidad. Si el ciudadano
  * está más lejos que esto del centroide más cercano, probablemente esté fuera
  * de CABA/Avellaneda y no se sugiere nada: es preferible que elija a mano antes
@@ -167,7 +196,8 @@ export const findNearestLocality = (coords, localities = []) => {
 
 /**
  * Indica si el pin está sospechosamente lejos del centroide del barrio elegido.
- * Es una advertencia aproximada, no una validación exacta (no hay polígonos oficiales).
+ * Es una advertencia aproximada, no una validación exacta (no hay polígonos oficiales):
+ * quien la usa NO debe bloquear al ciudadano por esto (REP-3814).
  * @param {[number, number]} pinCoords [lng, lat]
  * @param {string} localityLabel
  * @returns {{ isFar: boolean, distanceMeters: number|null }}
@@ -178,5 +208,5 @@ export const checkLocalityPinMismatch = (pinCoords, localityLabel) => {
     return { isFar: false, distanceMeters: null };
   }
   const distanceMeters = distanceInMeters(pinCoords, centroid);
-  return { isFar: distanceMeters > LOCALITY_MISMATCH_THRESHOLD_METERS, distanceMeters };
+  return { isFar: distanceMeters > getMismatchThresholdMeters(localityLabel), distanceMeters };
 };

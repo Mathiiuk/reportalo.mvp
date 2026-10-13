@@ -103,11 +103,10 @@ export const AdjustLocationModal = ({
     };
   }, []);
 
-  // Aviso + bloqueo cuando el barrio elegido queda geográficamente lejos del pin actual —
+  // Aviso (NO bloqueo) cuando el barrio elegido queda geográficamente lejos del pin actual —
   // ej. pin en Retiro con "Almagro" seleccionado en el desplegable. Los centroides son
-  // aproximados (no polígonos oficiales), así que el umbral es generoso a propósito para
-  // no bloquear casos legítimos cerca de un límite; el ciudadano sigue eligiendo el barrio
-  // a mano (R-1 a R-5), esto solo evita confirmar una combinación obviamente inconsistente.
+  // aproximados (no polígonos oficiales): REP-3814 — un punto desplazado bloqueaba a quien
+  // marcaba bien su barrio, así que el aviso solo advierte y el ciudadano decide (R-1 a R-5).
   // IMPORTANTE: Si está offline, el mapa no carga las calles (azulejos), por lo que el 
   // usuario no puede ajustar el pin. En ese caso, desactivamos la restricción de distancia.
   const { isFar: localityLooksFar } = localityId && isOnline
@@ -203,10 +202,10 @@ export const AdjustLocationModal = ({
     }
   }, [isGpsUnavailable, initialCoordinates, handleRecenter]);
 
-  // Confirmar ubicación — R-1/R-2: requiere localidad elegida del selector, y que no
-  // esté geográficamente lejos del pin (ver checkLocalityPinMismatch más arriba).
+  // Confirmar ubicación — R-1/R-2: requiere localidad elegida del selector. La distancia al
+  // centroide solo advierte (REP-3814), no impide confirmar.
   const handleConfirmLocation = () => {
-    if (!localityId || !onConfirm || localityLooksFar) return;
+    if (!localityId || !onConfirm) return;
     onConfirm({
       coordinates: { lng: currentCoords[0], lat: currentCoords[1] },
       localityId,
@@ -326,7 +325,7 @@ export const AdjustLocationModal = ({
             >
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-rep-warning" strokeWidth={2.25} aria-hidden="true" />
               <span className="text-rep-label font-semibold text-rep-warning-ink">
-                El barrio elegido parece estar lejos del punto marcado en el mapa. Movés el pin o elegís otro barrio para poder confirmar.
+                El barrio elegido parece estar lejos del punto marcado en el mapa. Revisá que sea el correcto; si lo es, podés confirmar igual.
               </span>
             </div>
           )}
@@ -334,7 +333,7 @@ export const AdjustLocationModal = ({
           <button
             type="button"
             onClick={handleConfirmLocation}
-            disabled={!localityId || localityLooksFar}
+            disabled={!localityId}
             aria-label="Confirmar ubicación"
             className="rep-focus flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 hover:bg-rep-accent-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:bg-rep-accent disabled:active:scale-100"
           >
