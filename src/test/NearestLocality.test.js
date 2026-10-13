@@ -9,6 +9,11 @@ import {
   findNearestLocality,
   NEAREST_LOCALITY_MAX_METERS,
   getLocalityCentroid,
+  checkLocalityPinMismatch,
+  distanceInMeters,
+  getMismatchThresholdMeters,
+  LOCALITY_MISMATCH_THRESHOLD_METERS,
+  AVELLANEDA_MISMATCH_THRESHOLD_METERS,
 } from '../services/localityCentroids';
 
 // Labels con el formato real que devuelve getSelectableLocalities.
@@ -55,5 +60,31 @@ describe('REP-2500-PRESEL: findNearestLocality', () => {
     expect(findNearestLocality(CABALLITO, [])).toBeNull();
     expect(findNearestLocality(CABALLITO, null)).toBeNull();
     expect(findNearestLocality([-58.4], LOCALITIES)).toBeNull();
+  });
+});
+
+// REP-3814: Piñeyro bloqueaba "Confirmar ubicación" por un centroide ~2 km corrido al este.
+describe('REP-3814: centroides de Avellaneda y umbral de aviso', () => {
+  const PINEYRO = 'Piñeyro — Partido de Avellaneda, Buenos Aires';
+
+  it('UT-PINEYRO-01: el centroide de Piñeyro coincide con la referencia pública (OSM), a menos de 300 m', () => {
+    const referencia = [-58.3883, -34.6697];
+    expect(distanceInMeters(getLocalityCentroid(PINEYRO), referencia)).toBeLessThan(300);
+  });
+
+  it('UT-PINEYRO-02: un pin a 500 m al oeste del centro de Piñeyro ya no dispara el aviso', () => {
+    const [lng, lat] = getLocalityCentroid(PINEYRO);
+    const pin = [lng - 0.0055, lat]; // ≈ 500 m al oeste a esta latitud
+    expect(checkLocalityPinMismatch(pin, PINEYRO).isFar).toBe(false);
+  });
+
+  it('UT-PINEYRO-03: un pin en otra punta del partido (Wilde) sí avisa para Piñeyro', () => {
+    expect(checkLocalityPinMismatch(getLocalityCentroid('Wilde'), PINEYRO).isFar).toBe(true);
+  });
+
+  it('UT-PINEYRO-04: Avellaneda usa un umbral mayor que CABA', () => {
+    expect(getMismatchThresholdMeters(PINEYRO)).toBe(AVELLANEDA_MISMATCH_THRESHOLD_METERS);
+    expect(getMismatchThresholdMeters('Almagro — Comuna 5, Ciudad Autónoma de Buenos Aires')).toBe(LOCALITY_MISMATCH_THRESHOLD_METERS);
+    expect(AVELLANEDA_MISMATCH_THRESHOLD_METERS).toBeGreaterThan(LOCALITY_MISMATCH_THRESHOLD_METERS);
   });
 });
