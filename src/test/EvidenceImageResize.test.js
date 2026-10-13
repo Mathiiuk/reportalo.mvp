@@ -91,7 +91,9 @@ describe('REP-3793 Bloque 1: prepareEvidenceImage', () => {
     global.createImageBitmap = vi.fn().mockResolvedValue({ width: 640, height: 480, close: vi.fn() });
     const { canvas, outBlob } = mockCanvas();
 
-    const result = await prepareEvidenceImage(makeFile('image/png'));
+    // REP-3813: ahora se decide por los bytes, así que el PNG de prueba lleva la firma PNG real
+    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const result = await prepareEvidenceImage(makeFile('image/png', pngBytes));
 
     expect(result).toBe(outBlob);
     expect(canvas.width).toBe(640);

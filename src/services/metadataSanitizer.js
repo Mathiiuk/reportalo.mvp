@@ -423,6 +423,38 @@ export const EVIDENCE_MAX_SIDE = 1600;
 export const EVIDENCE_JPEG_QUALITY = 0.85;
 
 /**
+ * REP-3813 · ¿El archivo es realmente un JPEG? Se decide por los bytes iniciales (firma
+ * FF D8 FF) y no por `file.type`: el navegador deduce el tipo de la EXTENSIÓN, así que una
+ * imagen WEBP/AVIF/PNG descargada de la web y guardada como `.jpg` figura como JPEG y se
+ * saltearía la conversión (el servidor la rechaza después como `not_jpeg`).
+ *
+ * Si el archivo no permite leer bytes (entornos sin Blob.slice/arrayBuffer) se cae a
+ * `file.type`, que es lo que se hacía antes.
+ *
+ * @param {Blob|File} file
+ * @returns {Promise<boolean>}
+ */
+export const isJpegByBytes = async (file) => {
+  if (!file) return false;
+  try {
+    if (typeof file.slice === 'function') {
+      const head = file.slice(0, 3);
+      if (head && typeof head.arrayBuffer === 'function') {
+        const bytes = new Uint8Array(await head.arrayBuffer());
+        return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+      }
+    }
+    if (typeof file.arrayBuffer === 'function') {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    }
+  } catch {
+    // Si no se pueden leer los bytes, se usa el tipo declarado
+  }
+  return file.type === 'image/jpeg';
+};
+
+/**
  * REP-3793 · Deja la foto lista para el servidor en una sola pasada de canvas:
  * derecha (aplica la rotación EXIF), en JPEG y con el lado mayor limitado a
  * EVIDENCE_MAX_SIDE. Nunca agranda una foto chica.
@@ -462,11 +494,13 @@ export const prepareEvidenceImage = async (
     const longestSide = Math.max(bitmap.width, bitmap.height);
 
     // ¿Hay que tocarla? Solo si es grande, no es JPEG o está rotada por EXIF
+    // REP-3813: "es JPEG" se decide por los bytes, no por file.type (que sale de la extensión)
+    const isJpeg = await isJpegByBytes(file);
     let needsRotation = false;
-    if (file.type === 'image/jpeg' && typeof file.arrayBuffer === 'function') {
+    if (isJpeg && typeof file.arrayBuffer === 'function') {
       needsRotation = readExifOrientation(new Uint8Array(await file.arrayBuffer())) !== 1;
     }
-    if (longestSide <= maxSide && file.type === 'image/jpeg' && !needsRotation) {
+    if (longestSide <= maxSide && isJpeg && !needsRotation) {
       if (typeof bitmap.close === 'function') bitmap.close();
       return file;
     }
@@ -641,7 +675,7 @@ const resizeViaImgFallback = async (file, maxSide, quality) => {
  * @returns {Promise<Blob|File>}
  */
 export const ensureJpeg = async (file) => {
-  if (!file || file.type === 'image/jpeg') return file;
+  if (!file || (await isJpegByBytes(file))) return file;
 
   if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
     return file;

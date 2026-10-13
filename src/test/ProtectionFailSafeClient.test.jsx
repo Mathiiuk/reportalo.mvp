@@ -36,6 +36,7 @@ describe('REP-3793 Bloque 4: motivo del fail-safe en el cliente', () => {
     expect(describeProtectionFailure('vision_timeout')).toMatchObject({ photoTips: false });
     expect(describeProtectionFailure('vision_not_configured').detail).toMatch(/no respondió/);
     expect(describeProtectionFailure('image_unreadable')).toMatchObject({ photoTips: true });
+    expect(describeProtectionFailure('not_jpeg')).toMatchObject({ photoTips: false, retryLater: false });
     expect(describeProtectionFailure(undefined).detail).toBeTruthy();
   });
 
@@ -127,6 +128,29 @@ describe('REP-3793 Bloque 4: pantalla «No pudimos proteger tu foto»', () => {
     await waitFor(() => expect(screen.getByTestId('quarantine-fail-safe-view')).toBeInTheDocument());
     expect(screen.getByText(/Buscá más luz/)).toBeInTheDocument();
     expect(screen.queryByText(/segmento cortado/)).not.toBeInTheDocument();
+  });
+
+  it('UT-FSC-09 (REP-3813): formato no compatible → sin consejos de luz/enfoque ni "guardar y enviar cuando haya señal"', async () => {
+    const onProcessingComplete = vi.fn();
+    render(
+      <ReportProcessingScreen
+        evidenceList={[{ previewUrl: 'blob:foto' }]}
+        clientSideId="rep-fsc"
+        onProcessingComplete={onProcessingComplete}
+        onErrorBack={vi.fn()}
+        onSaveForLater={vi.fn()}
+        processFn={vi.fn().mockResolvedValue({ success: false, failSafeTriggered: true, reason: 'not_jpeg', error: 'x' })}
+        durationMs={50}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTestId('quarantine-fail-safe-view')).toBeInTheDocument());
+    expect(screen.getByTestId('fail-safe-reason')).toHaveTextContent(/formato/i);
+    expect(screen.queryByText(/Buscá más luz/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Esperá que enfoque/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /cuando haya señal/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Cambiar foto/i })).toBeInTheDocument();
+    expect(onProcessingComplete).not.toHaveBeenCalled();
   });
 
   it('UT-FSC-06: mientras procesa no muestra un conteo de zonas inventado', () => {
