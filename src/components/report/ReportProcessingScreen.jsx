@@ -69,6 +69,12 @@ export const ReportProcessingScreen = ({
     setProgress(15);
     setCurrentStepIndex(0);
 
+    // REP-3827: esta tanda se cancela cuando vence la espera (el reporte pasa a la cola) o cuando se
+    // desmonta la pantalla / se reinicia el pipeline. Es local a cada ejecución a propósito: un reintento
+    // manual reinicia `abandonedRef`, pero no debe reactivar una tanda vieja que sigue en vuelo.
+    let cancelled = false;
+    const shouldAbort = () => cancelled;
+
     // Marca de tiempo inicial para calcular la duración mínima
     const startTime = Date.now();
 
@@ -84,6 +90,7 @@ export const ReportProcessingScreen = ({
             evidenceList,
             clientSideId,
             simulateError,
+            shouldAbort,
           });
         } else {
           // Invocamos el servicio oficial del pipeline de cuarentena
@@ -91,6 +98,7 @@ export const ReportProcessingScreen = ({
             evidenceList,
             clientSideId,
             simulateError,
+            shouldAbort,
           });
         }
       } catch (err) {
@@ -153,11 +161,14 @@ export const ReportProcessingScreen = ({
     watchdog = setTimeout(() => {
       if (hasCompletedRef.current || !onSaveForLaterRef.current || timeoutMs <= 0) return;
       abandonedRef.current = true;
+      cancelled = true;
       clearInterval(interval);
       onSaveForLaterRef.current();
     }, timeoutMs);
 
     return () => {
+      // REP-3827: al salir o reiniciar, la tanda en vuelo deja de procesar fotos
+      cancelled = true;
       clearInterval(interval);
       clearTimeout(watchdog);
     };
