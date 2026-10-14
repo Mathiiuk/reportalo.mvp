@@ -51,7 +51,7 @@ La función devuelve uno de cuatro resultados:
 
 ## Lo que queda abierto
 
-- **Qué parte viaja al organismo** (H-4 del pedido a Hernán). Hoy la función devuelve el texto técnico (`official_foundation`) y las citas, nunca el texto del ciudadano. Si Hernán decide enviar solo referencias y citas, se quita una línea de la función.
+- **Qué parte viaja al organismo (H-4): resuelto el 14/10/2026.** Hernán eligió la opción C en REP-2805: norma, artículo, extracto literal y fuente oficial, con el aviso de que es preliminar y generado con IA. `buildLegalFoundationText` ya no incluye el resumen técnico de la IA (`official_foundation`), que no es una cita verificable. La función de la base **sigue devolviendo** ese campo (solo al autor y a quien atiende el reporte, que ya pueden leerlo en la tabla); no se tocó para no redesplegarla. Quien arme el mensaje al organismo debe usar `buildLegalFoundationText`, no leer el campo.
 - **Política de visibilidad existente.** La policy `agency reads assigned report ai analysis` ya permite que un perfil que atiende el reporte lea **todo** el análisis, incluido `citizen_feedback`, directamente de la tabla. Esta función no lo cambia ni lo amplía, pero conviene que Hernán confirme si eso es lo que quiere (el ticket dice que la respuesta de IA completa es solo para el reportante).
 - **REP-2801** debe consumir esta función (`buildLegalFoundationText`) en lugar de leer las tablas, y decide si algo se envía y por qué canal.
 - El **dictamen de REP-3829** contrasta este componente.

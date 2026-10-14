@@ -92,9 +92,8 @@ export const buildLegalFoundationText = (foundation) => {
       }
       if (citation.quoted_text) lines.push(`   Cita textual: «${citation.quoted_text}»`);
     });
-    if (foundation.official_foundation) {
-      lines.push('', `Fundamento técnico: ${foundation.official_foundation}`);
-    }
+    // H-4 (decisión del PO, 14/10): al organismo viaja norma, artículo, cita textual y fuente oficial.
+    // El resumen técnico de la IA (`official_foundation`) NO viaja: no es una cita verificable contra el corpus.
   } else if (foundation.status === LEGAL_FOUNDATION_STATUS.PENDING) {
     lines.push('', 'Estado: análisis pendiente. Todavía no hay fundamento legal para este reporte.');
   } else {
