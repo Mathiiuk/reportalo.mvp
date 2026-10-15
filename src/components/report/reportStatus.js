@@ -11,6 +11,11 @@ export const REPORT_STATUS = {
   notificado: { label: 'Notificado al responsable', tone: 'notice' },
   resuelto: { label: 'Resuelto', tone: 'success' },
   descartado: { label: 'Descartado', tone: 'neutral' },
+  // REP-2502 (H-2, PO 15/10/2026): estados nuevos. INFORMADO = se le indicó al vecino el canal que corresponde,
+  // sin derivar a un organismo (vulnerabilidad social). ESCALADO y EN_DISCREPANCIA los pone el organismo.
+  informado: { label: 'Informado', tone: 'notice' },
+  escalado: { label: 'Escalado a otro organismo', tone: 'notice' },
+  en_discrepancia: { label: 'En discrepancia', tone: 'warning' },
 };
 
 /*
@@ -39,6 +44,11 @@ const DB_STATE_ALIASES = {
 
 // Pasos del tracker: uno por estado real; «descartado» es un cierre alternativo, no un paso
 export const TRACKER_STEPS = ['enviado', 'en_revision', 'notificado', 'resuelto'];
+
+// Estados que se muestran como un paso extra al final del recorrido, no dentro de los 4 pasos
+const EXTRA_STATES = ['descartado', 'informado', 'escalado', 'en_discrepancia'];
+// Los que ocurren después de la notificación al organismo: el recorrido llega al menos hasta «notificado»
+const AFTER_NOTIFIED_STATES = ['escalado', 'en_discrepancia'];
 
 export const normalizeReportState = (code) => {
   const value = String(code ?? '').trim().toLowerCase();
@@ -91,9 +101,13 @@ export const buildTimeline = ({ currentState, createdAt, history = [] }) => {
 
   const lastEntryFor = (state) => [...entries].reverse().find((entry) => entry.state === state) ?? null;
 
-  const isDiscarded = current === 'descartado';
-  const reachedIndex = isDiscarded
-    ? Math.max(0, ...entries.map((entry) => TRACKER_STEPS.indexOf(entry.state)))
+  const isExtra = EXTRA_STATES.includes(current);
+  const reachedIndex = isExtra
+    ? Math.max(
+        0,
+        ...entries.map((entry) => TRACKER_STEPS.indexOf(entry.state)),
+        AFTER_NOTIFIED_STATES.includes(current) ? TRACKER_STEPS.indexOf('notificado') : 0
+      )
     : TRACKER_STEPS.indexOf(current);
 
   const steps = TRACKER_STEPS.map((state, index) => {
@@ -103,20 +117,20 @@ export const buildTimeline = ({ currentState, createdAt, history = [] }) => {
       key: state,
       label: REPORT_STATUS[state].label,
       done,
-      current: !isDiscarded && index === reachedIndex,
+      current: !isExtra && index === reachedIndex,
       date: formatShortDateTime(entry?.changed_at ?? (state === 'enviado' ? createdAt : null)),
       note: entry?.notes || null,
     };
   });
 
-  if (isDiscarded) {
-    const entry = lastEntryFor('descartado');
+  if (isExtra) {
+    const entry = lastEntryFor(current);
     steps.push({
-      key: 'descartado',
-      label: REPORT_STATUS.descartado.label,
+      key: current,
+      label: REPORT_STATUS[current].label,
       done: true,
       current: true,
-      discarded: true,
+      discarded: current === 'descartado',
       date: formatShortDateTime(entry?.changed_at),
       note: entry?.notes || null,
     });
@@ -126,7 +140,7 @@ export const buildTimeline = ({ currentState, createdAt, history = [] }) => {
 };
 
 // Estados de cierre del §10. Lo usa el listado de Mis reportes para la insignia.
-export const CLOSED_STATES = ['resuelto', 'descartado'];
+export const CLOSED_STATES = ['resuelto', 'descartado', 'informado'];
 
-/** @returns {boolean} true si el reporte ya está cerrado (resuelto o descartado). */
+/** @returns {boolean} true si el reporte ya está cerrado (resuelto, descartado o informado). */
 export const isClosedState = (code) => CLOSED_STATES.includes(normalizeReportState(code));

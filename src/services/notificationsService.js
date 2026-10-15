@@ -42,6 +42,7 @@ const titleForState = (code, reportCode) => {
   if (state === 'notificado') return `${reportCode} fue notificado al responsable`;
   if (state === 'resuelto') return `${reportCode} se resolvió`;
   if (state === 'descartado') return `${reportCode} se cerró como ${label}`;
+  if (state === 'informado') return `Te informamos el canal que corresponde para ${reportCode}`;
   return `Tu reporte ${reportCode} pasó a ${label}`;
 };
 
