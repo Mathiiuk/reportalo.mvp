@@ -59,3 +59,30 @@ Motivos de rechazo: `sin_permiso` (el actor no es el sistema ni un organismo que
 
 1. Correr la migración en staging (aditiva; sin DROP ni DELETE).
 2. Comprobar: `select count(*) from report_state_transitions` = 3, y `select change_report_state('<id>', 'RESUELTO', 'prueba')` con un usuario autenticado que no atiende el reporte debe devolver `sin_permiso`, dejar una fila en `report_state_change_rejections` y no cambiar el estado.
+
+---
+
+## Actualización 15/10/2026 · H-2 respondida por el PO
+
+Hernán respondió la máquina de estados. Se carga como datos con la migración `20261015140000_rep2502_estados_definidos_por_el_po.sql` (**NO aplicada en staging al escribir esto**).
+
+| Estado | Quién lo pone | Cuándo |
+|---|---|---|
+| `RECIBIDO` | — | Estado inicial |
+| `EN_ANALISIS` | Sistema | Mientras la entrega sea borrador, el reporte se queda acá |
+| `INFORMADO` (nuevo, **cerrado**) | Sistema | No se manda nada a un organismo y se le informa al vecino el canal que corresponde (vulnerabilidad social: 108, Desarrollo Social, 102 o Consejo de Niñez) |
+| `DERIVADO` | Sistema | Solo cuando se envíe **de verdad** a un organismo (guardando cuál). Hoy no ocurre |
+| `ESCALADO` (nuevo) | Organismo | Lo pasa a otro organismo o área. No se usa en borrador |
+| `EN_DISCREPANCIA` (nuevo) | Organismo | La respuesta del organismo no coincide con lo reportado. No se usa en borrador |
+| `RESUELTO` / `DESESTIMADO` | **Solo el organismo**, con motivo obligatorio | Nunca por lo que diga la IA. De `DERIVADO` se puede ir directo a cualquiera de los dos |
+
+**Qué cambia en el sistema**
+- Se **retiran** las dos transiciones por inferencia de la IA (`EN_ANALISIS → RESUELTO` y `→ DESESTIMADO`).
+- `persist_rag_analysis` (RAG): «asistencia» y toda vulnerabilidad social pasan a `INFORMADO`. **«Fuera de alcance» ya no cierra** el reporte: queda en `EN_ANALISIS` hasta que lo revise una persona (**propuesta de Matías**, el PO no la había definido).
+- Escenario 4 del ticket (no comunicar «resuelto» por inferencia de la IA): **cubierto**.
+- La app muestra `Informado`, `Escalado a otro organismo` y `En discrepancia`; `INFORMADO` cuenta como cerrado y su notificación dice «Te informamos el canal que corresponde».
+- **Datos de prueba** (el PO confirmó que todos los reportes actuales lo son): los `RESUELTO` sin actuación de un organismo pasan a `INFORMADO` (los 20), y los `DESESTIMADO` cerrados por la IA vuelven a `EN_ANALISIS`. Cada corrección deja su historial (evento `CORRECCION_PO_H2`). Los `DERIVADO` no se tocan.
+
+**Lo que el PO no definió** (cargado como propuesta, marcado en `report_state_transitions.approved_by`): las salidas de `ESCALADO` y `EN_DISCREPANCIA` (a `RESUELTO`, `DESESTIMADO` y entre ellos). Y qué hacer con «fuera de alcance» (ver arriba).
+
+**Verificación:** `scripts/rep2502/prueba_local_estados_po.sql` (Postgres local con esquema de reemplazo; 28 aserciones, incluida una segunda corrida de la migración) y `src/test/Rep2502EstadosDefinidosPorElPO.test.js` (16 tests).

@@ -23,7 +23,7 @@ import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/r
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
 import { ReportVisualVerification } from '../components/report/ReportVisualVerification';
 import { StatusPill } from '../components/report/StatusPill';
-import { buildTimeline, formatReportCode, getStatusConfig, normalizeReportState } from '../components/report/reportStatus';
+import { buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
 import { useReportImageAnalysis } from '../hooks/useReportImageAnalysis';
 import { useReportStateLive } from '../hooks/useReportStateLive';
@@ -312,7 +312,7 @@ export const ReportDetailPage = () => {
     (typeof report.latitud === 'number'
       ? `${report.latitud.toFixed(4)}, ${report.longitud.toFixed(4)}`
       : 'Ubicación no disponible');
-  const isClosed = state === 'resuelto' || state === 'descartado';
+  const isClosed = isClosedState(state);
   const reportCode = formatReportCode(report.id);
   const categoryName = report.services?.service_name || 'Sin categoría';
   // Tres o más evidencias no entran prolijas en la grilla de dos columnas
