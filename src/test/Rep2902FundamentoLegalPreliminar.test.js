@@ -104,8 +104,17 @@ describe('REP-2902 · buildLegalFoundationText', () => {
     expect(text).toMatch(/Decreto-ley 6769\/58 — Ley Orgánica de las Municipalidades \(Provincia de Buenos Aires\)/i);
     expect(text).toMatch(/Fuente: https:\/\/normas\.gba\.gob\.ar\/documentos\/OVG48SW0\.html \(verificada el 2026-09-28\)/);
     expect(text).toMatch(/Cita textual: «competencia municipal»/);
-    expect(text).toMatch(/Fundamento técnico: La conservación de calles/);
     expect(text).toMatch(/Jurisdicción del reporte: Gerli, Avellaneda, Buenos Aires/);
+  });
+
+  it('UT-2902-06b (H-4, opción C): viaja norma, artículo, cita textual y fuente; el resumen técnico de la IA no viaja', () => {
+    const text = buildLegalFoundationText(verified);
+    expect(text).toMatch(/Norma: /);
+    expect(text).toMatch(/Cita textual: «/);
+    expect(text).toMatch(/Fuente: https?:\/\//);
+    expect(text).toMatch(/preliminar generado con asistencia de inteligencia artificial/i);
+    expect(text).not.toMatch(/Fundamento técnico/);
+    expect(text).not.toMatch(/La conservación de calles es competencia del municipio/);
   });
 
   it('UT-2902-07 (escenario 2): sin fundamento verificado lo dice y NO incluye ningún texto jurídico', () => {
