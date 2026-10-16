@@ -312,7 +312,7 @@ export const AppRoutes = () => {
       />
       <Route
         path="/municipalidad/plan"
-        element={<Navigate to="/municipios#planes" replace />}
+        element={<Navigate to="/municipios" replace />}
       />
       {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
       <Route path="/acceso-restringido" element={<ForbiddenPage />} />
