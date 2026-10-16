@@ -89,8 +89,10 @@ const GENERATION_MODEL = 'gemini-3.8-flash';
 // "fundamentado con salvedad" (cita la norma y aclara que aplica si no cuentan con el permiso) y no
 // "indeterminado". Es la misma lógica de la regla de excepciones de v3. Criterio de medición del PO: al menos
 // 9 de 10 corridas con el estado esperado, sin romper D4 (baches en CABA: derivación), ni los reclamos sin
-// conducta ni norma aplicable, ni Vulnerabilidad social, y con las mismas citas. SIN MEDIR TODAVÍA: correr
-// scripts/rag-local-dev/rep-diag-generacion (--caso D5-CABA-1 --corridas 10) antes de desplegar.
+// conducta ni norma aplicable, ni Vulnerabilidad social, y con las mismas citas. MEDIDO el 13/10/2026 con
+// scripts/rag-local-dev/rep-diag-generacion (mismo contexto congelado, temperatura 0, 10 corridas): D5-CABA-1 pasó de
+// 3 de 10 "fundamentado" (v4) a 10 de 10 (v5), con el mismo conjunto de citas; D4-CABA-INFRA no cambia (10 de 10
+// "sin_normativa" con v4 y con v5).
 const PROMPT_VERSION = 'v5';
 // P-06 (ronda 4) fijaba esto en el default de la API a propósito. REP-3795 lo cambia:
 // el Punto 5 del diagnóstico (docs/sprint14/RAG_diagnostico_puntos_rotos.docx) muestra el
