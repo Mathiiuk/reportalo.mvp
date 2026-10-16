@@ -1,9 +1,9 @@
 # REP-3828 (D8) · Cola y tiempos de la verificación visual
 
-**Fecha de la medición:** 13/10/2026 · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
+**Fecha de la medición:** 13/10/2026 · **Actualizado:** 16/10/2026 con el lote controlado (sección 8) · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
 **Responsable:** Matías · **Script reproducible:** [`scripts/rep3828/medicion_cola_visual.sql`](../scripts/rep3828/medicion_cola_visual.sql) (solo lectura)
 
-> **Estado:** primera pasada hecha con los datos que ya existen en staging. **Faltan los casos controlados de 2 y 4 fotos** (hay 2 reportes de 2 fotos y 1 de 4, todos de la batería de Hernán del 07/10). Ver «Qué falta».
+> **Estado (16/10/2026):** medición **completa**. Iván cargó los 15 casos controlados (lote `REP-3828-QA-01`, 5 de 1 foto, 5 de 2 y 5 de 4) y los validó en REP-3833. **Resultado (sección 8):** después del alta, la verificación visual **no depende de la cantidad de fotos** (las llamadas salen juntas, ~3 s cada una, 0 fallas en 35). La espera del cron (0 a 60 s) depende del segundo en que cae el alta, no del lote. **El cuello de botella de 4 fotos está antes del alta**: la anonimización secuencial (~11 s por foto) supera los 45 s de la pantalla y el reporte se crea ~2:30 min después (O-01 de QA). Las secciones 1 a 6 son la primera pasada del 13/10 y se conservan como estaban.
 
 ---
 
@@ -80,3 +80,71 @@ La hipótesis de Hernán (la anonimización de 4 fotos tarda más de 2 minutos) 
 1. Abrir el SQL Editor de staging y ejecutar `scripts/rep3828/medicion_cola_visual.sql` (las 4 consultas son de solo lectura).
 2. Para un lote de QA, acotar con `visual_qa_cases` (hay una nota en el script).
 3. Contrastar con el export de REP-3822 por `report_id`.
+
+---
+
+## 8. Lote controlado `REP-3828-QA-01` (16/10/2026)
+
+**Quién y cuándo:** cargado por Iván Juárez (QA) el 16/10/2026 entre las 04:10 y las 04:28 UTC, según el guion (`docs/REP-3828_Guion_casos_controlados_2_y_4_fotos.md`): mismo texto, Ambiente, Gerli, mismo pin, escritorio 1366×768, conexión normal, 25 s entre envíos. Los tiempos del navegador y la validación funcional están en su informe: [Regresión de evidencia, ubicación y D7-D8 (REP-3833)](https://unlz2026.atlassian.net/wiki/spaces/Reportalo/pages/157712389), anexos A y B. Esta sección agrega lo que mide la base **después del alta**, con la consulta 5 del script acotada a los 15 códigos (control del PASO 1: un reporte por código y la cantidad de fotos esperada en los 15).
+
+### 8.1 Una fila por caso (base de datos, UTC)
+
+| Caso | Fotos | Alta | Primer intento | Último resultado | Espera de cola (s) | Ejecución (s) | Total (s) | Llamada más lenta (s) | Intentos / fallidos | Tokens entrada / salida | Visual |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| S1-01 | 1 | 04:10:54 | 04:11:01 | 04:11:07 | 6,2 | 6,4 | 12,7 | 6,3 | 1 / 0 | 1.567 / 97 | coincide |
+| S1-02 | 1 | 04:13:55 | 04:14:01 | 04:14:04 | 5,7 | 2,5 | 8,2 | 2,4 | 1 / 0 | 1.567 / 97 | coincide |
+| S1-03 | 1 | 04:16:54 | 04:17:01 | 04:17:03 | 6,2 | 2,8 | 9,0 | 2,7 | 1 / 0 | 1.567 / 93 | coincide |
+| S1-04 | 1 | 04:19:55 | 04:20:01 | 04:20:05 | 6,3 | 3,4 | 9,7 | 3,3 | 1 / 0 | 1.567 / 95 | coincide |
+| S1-05 | 1 | 04:22:54 | 04:23:00 | 04:23:03 | 6,2 | 2,3 | 8,6 | 2,2 | 1 / 0 | 1.567 / 95 | coincide |
+| S2-01 | 2 | 04:11:51 | 04:12:01 | 04:12:06 | 9,1 | 5,0 | 14,2 | 4,6 | 2 / 0 | 3.123 / 203 | coincide |
+| S2-02 | 2 | 04:14:49 | 04:15:01 | 04:15:05 | 11,7 | 4,0 | 15,9 | 3,9 | 2 / 0 | 3.123 / 186 | coincide |
+| S2-03 | 2 | 04:17:51 | 04:18:00 | 04:18:04 | 8,9 | 3,4 | 12,6 | 3,4 | 2 / 0 | 3.123 / 199 | coincide |
+| S2-04 | 2 | 04:20:47 | 04:21:01 | 04:21:04 | 13,4 | 3,5 | 17,1 | 3,4 | 2 / 0 | 3.123 / 200 | coincide |
+| S2-05 | 2 | 04:23:52 | 04:24:01 | 04:24:04 | 8,3 | 2,6 | 11,1 | 2,5 | 2 / 0 | 3.123 / 203 | coincide |
+| S4-01 | 4 | 04:15:02 | 04:16:01 | 04:16:05 | **58,0** | 4,0 | **62,9** | 4,0 | 4 / 0 | 6.260 / 379 | coincide |
+| S4-02 | 4 | 04:17:54 | 04:18:00 | 04:18:12 | 5,6 | 12,1 | 18,3 | **11,9** | 4 / 0 | 6.260 / 484 | coincide |
+| S4-03 | 4 | 04:20:57 | 04:21:01 | 04:21:05 | 2,8 | 3,9 | 7,3 | 3,8 | 4 / 0 | 6.260 / 486 | coincide |
+| S4-04 | 4 | 04:23:55 | 04:24:01 | 04:24:04 | 4,8 | 2,8 | 8,2 | 2,7 | 4 / 0 | 6.260 / 492 | coincide |
+| S4-05 | 4 | 04:27:05 | 04:28:01 | 04:28:05 | **54,5** | 3,8 | **58,9** | 3,5 | 4 / 0 | 6.260 / 686 | coincide |
+
+Mismas definiciones que la sección 3: **espera de cola** = última evidencia persistida → primer intento; **ejecución** = primer intento → último resultado guardado; **total** = primera evidencia → último resultado. Modelo `gemini-3.8-flash` en las 35 llamadas.
+
+### 8.2 Resumen por tamaño de lote (medianas, con mínimo y máximo)
+
+| Fotos | Espera de cola (s) | Ejecución (s) | Total después del alta (s) | Envío → alta (navegador, QA) | Envío → resultado visual (QA) |
+|---|---|---|---|---|---|
+| 1 | 6,2 (5,7–6,3) | 2,8 (2,3–6,4) | 9,0 (8,2–12,7) | 14 s | 23 s (20–28) |
+| 2 | 9,1 (8,3–13,4) | 3,5 (2,6–5,0) | 14,2 (11,1–17,1) | 23 s | 36 s (35–38) |
+| 4 | 5,6 (2,8–58,0) | 3,9 (2,8–12,1) | 18,3 (7,3–62,9) | **2:34** | **2:43 (2:40–3:40)** |
+
+### 8.3 Lectura
+
+1. **Después del alta, la cantidad de fotos no suma tiempo.** Las fotos de un reporte se despachan juntas: entre el primer y el último intento de un mismo reporte hubo **0,1 a 1,3 s**. La ejecución queda en ~3–4 s con 1, 2 o 4 fotos. Confirma lo visto el 13/10 con el reporte D8.
+2. **La espera de cola la decide el reloj, no el lote.** El cron corre en el segundo :01 de cada minuto. Con 25 s entre envíos, casi todas las altas cayeron entre los segundos :47 y :57, justo antes del tick: esperaron 3 a 13 s. Las dos que cayeron justo después (S4-01 a las 04:15:02 y S4-05 a las 04:27:05) esperaron **58 y 54,5 s**. Por eso la fila de 4 fotos tiene el mínimo y el máximo de todo el lote: **no es un efecto del tamaño**. En uso real, la espera se reparte entre 0 y 60 s (promedio ~30 s, como en la sección 3).
+3. **Gemini respondió bien en las 35 llamadas, sin reintentos.** Una sola llamada tardó 11,9 s (S4-02); el resto, entre 2,2 y 6,3 s.
+4. **Con 4 fotos, el tiempo se pierde antes del alta.** Envío → alta: 14 s con 1 foto, 23 s con 2 y **2:34 con 4**. Según la medición de QA, la anonimización tarda ~11,3 s por foto y es secuencial: 4 fotos ≈ 49 s, más que los 45 s de la pantalla. El reporte pasa a la cola de Pendientes, que reintenta a los 60 s y vuelve a procesar todo (REP-3827, H1–H3; O-01 y O-02 de QA). La verificación visual, después, agrega solo 7 a 63 s.
+5. **Explica el caso B9-72 de Hernán (#RP-3091E5F5):** el reporte se creó, pero el ciudadano nunca vio «Reporte enviado». Es el mismo camino: la pantalla se rinde a los 45 s y el reporte entra por la cola. QA lo reprodujo en 5 de 5 casos.
+6. **Costo por foto (para REP-3822):** ~1.565 tokens de entrada y ~95–170 de salida por llamada visual, sin reintentos. **No se calculó el costo en moneda.** Con este lote, el costo crece en proporción a la cantidad de fotos (una llamada por foto); no hubo costo extra por reintentos.
+
+### 8.4 Recomendación (cuantificada, sin cambiar la arquitectura)
+
+| Tramo | Opción | Efecto esperado con 4 fotos | Costo / riesgo |
+|---|---|---|---|
+| **Antes del alta** (prioridad: es lo que ve el ciudadano) | **E · Aviso distinto** cuando el reporte entra a la cola con buena señal | No acorta el tiempo, pero deja de decir «apenas recuperes señal» cuando la señal es buena | Solo texto. Bajo |
+| | **C · Límite de la pantalla según la cantidad de fotos** (por ejemplo, 15 s por foto: 60 s con 4) | Cubre la mediana de 49 s y casi el peor caso posible con lo medido (4 × 14,3 s ≈ 57 s). El ciudadano ve «Reporte enviado» a los ~50 s en vez de caer en la cola y esperar 2:34 | Cambio chico en `ReportProcessingScreen`. Con mala señal, el ciudadano espera más antes de poder irse. **Decisión del PO** (O-01) |
+| | **F · Anonimizar de a 2 fotos a la vez** | Estimado ~23 s para 4 fotos (2 tandas de ~11 s). **No medido**: depende de cuántas ejecuciones simultáneas soporta `quarantine-anonymize` y del límite de Vision | Cambio en `quarantinePipelineService`. Medir antes de decidir |
+| **Después del alta** | **A · Mantener el cron por minuto** | 0 a 60 s hasta el resultado visual (promedio ~30 s). **No bloquea al ciudadano**: «Reporte enviado» no espera a la IA | Ninguno |
+| | B o C de la sección 4 (despachar al encolar o cron cada 10 s) | Resultado visual en ~5–15 s | Solo vale la pena si el PO quiere mostrar el resultado visual más rápido. No cambia O-01 |
+
+**Recomendación:** no tocar la verificación visual por ahora (A). Para el problema real de 4 fotos, **E y C** en un ticket nuevo, junto con O-01 y O-02 de QA (decisión del PO entre C y E, o ambas), y **medir F** antes de decidirla. La cola de la verificación visual queda descartada como causa de D8.
+
+### 8.5 Criterios de aceptación del ticket
+
+| Criterio | Estado |
+|---|---|
+| Tabla reproducible por tamaño de lote con IDs, fotos, horarios, modelo, duración desglosada, reintentos y resultado | **Hecho:** 8.1 y 8.2, más los anexos A y B del informe de QA (códigos, horarios ART, tiempos del navegador) |
+| Evidencia que ubica el cuello de botella, o diagnóstico de qué datos faltan | **Hecho:** antes del alta (anonimización secuencial y límite de 45 s); la cola visual queda descartada (8.3) |
+| Recomendación cuantificada, sin cambiar la arquitectura | **Hecho:** 8.4 |
+| QA valida que varias fotos no rompen el envío ni alteran fundamento, estado ni categoría | **Hecho:** REP-3833, APROBADO CON OBSERVACIÓN (15 de 15; 35 de 35 fotos «coincide»; 0 duplicados) |
+
+**Pendiente, fuera de este ticket:** registrar el lote en `visual_qa_cases` (PASO 2 de `scripts/rep3828/registrar_lote_qa.sql`; escribe en la base y no hace falta para esta medición), el costo en moneda (REP-3822) y la validación en iPhone/Safari (REP-3833, sección 8).
