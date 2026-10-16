@@ -19,6 +19,38 @@ const RAG_RESULT_STATUSES = ['fundamentado', 'indeterminado', 'sin_normativa', '
 /** Espejo de index.ts: colapsa espacios en blanco; NO toca mayúsculas, tildes ni puntuación. */
 const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
 
+/**
+ * Espejo de index.ts (RAG-S16, citas con elisión): se acepta una cita con "...", "…" o "[...]" solo si
+ * cada tramo es literal, en el orden de la cita, de al menos MIN_ELIDED_SEGMENT_CHARS caracteres, y lo
+ * salteado no contiene una negación ni una excepción. Ver docs/RAG-S16_citas_con_elision.md.
+ */
+const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
+const MIN_ELIDED_SEGMENT_CHARS = 15;
+const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
+
+export const quoteMatchesFragment = (quote, content) => {
+  const normalizedQuote = normalizeWhitespace(quote);
+  // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+  if (normalizedQuote === '') return false;
+  const normalizedContent = normalizeWhitespace(content);
+  if (normalizedContent.includes(normalizedQuote)) return true;
+  if (!ELISION_MARKER.test(normalizedQuote)) return false;
+
+  const segments = normalizedQuote.split(ELISION_MARKER).map((s) => s.trim()).filter((s) => s !== '');
+  if (segments.length === 0) return false;
+  let searchFrom = 0;
+  let previousEnd = null;
+  for (const segment of segments) {
+    if (segment.length < MIN_ELIDED_SEGMENT_CHARS) return false;
+    const at = normalizedContent.indexOf(segment, searchFrom);
+    if (at < 0) return false;
+    if (previousEnd !== null && ELIDED_TEXT_GUARD.test(normalizedContent.slice(previousEnd, at))) return false;
+    previousEnd = at + segment.length;
+    searchFrom = previousEnd;
+  }
+  return true;
+};
+
 /** Tope de la cita del modelo dentro de status_reason (espejo de index.ts). */
 const MAX_REJECTED_CITA_CHARS = 300;
 const truncateForReason = (text) =>
@@ -63,9 +95,7 @@ export const validateLlmAnalysis = (llmResponse, retrievedFragments, reportCateg
     if (!fragment) {
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
-    const normalizedQuote = normalizeWhitespace(cita.cita_textual);
-    // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
-    if (normalizedQuote === '' || !normalizeWhitespace(fragment.content).includes(normalizedQuote)) {
+    if (!quoteMatchesFragment(cita.cita_textual, fragment.content)) {
       // Espejo de supabase/functions/analizar-reporte/index.ts: se guarda lo que el modelo intentó citar.
       return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };
     }
