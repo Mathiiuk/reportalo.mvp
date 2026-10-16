@@ -300,12 +300,13 @@ describe('REP-2100 & REP-2101: Flujo de Autenticación, UI y Magic Link', () => 
       );
 
       expect(screen.getByText(/MUNICIPIOS/i)).toBeInTheDocument();
-      expect(screen.getByText(/Los reclamos de tus vecinos, con evidencia y encuadre legal/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Contratar Reportalo/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Solicitar una demo/i })).toBeInTheDocument();
+      expect(screen.getByText(/Los reclamos de tus usuarios, con evidencia y encuadre legal/i)).toBeInTheDocument();
+      // REP-3535: el MVP es informativo, sin CTA comerciales (detalle en MunicipiosLanding.test.jsx)
+      expect(screen.queryByText(/Contratar Reportalo/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Solicitar una demo/i)).not.toBeInTheDocument();
       expect(screen.getByText(/FOTOS ANONIMIZADAS/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ley 25.326/i)).toBeInTheDocument();
-      expect(screen.getByText(/Solo se habilitan cuentas con correo oficial del municipio./i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Ley 25.326/i).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/correo oficial del municipio/i)).not.toBeInTheDocument();
     });
   });
 });
