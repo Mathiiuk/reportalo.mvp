@@ -8,10 +8,11 @@
  * Mismo contrato { success, data, error } que reportSubmissionService.js: no
  * lanza excepciones, devuelve el error para que la pantalla decida qué mostrar.
  *
- * VISIBILIDAD (verificado contra produccion el 20/09/2026; decision de Matías 30/09/2026):
- * citizen_reports tiene una policy `lectura_publica` (rol public, qual `true`)
- * porque el mapa ciudadano necesita leer reportes ajenos, y el detalle es publico
- * para cualquier ciudadano con sesión: categoría, descripción, localidad, estado y fecha.
+ * VISIBILIDAD (decision de Matías 30/09/2026; REP-3849, 19/10/2026):
+ * el detalle de un reporte ajeno es publico para cualquier ciudadano con sesión
+ * (categoría, descripción, localidad, estado y fecha), pero sin identificar al autor.
+ * citizen_reports solo la lee el dueño (o quien atiende el reporte); el resumen ajeno
+ * sale de la vista `public_citizen_reports`, que no tiene user_id ni client_side_id.
  * Lo que sigue siendo del dueño: las fotos (este servicio no las pide para un reporte
  * ajeno), el fundamento del RAG (`citizen reads own report ai analysis`) y el historial
  * (`read own or attended`). Ver isOwnedBy.
@@ -20,6 +21,15 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 const EVIDENCE_BUCKET = 'report-evidences';
+/**
+ * REP-3849: vista con el resumen público de los reportes (sin user_id ni client_side_id). La usa todo lo que lee
+ * reportes ajenos: el mapa, el detalle de un reporte ajeno y el sondeo de estado.
+ */
+export const PUBLIC_REPORTS_VIEW = 'public_citizen_reports';
+/** Columnas del resumen que se muestran en el detalle, propio o ajeno (la vista también las tiene). */
+const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at,
+      services ( service_name ),
+      localities ( name )`;
 /** Cuánto vive una URL firmada de las fotos del reporte. Se vuelve a pedir cada vez que se abre el detalle. */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -83,27 +93,38 @@ export const getReportDetail = async (reportId, userId) => {
     return { success: false, error: 'Falta el identificador del reporte.' };
   }
 
-  const { data, error } = await supabase
-    .from('citizen_reports')
-    .select(
-      `
-      id, client_side_id, user_id, description, current_state_code,
-      latitud, longitud, created_at, updated_at,
-      services ( service_name ),
-      localities ( name )
-    `
-    )
-    .eq('id', reportId)
-    .maybeSingle();
-
-  if (error) {
-    return { success: false, error: error.message };
+  // REP-3849: primero la fila propia. La RLS de citizen_reports solo la devuelve al dueño (o a quien atiende el
+  // reporte), así que el user_id que viene acá nunca es el de otra persona. Sin sesión no hay fila propia posible.
+  let data = null;
+  if (userId) {
+    const own = await supabase
+      .from('citizen_reports')
+      .select(`id, client_side_id, user_id, ${PUBLIC_REPORT_COLUMNS}`)
+      .eq('id', reportId)
+      .maybeSingle();
+    if (own.error) {
+      return { success: false, error: own.error.message };
+    }
+    data = own.data;
   }
+
+  // Reporte ajeno: el resumen público, sin user_id ni client_side_id, y sin fotos (ni siquiera se consultan).
   if (!data) {
-    return { success: false, error: 'NOT_FOUND' };
+    const { data: publicReport, error } = await supabase
+      .from(PUBLIC_REPORTS_VIEW)
+      .select(`id, ${PUBLIC_REPORT_COLUMNS}`)
+      .eq('id', reportId)
+      .maybeSingle();
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    if (!publicReport) {
+      return { success: false, error: 'NOT_FOUND' };
+    }
+    return { success: true, data: { ...publicReport, report_images: [] } };
   }
 
-  // Reporte ajeno: sin fotos, y ni siquiera se consultan.
+  // Fila visible pero de otra persona (quien atiende el reporte): sin fotos en esta pantalla, como hasta ahora.
   if (!isOwnedBy(data, userId)) {
     return { success: true, data: { ...data, report_images: [] } };
   }
@@ -136,7 +157,7 @@ export const isOwnedBy = (report, userId) => {
 
 /**
  * Estado actual de un reporte: una sola fila por id, barata para sondear (REP-3798, estados en vivo).
- * citizen_reports es de lectura pública, así que sirve también para quien mira un reporte ajeno.
+ * Sale de la vista pública (REP-3849), así que sirve igual para el dueño y para quien mira un reporte ajeno.
  *
  * @param {string} reportId UUID de citizen_reports.id
  * @returns {Promise<{ snapshot: { current_state_code: string, updated_at: string }|null, error?: string }>}
@@ -144,7 +165,7 @@ export const isOwnedBy = (report, userId) => {
 export const getReportStateSnapshot = async (reportId) => {
   if (!isSupabaseConfigured || !reportId) return { snapshot: null, error: 'Falta el reporte.' };
   const { data, error } = await supabase
-    .from('citizen_reports')
+    .from(PUBLIC_REPORTS_VIEW)
     .select('current_state_code, updated_at')
     .eq('id', reportId)
     .maybeSingle();

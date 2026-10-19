@@ -1,0 +1,48 @@
+id: REP-3849
+external_ref: https://unlz2026.atlassian.net/browse/REP-3849
+title: 'O-03: ocultar user_id de reportes ajenos (vista public_citizen_reports)'
+type: fix
+status: READY_FOR_PR
+priority: high
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/migrations/20261019120000_rep3849_vista_publica_sin_user_id.sql
+    - src/services/reportDetailService.js
+    - src/services/mapReportsService.js
+  environments:
+    - local
+requirements:
+  - >-
+    Un ciudadano no dueño ve el resumen público de un reporte ajeno sin user_id
+    ni client_side_id, aunque pida select=user_id por la API (decisión PO 16/10)
+  - >-
+    Vista public_citizen_reports con proyección explícita, solo para usuarios
+    con sesión
+  - >-
+    citizen_reports queda para el dueño o quien atiende el reporte; se conserva
+    user_id para autoría y autorización
+  - El cliente no depende del user_id público para mostrar reportes ajenos
+acceptance_criteria:
+  - >-
+    Con dos cuentas, B obtiene el resumen de A sin user_id ni otro identificador
+    del autor
+  - El dueño sigue viendo y administrando sus reportes y su evidencia protegida
+  - RLS sigue negando fotos, fundamento IA y datos identificatorios a terceros
+  - Mapa, detalle y Mis reportes sin cambios visibles
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test

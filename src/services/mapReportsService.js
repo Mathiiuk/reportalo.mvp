@@ -8,13 +8,14 @@
  * navegaba a un detalle que devolvía «No encontramos este reporte» (observación H-36
  * del handoff del UJ v3.3).
  *
- * La consulta es pública a propósito: `citizen_reports` tiene la policy
- * `lectura_publica`, justamente porque el mapa muestra los reclamos de todo el barrio,
- * no solo los propios. Por eso acá NO se trae nada sensible: ni `user_id`, ni el
- * análisis jurídico, ni las fotos. El detalle, que sí es privado, valida pertenencia
- * por su cuenta.
+ * La consulta muestra los reclamos de todo el barrio, no solo los propios. Por eso lee
+ * la vista `public_citizen_reports` (REP-3849): citizen_reports ya no es de lectura
+ * pública, y la vista no tiene `user_id` ni `client_side_id`, así que la API no puede
+ * entregar quién hizo cada reporte aunque se lo pidan. Tampoco el análisis jurídico ni
+ * las fotos. El detalle, que sí es privado, valida pertenencia por su cuenta.
  */
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { PUBLIC_REPORTS_VIEW } from './reportDetailService';
 import { getStatusConfig } from '../components/report/reportStatus';
 import { getCategoryTone } from '../components/report/categoryTone';
 
@@ -186,7 +187,7 @@ export const getPublicMapReports = async ({ limit = MAP_REPORTS_LIMIT, bounds = 
 
   try {
     let query = supabase
-      .from('citizen_reports')
+      .from(PUBLIC_REPORTS_VIEW)
       .select(
         'id, description, latitud, longitud, current_state_code, created_at, services ( service_name ), localities ( name )'
       );
