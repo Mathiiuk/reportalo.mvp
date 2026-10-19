@@ -42,6 +42,13 @@ const BUCKET_QUARANTINE = 'evidence-quarantine';
 // Nombre del bucket de evidencias públicas protegidas
 const BUCKET_PUBLIC_EVIDENCES = 'report-evidences';
 
+/**
+ * REP-3848: la foto es privada y su respuesta no se puede guardar en la caché HTTP del navegador (otra cuenta en el
+ * mismo navegador la recibía desde la caché). supabase-js antepone `max-age=`: queda `max-age=0, private, no-store`.
+ * Mismo valor que PRIVATE_EVIDENCE_CACHE_CONTROL en src/services/quarantinePipelineService.js.
+ */
+const PRIVATE_EVIDENCE_CACHE_CONTROL = '0, private, no-store';
+
 /** Cuánto vive la URL firmada de la vista previa. */
 const PREVIEW_URL_TTL_SECONDS = 60 * 60;
 
@@ -162,6 +169,7 @@ Deno.serve(async (req: Request) => {
       .upload(finalFileName, protectedEvidence.bytes, {
         contentType: 'image/jpeg',
         upsert: true,
+        cacheControl: PRIVATE_EVIDENCE_CACHE_CONTROL,
       });
 
     if (uploadError) {

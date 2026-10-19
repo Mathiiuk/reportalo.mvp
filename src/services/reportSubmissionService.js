@@ -12,7 +12,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import { BUCKET_PUBLIC_EVIDENCES } from './quarantinePipelineService';
+import { BUCKET_PUBLIC_EVIDENCES, PRIVATE_EVIDENCE_CACHE_CONTROL } from './quarantinePipelineService';
 import { validateDescription } from './reportDescription';
 
 /**
@@ -326,7 +326,8 @@ export const attachReportEvidence = async ({ reportId, sanitizedUrl }) => {
   const storagePath = `${reportId}/${fileId}.jpg`;
   const { error: uploadError } = await supabase.storage
     .from(BUCKET_PUBLIC_EVIDENCES)
-    .upload(storagePath, blob, { contentType: 'image/jpeg', upsert: false });
+    // REP-3848: evidencia privada, sin caché HTTP reutilizable entre sesiones
+    .upload(storagePath, blob, { contentType: 'image/jpeg', upsert: false, cacheControl: PRIVATE_EVIDENCE_CACHE_CONTROL });
 
   if (uploadError) {
     return { success: false, error: `No se pudo subir la evidencia: ${uploadError.message}` };
