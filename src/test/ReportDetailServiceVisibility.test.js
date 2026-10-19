@@ -18,6 +18,11 @@ const armarSupabase = () => {
     if (table === 'citizen_reports') {
       return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: REPORT, error: null }) }) }) };
     }
+    // REP-3849: sin sesión (o sin fila propia) el resumen sale de la vista pública, sin user_id
+    if (table === 'public_citizen_reports') {
+      const { user_id: _omitido, ...publicReport } = REPORT;
+      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: publicReport, error: null }) }) }) };
+    }
     if (table === 'report_images') {
       return { select: () => ({ eq: async () => ({ data: [{ id: 'i1', image_url: 'https://x/1.jpg' }], error: null }) }) };
     }
