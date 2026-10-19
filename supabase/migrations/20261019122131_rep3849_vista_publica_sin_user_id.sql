@@ -37,6 +37,13 @@
 --
 -- ORDEN DE APLICACIÓN: primero publicar el frontend que lee public_citizen_reports, después esta migración. Con la
 -- migración aplicada y un frontend viejo, el mapa quedaría vacío (solo verías tus reportes) hasta actualizar la app.
+--
+-- APLICADA en la base Reportalo el 19/10/2026, con aprobación de Matías, después de verificar que staging servía el
+-- frontend nuevo (commit d58eb7c). La versión quedó registrada como 20261019122131; el archivo se renombró para
+-- coincidir. Verificado con sesiones simuladas: B (tercero) ve 0 filas de A en citizen_reports y el resumen en la
+-- vista (sin user_id); A conserva su fila, fotos, historial y fundamento; anon ve 0 filas y no puede leer la vista.
+-- Por REST con la clave pública: `citizen_reports?select=user_id` → [] y `public_citizen_reports?select=user_id` →
+-- columna inexistente.
 
 begin;
 

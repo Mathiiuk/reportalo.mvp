@@ -9,7 +9,7 @@ base_branch: staging
 scope:
   project: reportalo.mvp
   modules:
-    - supabase/migrations/20261019130000_rep3848_evidencias_sin_cache_http.sql
+    - supabase/migrations/20261019122518_rep3848_evidencias_sin_cache_http.sql
     - supabase/functions/quarantine-anonymize/index.ts
     - src/services/quarantinePipelineService.js
     - src/services/reportSubmissionService.js

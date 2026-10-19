@@ -9,7 +9,7 @@ base_branch: staging
 scope:
   project: reportalo.mvp
   modules:
-    - supabase/migrations/20261019120000_rep3849_vista_publica_sin_user_id.sql
+    - supabase/migrations/20261019122131_rep3849_vista_publica_sin_user_id.sql
     - src/services/reportDetailService.js
     - src/services/mapReportsService.js
   environments:

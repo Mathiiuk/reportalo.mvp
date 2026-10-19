@@ -42,7 +42,7 @@ describe('REP-3848 · evidencia privada sin caché HTTP', () => {
   });
 
   it('UT-3848-05: la migración reescribe el Cache-Control de los objetos ya subidos en los dos buckets privados', () => {
-    const code = sinComentarios(leer('supabase/migrations/20261019130000_rep3848_evidencias_sin_cache_http.sql'));
+    const code = sinComentarios(leer('supabase/migrations/20261019122518_rep3848_evidencias_sin_cache_http.sql'));
     expect(code).toMatch(/update storage\.objects/);
     expect(code).toContain(`'"max-age=${PRIVATE_EVIDENCE_CACHE_CONTROL}"'::jsonb`);
     expect(code).toMatch(/bucket_id in \('report-evidences', 'evidence-quarantine'\)/);

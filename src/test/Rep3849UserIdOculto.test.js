@@ -106,7 +106,7 @@ describe('REP-3849 · el user_id del autor no sale hacia terceros', () => {
 
 describe('REP-3849 · migración', () => {
   const sql = readFileSync(
-    resolve(__dirname, '../../supabase/migrations/20261019120000_rep3849_vista_publica_sin_user_id.sql'),
+    resolve(__dirname, '../../supabase/migrations/20261019122131_rep3849_vista_publica_sin_user_id.sql'),
     'utf8'
   );
   // Solo el código, sin los comentarios que explican la decisión

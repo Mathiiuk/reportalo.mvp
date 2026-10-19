@@ -24,6 +24,11 @@
 --
 -- ORDEN DE APLICACIÓN: indistinto respecto del frontend. Las fotos que un navegador ya tenga guardadas con el valor
 -- viejo vencen solas en menos de una hora (max-age=3600).
+--
+-- APLICADA en la base Reportalo el 19/10/2026, con aprobación de Matías, después de redesplegar quarantine-anonymize
+-- (versión 30, verify_jwt = false como antes). La versión quedó registrada como 20261019122518; el archivo se renombró
+-- para coincidir. Verificado: los 508 objetos de report-evidences quedaron con 'max-age=0, private, no-store', el
+-- bucket sigue privado y la policy de lectura sin cambios.
 
 begin;
 
