@@ -41,6 +41,15 @@ export const BUCKET_QUARANTINE = 'evidence-quarantine';
 export const BUCKET_PUBLIC_EVIDENCES = 'report-evidences';
 
 /**
+ * REP-3848 (O-02 de la QA REP-3832): las fotos de los dos buckets son privadas, así que su respuesta no se puede
+ * guardar en la caché HTTP del navegador. Con el `max-age=3600` por defecto, la foto que bajó el dueño se le servía
+ * desde la caché a otra cuenta en el mismo navegador, sin preguntarle al servidor.
+ * supabase-js antepone `max-age=` a este valor, así que el objeto queda con `Cache-Control: max-age=0, private,
+ * no-store` (la Edge Function quarantine-anonymize usa el mismo valor).
+ */
+export const PRIVATE_EVIDENCE_CACHE_CONTROL = '0, private, no-store';
+
+/**
  * Función para sanitizar metadatos EXIF en el lado cliente (utilidad de respaldo para entornos desconectados).
  * @param {Blob|File} file Objeto de archivo original
  * @returns {Promise<Blob>} Blob limpio sin metadatos
@@ -318,6 +327,8 @@ export const uploadToQuarantine = async (file, clientSideId, options = {}) => {
           .from(BUCKET_QUARANTINE)
           .upload(quarantinePath, file, {
             contentType: file.type || 'image/jpeg',
+            // REP-3848: la foto original (sin difuminar) no se guarda en la caché del navegador
+            cacheControl: PRIVATE_EVIDENCE_CACHE_CONTROL,
           });
 
         if (!error) {
