@@ -67,7 +67,6 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
         <ReportSuccessScreen
           reportCode="#RP-2048"
           category={{ name: 'Tránsito', color: '#F78E35', bgLight: '#FFF2E6' }}
-          agencyName="Municipio de Avellaneda"
           onViewReport={handleViewReport}
           onReturnToMap={handleReturnToMap}
           onViewTerms={handleViewTerms}
@@ -86,7 +85,9 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       // Card 1: ID, Categoría y Organismo
       expect(screen.getByTestId('success-report-code')).toHaveTextContent('#RP-2048');
       expect(screen.getByText('TRÁNSITO')).toBeInTheDocument();
-      expect(screen.getByText('Municipio de Avellaneda')).toBeInTheDocument();
+      // REP-3845: el organismo sale de route_report; sin reporte persistido no se muestra ninguno supuesto
+      expect(screen.getByTestId('success-destination')).toHaveAttribute('data-kind', 'no_disponible');
+      expect(screen.queryByText('Municipio de Avellaneda')).not.toBeInTheDocument();
 
       // Card 2: Timeline
       expect(screen.getByText('Enviado')).toBeInTheDocument();

@@ -13,6 +13,7 @@ import { getAllPendingSyncReports, deleteDraftReport, recordDraftSyncError } fro
 import { processAllEvidencesThroughQuarantine, describeProtectionFailure } from './quarantinePipelineService';
 import { resolveServiceDbId } from './categoriesService';
 import { validateDescription } from './reportDescription';
+import { routeReport } from './reportRoutingService';
 import {
   createCitizenReport,
   attachReportEvidence,
@@ -164,6 +165,9 @@ export const sendPendingDraft = async (draft, userId) => {
     }
 
     await deleteDraftReport(draft.client_side_id);
+    // REP-3845 (E5): un reporte que se crea al recuperar la señal también queda ruteado. route_report es idempotente
+    // y su falla no deshace el envío: el destino se puede volver a pedir.
+    await routeReport(creation.data.id);
     return { success: true, reportId: creation.data.id };
   } catch (err) {
     return failWith(draft, { code: 'UNEXPECTED', kind: 'retry', message: err?.message || 'Error inesperado al enviar el reporte.' });

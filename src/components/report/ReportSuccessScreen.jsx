@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Landmark, Ban, ShieldCheck } from 'lucide-react';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 import { useReportStateLive } from '../../hooks/useReportStateLive';
 import { normalizeReportState } from './reportStatus';
+import { routeReport, describeRoutingDestination } from '../../services/reportRoutingService';
 
 // El acuse se entera más rápido que el detalle: el paso a «En revisión» ocurre a los pocos segundos del envío
 const SUCCESS_POLL_INTERVAL_MS = 5000;
@@ -15,6 +16,22 @@ const TRACKER_STEPS = [
   { key: 'notificado', label: 'Notificado al responsable' },
   { key: 'resuelto', label: 'Resuelto' },
 ];
+
+// REP-3845: aclaración que acompaña al destino según lo que resolvió route_report. Nunca se afirma que el reporte
+// se entregó: el routing calcula el destino, no envía nada (modo borrador, REP-2801).
+const DESTINATION_NOTE = {
+  consultando: 'Buscando el organismo que corresponde…',
+  sin_destino: 'Destino sin verificar: es el canal general de la jurisdicción, no un receptor confirmado.',
+  sin_destino_vacio: 'No hay un organismo verificado para este reporte.',
+  no_resuelto: 'Todavía no está definido el organismo: hay más de uno posible.',
+  fuera_del_piloto: 'Por ahora Reportalo cubre CABA y Avellaneda: este reporte no se asocia a ningún organismo.',
+  no_disponible: 'No pudimos consultar el destino en este momento.',
+};
+
+const destinationNote = (destination) => {
+  if (destination.kind === 'sin_destino' && !destination.organismo) return DESTINATION_NOTE.sin_destino_vacio;
+  return DESTINATION_NOTE[destination.kind] ?? null;
+};
 
 const formatClock = (date) =>
   date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -30,6 +47,8 @@ const formatClock = (date) =>
  *
  * `reportId` (opcional): el id del reporte recién creado. Con él, el tracker avanza solo cuando el estado
  * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Enviado» a «En revisión» (REP-3798).
+ * También con él se pide el destino a route_report (REP-3845): organismo y canal salen del catálogo aprobado,
+ * nunca de la localidad escrita en pantalla. Sin reportId no se muestra ningún organismo.
  *
  * `desktopTopBar` (opcional): la barra superior global que D16 muestra sobre el acuse. La pasa
  * quien monta la pantalla (NewReportPage) para que este componente no dependa del router
@@ -39,7 +58,6 @@ export const ReportSuccessScreen = ({
   reportId = null,
   reportCode = '#RP-2048',
   category,
-  agencyName = 'Municipio de Avellaneda',
   onViewReport,
   onReturnToMap,
   onViewTerms,
@@ -58,6 +76,23 @@ export const ReportSuccessScreen = ({
     onUpdate: ({ stateCode: next }) => setStateCode(next),
   });
   // Pasos alcanzados: hasta el estado actual (un cierre como Descartado deja el tracker donde estaba)
+  // REP-3845: destino real del reporte (route_report). Mientras responde, no se muestra ningún organismo supuesto.
+  const [destination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
+  useEffect(() => {
+    if (!reportId) {
+      setDestination({ kind: 'no_disponible' });
+      return undefined;
+    }
+    let isMounted = true;
+    setDestination({ kind: 'consultando' });
+    routeReport(reportId).then((result) => {
+      if (isMounted) setDestination(describeRoutingDestination(result.routing));
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [reportId]);
+  const note = destinationNote(destination);
   const reachedIndex = Math.max(0, TRACKER_STEPS.findIndex((step) => step.key === normalizeReportState(stateCode)));
   const timeLabel = `Hoy ${formatClock(new Date())}`;
   const categoryName = (category?.name || 'Tránsito').toUpperCase();
@@ -120,9 +155,26 @@ export const ReportSuccessScreen = ({
                   </span>
                 </div>
                 <div aria-hidden="true" className="my-3 h-px bg-rep-divider desktop:hidden" />
-                <div className="flex items-center gap-2 text-rep-body font-semibold text-rep-ink-body desktop:ml-auto">
-                  <Landmark aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-rep-ink-muted" strokeWidth={2} />
-                  <span>{agencyName}</span>
+                <div
+                  data-testid="success-destination"
+                  data-kind={destination.kind}
+                  aria-live="polite"
+                  className="flex items-start gap-2 text-rep-body desktop:ml-auto desktop:max-w-[60%]"
+                >
+                  <Landmark aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-rep-ink-muted" strokeWidth={2} />
+                  <span className="flex min-w-0 flex-col">
+                    {destination.organismo && (
+                      <span data-testid="success-destination-agency" className="font-semibold text-rep-ink-body">
+                        {destination.organismo}
+                      </span>
+                    )}
+                    {destination.canal && (
+                      <span data-testid="success-destination-channel" className="text-rep-label font-medium text-rep-ink-muted">
+                        {destination.canal}
+                      </span>
+                    )}
+                    {note && <span className="text-rep-label font-medium text-rep-ink-muted">{note}</span>}
+                  </span>
                 </div>
               </section>
 

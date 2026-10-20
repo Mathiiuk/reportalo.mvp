@@ -1,0 +1,50 @@
+id: REP-3845
+external_ref: https://unlz2026.atlassian.net/browse/REP-3845
+title: «Reporte enviado» muestra el routing real (sin organismo hardcodeado)
+type: fix
+status: READY_FOR_PR
+priority: high
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/services/reportRoutingService.js
+    - src/components/report/ReportSuccessScreen.jsx
+    - src/pages/NewReportPage.jsx
+    - src/services/pendingSyncService.js
+  environments:
+    - local
+requirements:
+  - >-
+    Al persistir el reporte se ejecuta route_report (REP-2800/2801) y queda
+    traza en report_routing
+  - >-
+    «Reporte enviado» muestra organismo y canal de route_report, sin hardcodeos
+    ni rectángulos GPS
+  - >-
+    Sin destino verificado, fuera del piloto y sin respuesta se muestran sin
+    inventar organismo
+  - Los reportes de la cola sin conexión se rutean al sincronizar (idempotente)
+acceptance_criteria:
+  - E1 routing integrado y traza en report_routing
+  - E2 sin destino verificado con salvedad visible
+  - E3 fuera del piloto sin organismo
+  - >-
+    E4 no se cruzan jurisdicciones (la jurisdicción la decide el backend por
+    locality_id)
+  - E5 offline sin organismo supuesto; routing al sincronizar
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
