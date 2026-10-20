@@ -599,10 +599,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     persistReportRef.current(processedEvidences);
   }, []);
 
-  // Determinar agencia receptora según ubicación
-  const determinedAgency = activeAddressLabel?.toLowerCase().includes('avellaneda')
-    ? 'Municipio de Avellaneda'
-    : 'Gobierno de la Ciudad de Buenos Aires';
+  // REP-3845: el organismo ya no se deduce acá por el nombre de la localidad (los rectángulos de CABA y Avellaneda se
+  // superponen y cruzaban jurisdicciones). «Reporte enviado» lo pide a route_report con el id del reporte.
 
 
   return (
@@ -750,7 +748,6 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               reportId={persistedReport?.id || null}
               reportCode={persistedReport?.reportCode || '#RP-2048'}
               category={selectedCategory}
-              agencyName={determinedAgency}
               onViewReport={() => {
                 clearEvidence();
                 // REP-3789: "Ver el reporte" abre el detalle del reporte recien
