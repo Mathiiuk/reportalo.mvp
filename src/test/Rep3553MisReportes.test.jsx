@@ -84,16 +84,16 @@ describe('REP-3553: Mis reportes', () => {
     expect(screen.getByTestId('donde')).toHaveTextContent('/reportes/00000001-aaaa-4bbb-8ccc-000000000001');
   });
 
-  it('UT-V3553-03: los filtros cuentan y separan «En curso» de «Resueltos»', async () => {
+  it('UT-V3553-03: los filtros cuentan y separan «En curso» de «Concluidos» (REP-3847)', async () => {
     getMyReportsMock.mockResolvedValue({ success: true, reports: [fila(1, 'RECIBIDO'), fila(2, 'EN_ANALISIS'), fila(3, 'RESUELTO')] });
     montar();
     await screen.findAllByTestId('report-row');
 
     expect(screen.getByRole('button', { name: 'Todos · 3' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'En curso · 2' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Resueltos · 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Concluidos · 1' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Resueltos · 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Concluidos · 1' }));
     expect(screen.getAllByTestId('report-row')).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'En curso · 2' }));

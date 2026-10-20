@@ -66,7 +66,7 @@ export const ProfilePage = () => {
           setReportStats((prev) => ({
             ...prev,
             total: reports.length,
-            // Mismo criterio que «Resueltos» en Mis reportes, para que los números coincidan
+            // Mismo criterio que «Concluidos» en Mis reportes, para que los números coincidan (REP-3847)
             closed: reports.filter((r) => isClosedState(r.current_state_code)).length,
           }));
         })
@@ -160,7 +160,7 @@ export const ProfilePage = () => {
         consentimiento_terminos: hasAcceptedTerms ? termsRecord : null,
         estadisticas: {
           reportes_totales: reportStats.total,
-          resueltos: reportStats.closed,
+          concluidos: reportStats.closed,
           sin_enviar: reportStats.pending,
         },
         exportado_el: new Date().toISOString(),
@@ -253,7 +253,7 @@ export const ProfilePage = () => {
                     {formatStat(reportStats.closed)}
                   </div>
                   <div className="font-bold text-[8.5px] text-rep-ink-muted mt-1 md:mt-1.5 tracking-[0.3px] uppercase">
-                    RESUELTOS
+                    CONCLUIDOS
                   </div>
                 </div>
 

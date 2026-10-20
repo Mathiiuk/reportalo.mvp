@@ -67,7 +67,7 @@ describe('REP-3532: Pantalla de Perfil Ciudadano y Gestión de Notificaciones PW
     await waitFor(() => expect(screen.getByTestId('profile-stat-total')).toHaveTextContent('4'));
     expect(screen.getByText('REPORTES')).toBeInTheDocument();
     expect(screen.getByTestId('profile-stat-closed')).toHaveTextContent('2');
-    expect(screen.getByText('RESUELTOS')).toBeInTheDocument();
+    expect(screen.getByText('CONCLUIDOS')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('profile-stat-pending')).toHaveTextContent('1'));
     expect(screen.getByText('SIN ENVIAR')).toBeInTheDocument();
     expect(getMyReportsMock).toHaveBeenCalledWith('usr-123');
