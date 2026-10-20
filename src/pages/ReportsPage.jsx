@@ -17,7 +17,9 @@ import { getAllPendingSyncReports } from '../services/offlineStorageService';
 // del §10 del UJ v3.3. Antes salía de REPORT_STATE_META, que hacía lo mismo pero
 // en paralelo: mantener dos taxonomías era pedir que divergieran, como ya había
 // pasado antes en este archivo.
-const CLOSED_BADGE = { status: 'Resueltos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
+// REP-3847: el grupo de cerrados se llama «Concluidos», no «Resueltos». Agrupa INFORMADO, RESUELTO y DESESTIMADO
+// (CLOSED_STATES): «Resuelto» queda para la insignia de un reporte que un organismo cerró como RESUELTO.
+const CLOSED_BADGE = { status: 'Concluidos', statusColor: 'bg-[#E3F5EC] text-[#2E9E6B]' };
 const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A00]' };
 
 // Cada cuánto se vuelve a pedir la lista mientras haya reportes abiertos (estados en vivo, REP-3798)
@@ -134,13 +136,13 @@ export const ReportsPage = () => {
   const filteredReports = currentReports.filter((r) => {
     if (activeFilter === 'todos') return true;
     if (activeFilter === 'en curso') return r.status === 'En curso';
-    if (activeFilter === 'resueltos') return r.status === 'Resueltos';
+    if (activeFilter === 'concluidos') return r.status === 'Concluidos';
     return true;
   });
 
   const countTodos = currentReports.length;
   const countEnCurso = currentReports.filter((r) => r.status === 'En curso').length;
-  const countResueltos = currentReports.filter((r) => r.status === 'Resueltos').length;
+  const countConcluidos = currentReports.filter((r) => r.status === 'Concluidos').length;
 
   const draftTitle = (draft) => {
     const text = String(draft.description || '').trim().split('\n')[0];
@@ -148,7 +150,7 @@ export const ReportsPage = () => {
     return text.length > 48 ? `${text.slice(0, 47)}…` : text;
   };
 
-  const showDrafts = pendingDrafts.length > 0 && activeFilter !== 'resueltos';
+  const showDrafts = pendingDrafts.length > 0 && activeFilter !== 'concluidos';
 
   return (
     <AppLayout activeTab="reportes">
@@ -163,7 +165,7 @@ export const ReportsPage = () => {
             {[
               { key: 'todos', label: 'Todos', count: countTodos },
               { key: 'en curso', label: 'En curso', count: countEnCurso },
-              { key: 'resueltos', label: 'Resueltos', count: countResueltos },
+              { key: 'concluidos', label: 'Concluidos', count: countConcluidos },
             ].map((filter) => (
               <button
                 key={filter.key}
