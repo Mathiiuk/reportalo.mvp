@@ -1,0 +1,22 @@
+{
+  "set_version": "prueba-0",
+  "nota": "Fixture de los tests de REP-3859: casos inventados, no es el set de REP-3858.",
+  "casos": [
+    {
+      "id": "T-01",
+      "categoria": "TRANSITO",
+      "localidad": "Balvanera",
+      "provincia": "Ciudad Autónoma de Buenos Aires",
+      "descripcion": "Auto estacionado sobre la rampa de discapacitados.",
+      "n1": ["a439a0c1-d577-4ce0-adb9-ec14cd275b89"]
+    },
+    {
+      "id": "T-02",
+      "categoria": "VULNERABILIDAD_SOCIAL",
+      "localidad_id": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "descripcion": "Persona durmiendo en la vereda con frío.",
+      "universo": "B",
+      "pendiente_po": true
+    }
+  ]
+}
