@@ -56,7 +56,8 @@ const STATE_CONFIG = {
     badge: 'Asistencia',
     badgeTone: 'bg-rep-success-soft text-rep-success',
     title: 'Situación de asistencia',
-    message: 'Tu reporte va a ser derivado al área de asistencia social correspondiente.',
+    // REP-3841 (O-06): antes decía «va a ser derivado al área de asistencia social», y nadie deriva nada.
+    message: 'Reportalo no deriva este reporte a ningún organismo. Para que la persona reciba asistencia, avisá al canal oficial que corresponde.',
   },
 };
 
@@ -82,7 +83,46 @@ const PanelHeader = ({ icon: Icon, iconTone, title, badge, badgeTone, pulse = fa
   </div>
 );
 
-export const ReportAiAnalysisPanel = ({ analysis, loading = false, error = null }) => {
+/**
+ * REP-3841: canal que se le indica al vecino en un caso de asistencia (route_report, catálogo REP-2806). No se cita
+ * normativa: el motor no consulta el corpus para esta categoría, así que se declara la abstención.
+ */
+const SocialAssistanceChannel = ({ channel, loading }) => {
+  if (loading) {
+    return <p className="m-0 text-rep-label text-rep-ink-muted">Buscando el canal que corresponde…</p>;
+  }
+  if (!channel) {
+    return (
+      <p data-testid="rag-panel-no-channel" className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">
+        No tenemos un canal verificado para este caso. Si hay riesgo inmediato, llamá al 911.
+      </p>
+    );
+  }
+  return (
+    <div data-testid="rag-panel-channel" className="flex flex-col gap-1">
+      <span className={FIELD_LABEL}>Canal oficial</span>
+      {channel.organismo && (
+        <span className="text-rep-body font-semibold text-rep-ink desktop:text-rep-body-d">{channel.organismo}</span>
+      )}
+      <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+        {channel.canales.map((canal) => (
+          <li key={`${canal.tipo}-${canal.valor}`} className="text-rep-body text-rep-ink-body desktop:text-rep-body-d">
+            <span className="font-semibold">{canal.valor}</span>
+            {canal.etiqueta && <span className="text-rep-ink-label"> · {canal.etiqueta}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export const ReportAiAnalysisPanel = ({
+  analysis,
+  loading = false,
+  error = null,
+  socialChannel = null,
+  socialChannelLoading = false,
+}) => {
   // REP-3789: el error va antes que el estado pendiente a proposito. Si la lectura
   // del analisis fallo, mostrar «lo estamos analizando» dejaria al ciudadano
   // esperando indefinidamente algo que nunca va a llegar solo.
@@ -213,6 +253,15 @@ export const ReportAiAnalysisPanel = ({ analysis, loading = false, error = null 
         </>
       ) : (
         <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">{config.message}</p>
+      )}
+
+      {analysis.result_status_code === 'asistencia' && (
+        <>
+          <SocialAssistanceChannel channel={socialChannel} loading={socialChannelLoading} />
+          <p data-testid="rag-panel-no-foundation" className="m-0 text-rep-label text-rep-ink-label">
+            Por ahora no mostramos fundamento legal para estos casos.
+          </p>
+        </>
       )}
     </section>
   );

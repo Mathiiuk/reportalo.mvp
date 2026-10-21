@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Landmark, Ban, ShieldCheck } from 'lucide-react';
+import { Check, Landmark, Ban, ShieldCheck, PhoneCall } from 'lucide-react';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 import { useReportStateLive } from '../../hooks/useReportStateLive';
 import { normalizeReportState } from './reportStatus';
 import { routeReport, describeRoutingDestination } from '../../services/reportRoutingService';
+import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
 
 // El acuse se entera más rápido que el detalle: el paso a «En revisión» ocurre a los pocos segundos del envío
 const SUCCESS_POLL_INTERVAL_MS = 5000;
@@ -15,6 +16,13 @@ const TRACKER_STEPS = [
   { key: 'en_revision', label: 'En revisión' },
   { key: 'notificado', label: 'Notificado al responsable' },
   { key: 'resuelto', label: 'Resuelto' },
+];
+
+// REP-3841: Vulnerabilidad social no se deriva a ningún organismo. El backend la deja en INFORMADO (se le indicó al
+// vecino el canal), así que el recorrido no promete «Notificado al responsable» ni «Resuelto».
+const SOCIAL_TRACKER_STEPS = [
+  { key: 'enviado', label: 'Enviado' },
+  { key: 'informado', label: 'Informado' },
 ];
 
 // REP-3845: aclaración que acompaña al destino según lo que resolvió route_report. Nunca se afirma que el reporte
@@ -32,6 +40,42 @@ const destinationNote = (destination) => {
   if (destination.kind === 'sin_destino' && !destination.organismo) return DESTINATION_NOTE.sin_destino_vacio;
   return DESTINATION_NOTE[destination.kind] ?? null;
 };
+
+/**
+ * REP-3841: destino de un reporte de Vulnerabilidad social. Es un canal para que el vecino avise, no un organismo al
+ * que Reportalo haya derivado el caso. Sin canal verificado en el catálogo se dice, no se inventa uno.
+ */
+const SocialAssistanceDestination = ({ consulting, channel }) => (
+  <div
+    data-testid="success-destination"
+    data-kind={consulting ? 'consultando' : channel ? 'informar_canal' : 'sin_canal'}
+    aria-live="polite"
+    className="flex items-start gap-2 text-rep-body desktop:ml-auto desktop:max-w-[60%]"
+  >
+    <PhoneCall aria-hidden="true" className="mt-0.5 h-[18px] w-[18px] shrink-0 text-rep-ink-muted" strokeWidth={2} />
+    <span className="flex min-w-0 flex-col">
+      {consulting ? (
+        <span className="text-rep-label font-medium text-rep-ink-muted">Buscando el canal que corresponde…</span>
+      ) : channel ? (
+        <>
+          <span className="text-rep-label font-medium text-rep-ink-muted">Podés comunicarte con</span>
+          {channel.organismo && (
+            <span data-testid="success-destination-agency" className="font-semibold text-rep-ink-body">
+              {channel.organismo}
+            </span>
+          )}
+          <span data-testid="success-destination-channel" className="text-rep-label font-medium text-rep-ink-muted">
+            {channel.canales[0].etiqueta ? `${channel.canales[0].valor} · ${channel.canales[0].etiqueta}` : channel.canales[0].valor}
+          </span>
+        </>
+      ) : (
+        <span className="text-rep-label font-medium text-rep-ink-muted">
+          No tenemos un canal verificado para este caso. Si hay riesgo inmediato, llamá al 911.
+        </span>
+      )}
+    </span>
+  </div>
+);
 
 const formatClock = (date) =>
   date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -78,6 +122,8 @@ export const ReportSuccessScreen = ({
   // Pasos alcanzados: hasta el estado actual (un cierre como Descartado deja el tracker donde estaba)
   // REP-3845: destino real del reporte (route_report). Mientras responde, no se muestra ningún organismo supuesto.
   const [destination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
+  // REP-3841: con Vulnerabilidad social, el canal verificado que se le indica al vecino (null si el catálogo no tiene)
+  const [socialChannel, setSocialChannel] = useState(null);
   useEffect(() => {
     if (!reportId) {
       setDestination({ kind: 'no_disponible' });
@@ -86,14 +132,18 @@ export const ReportSuccessScreen = ({
     let isMounted = true;
     setDestination({ kind: 'consultando' });
     routeReport(reportId).then((result) => {
-      if (isMounted) setDestination(describeRoutingDestination(result.routing));
+      if (!isMounted) return;
+      setDestination(describeRoutingDestination(result.routing));
+      setSocialChannel(describeSocialAssistanceChannel(result.routing));
     });
     return () => {
       isMounted = false;
     };
   }, [reportId]);
   const note = destinationNote(destination);
-  const reachedIndex = Math.max(0, TRACKER_STEPS.findIndex((step) => step.key === normalizeReportState(stateCode)));
+  const isSocialAssistance = isSocialAssistanceCategory(category);
+  const trackerSteps = isSocialAssistance ? SOCIAL_TRACKER_STEPS : TRACKER_STEPS;
+  const reachedIndex = Math.max(0, trackerSteps.findIndex((step) => step.key === normalizeReportState(stateCode)));
   const timeLabel = `Hoy ${formatClock(new Date())}`;
   const categoryName = (category?.name || 'Tránsito').toUpperCase();
   const tone = getCategoryTone(category || { id: 'transito' });
@@ -137,8 +187,13 @@ export const ReportSuccessScreen = ({
               </span>
               <div className="mt-3 desktop:mt-0">
                 <h1 className="rep-success-ink m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">Reporte enviado</h1>
-                <p className="rep-success-fade m-0 mt-1 text-rep-body text-rep-ink-muted desktop:text-rep-body-d">
-                  Tu evidencia ya está en camino al organismo competente.
+                <p
+                  data-testid="success-subtitle"
+                  className="rep-success-fade m-0 mt-1 text-rep-body text-rep-ink-muted desktop:text-rep-body-d"
+                >
+                  {isSocialAssistance
+                    ? 'Te indicamos a quién avisar. Reportalo no deriva este caso a ningún organismo.'
+                    : 'Tu evidencia ya está en camino al organismo competente.'}
                 </p>
               </div>
             </div>
@@ -155,6 +210,9 @@ export const ReportSuccessScreen = ({
                   </span>
                 </div>
                 <div aria-hidden="true" className="my-3 h-px bg-rep-divider desktop:hidden" />
+                {isSocialAssistance ? (
+                  <SocialAssistanceDestination consulting={destination.kind === 'consultando'} channel={socialChannel} />
+                ) : (
                 <div
                   data-testid="success-destination"
                   data-kind={destination.kind}
@@ -176,12 +234,13 @@ export const ReportSuccessScreen = ({
                     {note && <span className="text-rep-label font-medium text-rep-ink-muted">{note}</span>}
                   </span>
                 </div>
+                )}
               </section>
 
               {/* Estado del trámite: vertical en teléfono, horizontal en escritorio */}
               <section aria-label="Estado del reporte" className="rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:border-0 desktop:px-0 desktop:shadow-none">
                 <ol className="relative m-0 flex list-none flex-col gap-3 p-0 desktop:flex-row desktop:items-start desktop:gap-0">
-                  {TRACKER_STEPS.map((step, index) => {
+                  {trackerSteps.map((step, index) => {
                     const isDone = index <= reachedIndex;
                     const isCurrent = index === reachedIndex;
                     return (

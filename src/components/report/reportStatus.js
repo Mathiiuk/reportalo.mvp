@@ -44,6 +44,8 @@ const DB_STATE_ALIASES = {
 
 // Pasos del tracker: uno por estado real; «descartado» es un cierre alternativo, no un paso
 export const TRACKER_STEPS = ['enviado', 'en_revision', 'notificado', 'resuelto'];
+// REP-3841: Vulnerabilidad social no se deriva: Enviado → Informado, sin «Notificado al responsable» ni «Resuelto»
+export const SOCIAL_TRACKER_STEPS = ['enviado', 'informado'];
 
 // Estados que se muestran como un paso extra al final del recorrido, no dentro de los 4 pasos
 const EXTRA_STATES = ['descartado', 'informado', 'escalado', 'en_discrepancia'];
@@ -93,13 +95,44 @@ export const formatListDate = (value, now = new Date()) => {
  * y el historial (`report_state_history`). Si el historial no está disponible, igual marca como
  * hechos los pasos anteriores al estado actual, sin fecha.
  */
-export const buildTimeline = ({ currentState, createdAt, history = [] }) => {
+export const buildTimeline = ({ currentState, createdAt, history = [], socialAssistance = false }) => {
   const current = normalizeReportState(currentState) ?? 'enviado';
   const entries = history
     .map((entry) => ({ ...entry, state: normalizeReportState(entry.state_code) }))
     .filter((entry) => entry.state);
 
   const lastEntryFor = (state) => [...entries].reverse().find((entry) => entry.state === state) ?? null;
+
+  // REP-3841: un INFORMADO también usa este recorrido aunque no se sepa la categoría (solo lo pone asistencia social).
+  // Un cierre como Descartado se agrega al final, igual que en el recorrido general.
+  if (socialAssistance || current === 'informado') {
+    const informed = current === 'informado';
+    const steps = SOCIAL_TRACKER_STEPS.map((state, index) => {
+      const entry = lastEntryFor(state);
+      const done = index === 0 || informed;
+      return {
+        key: state,
+        label: REPORT_STATUS[state].label,
+        done,
+        current: informed ? state === 'informado' : index === 0 && current !== 'descartado',
+        date: formatShortDateTime(entry?.changed_at ?? (state === 'enviado' ? createdAt : null)),
+        note: entry?.notes || null,
+      };
+    });
+    if (current === 'descartado') {
+      const entry = lastEntryFor(current);
+      steps.push({
+        key: current,
+        label: REPORT_STATUS[current].label,
+        done: true,
+        current: true,
+        discarded: true,
+        date: formatShortDateTime(entry?.changed_at),
+        note: entry?.notes || null,
+      });
+    }
+    return steps;
+  }
 
   const isExtra = EXTRA_STATES.includes(current);
   const reachedIndex = isExtra

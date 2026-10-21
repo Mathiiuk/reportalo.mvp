@@ -65,7 +65,8 @@ describe('REP-2909: ReportAiAnalysisPanel', () => {
     ['sin_normativa', /normativa cargada/i],
     ['indeterminado', /no concluyente/i],
     ['fuera_de_alcance', /911/],
-    ['asistencia', /asistencia social/i],
+    // REP-3841: ya no promete «va a ser derivado al área de asistencia social»
+    ['asistencia', /no deriva este reporte a ningún organismo/i],
   ])('estado %s: muestra un mensaje transparente, nunca un texto inventado', (status, expectedText) => {
     render(<ReportAiAnalysisPanel analysis={{ result_status_code: status, report_ai_evidence: [] }} />);
     const panel = screen.getByTestId('rag-panel');

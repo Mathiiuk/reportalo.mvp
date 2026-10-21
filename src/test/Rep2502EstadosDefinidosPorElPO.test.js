@@ -123,10 +123,8 @@ describe('REP-2502 H-2 · la app muestra los estados nuevos', () => {
         { state_code: 'INFORMADO', changed_at: '2026-10-15T10:02:00Z', notes: 'Se informó al vecino el canal que corresponde.' },
       ],
     });
-    const byKey = Object.fromEntries(steps.map((s) => [s.key, s]));
-    expect(byKey.resuelto.done).toBe(false);
-    expect(byKey.notificado.done).toBe(false);
-    expect(byKey.en_revision.done).toBe(true);
+    // REP-3841: el recorrido de asistencia social es Enviado → Informado; ni siquiera muestra los pasos de derivación
+    expect(steps.map((s) => s.key)).toEqual(['enviado', 'informado']);
     expect(steps.at(-1)).toMatchObject({ key: 'informado', label: 'Informado', done: true, current: true });
     expect(steps.filter((s) => s.current)).toHaveLength(1);
   });

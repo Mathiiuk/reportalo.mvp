@@ -18,6 +18,7 @@ import {
   DESCRIPTION_MAX_LENGTH,
   validateDescription,
 } from '../../services/reportDescription';
+import { SOCIAL_ASSISTANCE_OPTIONS, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
 
 // Ícono Lucide por código de ícono de la categoría (bundleado, no depende de una fuente externa)
 const ICON_MAP = {
@@ -34,6 +35,9 @@ const ARROW_STEP = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
  * Paso 2 del alta de reporte: categoría y descripción.
  * UJ v3.3 · M10 «Clasificar» (teléfono) y D11 (escritorio ≥ 1025 px, dos columnas).
  * REP-3791 Bloques 1 y 1-D. Mismo contrato de props que antes.
+ *
+ * REP-3841: con «Vulnerabilidad social» se pregunta si hay niñas, niños o adolescentes. De eso depende el canal
+ * que indica el catálogo (por ejemplo 108 o 102 en CABA). `prestacionKey` / `onSelectPrestacion` son opcionales.
  */
 export const ReportDetailsStep = ({
   categories = [],
@@ -41,6 +45,8 @@ export const ReportDetailsStep = ({
   description = '',
   onSelectCategory,
   onChangeDescription,
+  prestacionKey = null,
+  onSelectPrestacion = () => {},
   onBack,
   onContinue,
 }) => {
@@ -50,11 +56,17 @@ export const ReportDetailsStep = ({
   const [attemptedContinue, setAttemptedContinue] = useState(false);
   const descriptionValidation = validateDescription(description);
   const showDescriptionError = attemptedContinue && !descriptionValidation.valid;
+  const asksAudience = isSocialAssistanceCategory(selectedCategory);
+  const missingAudience = asksAudience && !prestacionKey;
 
   const handleContinue = () => {
     if (!descriptionValidation.valid) {
       setAttemptedContinue(true);
       descriptionRef.current?.focus();
+      return;
+    }
+    if (missingAudience) {
+      setAttemptedContinue(true);
       return;
     }
     onContinue();
@@ -179,6 +191,43 @@ export const ReportDetailsStep = ({
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* REP-3841: de esta respuesta depende el canal que se le indica al vecino */}
+          {asksAudience && (
+            <section
+              data-testid="social-audience"
+              className="flex flex-col gap-2.5 desktop:col-start-1 desktop:row-start-3"
+              aria-labelledby="social-audience-label"
+            >
+              <h2 id="social-audience-label" className="m-0 text-rep-label font-bold text-rep-ink-label desktop:text-rep-label-d">
+                ¿Hay niñas, niños o adolescentes?
+              </h2>
+              <div role="radiogroup" aria-labelledby="social-audience-label" className="grid grid-cols-2 gap-2.5">
+                {SOCIAL_ASSISTANCE_OPTIONS.map((option) => {
+                  const isSelected = prestacionKey === option.key;
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => onSelectPrestacion(option.key)}
+                      className={`rep-focus flex min-h-touch items-center rounded-2xl border bg-rep-surface px-3.5 py-3 text-left text-rep-body font-bold text-rep-ink shadow-rep-card transition-colors duration-120 ${
+                        isSelected ? 'border-rep-accent ring-2 ring-rep-accent/30' : 'border-rep-border'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {attemptedContinue && missingAudience && (
+                <p role="alert" className="m-0 text-rep-label text-rep-danger">
+                  Elegí una opción para que te indiquemos el canal que corresponde.
+                </p>
+              )}
+            </section>
+          )}
 
           {/* Descripción */}
           <div className="flex flex-col gap-2 desktop:col-start-2 desktop:row-span-2 desktop:row-start-1">
