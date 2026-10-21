@@ -682,6 +682,9 @@ export const processAllEvidencesThroughQuarantine = async ({
           stepIndex: 2,
           label: PIPELINE_STEPS[2],
           progress: Math.round(((index + 0.8) / evidenceList.length) * 100),
+          // REP-3846: la pantalla muestra «Foto N de M» con el avance real, no con la animación
+          photosDone: index + 1,
+          photoCount: evidenceList.length,
         });
       }
 
