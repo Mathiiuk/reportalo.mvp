@@ -299,7 +299,8 @@ describe('REP-2100 & REP-2101: Flujo de Autenticación, UI y Magic Link', () => 
         </MemoryRouter>
       );
 
-      expect(screen.getByText(/MUNICIPIOS/i)).toBeInTheDocument();
+      // El chip «MUNICIPIOS» aparece en la barra y en el footer compartido (REP-3866)
+      expect(screen.getAllByText(/MUNICIPIOS/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/Los reclamos de tus usuarios, con evidencia y encuadre legal/i)).toBeInTheDocument();
       // REP-3535: el MVP es informativo, sin CTA comerciales (detalle en MunicipiosLanding.test.jsx)
       expect(screen.queryByText(/Contratar Reportalo/i)).not.toBeInTheDocument();

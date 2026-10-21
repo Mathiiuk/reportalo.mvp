@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, ScanFace, EyeOff, Gavel } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -226,6 +227,8 @@ export const MunicipiosPage = () => {
           </div>
         </section>
       </main>
+      {/* REP-3866: footer variante municipios, después de la banda azul final (handoff REP-3865 §5.3) */}
+      <SiteFooter variant="municipios" portalHref={portalHref} />
     </div>
   );
 };

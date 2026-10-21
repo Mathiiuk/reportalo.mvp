@@ -1,0 +1,55 @@
+id: REP-3866
+external_ref: https://unlz2026.atlassian.net/browse/REP-3866
+title: «Acerca de» y footer compartido (handoff REP-3865), portado a React
+type: feat
+status: READY_FOR_PR
+priority: medium
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/pages/AcercaPage.jsx
+    - src/components/layout/SiteFooter.jsx
+    - src/content/siteInfo.js
+    - src/services/buildInfoService.js
+    - scripts/build-info.mjs
+    - src/pages/FaqPage.jsx
+    - src/pages/ProfilePage.jsx
+    - src/pages/WelcomePage.jsx
+    - src/pages/MunicipiosPage.jsx
+    - src/App.jsx
+  environments:
+    - local
+requirements:
+  - >-
+    Página pública /acerca con los textos del handoff, equipo, mención especial
+    y versión real del build
+  - Footer compartido con variantes ciudadano y municipios
+  - >-
+    Fila «Acerca de Reportalo™» en Perfil; footer en D01, FAQ (escritorio con
+    sesión), D20, /acerca y D21
+  - «¿Es una emergencia?» abre esa pregunta en la FAQ, que pasa a ser pública
+  - >-
+    Correo institucional oculto hasta REP-3873; sin enlace a /privacidad hasta
+    que exista
+acceptance_criteria:
+  - >-
+    Versión real coincidente con el build (build-info.json generado en dev y
+    build)
+  - Navegación principal intacta en mobile y desktop, accesible con teclado
+  - Sección 9 del LEEME de Iván
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test

@@ -17,7 +17,8 @@ import {
   isNotificationsEnabled,
   setNotificationPreference,
 } from '../services/notificationService';
-import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast, FileText, HelpCircle } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast, FileText, HelpCircle, Info } from 'lucide-react';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { THEME_TOGGLE_ENABLED, setThemePreference } from '../lib/themePreference';
 
@@ -374,6 +375,20 @@ export const ProfilePage = () => {
                   <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
                 </button>
 
+                {/* REP-3866: «Acerca de Reportalo™», debajo de la fila de preguntas frecuentes (handoff REP-3865 §4.5) */}
+                <button
+                  type="button"
+                  data-testid="profile-about-btn"
+                  onClick={() => navigate('/acerca?desde=perfil')}
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 min-h-touch border-b border-rep-divider cursor-pointer hover:bg-rep-surface-sunken transition-colors text-left bg-transparent border-0"
+                >
+                  <Info className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink flex-1">
+                    Acerca de Reportalo™
+                  </span>
+                  <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
+                </button>
+
                 {/* Permisos de la app */}
                 <button
                   type="button"
@@ -459,6 +474,9 @@ export const ProfilePage = () => {
           </div>
 
         </div>
+        {/* REP-3866: footer ciudadano al final del Perfil de escritorio (D20). En teléfono (M19) no va: abajo está la
+            barra de pestañas y la entrada es la fila «Acerca de Reportalo™». */}
+        {isDesktop && <SiteFooter className="-mx-4 sm:-mx-6 md:-mx-10 -mb-4 md:-mb-6 mt-10" />}
       </div>
 
       {/* Modal: Permiso de Notificaciones Bloqueado en el Sistema Operativo / Navegador */}

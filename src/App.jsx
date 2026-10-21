@@ -35,6 +35,7 @@ const SessionExpiredPage = React.lazy(() => import('./pages/SessionExpiredPage')
 const NewsDetailPage = React.lazy(() => import('./pages/NewsDetailPage').then(m => ({ default: m.NewsDetailPage })));
 const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
+const AcercaPage = React.lazy(() => import('./pages/AcercaPage').then(m => ({ default: m.AcercaPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
@@ -264,15 +265,11 @@ export const AppRoutes = () => {
       {/* El detalle del reporte ya tiene su ruta /reportes/:id (REP-3789). El
           bloque proponia /reporte/:id, en singular, tomada del mockup de D17: se
           descarta para no dejar dos rutas hacia la misma pantalla. */}
-      {/* REP-3554 — preguntas frecuentes, accesibles desde Perfil */}
-      <Route
-        path="/faq"
-        element={
-          <ProtectedRoute>
-            <FaqPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* REP-3554 — preguntas frecuentes, accesibles desde Perfil. REP-3866: públicas, porque el footer compartido las
+          enlaza desde páginas sin sesión y «¿Es una emergencia?» no puede pedir login (FaqPage se adapta a la sesión). */}
+      <Route path="/faq" element={<FaqPage />} />
+      {/* REP-3866 — «Acerca de Reportalo™» (handoff REP-3865), pública */}
+      <Route path="/acerca" element={<AcercaPage />} />
       {/* UJ v3.3 · M18 / D19 — notificaciones del ciudadano (REP-3791 Bloque 6) */}
       <Route
         path="/notificaciones"
