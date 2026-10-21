@@ -45,7 +45,10 @@ describe('REP-3535: Landing institucional Municipios', () => {
   it('Volver al portal sin sesión: los dos CTA llevan a la portada ciudadana', () => {
     renderLanding();
 
-    const links = screen.getAllByRole('link', { name: /portal ciudadano/i });
+    // Los dos CTA de la página (el footer compartido de REP-3866 trae otro enlace al portal, con el mismo destino)
+    const links = screen
+      .getAllByRole('link', { name: /portal ciudadano/i })
+      .filter((link) => !link.closest('[data-testid="site-footer"]'));
     expect(links).toHaveLength(2);
     links.forEach((link) => expect(link).toHaveAttribute('href', '/'));
   });

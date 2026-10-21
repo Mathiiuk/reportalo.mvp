@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { BrandBar } from '../components/layout/BrandBar';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { CityTexture } from '../components/common/CityTexture';
 import { AlertCircle, Shield, Sparkles, Map as MapIcon } from 'lucide-react';
 
@@ -41,8 +42,11 @@ export const WelcomePage = () => {
 
   // D01 · Landing en navegador (UJ v3.3, REP-3791 Bloque 11-C): barra blanca con la marca e
   // «Ingresar»; héroe azul con el isotipo, el titular, un solo CTA y las tres promesas en fila.
+  // REP-3866: el footer ciudadano va debajo del héroe, fuera del bloque de pantalla completa, así aparece al hacer
+  // scroll (handoff REP-3865 §5.3). Sin sesión no hay barra de pestañas, así que va también en el teléfono.
   if (isDesktop) {
     return (
+      <>
       <div className="flex min-h-[100dvh] w-full select-none flex-col bg-rep-surface font-manrope">
         <BrandBar>
           {/* No está en D01: se conserva para no dejar sin entrada la portada de municipios (ver README 11-C) */}
@@ -107,11 +111,14 @@ export const WelcomePage = () => {
           </motion.div>
         </main>
       </div>
+      <SiteFooter />
+      </>
     );
   }
 
   // M01 · Bienvenida en el teléfono (sin cambios de diseño en este bloque)
   return (
+    <>
     <div className="flex min-h-[100dvh] w-full select-none flex-col bg-rep-surface font-manrope">
       <main
         className="flex min-h-[100dvh] flex-1 flex-col justify-between px-6 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),28px)] text-white"
@@ -166,5 +173,7 @@ export const WelcomePage = () => {
         </div>
       </main>
     </div>
+    <SiteFooter />
+    </>
   );
 };

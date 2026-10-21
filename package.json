@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/build-info.mjs && vite",
+    "build": "node scripts/build-info.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "agt:task": "agt task:new",

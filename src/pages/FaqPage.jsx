@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Construction, Headset, HeartHandshake, Leaf, Phone, Store, Truck } from 'lucide-react';
 // Solo el peso 700 en alfabeto latino, para los números de los pasos. Se sirve desde la app (sin red), igual que Manrope.
 import '@fontsource/jetbrains-mono/latin-700.css';
 import { AppLayout } from '../components/layout/AppLayout';
+import { SiteFooter } from '../components/layout/SiteFooter';
 import { FAQ_CONTACT, FAQ_ITEMS } from '../content/faqContent';
+import { useAuth } from '../hooks/useAuth';
+import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 
 // Ícono y colores de cada tarjeta de categoría. Las cuatro con token propio cambian solas con el tema;
 // «Vulnerabilidad social» no tiene token y usa el mismo rosa que el resto de la app (categoriesService).
@@ -33,22 +36,48 @@ const renderRich = (text) =>
  * docs/export/faq: encabezado con la marca, acordeón en una sola tarjeta y bloque de contacto al pie.
  * El contenido vive en src/content/faqContent.js, así que cambiarlo no obliga a tocar esta pantalla.
  * Se muestra una respuesta por vez (abrir una cierra la anterior) y la primera arranca abierta.
+ *
+ * REP-3866: es pública. El footer compartido enlaza «Preguntas frecuentes» y «¿Es una emergencia?» desde páginas sin
+ * sesión, y los números de emergencia no pueden quedar detrás del login. Sin sesión se muestra sin la barra de la app
+ * (que lleva a pantallas protegidas), con «Volver» al inicio y el footer. Con sesión queda como estaba, y el footer
+ * aparece solo en escritorio (en teléfono abajo está la barra de pestañas, handoff REP-3865 §5.3).
+ * Con `#emergencias` abre esa pregunta, la deja a la vista y le da el foco (enlace «¿Es una emergencia?»).
  */
 export const FaqPage = () => {
   const navigate = useNavigate();
-  const [openId, setOpenId] = useState(FAQ_ITEMS[0]?.id ?? null);
+  const location = useLocation();
+  const { session } = useAuth();
+  const isDesktop = useIsDesktopLayout();
+  const hashId = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+  const hashItem = FAQ_ITEMS.find((item) => item.id === hashId);
+  const [openId, setOpenId] = useState(hashItem?.id ?? FAQ_ITEMS[0]?.id ?? null);
+  const itemRefs = useRef({});
 
   const toggle = (id) => setOpenId((current) => (current === id ? null : id));
 
-  return (
-    <AppLayout activeTab="perfil">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-2 tablet:px-6 desktop:pb-16">
+  // Entrar (o cambiar) con #emergencias abre esa pregunta, la desplaza a la vista y enfoca su botón
+  useEffect(() => {
+    if (!hashItem) return undefined;
+    setOpenId(hashItem.id);
+    const timer = setTimeout(() => {
+      const node = itemRefs.current[hashItem.id];
+      node?.scrollIntoView?.({ block: 'start' });
+      node?.querySelector('button')?.focus({ preventScroll: true });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [hashItem]);
+
+  const backTo = session ? '/perfil' : '/';
+  const backLabel = session ? 'Volver al perfil' : 'Volver al inicio';
+
+  const content = (
+      <div className={`bg-rep-bg px-4 pt-2 tablet:px-6 ${session ? 'flex-1 overflow-y-auto pb-28 desktop:pb-16' : 'pb-16'}`}>
         <div className="mx-auto w-full max-w-[820px]">
           <button
             type="button"
-            onClick={() => navigate('/perfil')}
-            aria-label="Volver al perfil"
-            title="Volver al perfil"
+            onClick={() => navigate(backTo)}
+            aria-label={backLabel}
+            title={backLabel}
             className="rep-focus -ml-2 flex min-h-touch min-w-touch items-center justify-center rounded-full text-rep-ink transition-colors duration-120 hover:bg-rep-divider hover:text-rep-accent"
           >
             <ArrowLeft aria-hidden="true" className="h-6 w-6" strokeWidth={2.25} />
@@ -80,7 +109,14 @@ export const FaqPage = () => {
               const buttonId = `faq-pregunta-${item.id}`;
               const panelId = `faq-respuesta-${item.id}`;
               return (
-                <li key={item.id}>
+                <li
+                  key={item.id}
+                  id={item.id}
+                  ref={(node) => {
+                    itemRefs.current[item.id] = node;
+                  }}
+                  className="scroll-mt-20"
+                >
                   <h2 className="m-0">
                     <button
                       type="button"
@@ -198,11 +234,23 @@ export const FaqPage = () => {
             </a>
           </section>
 
-          <p className="m-0 mt-8 text-[12.5px] font-medium text-rep-ink-muted">Reportalo™</p>
+          {/* La línea suelta «Reportalo™» queda solo donde no va el footer (teléfono con barra de pestañas) */}
+          {session && !isDesktop && <p className="m-0 mt-8 text-[12.5px] font-medium text-rep-ink-muted">Reportalo™</p>}
         </div>
+        {session && isDesktop && <SiteFooter className="-mx-4 mt-12 tablet:-mx-6" />}
       </div>
-    </AppLayout>
   );
+
+  if (!session) {
+    return (
+      <div className="flex min-h-[100dvh] w-full flex-col bg-rep-bg font-manrope">
+        <main className="flex-1">{content}</main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  return <AppLayout activeTab="perfil">{content}</AppLayout>;
 };
 
 export default FaqPage;

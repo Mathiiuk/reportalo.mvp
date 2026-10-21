@@ -22,14 +22,18 @@ vi.mock('../services/offlineStorageService', () => ({ getAllPendingSyncReports: 
 
 const Donde = () => <div data-testid="donde">{useLocation().pathname}</div>;
 
-const montarFaq = () =>
+// REP-3866: /faq es pública. Sin sesión se monta sin la barra de la app; con sesión, como antes.
+const SESION = { session: { user: { id: 'u1' } }, user: { id: 'u1', email: 'vecino@example.com' }, loading: false, signOut: vi.fn() };
+const montarFaq = ({ conSesion = false } = {}) =>
   render(
-    <MemoryRouter initialEntries={['/faq']}>
-      <Routes>
-        <Route path="/faq" element={<FaqPage />} />
-        <Route path="*" element={<Donde />} />
-      </Routes>
-    </MemoryRouter>
+    <AuthContext.Provider value={conSesion ? SESION : { session: null, user: null, loading: false, signOut: vi.fn() }}>
+      <MemoryRouter initialEntries={['/faq']}>
+        <Routes>
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path="*" element={<Donde />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthContext.Provider>
   );
 
 // Todo el texto que el ciudadano puede leer en una pregunta: enunciado, párrafos y bloques opcionales
@@ -127,17 +131,24 @@ describe('REP-3554: pantalla /faq', () => {
     expect(region).toHaveAttribute('aria-labelledby', boton.id);
   });
 
-  it('UT-V3554-08: tiene navegación de retorno al Perfil', () => {
-    montarFaq();
+  it('UT-V3554-08: tiene navegación de retorno: al Perfil con sesión, al inicio sin sesión (REP-3866)', () => {
+    const { unmount } = montarFaq({ conSesion: true });
     fireEvent.click(screen.getByRole('button', { name: /volver al perfil/i }));
     expect(screen.getByTestId('donde')).toHaveTextContent('/perfil');
+    unmount();
+
+    montarFaq();
+    fireEvent.click(screen.getByRole('button', { name: /volver al inicio/i }));
+    expect(screen.getByTestId('donde')).toHaveTextContent('/');
   });
 
   it('UT-V3554-09: el contacto es solo un enlace de correo: sin formulario, sin campos de texto y sin enlaces a sitios externos', () => {
     const { container } = montarFaq();
     // La barra de la app trae su propio <input type="file"> para abrir la cámara: no cuenta como campo de soporte
     expect(container.querySelector('form, textarea, input:not([type="file"])')).toBeNull();
-    expect(container.querySelector('a[href^="http"]')).toBeNull();
+    // El único enlace externo permitido es el logo de la UNLZ del footer compartido (REP-3866)
+    const externos = [...container.querySelectorAll('a[href^="http"]')].filter((a) => !a.closest('[data-testid="site-footer"]'));
+    expect(externos).toEqual([]);
     expect(screen.getByTestId('faq-contact-btn')).toHaveAttribute('href', `mailto:${FAQ_CONTACT.email}`);
   });
 
@@ -183,9 +194,9 @@ describe('REP-3554: acceso visible desde Perfil y ruta protegida', () => {
     expect(screen.getByTestId('donde')).toHaveTextContent('/faq');
   });
 
-  it('UT-V3554-11: la ruta /faq existe y exige sesión, como las demás pantallas de la app', () => {
+  it('UT-V3554-11: la ruta /faq existe y es pública (REP-3866: el footer la enlaza desde páginas sin sesión)', () => {
     const app = readFileSync(resolve(__dirname, '../App.jsx'), 'utf8');
-    expect(app).toMatch(/path="\/faq"\s+element=\{\s*<ProtectedRoute>\s*<FaqPage \/>\s*<\/ProtectedRoute>/);
+    expect(app).toMatch(/<Route path="\/faq" element=\{<FaqPage \/>\} \/>/);
     expect(app).toMatch(/React\.lazy\(\(\) => import\('\.\/pages\/FaqPage'\)/);
   });
 });

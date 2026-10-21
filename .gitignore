@@ -19,3 +19,6 @@ supabase/backups/
 
 # Salida local de las pruebas del RAG (REP-3797): no se versiona
 scripts/rag-local-dev/rep3797/generation-experiment-results.json
+
+# REP-3866: versión, commit y fecha del build; lo genera scripts/build-info.mjs en cada build, no se versiona
+public/build-info.json
