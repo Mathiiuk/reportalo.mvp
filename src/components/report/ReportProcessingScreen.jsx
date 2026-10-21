@@ -5,6 +5,12 @@ import {
   describeProtectionFailure,
   PIPELINE_STEPS,
 } from '../../services/quarantinePipelineService';
+import {
+  getProtectionWait,
+  isConfirmedOffline,
+  MEASURED_MEDIAN_PER_PHOTO_MS,
+  QUEUE_REASON,
+} from '../../services/sendWaitPolicy';
 
 /**
  * Pantalla de protección y anonimización de fotos en el servidor ("Protegiendo tus fotos…").
@@ -21,8 +27,10 @@ import {
  * @param {Function} [props.processFn] Función opcional para inyectar o mockear el pipeline
  * @param {number} [props.durationMs] Tiempo mínimo de animación para visualización armónica
  * @param {boolean} [props.simulateError] Bandera para simular error fail-safe en pruebas
- * @param {Function} [props.onSaveForLater] Deja el reporte en la cola de pendientes (señal débil)
- * @param {number} [props.timeoutMs] Espera máxima del pipeline antes de pasar el reporte a la cola
+ * @param {Function} [props.onSaveForLater] Deja el reporte en la cola de pendientes. Recibe el motivo (QUEUE_REASON)
+ * @param {number} [props.timeoutMs] Espera máxima antes de pasar el reporte a la cola. Por defecto, proporcional a la
+ *   cantidad de fotos (REP-3846, `getProtectionWait`); 0 la desactiva
+ * @param {number} [props.slowNoticeMs] Cuándo avisar que tarda más de lo habitual, sin cortar nada. Por defecto, proporcional
  */
 export const ReportProcessingScreen = ({
   evidenceList = [],
@@ -35,8 +43,14 @@ export const ReportProcessingScreen = ({
   durationMs = 3200,
   simulateError = false,
   onSaveForLater = null,
-  timeoutMs = 45000,
+  timeoutMs = null,
+  slowNoticeMs = null,
 }) => {
+  // REP-3846 (C): antes la espera era fija (45 s) y con 4 fotos vencía siempre, aun con buena señal
+  const photoCount = Math.max(1, evidenceList.length);
+  const wait = getProtectionWait(photoCount);
+  const maxWaitMs = timeoutMs ?? wait.maxWaitMs;
+  const noticeMs = slowNoticeMs ?? (maxWaitMs > 0 ? Math.min(wait.slowNoticeMs, maxWaitMs) : wait.slowNoticeMs);
   // Índice del paso actual mostrado al usuario
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   // Porcentaje numérico de progreso de la barra (15% a 100%)
@@ -47,6 +61,12 @@ export const ReportProcessingScreen = ({
   const [failureReason, setFailureReason] = useState(null);
   // Contador de reintentos
   const [retryTrigger, setRetryTrigger] = useState(0);
+  // REP-3846 (E): pasó el tiempo habitual y las fotos se siguen protegiendo (no se cortó nada)
+  const [isSlow, setIsSlow] = useState(false);
+  // Fotos ya protegidas según el pipeline real (no según la animación)
+  const [photosDone, setPhotosDone] = useState(0);
+  // Deja en Pendientes la tanda en curso (lo arma cada ejecución del pipeline)
+  const abandonRef = useRef(null);
 
   // Referencia para evitar dobles llamadas a onProcessingComplete
   const hasCompletedRef = useRef(false);
@@ -68,12 +88,17 @@ export const ReportProcessingScreen = ({
     setFailureReason(null);
     setProgress(15);
     setCurrentStepIndex(0);
+    setIsSlow(false);
+    setPhotosDone(0);
 
     // REP-3827: esta tanda se cancela cuando vence la espera (el reporte pasa a la cola) o cuando se
     // desmonta la pantalla / se reinicia el pipeline. Es local a cada ejecución a propósito: un reintento
     // manual reinicia `abandonedRef`, pero no debe reactivar una tanda vieja que sigue en vuelo.
     let cancelled = false;
     const shouldAbort = () => cancelled;
+    const onProgress = ({ photosDone: done } = {}) => {
+      if (!cancelled && typeof done === 'number') setPhotosDone(done);
+    };
 
     // Marca de tiempo inicial para calcular la duración mínima
     const startTime = Date.now();
@@ -91,6 +116,7 @@ export const ReportProcessingScreen = ({
             clientSideId,
             simulateError,
             shouldAbort,
+            onProgress,
           });
         } else {
           // Invocamos el servicio oficial del pipeline de cuarentena
@@ -99,6 +125,7 @@ export const ReportProcessingScreen = ({
             clientSideId,
             simulateError,
             shouldAbort,
+            onProgress,
           });
         }
       } catch (err) {
@@ -110,8 +137,9 @@ export const ReportProcessingScreen = ({
       }
     })();
 
-    // Temporizador de espera máxima (se arma más abajo, junto al intervalo)
+    // Temporizadores de aviso y de espera máxima (se arman más abajo, junto al intervalo)
     let watchdog = null;
+    let slowTimer = null;
 
     // Intervalo de animación visual suave
     const interval = setInterval(async () => {
@@ -136,6 +164,8 @@ export const ReportProcessingScreen = ({
         // Si mientras tanto se venció la espera, el reporte ya está en la cola: no se sigue
         if (abandonedRef.current) return;
         clearTimeout(watchdog);
+        clearTimeout(slowTimer);
+        setIsSlow(false);
 
         // Verificamos si el pipeline fue exitoso
         if (pipelineResult && pipelineResult.success) {
@@ -156,21 +186,39 @@ export const ReportProcessingScreen = ({
       }
     }, 40);
 
-    // Con señal débil la subida puede no terminar nunca. Pasado timeoutMs, si hay a dónde
-    // mandarlo, el reporte queda en la cola de pendientes y el ciudadano vuelve al mapa.
-    watchdog = setTimeout(() => {
-      if (hasCompletedRef.current || !onSaveForLaterRef.current || timeoutMs <= 0) return;
+    // Deja el reporte en Pendientes y corta la tanda en vuelo (REP-3827): un resultado que llegue tarde se ignora
+    const abandon = (reason) => {
+      if (hasCompletedRef.current || abandonedRef.current || !onSaveForLaterRef.current) return;
       abandonedRef.current = true;
       cancelled = true;
       clearInterval(interval);
-      onSaveForLaterRef.current();
-    }, timeoutMs);
+      clearTimeout(watchdog);
+      clearTimeout(slowTimer);
+      onSaveForLaterRef.current(reason);
+    };
+    abandonRef.current = abandon;
+
+    // REP-3846 (E): pasado el tiempo habitual se avisa y se ofrece dejarlo en Pendientes, pero se sigue esperando
+    if (noticeMs > 0) {
+      slowTimer = setTimeout(() => {
+        if (!hasCompletedRef.current && !abandonedRef.current) setIsSlow(true);
+      }, noticeMs);
+    }
+
+    // REP-3846 (C): espera máxima proporcional a las fotos. Recién ahí pasa a Pendientes, y el motivo dice si se
+    // confirmó que no hay conexión: con señal, al ciudadano no se le dice que «recupere señal».
+    if (maxWaitMs > 0) {
+      watchdog = setTimeout(() => {
+        abandon(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
+      }, maxWaitMs);
+    }
 
     return () => {
       // REP-3827: al salir o reiniciar, la tanda en vuelo deja de procesar fotos
       cancelled = true;
       clearInterval(interval);
       clearTimeout(watchdog);
+      clearTimeout(slowTimer);
     };
   }, [
     evidenceList,
@@ -179,7 +227,8 @@ export const ReportProcessingScreen = ({
     onProcessingComplete,
     processFn,
     simulateError,
-    timeoutMs,
+    maxWaitMs,
+    noticeMs,
   ]);
 
   // Efecto que inicia o reintenta el pipeline
@@ -197,6 +246,16 @@ export const ReportProcessingScreen = ({
   const handleRetry = () => {
     setRetryTrigger((prev) => prev + 1);
   };
+
+  // El ciudadano elige no seguir esperando: el reporte queda en Pendientes
+  const handleSaveWhileSlow = () => abandonRef.current?.(QUEUE_REASON.MANUAL);
+
+  // Tras una falla de protección por red: el motivo depende de si se confirmó que no hay conexión
+  const handleSaveAfterFailure = () =>
+    onSaveForLater?.(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
+
+  // Referencia para el ciudadano: la mediana medida por foto (REP-3828), redondeada a 5 s
+  const approxSeconds = Math.max(5, Math.round((MEASURED_MEDIAN_PER_PHOTO_MS * photoCount) / 5000) * 5);
 
   // Manejador para volver atrás y tomar una nueva foto
   const handleBackToCapture = () => {
@@ -322,9 +381,21 @@ export const ReportProcessingScreen = ({
           {!hasError ? (
             <>
               <h1 className="m-0 mt-6 text-rep-title text-white desktop:mt-0 desktop:text-rep-title-d">Protegiendo tus fotos…</h1>
-              <p className="m-0 mt-2 text-rep-body text-rep-camera-ink-muted desktop:text-rep-body-d">
-                Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.
+              <p
+                data-testid="processing-expected-time"
+                className="m-0 mt-2 text-rep-body text-rep-camera-ink-muted desktop:text-rep-body-d"
+              >
+                {photoCount > 1
+                  ? `Con ${photoCount} fotos tarda unos ${approxSeconds} segundos. No tenés que hacer nada más: cuando termina, el reporte sale.`
+                  : 'Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.'}
               </p>
+              {photoCount > 1 && (
+                <p data-testid="processing-photo-count" aria-live="polite" className="m-0 mt-2 text-rep-label font-bold text-white/85">
+                  {photosDone >= photoCount
+                    ? `${photoCount} de ${photoCount} fotos protegidas`
+                    : `Protegiendo la foto ${photosDone + 1} de ${photoCount}`}
+                </p>
+              )}
 
               <div
                 role="progressbar"
@@ -375,6 +446,29 @@ export const ReportProcessingScreen = ({
                   );
                 })}
               </ol>
+
+              {/* REP-3846 (E): sigue en curso y con conexión. No se dice «sin señal» ni se vuelve solo al mapa */}
+              {isSlow && (
+                <div
+                  data-testid="processing-slow-notice"
+                  role="status"
+                  className="mt-5 flex flex-col gap-3 rounded-xl border border-white/15 bg-white/[0.07] p-3"
+                >
+                  <p className="m-0 flex items-start gap-2.5 text-rep-label font-semibold text-white/90 desktop:text-rep-label-d">
+                    <Clock aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-camera-accent" strokeWidth={2.25} />
+                    Está tardando más de lo habitual. Seguimos protegiendo tus fotos: tu reporte todavía no se envió.
+                  </p>
+                  {onSaveForLater && (
+                    <button
+                      type="button"
+                      onClick={handleSaveWhileSlow}
+                      className="rep-focus flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-white/10 text-rep-body font-semibold text-white/90 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
+                    >
+                      Dejarlo en Pendientes y salir
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="mt-5 flex items-start gap-2.5">
                 <Shapes aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-camera-ink-muted" strokeWidth={2} />
@@ -440,7 +534,7 @@ export const ReportProcessingScreen = ({
                 {onSaveForLater && failureDescription.retryLater !== false && (
                   <button
                     type="button"
-                    onClick={onSaveForLater}
+                    onClick={handleSaveAfterFailure}
                     className="rep-focus flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-white/10 text-rep-body font-semibold text-white/85 transition-colors duration-120 hover:bg-white/15 focus-visible:ring-offset-rep-camera"
                   >
                     <Clock aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />

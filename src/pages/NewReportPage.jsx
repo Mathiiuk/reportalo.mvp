@@ -15,6 +15,7 @@ import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { resolveServiceDbId, getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
 import { isSocialAssistanceCategory, saveSocialAssistancePrestacion } from '../services/socialAssistanceService';
+import { QUEUE_REASON, describeQueuedReport, isConfirmedOffline } from '../services/sendWaitPolicy';
 import { hasAcceptedCurrentTerms, recordTermsAcceptance, CURRENT_TERMS_VERSION } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
@@ -389,27 +390,43 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
 
   // Deja el reporte en la cola de pendientes (PENDING_SYNC) y vuelve al mapa. Se usa sin conexión
   // y también cuando hay señal pero no alcanza para enviar: PendingSyncManager lo envía solo después.
-  const saveForLaterAndExit = async () => {
+  // REP-3846 (E): el mensaje depende del motivo. «Cuando recuperes señal» va solo si se confirmó que no hay conexión;
+  // si hay señal y la protección o el envío no terminaron a tiempo, se dice que quedó pendiente y se abre Pendientes,
+  // en vez de volver al mapa como si se hubiera cortado la conexión (O-01 de REP-3833).
+  const saveForLaterAndExit = async (reason = QUEUE_REASON.OFFLINE) => {
     // REP-3801: sin localidad confirmada el reporte queda guardado pero NO se envía solo; falta completarla
     const missingLocation = !customLocation?.localityId;
+    let queuedDraft = null;
     try {
-      await markDraftPendingSync(clientSideId);
+      queuedDraft = await markDraftPendingSync(clientSideId);
     } catch (err) {
+      console.error('[saveForLaterAndExit] No se pudo dejar el borrador en la cola:', err);
+    }
+    // Sin un borrador reintentable no se promete ningún envío: vuelve a la revisión con los datos en pantalla
+    if (!queuedDraft) {
       unlockSubmit();
-      throw err;
+      toast.error('No pudimos guardar tu reporte para enviarlo después', {
+        description: 'Tus datos siguen en pantalla. Probá enviarlo de nuevo en unos segundos.',
+      });
+      goToStep(3);
+      return;
     }
     setDraftStatus(DRAFT_STATUS.PENDING_SYNC);
     // Avisa a PendingSyncManager para que empiece a reintentar el envío solo
     window.dispatchEvent(new Event(PENDING_QUEUED_EVENT));
-    // Mensaje coloquial informando que se guardó y enviará solo
-    toast.success('Reporte guardado con éxito', {
-      description: missingLocation
-        ? 'Cuando vuelva la señal, completá la ubicación en Pendientes para enviarlo.'
-        : 'Se enviará automáticamente apenas recuperes señal.',
-      // UJ v3.3 · M20: acceso a la cola de pendientes de envío
-      action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
-    });
-    navigate('/mapa', { replace: true });
+
+    // Quien llama ya decidió el motivo con una detección real (useNetworkStatus o navigator.onLine)
+    const notice = describeQueuedReport({ reason, missingLocation });
+    if (notice.goTo === '/mapa') {
+      toast.success(notice.title, {
+        description: notice.description,
+        // UJ v3.3 · M20: acceso a la cola de pendientes de envío
+        action: { label: 'Ver pendientes', onClick: () => navigate('/pendientes') },
+      });
+    } else {
+      toast.info(notice.title, { description: notice.description });
+    }
+    navigate(notice.goTo, { replace: true });
   };
 
   // Envío de reporte: si está offline, se persiste en PENDING_SYNC; si está online, avanza a cuarentena
@@ -418,7 +435,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     if (!lockSubmit()) return;
     if (!isOnline) {
       // Estado explícito PENDING_SYNC cuando no hay conectividad (REP-2703)
-      await saveForLaterAndExit();
+      await saveForLaterAndExit(QUEUE_REASON.OFFLINE);
       return;
     }
 
@@ -436,7 +453,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     });
     setConsentRecord({ version: CURRENT_TERMS_VERSION, acceptedAt: new Date().toISOString() });
     if (!isOnline) {
-      await saveForLaterAndExit();
+      await saveForLaterAndExit(QUEUE_REASON.OFFLINE);
       return;
     }
     goToStep(4);
@@ -512,7 +529,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       const serviceResult = await withSendTimeout(resolveServiceDbId(selectedCategory));
       if (serviceResult === SEND_TIMED_OUT) {
         // Hay señal pero no alcanza: el reporte queda en la cola y sale solo después
-        await saveForLaterAndExit();
+        await saveForLaterAndExit(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
         return;
       }
       const serviceId = serviceResult;
@@ -540,7 +557,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       // idempotente por client_side_id, así que si este intento igual llega al servidor, el envío
       // de la cola recupera ese mismo reporte y le adjunta las fotos sin duplicarlas.
       if (creationResult === SEND_TIMED_OUT || (!creationResult.success && isNetworkFailure(creationResult.error))) {
-        await saveForLaterAndExit();
+        await saveForLaterAndExit(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
         return;
       }
 
@@ -748,7 +765,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               durationMs={import.meta.env?.MODE === 'test' ? 300 : 3200}
               onErrorBack={() => goToStep(1)}
               onDiscard={handleCancel}
-              // Señal débil: si subir y proteger las fotos no termina a tiempo, el reporte va a la cola
+              // REP-3846: si la protección no termina dentro de la espera proporcional, el reporte va a la cola con el
+              // motivo real (sin conexión confirmada, lento o elegido por el ciudadano)
               onSaveForLater={saveForLaterAndExit}
               onProcessingComplete={handleProcessingComplete}
             />
