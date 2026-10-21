@@ -1,0 +1,47 @@
+id: REP-3859
+external_ref: https://unlz2026.atlassian.net/browse/REP-3859
+title: 'P0: runners M1/M2 con el esquema común y versión del motor (sin medir)'
+type: chore
+status: READY_FOR_PR
+priority: high
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - scripts/rag-local-dev/p0/
+    - scripts/rag-local-dev/rep-diag-variantes/
+    - scripts/rag-local-dev/rep-diag-generacion/run.mjs
+    - docs/rag/RAG-P0_version-motor.md
+  environments:
+    - local
+requirements:
+  - >-
+    Extender rep-diag-variantes (M1) y rep-diag-generacion (M2), sin runner
+    nuevo
+  - >-
+    Esquema JSON común acordado con Iván (motor, set_version, una fila por caso
+    y repetición, pendiente_po)
+  - 3 repeticiones; M1 ventana 100; M2 con validador fiel y tokens
+  - Registrar la versión del motor
+  - >-
+    No correr la medición definitiva ni tocar corpus, prompt o staging hasta el
+    set v1 de REP-3858
+acceptance_criteria:
+  - '--dry-run valida el set y estima sin red'
+  - El modo P0 no escribe en la base
+  - El validador replica validateLlmAnalysis + validateOrganismoSugerido
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test

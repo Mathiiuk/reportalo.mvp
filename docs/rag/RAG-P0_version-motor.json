@@ -1,0 +1,58 @@
+{
+  "esquema": "rag-p0/v1",
+  "documento": "RAG-P0_version-motor",
+  "verificado_utc": "2026-10-21T11:38:26.114Z",
+  "fuente_de_cada_dato": {
+    "parametros": "supabase/functions/analizar-reporte/index.ts (leídos con readGenerationSpec, no copiados a mano)",
+    "despliegue": "Supabase list_edge_functions: analizar-reporte version 44, updated_at 1791928117895 (13/10/2026 19:48 ART), ezbr_sha256 31a51552e8ed933cd0598b18e530a96f5b58fea5909c7639f43a55c392e17e73",
+    "commit_codigo": "git log -1 -- supabase/functions/analizar-reporte: 543fb6b (13/10 18:53 ART, anterior al despliegue). Respecto de 3519c73 (prompt v5) solo cambia un comentario de PROMPT_VERSION.",
+    "corpus": "Consulta de solo lectura sobre knowledge_fragments (21/10/2026): 132 fragmentos, 127 vigentes, 29 fuentes vigentes, 127 con vector del modelo activo. La huella usa la misma fórmula que huellaCorpus (p0/esquema.mjs) y coincide con la calculada en JS."
+  },
+  "motor": {
+    "analizar_reporte": {
+      "commit_codigo": "543fb6b42021c6810b0ad7a0a1fc271954276a0b",
+      "commit_repo": null,
+      "despliegue": "analizar-reporte v44 (13/10/2026 19:48 ART)"
+    },
+    "prompt_version": "v5",
+    "modelo_generacion": "gemini-3.8-flash",
+    "temperatura": 0,
+    "thinking": "low",
+    "max_output_tokens": 2048,
+    "modelo_embeddings": "gemini-embedding-2@768",
+    "dimensiones": 768,
+    "top_k": 8,
+    "umbral": 0.45,
+    "rpc": "match_knowledge_fragments",
+    "corpus": {
+      "fragmentos_vigentes": 127,
+      "ultimo_fragmento_utc": "2026-10-13 21:34:45.474517+00",
+      "sha256": "628486fc5a3f7f142892d87d59c38aad70fc87206df6b2fadfb60b12620e93a3"
+    }
+  },
+  "validador": {
+    "replica": "scripts/rag-local-dev/p0/esquema.mjs#validarComoProduccion (validateLlmAnalysis + validateOrganismoSugerido)",
+    "estados_validos": [
+      "fundamentado",
+      "indeterminado",
+      "sin_normativa",
+      "fuera_de_alcance",
+      "asistencia"
+    ],
+    "campos_obligatorios": [
+      "estado",
+      "es_infraccion",
+      "fundamento_ciudadano",
+      "fundamento_oficial",
+      "confianza",
+      "citas"
+    ],
+    "categoria_sin_modelo": "VULNERABILIDAD_SOCIAL"
+  },
+  "corpus_detalle": {
+    "fragmentos_total": 132,
+    "fragmentos_vigentes": 127,
+    "fuentes_vigentes": 29,
+    "vectores_modelo_activo": 127
+  }
+}

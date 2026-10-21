@@ -29,6 +29,158 @@ const argValue = (flag) => {
   const i = args.indexOf(flag);
   return i >= 0 ? args[i + 1] : null;
 };
+// ── Modo --p0 (REP-3859): M2 de la línea base con el set congelado ───────────────────────────────────────────────
+// Reproduce analizar-reporte paso a paso SIN persistir nada: VULNERABILIDAD_SOCIAL → asistencia sin modelo; vectorizar,
+// recuperar top-k, filtrar por umbral; sin fragmentos → sin_normativa sin modelo; si hay, generar con el prompt, el esquema
+// y la configuración leídos del fuente, y validar con la réplica fiel de validateLlmAnalysis + validateOrganismoSugerido
+// (p0/esquema.mjs). El estado final es el que guardaría producción. Esquema común de p0/esquema.mjs.
+//   node run.mjs --p0 --set <casos-referencia-v1.json> [--repeticiones 3] [--despliegue "analizar-reporte v44"] [--dry-run] [--prueba]
+if (args.includes('--p0')) {
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const { ESQUEMA, encabezadoMotor, validarComoProduccion, filaM2, resumenM2, estimarLlamadas, leerReglasValidador } = await import('../p0/esquema.mjs');
+  const { leerEnv, crearRest, infoGit, leerCorpus, resolverLocalidades, leerAgencias, cargarSet, argsP0, marcaDeTiempo } = await import('../p0/entorno.mjs');
+
+  const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const opciones = argsP0(args);
+  const fuente = fs.readFileSync(new URL('supabase/functions/analizar-reporte/index.ts', root), 'utf-8');
+  const spec = readGenerationSpec(fuente);
+  const reglas = leerReglasValidador(fuente);
+  const set = cargarSet(path.resolve(opciones.rutaSet));
+  console.log(`Set ${set.set_version}: ${set.casos.length} casos · ${opciones.repeticiones} repeticiones · ${spec.model} · prompt ${spec.promptVersion} · temperatura ${spec.temperature}`);
+  if (opciones.dryRun) {
+    console.log(`Dry-run (sin red): ${JSON.stringify(estimarLlamadas(set.casos, opciones.repeticiones, reglas))}`);
+    process.exit(0);
+  }
+
+  const { need } = leerEnv(argValue('--env') ? path.resolve(argValue('--env')) : new URL('.env', root));
+  const apiKey = need('GEMINI_API_KEY');
+  const supabaseUrl = need('VITE_SUPABASE_URL').replace(/\/$/, '');
+  const rest = crearRest(supabaseUrl, need('SUPABASE_SERVICE_ROLE_KEY'));
+  console.log(`Proyecto Supabase: ${new URL(supabaseUrl).host} (confirmar que es STAGING).`);
+
+  const git = infoGit(fileURLToPath(root));
+  if (git.cambiosLocalesEnFuncion) console.warn('ATENCIÓN: analizar-reporte tiene cambios sin commitear: el código medido no es el del commit.');
+  const corpus = await leerCorpus(rest);
+  const articulos = new Map(corpus.fragments.map((f) => [f.id, [f.article, f.subsection].filter(Boolean).join(' inc. ') || null]));
+  const agencias = await leerAgencias(rest);
+  await resolverLocalidades(rest, set.casos);
+  const inicio = new Date().toISOString();
+  const motor = encabezadoMotor({ spec, git, despliegue: opciones.despliegue, corpus: corpus.huella });
+
+  const gemini = async (metodo, modelo, body) => {
+    const backoffs = [2000, 5000, 10000, 20000];
+    for (let attempt = 0; ; attempt += 1) {
+      const res = await fetch(`${GEMINI_API}/models/${modelo}:${metodo}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) return res.json();
+      if (attempt >= backoffs.length || ![429, 500, 503].includes(res.status)) throw new Error(`${metodo} falló (${res.status})`);
+      await espera(backoffs[attempt]);
+    }
+  };
+
+  const resultados = [];
+  for (let repeticion = 1; repeticion <= opciones.repeticiones; repeticion += 1) {
+    for (const caso of set.casos) {
+      const fecha_utc = new Date().toISOString();
+      const t0 = Date.now();
+      let r;
+      if (caso.categoria === reglas.vulnerabilidad) {
+        // Producción corta antes de vectorizar: estado asistencia, sin modelo
+        r = { camino: 'asistencia', fragments: [], latencia_ms: Date.now() - t0 };
+      } else {
+        const emb = await gemini('embedContent', spec.embeddingModel, {
+          model: `models/${spec.embeddingModel}`,
+          content: { parts: [{ text: buildQueryText(caso.descripcion, caso.categoria) }] },
+          outputDimensionality: spec.dimensions,
+        });
+        const filas = await rest('rpc/match_knowledge_fragments', {
+          method: 'POST',
+          body: JSON.stringify({
+            query_embedding: (() => {
+              const values = emb?.embedding?.values;
+              if (!Array.isArray(values) || values.length !== spec.dimensions) throw new Error('Vector inválido');
+              return values;
+            })(),
+            p_locality_id: caso.localidad_id,
+            p_model_code: spec.embeddingModelCode,
+            match_count: spec.matchCount,
+            p_service_code: caso.categoria.toUpperCase(),
+          }),
+        });
+        const fragments = filas.filter((f) => f.similarity >= spec.threshold);
+        if (fragments.length === 0) {
+          r = { camino: 'sin_normativa', fragments, latencia_ms: Date.now() - t0 };
+        } else {
+          const prompt = buildPrompt(spec.instructions, { reportText: caso.descripcion, category: caso.categoria, fragments });
+          try {
+            const data = await gemini('generateContent', spec.model, {
+              model: `models/${spec.model}`,
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: spec.schema,
+                thinkingConfig: { thinkingLevel: spec.thinkingLevel },
+                temperature: spec.temperature,
+                maxOutputTokens: spec.maxOutputTokens,
+              },
+            });
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error(`sin contenido (finishReason: ${data?.candidates?.[0]?.finishReason ?? '?'})`);
+            const parsed = JSON.parse(text);
+            r = {
+              camino: 'generacion', parsed, fragments, usage: data.usageMetadata ?? {}, prompt_sha256: sha256(prompt),
+              validacion: validarComoProduccion(parsed, fragments, caso.categoria, { ...reglas, agencias }),
+              latencia_ms: Date.now() - t0,
+            };
+          } catch (e) {
+            // Producción falla cerrado a indeterminado ante cualquier error de la generación
+            r = { camino: 'generacion', error: String(e.message).slice(0, 300), fragments, latencia_ms: Date.now() - t0 };
+          }
+        }
+      }
+      const fila = filaM2(r, caso.esperados_n1, (id) => articulos.get(id) ?? null);
+      resultados.push({
+        caso_id: caso.caso_id,
+        repeticion,
+        fecha_utc,
+        pendiente_po: caso.pendiente_po,
+        universo: caso.universo,
+        categoria: caso.categoria,
+        esperados_n1: caso.esperados_n1,
+        esperados_n2: caso.esperados_n2,
+        prompt_sha256: r.prompt_sha256 ?? null,
+        ...fila,
+      });
+      console.log(`${caso.caso_id.padEnd(16)} r${repeticion} · ${fila.estado}${fila.rechazo_validador ? ' (rechazo del validador)' : ''} · citas ${fila.citas.length} · N1 ${fila.cita_esperada_n1 ? 'sí' : 'no'}`);
+    }
+  }
+
+  const salida = {
+    esquema: ESQUEMA,
+    medicion: 'M2',
+    prueba: opciones.prueba,
+    set_version: set.set_version,
+    inicio_utc: inicio,
+    fin_utc: new Date().toISOString(),
+    repeticiones: opciones.repeticiones,
+    motor,
+    resumen: resumenM2(resultados),
+    resultados,
+  };
+  const dir = new URL('salida/', here);
+  fs.mkdirSync(dir, { recursive: true });
+  const nombre = `RAG-P0_M2${opciones.prueba ? '_PRUEBA' : ''}_${marcaDeTiempo(inicio)}.json`;
+  fs.writeFileSync(new URL(nombre, dir), JSON.stringify(salida, null, 2));
+  console.log(`\nResumen: ${JSON.stringify(salida.resumen)}`);
+  console.log(`Salida: scripts/rag-local-dev/rep-diag-generacion/salida/${nombre}`);
+  process.exit(0);
+}
+
 const casoId = argValue('--caso') ?? 'D2-AVE-4';
 const corridas = Number(argValue('--corridas') ?? 5);
 const reuse = args.includes('--reusar');

@@ -34,6 +34,115 @@ const argValue = (flag) => {
   return i >= 0 ? args[i + 1] : null;
 };
 
+// ── Modo --p0 (REP-3859): M1 de la línea base con el set congelado, sin variantes ─────────────────────────────────
+// Mide SOLO la recuperación de producción (ranking del RPC con ventana 100, top-k y umbral reales) con el esquema común
+// de scripts/rag-local-dev/p0/esquema.mjs. Cada repetición vuelve a vectorizar la consulta (sin caché), como producción.
+//   node run.mjs --p0 --set <casos-referencia-v1.json> [--repeticiones 3] [--despliegue "analizar-reporte v44"] [--dry-run] [--prueba]
+// --dry-run valida el set y estima llamadas sin red. --prueba marca la salida como prueba (no vale para la puerta P0).
+if (args.includes('--p0')) {
+  const { ESQUEMA, VENTANA_M1, encabezadoMotor, filaM1, resumenM1, estimarLlamadas, leerReglasValidador } = await import('../p0/esquema.mjs');
+  const { leerEnv, crearRest, infoGit, leerCorpus, resolverLocalidades, cargarSet, argsP0, marcaDeTiempo } = await import('../p0/entorno.mjs');
+  const { readGenerationSpec, buildQueryText: queryTextOf } = await import('../rep-diag-generacion/lib.mjs');
+
+  const { fileURLToPath } = await import('node:url');
+  const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const opciones = argsP0(args);
+  const fuente = fs.readFileSync(new URL('supabase/functions/analizar-reporte/index.ts', root), 'utf-8');
+  const spec = readGenerationSpec(fuente);
+  const reglas = leerReglasValidador(fuente);
+  const set = cargarSet(path.resolve(opciones.rutaSet));
+  console.log(`Set ${set.set_version}: ${set.casos.length} casos · ${opciones.repeticiones} repeticiones · ventana ${VENTANA_M1} · top-k ${spec.matchCount} · umbral ${spec.threshold}`);
+  if (opciones.dryRun) {
+    console.log(`Dry-run (sin red): ${JSON.stringify(estimarLlamadas(set.casos, opciones.repeticiones, reglas))}`);
+    process.exit(0);
+  }
+
+  const { need } = leerEnv(argValue('--env') ? path.resolve(argValue('--env')) : new URL('.env', root));
+  const geminiKey = need('GEMINI_API_KEY');
+  const supabaseUrl = need('VITE_SUPABASE_URL').replace(/\/$/, '');
+  const rest = crearRest(supabaseUrl, need('SUPABASE_SERVICE_ROLE_KEY'));
+  console.log(`Proyecto Supabase: ${new URL(supabaseUrl).host} (confirmar que es STAGING).`);
+
+  const git = infoGit(fileURLToPath(root));
+  if (git.cambiosLocalesEnFuncion) console.warn('ATENCIÓN: analizar-reporte tiene cambios sin commitear: el código medido no es el del commit.');
+  const corpus = await leerCorpus(rest);
+  await resolverLocalidades(rest, set.casos);
+  const inicio = new Date().toISOString();
+  const motor = encabezadoMotor({ spec, git, despliegue: opciones.despliegue, corpus: corpus.huella });
+
+  const embed = async (text) => {
+    const backoffs = [2000, 5000, 10000, 20000];
+    for (let attempt = 0; ; attempt += 1) {
+      const res = await fetch(`${GEMINI_API}/models/${spec.embeddingModel}:embedContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+        body: JSON.stringify({ model: `models/${spec.embeddingModel}`, content: { parts: [{ text }] }, outputDimensionality: spec.dimensions }),
+      });
+      if (res.ok) {
+        const values = (await res.json())?.embedding?.values;
+        if (!Array.isArray(values) || values.length !== spec.dimensions) throw new Error('Vector inválido');
+        return values;
+      }
+      if (attempt >= backoffs.length || ![429, 500, 503].includes(res.status)) throw new Error(`embedContent falló (${res.status})`);
+      await espera(backoffs[attempt]);
+    }
+  };
+
+  const resultados = [];
+  for (let repeticion = 1; repeticion <= opciones.repeticiones; repeticion += 1) {
+    for (const caso of set.casos) {
+      const fecha_utc = new Date().toISOString();
+      const vector = await embed(queryTextOf(caso.descripcion, caso.categoria));
+      const filas = await rest('rpc/match_knowledge_fragments', {
+        method: 'POST',
+        body: JSON.stringify({
+          query_embedding: vector,
+          p_locality_id: caso.localidad_id,
+          p_model_code: spec.embeddingModelCode,
+          match_count: VENTANA_M1,
+          p_service_code: caso.categoria,
+        }),
+      });
+      const m = filaM1(filas, caso.esperados_n1, spec);
+      resultados.push({
+        caso_id: caso.caso_id,
+        repeticion,
+        fecha_utc,
+        pendiente_po: caso.pendiente_po,
+        universo: caso.universo,
+        categoria: caso.categoria,
+        // Producción no recupera para VULNERABILIDAD_SOCIAL (corta antes, estado asistencia): se mide igual, informativo
+        recupera_en_produccion: caso.categoria !== reglas.vulnerabilidad,
+        esperados_n1: caso.esperados_n1,
+        esperados_n2: caso.esperados_n2,
+        ...m,
+      });
+      console.log(`${caso.caso_id.padEnd(16)} r${repeticion} · cand ${String(filas.length).padStart(3)} · 1.ª esperada ${m.posicion_primera_esperada ?? '-'} · entregados ${m.entregados}`);
+    }
+  }
+
+  const salida = {
+    esquema: ESQUEMA,
+    medicion: 'M1',
+    prueba: opciones.prueba,
+    set_version: set.set_version,
+    inicio_utc: inicio,
+    fin_utc: new Date().toISOString(),
+    repeticiones: opciones.repeticiones,
+    ventana: VENTANA_M1,
+    motor,
+    resumen: resumenM1(resultados),
+    resultados,
+  };
+  fs.mkdirSync(new URL('salida/', here), { recursive: true });
+  const nombre = `RAG-P0_M1${opciones.prueba ? '_PRUEBA' : ''}_${marcaDeTiempo(inicio)}.json`;
+  fs.writeFileSync(new URL(`salida/${nombre}`, here), JSON.stringify(salida, null, 2));
+  console.log(`\nResumen: ${JSON.stringify(salida.resumen)}`);
+  console.log(`Salida: scripts/rag-local-dev/rep-diag-variantes/salida/${nombre}`);
+  process.exit(0);
+}
+
 const casosFile = argValue('--casos') ?? 'casos.json';
 const ftsFile = argValue('--fts') ?? 'fts-ranks.json';
 const { escenarios, casos } = JSON.parse(fs.readFileSync(new URL(casosFile, here), 'utf-8'));
