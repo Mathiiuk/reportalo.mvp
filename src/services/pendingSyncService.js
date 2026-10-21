@@ -14,6 +14,7 @@ import { processAllEvidencesThroughQuarantine, describeProtectionFailure } from 
 import { resolveServiceDbId } from './categoriesService';
 import { validateDescription } from './reportDescription';
 import { routeReport } from './reportRoutingService';
+import { isSocialAssistanceCategory, saveSocialAssistancePrestacion } from './socialAssistanceService';
 import {
   createCitizenReport,
   attachReportEvidence,
@@ -162,6 +163,12 @@ export const sendPendingDraft = async (draft, userId) => {
       if (!attached.success) {
         return failWith(draft, { code: 'ATTACH', kind: 'retry', message: attached.error || 'No se pudo adjuntar la foto.' });
       }
+    }
+
+    // REP-3841: la respuesta «¿hay niñas, niños o adolescentes?» va antes de route_report, que la lee para elegir el canal.
+    // Si falla no se reintenta el envío: el reporte ya está y route_report propone el canal general.
+    if (draft.prestacionKey && isSocialAssistanceCategory(draft.selectedCategory)) {
+      await saveSocialAssistancePrestacion({ reportId: creation.data.id, serviceId, prestacionKey: draft.prestacionKey });
     }
 
     await deleteDraftReport(draft.client_side_id);

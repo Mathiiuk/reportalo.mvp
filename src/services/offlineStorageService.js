@@ -166,6 +166,8 @@ export const saveDraftReport = async (draftData) => {
     currentStep: draftData.currentStep || 1,
     evidenceList: normalizedEvidence,
     selectedCategory: draftData.selectedCategory || null,
+    // REP-3841: respuesta «¿hay niñas, niños o adolescentes?» de Vulnerabilidad social (value_key del catálogo)
+    prestacionKey: draftData.prestacionKey || null,
     description: draftData.description || '',
     customLocation: draftData.customLocation || null,
     geolocation: draftData.geolocation || null,

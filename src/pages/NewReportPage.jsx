@@ -14,6 +14,7 @@ import { AppDesktopHeader } from '../components/layout/AppLayout';
 import { TermsAndPermissionsPage } from './TermsAndPermissionsPage';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { resolveServiceDbId, getReportCategories, DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
+import { isSocialAssistanceCategory, saveSocialAssistancePrestacion } from '../services/socialAssistanceService';
 import { hasAcceptedCurrentTerms, recordTermsAcceptance, CURRENT_TERMS_VERSION } from '../services/termsService';
 
 import { getFriendlyLocationLabel } from '../services/locationService';
@@ -81,6 +82,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
   const [categories, setCategories] = useState(DEFAULT_REPORT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState(DEFAULT_REPORT_CATEGORIES[1]); // Default: Infracción de tránsito
   const [description, setDescription] = useState('');
+  // REP-3841: con «Vulnerabilidad social», si hay niñas, niños o adolescentes (define el canal del catálogo)
+  const [prestacionKey, setPrestacionKey] = useState(null);
+  const socialPrestacionKey = isSocialAssistanceCategory(selectedCategory) ? prestacionKey : null;
   // isGranted distingue una lectura real de GPS del valor por defecto
   // (DEFAULT_CITY_COORDINATES): sugerir una localidad a partir del respaldo
   // seria inferir jurisdiccion desde una ubicacion inventada (REP-2500-PRESEL).
@@ -187,6 +191,9 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             // Restauramos los campos del formulario
             if (draft.selectedCategory) {
               setSelectedCategory(draft.selectedCategory);
+            }
+            if (draft.prestacionKey) {
+              setPrestacionKey(draft.prestacionKey);
             }
             if (
               typeof draft.description === 'string' &&
@@ -312,6 +319,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       currentStep,
       evidenceList: activeList,
       selectedCategory,
+      prestacionKey: socialPrestacionKey,
       description,
       customLocation,
       geolocation: activeCoords,
@@ -325,6 +333,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
     currentStep,
     activeList,
     selectedCategory,
+    socialPrestacionKey,
     description,
     customLocation,
     activeCoords,
@@ -570,6 +579,19 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         });
       }
 
+      // REP-3841: la respuesta va antes de que «Reporte enviado» pida el destino a route_report, que la lee de acá.
+      // Si no se guarda, el reporte sigue enviado y route_report propone el canal general (sin verificar).
+      if (socialPrestacionKey) {
+        const prestacionResult = await saveSocialAssistancePrestacion({
+          reportId: creationResult.data.id,
+          serviceId,
+          prestacionKey: socialPrestacionKey,
+        });
+        if (!prestacionResult.success) {
+          console.error('[handleConfirmEvidenceAndPersist] Prestación no guardada:', prestacionResult.error);
+        }
+      }
+
       setPersistedReport({
         id: creationResult.data.id,
         // Mismo codigo corto que muestra el detalle (REP-3789): antes la
@@ -667,6 +689,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
               description={description}
               onSelectCategory={setSelectedCategory}
               onChangeDescription={setDescription}
+              prestacionKey={socialPrestacionKey}
+              onSelectPrestacion={setPrestacionKey}
               onBack={handleBack}
               onContinue={() => goToStep(3)}
             />

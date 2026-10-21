@@ -25,6 +25,8 @@ import { ReportVisualVerification } from '../components/report/ReportVisualVerif
 import { StatusPill } from '../components/report/StatusPill';
 import { buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
+import { routeReport } from '../services/reportRoutingService';
+import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../services/socialAssistanceService';
 import { useReportImageAnalysis } from '../hooks/useReportImageAnalysis';
 import { useReportStateLive } from '../hooks/useReportStateLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
@@ -211,6 +213,21 @@ export const ReportDetailPage = () => {
   // REP-3820: verificación visual de las fotos. Solo el dueño la lee (RLS de report_image_analysis); aditiva y separada
   // del fundamento legal: no cambia estados ni el panel de arriba.
   const { results: imageAnalyses } = useReportImageAnalysis({ reportId: id, imageCount: images.length, enabled: reportOwned });
+  // REP-3841: en Vulnerabilidad social, el canal del catálogo que se le indica al dueño (route_report es idempotente y
+  // solo le responde al autor). Los reportes viejos sin la respuesta de niñas/niños quedan sin canal verificado.
+  const isSocialAssistance = isSocialAssistanceCategory(report?.services?.service_code);
+  const [socialChannel, setSocialChannel] = useState({ loading: false, channel: null });
+  useEffect(() => {
+    if (!reportOwned || !isSocialAssistance) return undefined;
+    let isMounted = true;
+    setSocialChannel({ loading: true, channel: null });
+    routeReport(id).then((result) => {
+      if (isMounted) setSocialChannel({ loading: false, channel: describeSocialAssistanceChannel(result.routing) });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [id, reportOwned, isSocialAssistance]);
   useReportStateLive({
     reportId: id,
     stateCode: report?.current_state_code,
@@ -306,6 +323,7 @@ export const ReportDetailPage = () => {
     currentState: report.current_state_code,
     createdAt: report.created_at,
     history: stateHistory,
+    socialAssistance: isSocialAssistance,
   });
   const locationLabel =
     report.localities?.name ||
@@ -488,7 +506,13 @@ export const ReportDetailPage = () => {
 
           {isOwner && (
             <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
-              <ReportAiAnalysisPanel analysis={analysis} loading={loadingAnalysis} error={analysisError} />
+              <ReportAiAnalysisPanel
+                analysis={analysis}
+                loading={loadingAnalysis}
+                error={analysisError}
+                socialChannel={socialChannel.channel}
+                socialChannelLoading={socialChannel.loading}
+              />
               <ReportVisualVerification results={imageAnalyses} images={images} categoryName={categoryName} />
             </div>
           )}
@@ -519,7 +543,7 @@ export const ReportDetailPage = () => {
                       <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-track text-rep-ink-label">
                         <Ban aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </span>
-                    ) : step.current && step.key !== 'enviado' && step.key !== 'resuelto' ? (
+                    ) : step.current && !['enviado', 'resuelto', 'informado'].includes(step.key) ? (
                       <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent">
                         <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </span>

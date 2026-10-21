@@ -28,7 +28,7 @@ const EVIDENCE_BUCKET = 'report-evidences';
 export const PUBLIC_REPORTS_VIEW = 'public_citizen_reports';
 /** Columnas del resumen que se muestran en el detalle, propio o ajeno (la vista también las tiene). */
 const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at,
-      services ( service_name ),
+      services ( service_name, service_code ),
       localities ( name )`;
 /** Cuánto vive una URL firmada de las fotos del reporte. Se vuelve a pedir cada vez que se abre el detalle. */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
