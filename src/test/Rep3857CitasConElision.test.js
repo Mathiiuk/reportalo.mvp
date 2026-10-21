@@ -1,0 +1,131 @@
+/**
+ * @file Rep3857CitasConElision.test.js
+ * @description REP-3857 (RAG P1): citas con elisión por tramos. La base es la rama de S16 (casos de ValidateLlmAnalysis);
+ * acá van las reglas que pide el ticket y que faltaban, y la paridad entre las tres copias del validador:
+ * la función (analizar-reporte), el espejo del frontend y la réplica de los runners (rep-diag-generacion → p0).
+ */
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { quoteMatchesFragment } from '../services/validateLlmAnalysis';
+import { quoteMatchesFragment as replicaRunners } from '../../scripts/rag-local-dev/rep-diag-generacion/lib.mjs';
+import { validarComoProduccion, leerReglasValidador } from '../../scripts/rag-local-dev/p0/esquema.mjs';
+
+// En Windows el checkout puede traer CRLF: se compara el código, no el fin de línea
+const leer = (ruta) => readFileSync(resolve(__dirname, '../..', ruta), 'utf8').replace(/\r\n/g, '\n');
+const FUNCION = leer('supabase/functions/analizar-reporte/index.ts');
+const ESPEJO = leer('src/services/validateLlmAnalysis.js');
+const REPLICA = leer('scripts/rag-local-dev/rep-diag-generacion/lib.mjs');
+
+describe('REP-3857 · lo omitido en los bordes de la cita', () => {
+  it('con «...» al principio, rechaza si lo omitido de la misma oración tiene una negación', () => {
+    const fragmento = 'No se permite estacionar sobre la vereda en todo el ejido urbano.';
+    expect(quoteMatchesFragment('... se permite estacionar sobre la vereda', fragmento)).toBe(false);
+    expect(quoteMatchesFragment('[...] se permite estacionar sobre la vereda', fragmento)).toBe(false);
+  });
+
+  it('con «...» al final, rechaza si lo omitido de la misma oración tiene una salvedad', () => {
+    const fragmento = 'Se permite estacionar sobre la vereda, salvo en días hábiles. El resto queda prohibido.';
+    expect(quoteMatchesFragment('Se permite estacionar sobre la vereda …', fragmento)).toBe(false);
+    expect(quoteMatchesFragment('Se permite estacionar sobre la vereda (...)', fragmento)).toBe(false);
+  });
+
+  it('una negación en otra oración no bloquea la elisión del borde', () => {
+    const fragmento = 'No corresponde la multa. Se permite estacionar sobre la vereda los domingos y feriados.';
+    expect(quoteMatchesFragment('... Se permite estacionar sobre la vereda', fragmento)).toBe(true);
+    expect(quoteMatchesFragment('Se permite estacionar sobre la vereda ...', fragmento)).toBe(true);
+  });
+
+  it('las cuatro salvedades compuestas del ticket se detectan en lo salteado', () => {
+    for (const salvedad of ['siempre que', 'sin perjuicio', 'excepto', 'excepción', 'nunca', 'jamás', 'ni']) {
+      const fragmento = `El titular debe mantener la vereda en buen estado ${salvedad} lo disponga la autoridad de aplicación del municipio.`;
+      expect(
+        quoteMatchesFragment('El titular debe mantener la vereda ... la autoridad de aplicación del municipio.', fragmento),
+        salvedad
+      ).toBe(false);
+    }
+  });
+});
+
+describe('REP-3857 · saltos de línea', () => {
+  it('normaliza CRLF y LF igual en la cita y en la fuente, sin aceptar texto inventado', () => {
+    const fragmento = 'Constituyen obras públicas municipales:\r\na) Las concernientes a los establecimientos municipales.\r\nd) Las de infraestructura urbana, en especial las de pavimentación.';
+    expect(quoteMatchesFragment('Constituyen obras públicas municipales:\n...\nd) Las de infraestructura urbana', fragmento)).toBe(true);
+    expect(quoteMatchesFragment('Constituyen obras públicas municipales:\r\n... d) Las de infraestructura rural', fragmento)).toBe(false);
+  });
+
+  it('sin marca de elisión el resultado es el de P0: solo un tramo literal (tolerando espacios)', () => {
+    const fragmento = 'Prohíbese estacionar\r\nsobre las rampas.';
+    expect(quoteMatchesFragment('Prohíbese estacionar sobre las rampas.', fragmento)).toBe(true);
+    expect(quoteMatchesFragment('Prohíbese estacionar en las rampas.', fragmento)).toBe(false);
+  });
+});
+
+describe('REP-3857 · las tres copias del validador son iguales', () => {
+  const bloque = (fuente) =>
+    fuente.slice(fuente.indexOf('const ELISION_MARKER'), fuente.indexOf('const sentenceStartBefore'));
+  const funcionJs = (fuente) =>
+    fuente.slice(fuente.indexOf('const sentenceStartBefore'), fuente.indexOf('return true;\n};', fuente.indexOf('quoteMatchesFragment = ')));
+
+  it('mismas constantes: marcas, tramo mínimo, salvedades y bordes', () => {
+    expect(bloque(FUNCION)).not.toBe('');
+    expect(bloque(ESPEJO)).toBe(bloque(FUNCION));
+    expect(bloque(REPLICA)).toBe(bloque(FUNCION));
+  });
+
+  it('el espejo del frontend y la réplica de los runners tienen el mismo código', () => {
+    expect(funcionJs(REPLICA)).toBe(funcionJs(ESPEJO));
+  });
+
+  it('la función, sin las anotaciones de tipos, tiene el mismo código', () => {
+    const sinTipos = funcionJs(FUNCION)
+      .replace(/\(text: string, at: number\): number/g, '(text, at)')
+      .replace(/\(text: string, from: number\): number/g, '(text, from)')
+      .replace(/\(quote: string, content: string\): boolean/g, '(quote, content)')
+      .replace(/: number \| null = null/g, ' = null')
+      .replace(/\(m\.index \?\? 0\)/g, 'm.index')
+      .replace(/\n\/\*\* true si la cita es literal[^\n]*\n/, '\n');
+    expect(sinTipos.replace(/^export /m, '')).toBe(funcionJs(ESPEJO).replace(/^export /m, ''));
+  });
+
+  it('los dos JS dan lo mismo que el validador de los runners en casos reales', () => {
+    const casos = [
+      ['No se permite estacionar sobre la vereda en todo el ejido.', '... se permite estacionar sobre la vereda'],
+      ['Constituyen obras públicas municipales:\nd) Las de infraestructura urbana.', 'Constituyen obras públicas municipales: ... d) Las de infraestructura urbana.'],
+      ['uno dos tres', 'uno tres'],
+    ];
+    for (const [fragmento, cita] of casos) expect(replicaRunners(cita, fragmento)).toBe(quoteMatchesFragment(cita, fragmento));
+  });
+});
+
+describe('REP-3857 · runner M2 (P1) con la regla nueva', () => {
+  const reglas = { ...leerReglasValidador(FUNCION), agencias: new Set() };
+  const base = { estado: 'fundamentado', es_infraccion: true, fundamento_ciudadano: 'x', fundamento_oficial: 'y', confianza: 0.9, organismo_sugerido_id: null };
+  const fragments = [
+    {
+      fragment_id: 'f-lom59',
+      content: 'Constituyen obras públicas municipales:\na) Las concernientes a los establecimientos municipales.\nd) Las de infraestructura urbana, en especial las de iluminación.',
+    },
+  ];
+
+  it('acepta la elisión válida de la LOM art. 59 y la marca como cita que pasa el validador', () => {
+    const r = validarComoProduccion(
+      { ...base, citas: [{ fragment_id: 'f-lom59', cita_textual: 'Constituyen obras públicas municipales: ... d) Las de infraestructura urbana' }] },
+      fragments,
+      'INFRAESTRUCTURA',
+      reglas
+    );
+    expect(r.valid).toBe(true);
+    expect(r.citas[0]).toMatchObject({ en_contexto: true, literal: true, pasa: true });
+  });
+
+  it('rechaza un tramo corto, como la función', () => {
+    const r = validarComoProduccion(
+      { ...base, citas: [{ fragment_id: 'f-lom59', cita_textual: 'Constituyen ... iluminación' }] },
+      fragments,
+      'INFRAESTRUCTURA',
+      reglas
+    );
+    expect(r.valid).toBe(false);
+  });
+});

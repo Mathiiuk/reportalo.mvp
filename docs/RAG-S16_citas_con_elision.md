@@ -97,3 +97,28 @@ Los tres archivos de test pasan. La suite completa tiene 15 archivos de UI y map
 - `scripts/rag-local-dev/rep-diag-generacion/run.mjs` en la versión de `claude/zen-fermi-205081` (con `--desde-variantes … --variante B --reusar`), sobre los contextos congelados `contexto-B-B8-64-B.json` y `contexto-B-B8-65-B.json`. La opción A se midió con la regla agregada temporalmente en `index.ts` (el script lee el prompt del fuente).
 - La opción B se midió revalidando con `validateRun` todas las salidas `generacion-*.json` guardadas junto a su contexto.
 - Costo: **112 llamadas** a `gemini-3.8-flash` (48 de línea de base y 64 con la regla del prompt); ninguna escritura en la base.
+
+## 9. REP-3857 (P1, Sprint 17): qué se agregó sobre la rama de S16
+
+La rama de S16 (`9c8492b`) se aplicó sobre `staging` el 21/10 en `feat/REP-3857-citas-con-elision-por-tramos`, sin conflictos. Se revisó contra el ticket:
+
+| Regla del ticket | Estado |
+|---|---|
+| Marcas `...`, `…`, `[...]` y `(...)` | Ya estaba |
+| Cada tramo literal, de 15 caracteres o más, en orden y sin superponerse | Ya estaba |
+| Rechazar si lo omitido tiene «no», «ni», «nunca», «jamás», «salvo», «excepto», «excepción», «siempre que» o «sin perjuicio» | Ya estaba **entre tramos**. **Faltaba en los bordes:** con «...» al principio o al final de la cita, lo omitido no se revisaba |
+| Normalizar CRLF y saltos de línea en la cita y en la fuente | Ya estaba (`normalizeWhitespace`), ahora con tests |
+| Sin marca de elisión, el resultado es idéntico al de P0 | Sí: sin marca, el camino es el literal de siempre |
+
+**Lo agregado:**
+- **Bordes:** con la marca al principio, se revisa lo omitido desde el inicio de la oración (después del último «. », «; » o «: ») hasta el primer tramo. Con la marca al final, desde el último tramo hasta el fin de la oración. Ejemplo: de «No se permite estacionar…», la cita «... se permite estacionar» se rechaza.
+- **Una sola regla en las tres copias:** la función, el espejo del frontend y la réplica de `rep-diag-generacion`. Ahora el runner de P0/P1 (`p0/esquema.mjs`) usa esa misma réplica, así que M2 de P1 mide con el validador nuevo.
+- **Tests:** `Rep3857CitasConElision.test.js` (12) cubre los bordes, CRLF, las salvedades compuestas, la paridad del código entre las tres copias y el runner M2 con la regla nueva. El test de paridad de REP-3859 ahora busca `quoteMatchesFragment`.
+
+**Para Hernán, antes del merge** (paso 3 del ticket):
+1. ¿La lista de negaciones y salvedades es completa? Están «no», «ni», «nunca», «jamás», «salvo», «excepto», «excepción», «siempre que» y «sin perjuicio». Candidatas a sumar: «a menos que», «con excepción de», «solo si», «únicamente», «prohíbese».
+2. ¿El límite en los bordes es la oración (corta en «. », «; » o «: »)?
+3. ¿15 caracteres es un buen mínimo por tramo?
+4. Casos límite para revisar: una elisión dentro de un inciso que tiene una salvedad en el inciso siguiente, una cita que empieza en la mitad de una enumeración, y un «ni» como conjunción («ni ... ni»).
+
+**Lo que falta y espera a P0** (orden P0 → P1): correr M2 con el set v1 congelado (REP-3858), compararlo con la línea base de P0 (REP-3859), la auditoría de Iván (REP-3861) y la decisión de Hernán. **Recién después** se mergea y se despliega `analizar-reporte`. Hasta entonces **no se despliega nada**.

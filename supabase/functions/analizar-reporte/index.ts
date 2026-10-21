@@ -340,6 +340,22 @@ const normalizeWhitespace = (text: string): string => text.replace(/\s+/g, ' ').
 const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
 const MIN_ELIDED_SEGMENT_CHARS = 15;
 const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
+// REP-3857: marca al principio o al final de la cita. Lo omitido ahí se revisa hasta el borde de la oración.
+const ELISION_AT_START = /^(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)/;
+const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)$/;
+const SENTENCE_BREAK = /[.;:]\s/g;
+
+/** Inicio de la oración que contiene `at` (después del último «. », «; » o «: »). */
+const sentenceStartBefore = (text: string, at: number): number => {
+  let start = 0;
+  for (const m of text.slice(0, at).matchAll(SENTENCE_BREAK)) start = (m.index ?? 0) + m[0].length;
+  return start;
+};
+/** Fin de la oración que sigue a `from` (el próximo «.», «;» o «:»), o el final del texto. */
+const sentenceEndAfter = (text: string, from: number): number => {
+  const m = /[.;:](?:\s|$)/.exec(text.slice(from));
+  return m ? from + m.index : text.length;
+};
 
 /** true si la cita es literal (tolerando espacios) o, con elisiones, si cada tramo cumple las reglas de arriba. */
 const quoteMatchesFragment = (quote: string, content: string): boolean => {
@@ -354,14 +370,22 @@ const quoteMatchesFragment = (quote: string, content: string): boolean => {
   if (segments.length === 0) return false;
   let searchFrom = 0;
   let previousEnd: number | null = null;
+  let firstStart: number | null = null;
   for (const segment of segments) {
     if (segment.length < MIN_ELIDED_SEGMENT_CHARS) return false;
     const at = normalizedContent.indexOf(segment, searchFrom);
     if (at < 0) return false;
     if (previousEnd !== null && ELIDED_TEXT_GUARD.test(normalizedContent.slice(previousEnd, at))) return false;
+    if (firstStart === null) firstStart = at;
     previousEnd = at + segment.length;
     searchFrom = previousEnd;
   }
+  // REP-3857: con «...» al principio o al final, lo omitido llega hasta el borde de la oración. Ahí tampoco puede
+  // haber una negación ni una salvedad (p. ej. citar «... se permite estacionar» de «No se permite estacionar»).
+  if (ELISION_AT_START.test(normalizedQuote)
+    && ELIDED_TEXT_GUARD.test(normalizedContent.slice(sentenceStartBefore(normalizedContent, firstStart), firstStart))) return false;
+  if (ELISION_AT_END.test(normalizedQuote)
+    && ELIDED_TEXT_GUARD.test(normalizedContent.slice(previousEnd, sentenceEndAfter(normalizedContent, previousEnd)))) return false;
   return true;
 };
 

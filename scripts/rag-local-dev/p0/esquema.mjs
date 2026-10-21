@@ -11,6 +11,8 @@
 //   - M2: estado, citas con fragment_id/artículo/validador, citas verificadas y excluidas, motivo, tokens y latencia.
 // Los casos `pendiente_po` se miden igual pero no computan para la puerta P0 (decisión de Leo, 20/10).
 import crypto from 'node:crypto';
+// REP-3857: misma regla de citas que analizar-reporte (literal o con elisión por tramos); réplica en un solo lugar
+import { quoteMatchesFragment } from '../rep-diag-generacion/lib.mjs';
 
 export const ESQUEMA = 'rag-p0/v1';
 export const VENTANA_M1 = 100;
@@ -170,7 +172,6 @@ export const resumenM1 = (resultados) => {
 };
 
 // ── M2 · respuesta jurídica ──────────────────────────────────────────────────────────────────────────────────────
-const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
 const UUID_ORGANISMO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -184,9 +185,8 @@ export const validarComoProduccion = (parsed, fragments, category, { estados, ca
   const citas = Array.isArray(parsed?.citas)
     ? parsed.citas.map((c) => {
         const fragment = porId.get(c?.fragment_id);
-        const quote = normalizeWhitespace(c?.cita_textual ?? '');
         const enContexto = Boolean(fragment);
-        const literal = enContexto && quote !== '' && normalizeWhitespace(fragment.content).includes(quote);
+        const literal = enContexto && quoteMatchesFragment(c?.cita_textual ?? '', fragment.content);
         return { fragment_id: c?.fragment_id ?? null, en_contexto: enContexto, literal, pasa: enContexto && literal };
       })
     : [];
