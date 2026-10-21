@@ -1,0 +1,844 @@
+{
+  "fuente": "bateria_completa_81.csv",
+  "escenarios": {
+    "AMB_PBA": {
+      "fuente": "LEEME de Hernán §5, D1 (aceptables)",
+      "esperados": [
+        "40000000-0000-4000-8000-000000000026",
+        "40000000-0000-4000-8000-000000000023",
+        "40000000-0000-4000-8000-000000000024",
+        "60000000-0000-4000-8000-000000000018",
+        "60000000-0000-4000-8000-000000000016",
+        "60000000-0000-4000-8000-000000000020",
+        "20000000-0000-4000-8000-000000000002",
+        "40000000-0000-4000-8000-000000000052",
+        "40000000-0000-4000-8000-000000000053"
+      ]
+    },
+    "COM_PBA": {
+      "fuente": "LEEME §5, D2 (aceptables)",
+      "esperados": [
+        "80000000-0000-4000-8000-000000000003",
+        "80000000-0000-4000-8000-000000000002",
+        "80000000-0000-4000-8000-000000000004",
+        "40000000-0000-4000-8000-000000000049",
+        "40000000-0000-4000-8000-000000000051",
+        "60000000-0000-4000-8000-000000000002"
+      ]
+    },
+    "ALUMBRADO_PBA": {
+      "fuente": "LEEME §5, D3 (aceptables)",
+      "esperados": [
+        "80000000-0000-4000-8000-000000000001",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "40000000-0000-4000-8000-000000000050"
+      ]
+    },
+    "BACHE_CABA": {
+      "fuente": "LEEME §5, D4 (aceptables si no se sabe la causa; sin el canal 147, que es un canal y no una norma)",
+      "esperados": [
+        "80000000-0000-4000-8000-000000000005",
+        "80000000-0000-4000-8000-000000000007"
+      ]
+    },
+    "COM_CABA": {
+      "fuente": "LEEME §5, D5 (aceptables)",
+      "esperados": [
+        "60000000-0000-4000-8000-000000000021",
+        "40000000-0000-4000-8000-000000000047",
+        "40000000-0000-4000-8000-000000000013"
+      ]
+    },
+    "TRANS_CABA": {
+      "fuente": "LEEME §5, casos sin desvío: Ley 451 arts. 6.1.52, 6.1.37 y 6.1.54 · Ley 2148 arts. 7.1.8 y 7.1.9",
+      "esperados": [
+        "20000000-0000-4000-8000-000000000013",
+        "20000000-0000-4000-8000-000000000014",
+        "40000000-0000-4000-8000-000000000048",
+        "60000000-0000-4000-8000-000000000033",
+        "60000000-0000-4000-8000-000000000034",
+        "60000000-0000-4000-8000-000000000035",
+        "60000000-0000-4000-8000-000000000036",
+        "60000000-0000-4000-8000-000000000037",
+        "60000000-0000-4000-8000-000000000038"
+      ]
+    },
+    "TRANS_PBA": {
+      "fuente": "LEEME §5, casos sin desvío: Ley 24.449 art. 49 b) ap. 3 y ap. 1 · Ley 13.927 arts. 1 y 2",
+      "esperados": [
+        "60000000-0000-4000-8000-000000000040",
+        "20000000-0000-4000-8000-000000000009",
+        "40000000-0000-4000-8000-000000000054",
+        "40000000-0000-4000-8000-000000000055"
+      ]
+    },
+    "AMB_CABA": {
+      "fuente": "LEEME §5, casos sin desvío: Ley 1854 art. 36 · Ley 451 art. 1.3.13",
+      "esperados": [
+        "40000000-0000-4000-8000-000000000009",
+        "40000000-0000-4000-8000-000000000041"
+      ]
+    },
+    "BACHE_PBA": {
+      "fuente": "LEEME §5, casos sin desvío: Const. PBA art. 192 inc. 4 · LOM art. 27 inc. 2, 52 y 59 · Ord. Fiscal art. 132",
+      "esperados": [
+        "20000000-0000-4000-8000-000000000001",
+        "40000000-0000-4000-8000-000000000050",
+        "20000000-0000-4000-8000-000000000002",
+        "20000000-0000-4000-8000-000000000003",
+        "80000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "SIN_NORMA": {
+      "fuente": "Control negativo: el texto no corresponde a la categoría elegida, o no describe un hecho reclamable; ningún fragmento elegible es aplicable",
+      "esperados": []
+    },
+    "SIN_ACEPTABLES": {
+      "fuente": "Vulnerabilidad social: §5 del LEEME no define artículos aceptables (el estado esperado es «asistencia»). Se informa aparte.",
+      "esperados": []
+    }
+  },
+  "casos": [
+    {
+      "id": "B-B1-01",
+      "grupo": "B",
+      "escenario": "TRANS_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "TRANSITO",
+      "descripcion": "Auto estacionado sobre la vereda, tapando la rampa y el paso peatonal de la esquina.",
+      "filas": [
+        "B1-01",
+        "B1-02",
+        "B1-03",
+        "B4-49",
+        "B9-66",
+        "B9-75"
+      ],
+      "estadosObservados": {
+        "analizado": 6
+      }
+    },
+    {
+      "id": "B-B1-04",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Hay un bache grande y profundo en el medio de la calle que rompe las gomas de los autos.",
+      "filas": [
+        "B1-04",
+        "B1-05",
+        "B1-06",
+        "B4-50",
+        "B9-71",
+        "B9-73"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 6
+      }
+    },
+    {
+      "id": "B-B1-07",
+      "grupo": "B",
+      "escenario": "AMB_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "AMBIENTE",
+      "descripcion": "Hay bolsas de basura acumuladas en la vereda y en la calle junto al contenedor, hace días.",
+      "filas": [
+        "B1-07",
+        "B1-08",
+        "B1-09",
+        "B4-51"
+      ],
+      "estadosObservados": {
+        "analizado": 4
+      }
+    },
+    {
+      "id": "B-B1-10",
+      "grupo": "B",
+      "escenario": "COM_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Puestos de venta ambulante sobre la vereda ocupando el espacio público de la zona.",
+      "filas": [
+        "B1-10",
+        "B1-11",
+        "B1-12",
+        "B4-52"
+      ],
+      "estadosObservados": {
+        "analizado": 4
+      }
+    },
+    {
+      "id": "B-B1-13",
+      "grupo": "B",
+      "escenario": "TRANS_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "TRANSITO",
+      "descripcion": "Auto estacionado sobre la vereda, tapando la rampa y el paso peatonal de la esquina.",
+      "filas": [
+        "B1-13",
+        "B1-14",
+        "B1-15",
+        "B4-53"
+      ],
+      "estadosObservados": {
+        "analizado": 4
+      }
+    },
+    {
+      "id": "B-B1-16",
+      "grupo": "B",
+      "escenario": "BACHE_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Hay un bache grande y profundo en el medio de la calle que rompe las gomas de los autos.",
+      "filas": [
+        "B1-16",
+        "B1-17",
+        "B1-18",
+        "B4-54"
+      ],
+      "estadosObservados": {
+        "analizado": 4
+      }
+    },
+    {
+      "id": "B-B1-19",
+      "grupo": "B",
+      "escenario": "AMB_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "AMBIENTE",
+      "descripcion": "Hay bolsas de basura acumuladas en la vereda y en la calle junto al contenedor, hace días.",
+      "filas": [
+        "B1-19",
+        "B1-20",
+        "B1-21",
+        "B4-55",
+        "B9-72",
+        "B9-74",
+        "B9-77"
+      ],
+      "estadosObservados": {
+        "analizado": 7
+      }
+    },
+    {
+      "id": "B-B1-22",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Puestos de venta ambulante sobre la vereda ocupando el espacio público de la zona.",
+      "filas": [
+        "B1-22",
+        "B1-23",
+        "B1-24",
+        "B4-56",
+        "B9-67"
+      ],
+      "estadosObservados": {
+        "": 1,
+        "sin normativa cargada": 4
+      }
+    },
+    {
+      "id": "B-B2-25",
+      "grupo": "B",
+      "escenario": "TRANS_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "TRANSITO",
+      "descripcion": "auto en vereda",
+      "filas": [
+        "B2-25"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-26",
+      "grupo": "B",
+      "escenario": "TRANS_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "TRANSITO",
+      "descripcion": "Auto estacionado sobre la vereda",
+      "filas": [
+        "B2-26"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-27",
+      "grupo": "B",
+      "escenario": "TRANS_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "TRANSITO",
+      "descripcion": "Hay un auto estacionado sobre la vereda, tapando por completo la rampa para personas con discapacidad y el paso peatonal de la esquina. Pasa todos los días en horario de entrada a la escuela y la gente tiene que bajar a la calle para esquivarlo, con el riesgo que eso implica.",
+      "filas": [
+        "B2-27"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-28",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "bache grande",
+      "filas": [
+        "B2-28"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B2-29",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Bache grande en el medio de la calle",
+      "filas": [
+        "B2-29"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B2-30",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Hay un bache muy grande y profundo en el medio de la calle, con agua acumulada cuando llueve. Los autos y las motos lo esquivan de golpe y ya hubo un par de casi accidentes. Rompe las gomas y las llantas. Hace varias semanas que está así y nadie lo repara.",
+      "filas": [
+        "B2-30"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B2-31",
+      "grupo": "B",
+      "escenario": "AMB_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "AMBIENTE",
+      "descripcion": "basura tirada",
+      "filas": [
+        "B2-31"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-32",
+      "grupo": "B",
+      "escenario": "AMB_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "AMBIENTE",
+      "descripcion": "Basura acumulada en la vereda",
+      "filas": [
+        "B2-32"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-33",
+      "grupo": "B",
+      "escenario": "AMB_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "AMBIENTE",
+      "descripcion": "Hay muchísimas bolsas de basura acumuladas en la vereda y en la calle, alrededor del contenedor que está desbordado. Hace varios días que no pasa el camión y ya hay olor y se juntan bichos. Afecta a todos los vecinos y a los comercios de la cuadra.",
+      "filas": [
+        "B2-33"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-34",
+      "grupo": "B",
+      "escenario": "COM_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "venden en la calle",
+      "filas": [
+        "B2-34"
+      ],
+      "estadosObservados": {
+        "no concluyente": 1
+      }
+    },
+    {
+      "id": "B-B2-35",
+      "grupo": "B",
+      "escenario": "COM_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Venta ambulante en la vereda",
+      "filas": [
+        "B2-35"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-36",
+      "grupo": "B",
+      "escenario": "COM_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Hay muchos puestos de venta ambulante armados sobre la vereda, ocupando todo el espacio público frente a los locales. Venden ropa y otros productos sin ningún permiso, y la gente tiene que caminar por la calle porque no queda lugar para pasar por la vereda.",
+      "filas": [
+        "B2-36"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-37",
+      "grupo": "B",
+      "escenario": "TRANS_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "TRANSITO",
+      "descripcion": "auto en vereda",
+      "filas": [
+        "B2-37"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-38",
+      "grupo": "B",
+      "escenario": "TRANS_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "TRANSITO",
+      "descripcion": "Auto estacionado sobre la vereda",
+      "filas": [
+        "B2-38"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-39",
+      "grupo": "B",
+      "escenario": "TRANS_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "TRANSITO",
+      "descripcion": "Hay un auto estacionado sobre la vereda, tapando por completo la rampa para personas con discapacidad y el paso peatonal de la esquina. Pasa todos los días en horario de entrada a la escuela y la gente tiene que bajar a la calle para esquivarlo, con el riesgo que eso implica.",
+      "filas": [
+        "B2-39"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-40",
+      "grupo": "B",
+      "escenario": "BACHE_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "bache grande",
+      "filas": [
+        "B2-40"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-41",
+      "grupo": "B",
+      "escenario": "BACHE_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Bache grande en el medio de la calle",
+      "filas": [
+        "B2-41"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-42",
+      "grupo": "B",
+      "escenario": "BACHE_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Hay un bache muy grande y profundo en el medio de la calle, con agua acumulada cuando llueve. Los autos y las motos lo esquivan de golpe y ya hubo un par de casi accidentes. Rompe las gomas y las llantas. Hace varias semanas que está así y nadie lo repara.",
+      "filas": [
+        "B2-42"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-43",
+      "grupo": "B",
+      "escenario": "AMB_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "AMBIENTE",
+      "descripcion": "basura tirada",
+      "filas": [
+        "B2-43"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-44",
+      "grupo": "B",
+      "escenario": "AMB_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "AMBIENTE",
+      "descripcion": "Basura acumulada en la vereda",
+      "filas": [
+        "B2-44"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-45",
+      "grupo": "B",
+      "escenario": "AMB_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "AMBIENTE",
+      "descripcion": "Hay muchísimas bolsas de basura acumuladas en la vereda y en la calle, alrededor del contenedor que está desbordado. Hace varios días que no pasa el camión y ya hay olor y se juntan bichos. Afecta a todos los vecinos y a los comercios de la cuadra.",
+      "filas": [
+        "B2-45"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B2-46",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "venden en la calle",
+      "filas": [
+        "B2-46"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B2-47",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Venta ambulante en la vereda",
+      "filas": [
+        "B2-47"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B2-48",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Hay muchos puestos de venta ambulante armados sobre la vereda, ocupando todo el espacio público frente a los locales. Venden ropa y otros productos sin ningún permiso, y la gente tiene que caminar por la calle porque no queda lugar para pasar por la vereda.",
+      "filas": [
+        "B2-48"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B8-57",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Deterioro de la calzada con pozos que afectan la circulación vehicular en la zona.",
+      "filas": [
+        "B8-57"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B8-58",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Falta de conservación y mantenimiento de la vía pública por parte del gobierno de la Ciudad.",
+      "filas": [
+        "B8-58"
+      ],
+      "estadosObservados": {
+        "no concluyente": 1
+      }
+    },
+    {
+      "id": "B-B8-59",
+      "grupo": "B",
+      "escenario": "BACHE_CABA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Reclamo para que reparen las calles que están en mal estado y no se pueden transitar bien.",
+      "filas": [
+        "B8-59"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B8-60",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Ocupación del espacio público con puestos de venta sin habilitación comercial en la zona.",
+      "filas": [
+        "B8-60"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B8-61",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Comercio en la vía pública sin permiso municipal ni habilitación correspondiente.",
+      "filas": [
+        "B8-61"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 1
+      }
+    },
+    {
+      "id": "B-B8-62",
+      "grupo": "B",
+      "escenario": "COM_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "COMERCIO_IRREGULAR",
+      "descripcion": "Venta de mercadería en la calle sin habilitación ni controles de higiene y seguridad.",
+      "filas": [
+        "B8-62"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B8-63",
+      "grupo": "B",
+      "escenario": "ALUMBRADO_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Luminaria del alumbrado público apagada, la cuadra queda sin iluminación de noche.",
+      "filas": [
+        "B8-63"
+      ],
+      "estadosObservados": {
+        "no concluyente": 1
+      }
+    },
+    {
+      "id": "B-B8-64",
+      "grupo": "B",
+      "escenario": "ALUMBRADO_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Falta de mantenimiento del servicio de alumbrado público a cargo del municipio.",
+      "filas": [
+        "B8-64"
+      ],
+      "estadosObservados": {
+        "no concluyente": 1
+      }
+    },
+    {
+      "id": "B-B8-65",
+      "grupo": "B",
+      "escenario": "ALUMBRADO_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "Zona sin iluminación que afecta la seguridad de peatones y vehículos por la noche.",
+      "filas": [
+        "B8-65"
+      ],
+      "estadosObservados": {
+        "analizado": 1
+      }
+    },
+    {
+      "id": "B-B9-68",
+      "grupo": "N",
+      "escenario": "SIN_NORMA",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "AMBIENTE",
+      "descripcion": "Auto estacionado sobre la vereda, tapando la rampa y el paso peatonal de la esquina.",
+      "filas": [
+        "B9-68",
+        "B9-76"
+      ],
+      "estadosObservados": {
+        "sin normativa cargada": 2
+      }
+    },
+    {
+      "id": "B-B9-69",
+      "grupo": "B",
+      "escenario": "ALUMBRADO_PBA",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "INFRAESTRUCTURA",
+      "descripcion": "La luminaria de la esquina está apagada y la cuadra queda a oscuras de noche.",
+      "filas": [
+        "B9-69",
+        "B9-70"
+      ],
+      "estadosObservados": {
+        "no concluyente": 2
+      }
+    },
+    {
+      "id": "B-B11-78",
+      "grupo": "V",
+      "escenario": "SIN_ACEPTABLES",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "VULNERABILIDAD_SOCIAL",
+      "descripcion": "Hay personas durmiendo en la vereda, sin abrigo ni refugio, durante la noche.",
+      "filas": [
+        "B11-78"
+      ],
+      "estadosObservados": {
+        "asistencia": 1
+      }
+    },
+    {
+      "id": "B-B11-79",
+      "grupo": "V",
+      "escenario": "SIN_ACEPTABLES",
+      "zona": "CABA",
+      "localidad": "41c88642-689a-4346-897d-0ae6f92bdba3",
+      "categoria": "VULNERABILIDAD_SOCIAL",
+      "descripcion": "hay gente en la calle",
+      "filas": [
+        "B11-79"
+      ],
+      "estadosObservados": {
+        "asistencia": 1
+      }
+    },
+    {
+      "id": "B-B11-80",
+      "grupo": "V",
+      "escenario": "SIN_ACEPTABLES",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "VULNERABILIDAD_SOCIAL",
+      "descripcion": "Hay personas durmiendo en la vereda, sin abrigo ni refugio, durante la noche.",
+      "filas": [
+        "B11-80"
+      ],
+      "estadosObservados": {
+        "asistencia": 1
+      }
+    },
+    {
+      "id": "B-B11-81",
+      "grupo": "V",
+      "escenario": "SIN_ACEPTABLES",
+      "zona": "Avellaneda",
+      "localidad": "cba99f1c-1290-4873-b4fb-af8ae61122e1",
+      "categoria": "VULNERABILIDAD_SOCIAL",
+      "descripcion": "hay gente en la calle",
+      "filas": [
+        "B11-81"
+      ],
+      "estadosObservados": {
+        "asistencia": 1
+      }
+    }
+  ]
+}
