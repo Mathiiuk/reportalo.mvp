@@ -1,0 +1,108 @@
+categoria_reportalo,grupo_destino,prestacion_oficial,categoria_suaci,tipo_suaci,contactos_caba_2023
+AMBIENTE,CONTAMINACION,Malos Olores / Humos / Gases Tóxicos,APRA CONTROL AMBIENTAL,Denuncia,849
+AMBIENTE,CONTAMINACION,Uso indebido del agua para limpiar las veredas,APRA CONTROL AMBIENTAL,Denuncia,257
+AMBIENTE,CONTAMINACION,Derrame de líquidos peligrosos / industriales,APRA CONTROL AMBIENTAL,Denuncia,172
+AMBIENTE,CONTAMINACION,Trascendencia de calor desde instalaciones fijas comerciales / industriales hacia inmuebles linderos,APRA CONTROL AMBIENTAL,Denuncia,94
+AMBIENTE,CONTAMINACION,Irregularidades en la manipulación de residuos peligrosos,APRA CONTROL AMBIENTAL,Denuncia,80
+AMBIENTE,CONTAMINACION,Irregularidades en el mantenimiento de tanques de agua,APRA CONTROL AMBIENTAL,Denuncia,41
+AMBIENTE,CONTAMINACION,Emanaciones / humo negro producidos por colectivos,APRA CONTROL AMBIENTAL,Denuncia,20
+AMBIENTE,CONTAMINACION,Radiaciones no ionizantes y antenas de telefonía celular,APRA CONTROL AMBIENTAL,Denuncia,19
+AMBIENTE,CONTAMINACION,Irregularidades vinculadas al uso del combustible,APRA CONTROL AMBIENTAL,Denuncia,18
+AMBIENTE,CONTAMINACION,Irregularidades en la calidad de agua de natatorios,APRA CONTROL AMBIENTAL,Denuncia,17
+AMBIENTE,CONTAMINACION,Irregularidades en establecimientos de tintorerías / lavaderos industriales,APRA CONTROL AMBIENTAL,Denuncia,15
+AMBIENTE,CONTAMINACION,Irregularidades vinculadas al régimen de aceites vegetales usados,APRA CONTROL AMBIENTAL,Denuncia,13
+AMBIENTE,CONTAMINACION,Uso indebido del plástico (bolsas y sorbetes plásticos de un solo uso),APRA CONTROL AMBIENTAL,Denuncia,10
+AMBIENTE,CONTAMINACION,Uso de aparatos que puedan contener PCB,APRA CONTROL AMBIENTAL,Denuncia,5
+AMBIENTE,HIGIENE_RESIDUOS,Reparación de contenedor,HIGIENE,Solicitud,19409
+AMBIENTE,HIGIENE_RESIDUOS,Reubicación de contenedor,HIGIENE,Solicitud,17797
+AMBIENTE,HIGIENE_RESIDUOS,Recolección de residuos fuera del contenedor,HIGIENE,Solicitud,14598
+AMBIENTE,HIGIENE_RESIDUOS,Mejora de barrido,HIGIENE,Queja,14226
+AMBIENTE,HIGIENE_RESIDUOS,Reparación de cesto papelero,HIGIENE,Solicitud,10354
+AMBIENTE,HIGIENE_RESIDUOS,"Desratizar, desinsectar y desinfectar en vía pública",HIGIENE,Solicitud,9932
+AMBIENTE,HIGIENE_RESIDUOS,Vaciado de contenedor,HIGIENE,Queja,8865
+AMBIENTE,HIGIENE_RESIDUOS,Lavado de contenedor,HIGIENE,Solicitud,7776
+AMBIENTE,HIGIENE_RESIDUOS,Reposición de contenedor,HIGIENE,Solicitud,5312
+AMBIENTE,HIGIENE_RESIDUOS,Reposición de cesto papelero,HIGIENE,Solicitud,3063
+AMBIENTE,HIGIENE_RESIDUOS,Lavado de cesto papelero,HIGIENE,Solicitud,2847
+AMBIENTE,HIGIENE_RESIDUOS,Limpieza/Higienización de Espacios Públicos por Asentamientos Precarios,HIGIENE,Solicitud,1489
+AMBIENTE,HIGIENE_RESIDUOS,Vaciado de cesto papelero,HIGIENE,Queja,1097
+AMBIENTE,HIGIENE_RESIDUOS,Reubicación de cesto papelero,HIGIENE,Solicitud,874
+AMBIENTE,HIGIENE_RESIDUOS,Irregularidades en la disposición de residuos de establecimientos,HIGIENE,Denuncia,705
+AMBIENTE,HIGIENE_RESIDUOS,Retiro de Afiches y/o pasacalles,HIGIENE,Solicitud,655
+AMBIENTE,HIGIENE_RESIDUOS,Retiro de animales muertos en vía pública,HIGIENE,Solicitud,503
+AMBIENTE,HIGIENE_RESIDUOS,Vereda sucia por mascotas,HIGIENE,Reporte,484
+AMBIENTE,HIGIENE_RESIDUOS,Limpieza de calzada en túneles y víaductos,HIGIENE,Solicitud,387
+AMBIENTE,HIGIENE_RESIDUOS,Acopio de recuperadores urbanos en espacio público,HIGIENE,Denuncia,334
+AMBIENTE,HIGIENE_RESIDUOS,Remoción de volquete abandonado o mal dispuesto,HIGIENE,Solicitud,203
+AMBIENTE,HIGIENE_RESIDUOS,"Higienización, desratización, saneamiento de terreno baldío o casa abandonada",TERRENO BALDÍO,Solicitud,177
+AMBIENTE,HIGIENE_RESIDUOS,Falta de recolección de residuos secos en generador especial,HIGIENE,Solicitud,133
+AMBIENTE,HIGIENE_RESIDUOS,Punto Verde cerrado en horario de atención,HIGIENE,Queja,110
+AMBIENTE,HIGIENE_RESIDUOS,Irregularidades en la separación de residuos en origen,HIGIENE,Denuncia,109
+AMBIENTE,HIGIENE_RESIDUOS,Camión de recolección que incumple normas de tránsito,HIGIENE,Denuncia,59
+AMBIENTE,HIGIENE_RESIDUOS,Residuos acumulados o diseminados fuera de Punto Verde,HIGIENE,Solicitud,48
+AMBIENTE,HIGIENE_RESIDUOS,"Higienización, desratización, saneamiento de casa abandonada",TERRENO BALDÍO,Solicitud,40
+AMBIENTE,HIGIENE_RESIDUOS,Personal de empresa de recolección con conductas indebidas,HIGIENE,Denuncia,38
+AMBIENTE,HIGIENE_RESIDUOS,Camión de recolección que despide malos olores / líquidos,HIGIENE,Denuncia,33
+AMBIENTE,HIGIENE_RESIDUOS,Personal de empresa de recolección realiza pedido de dádivas,HIGIENE,Denuncia,33
+AMBIENTE,HIGIENE_RESIDUOS,Camión recuperador que interrumpe el tránsito,HIGIENE,Solicitud,15
+COMERCIO_IRREGULAR,ESPACIO_PUBLICO_COMERCIO,Ocupación indebida de la vereda/calzada por área gastronómica,MEPHU FISCALIZACIÓN,Denuncia,1294
+COMERCIO_IRREGULAR,ESPACIO_PUBLICO_COMERCIO,Ocupación indebida de la vereda/calzada por local comercial,ESPACIO PÚBLICO,Denuncia,889
+COMERCIO_IRREGULAR,ESPACIO_PUBLICO_COMERCIO,Ocupación indebida por mantero o vendedor ambulante,MEPHU FISCALIZACIÓN,Reporte,618
+COMERCIO_IRREGULAR,ESPACIO_PUBLICO_COMERCIO,Irregularidades en ferias,FERIAS Y MERCADOS,Denuncia,121
+COMERCIO_IRREGULAR,LOCAL_SIN_HABILITACION,Establecimiento sin autorización para funcionar sin venta o elaboración de alimentos,AGC FISCALIZACIÓN Y CONTROL,Denuncia,1376
+INFRAESTRUCTURA,ALUMBRADO,Reparación de luminaria apagada durante la noche,ALUMBRADO,Solicitud,19817
+INFRAESTRUCTURA,ALUMBRADO,Mayor iluminación en calle / plaza,ALUMBRADO,Solicitud,5129
+INFRAESTRUCTURA,ALUMBRADO,Reparación de luminaria por artefacto roto,ALUMBRADO,Solicitud,2878
+INFRAESTRUCTURA,ALUMBRADO,Reparación de tapa faltante / deteriorada en columna de alumbrado,ALUMBRADO,Solicitud,1095
+INFRAESTRUCTURA,ALUMBRADO,Luminaria intermitente,ALUMBRADO,Solicitud,764
+INFRAESTRUCTURA,ALUMBRADO,Reparación de luminaria encendida durante el día,ALUMBRADO,Solicitud,654
+INFRAESTRUCTURA,ALUMBRADO,Reparación de toma de energía de alumbrado público,ALUMBRADO,Solicitud,433
+INFRAESTRUCTURA,ALUMBRADO,Limpieza de artefacto de alumbrado,ALUMBRADO,Solicitud,151
+INFRAESTRUCTURA,CALLES,"Columna/poste/cable en mal estado, abandonado o cortado",ESPACIO PÚBLICO,Solicitud,8685
+INFRAESTRUCTURA,CALLES,Reparación de bache en calle,CALZADA,Solicitud,3638
+INFRAESTRUCTURA,CALLES,Reparación de bache - Apertura hundida,CALZADA,Solicitud,2335
+INFRAESTRUCTURA,CALLES,Reparación de cuneta,CALZADA,Solicitud,2102
+INFRAESTRUCTURA,CALLES,Reparación / construcción de cordón,CALZADA,Solicitud,1283
+INFRAESTRUCTURA,CALLES,Repintado / reparación de marca vial en calle o cordón,CALZADA,Solicitud,1095
+INFRAESTRUCTURA,CALLES,Nivelación de tapa de empresa de servicio público en calle,CALZADA,Solicitud,605
+INFRAESTRUCTURA,CALLES,Reparación de bache - Socavamiento,CALZADA,Solicitud,561
+INFRAESTRUCTURA,CALLES,Reparación de calle rota por empresa de servicio,CALZADA,Solicitud,431
+INFRAESTRUCTURA,CALLES,Ajuste de chapa metálica por ruidos molestos en calle,CALZADA,Solicitud,429
+INFRAESTRUCTURA,CALLES,Nivelación por hundimiento del pavimento,CALZADA,Solicitud,409
+INFRAESTRUCTURA,CALLES,Repavimentación de calle,CALZADA,Solicitud,269
+INFRAESTRUCTURA,CALLES,Reparación de bache - Granito hundido,CALZADA,Solicitud,256
+INFRAESTRUCTURA,CALLES,Reparación de calle de adoquines o granito,CALZADA,Solicitud,250
+INFRAESTRUCTURA,CALLES,Reparación de bache en ciclovía,CALZADA,Solicitud,227
+INFRAESTRUCTURA,CALLES,Reparación de tapa de empresa de servicios públicos - Contorno,CALZADA,Solicitud,196
+INFRAESTRUCTURA,CALLES,Problemas con obras de bacheo,CALZADA,Queja,135
+INFRAESTRUCTURA,CALLES,Asfaltado de calle con adoquines,CALZADA,Solicitud,107
+INFRAESTRUCTURA,CALLES,Reposición de tapa de empresa de servicio público en calle,CALZADA,Solicitud,93
+INFRAESTRUCTURA,CALLES,Reparación de lomo de burro,CALZADA,Solicitud,91
+INFRAESTRUCTURA,CALLES,Reparación de dársena para ascenso/descenso de colectivos,CALZADA,Solicitud,42
+INFRAESTRUCTURA,CALLES,Reparación de elementos en túneles / puentes,CALZADA,Solicitud,28
+INFRAESTRUCTURA,CALLES,Instalación de elementos viales en calle,CALZADA,Solicitud,3
+INFRAESTRUCTURA,PLUVIALES,Destape de sumidero/alcantarilla o boca de registro pluvial,PLUVIALES,Solicitud,865
+INFRAESTRUCTURA,PLUVIALES,Reparación de sumidero/alcantarilla o boca de registro pluvial faltante,PLUVIALES,Solicitud,578
+INFRAESTRUCTURA,PLUVIALES,Reparación de sumidero/alcantarilla o boca de registro pluvial rota,PLUVIALES,Solicitud,550
+INFRAESTRUCTURA,PLUVIALES,Destape de sumideros,PLUVIALES,Solicitud,294
+INFRAESTRUCTURA,PLUVIALES,Intervención por calle anegada/inundada,PLUVIALES,Queja,148
+INFRAESTRUCTURA,PLUVIALES,Construcción de sumidero/alcantarilla o boca de registro pluvial,PLUVIALES,Solicitud,53
+INFRAESTRUCTURA,SEMAFOROS_SENALES,Reparación de semáforo,TRÁNSITO Y TRANSPORTE,Solicitud,2172
+INFRAESTRUCTURA,SEMAFOROS_SENALES,Reparación de señal de tránsito,TRÁNSITO Y TRANSPORTE,Solicitud,764
+INFRAESTRUCTURA,VEREDAS,Reparación de vereda,VEREDAS,Solicitud,36707
+INFRAESTRUCTURA,VEREDAS,Reparación de vereda por raíces de árbol que producen roturas,VEREDAS,Solicitud,15323
+INFRAESTRUCTURA,VEREDAS,Nivelación de tapa de empresa de servicio público en vereda,VEREDAS,Solicitud,6775
+INFRAESTRUCTURA,VEREDAS,Reparación de vereda rota por empresa de servicio,VEREDAS,Solicitud,2683
+INFRAESTRUCTURA,VEREDAS,Reparación de rampa de accesibilidad,VEREDAS,Solicitud,2332
+INFRAESTRUCTURA,VEREDAS,Obstrucción de calle o vereda por elementos fijos o móviles,ESPACIO PÚBLICO,Denuncia,1935
+INFRAESTRUCTURA,VEREDAS,Restos de obra en vereda que impiden el paso,VEREDAS,Queja,1314
+INFRAESTRUCTURA,VEREDAS,Reposición de tapa de empresa de servicio público en vereda,VEREDAS,Solicitud,1037
+INFRAESTRUCTURA,VEREDAS,Reparación de vereda por obra mal terminada,VEREDAS,Solicitud,664
+INFRAESTRUCTURA,VEREDAS,Construcción de rampa de accesibilidad,VEREDAS,Solicitud,272
+INFRAESTRUCTURA,VEREDAS,Vereda rota por alumbrado público,VEREDAS,Solicitud,16
+TRANSITO,TRANSITO_ESTACIONAMIENTO,Vehículo mal estacionado,DENUNCIA VIAL,Denuncia,159876
+TRANSITO,TRANSITO_ESTACIONAMIENTO,Remoción de vehículo abandonado,TRÁNSITO Y TRANSPORTE,Solicitud,7759
+TRANSITO,TRANSITO_ESTACIONAMIENTO,Irregularidades con reservas de espacios para estacionamiento de vehículos de personas con discapacidad,TRÁNSITO Y TRANSPORTE,Solicitud,275
+TRANSITO,TRANSITO_ESTACIONAMIENTO,Vehículo obstruyendo garaje,DENUNCIA VIAL,Denuncia,6
+VULNERABILIDAD_SOCIAL,NINEZ,"Niñas, niños o adolescentes en situación de calle o riesgo",,,
+VULNERABILIDAD_SOCIAL,SITUACION_DE_CALLE,Persona o familia en situación de calle,,,
