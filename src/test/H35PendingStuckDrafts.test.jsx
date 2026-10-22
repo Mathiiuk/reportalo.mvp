@@ -106,7 +106,7 @@ describe('H-35: Pendientes con borradores trabados', () => {
     renderPage();
 
     const item = await screen.findByTestId('pending-report-item');
-    expect(within(item).getByText('Falta protegerse la foto: requiere conexión.')).toBeInTheDocument();
+    expect(within(item).getByText('Falta terminar de proteger la foto. Lo seguimos intentando solo.')).toBeInTheDocument();
     expect(within(item).queryByTestId('pending-description-input')).not.toBeInTheDocument();
   });
 
@@ -189,6 +189,29 @@ describe('H-35: Pendientes con borradores trabados', () => {
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Algunos reportes no se pudieron enviar', expect.anything()));
     expect(toast.warning).not.toHaveBeenCalledWith('Falta completar un dato', expect.anything());
+  });
+
+  it('UT-3855-O02: sin conexión confirmada, la tarjeta y el pie sí dicen que falta la conexión', async () => {
+    const original = Object.getOwnPropertyDescriptor(window.navigator, 'onLine');
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, get: () => false });
+    try {
+      getAllPendingSyncReports.mockResolvedValue([draft()]);
+      renderPage();
+      const item = await screen.findByTestId('pending-report-item');
+      expect(within(item).getByText('Falta protegerse la foto: requiere conexión.')).toBeInTheDocument();
+      expect(screen.getByText(/hasta que haya conexión/)).toBeInTheDocument();
+    } finally {
+      if (original) Object.defineProperty(window.navigator, 'onLine', original);
+      else delete window.navigator.onLine;
+    }
+  });
+
+  it('UT-3855-O02: con conexión, el pie no atribuye la espera a la falta de señal', async () => {
+    getAllPendingSyncReports.mockResolvedValue([draft()]);
+    renderPage();
+    await screen.findByTestId('pending-report-item');
+    expect(screen.getByText('Las fotos en cola quedan solo en tu dispositivo hasta que se envíen.')).toBeInTheDocument();
+    expect(screen.queryByText(/requiere conexión/i)).not.toBeInTheDocument();
   });
 
   it('UT-H35-25: si no se puede descartar, avisa y el borrador sigue en la lista', async () => {
