@@ -6,9 +6,9 @@ import {
   PIPELINE_STEPS,
 } from '../../services/quarantinePipelineService';
 import {
+  describeExpectedWait,
   getProtectionWait,
   isConfirmedOffline,
-  MEASURED_MEDIAN_PER_PHOTO_MS,
   QUEUE_REASON,
 } from '../../services/sendWaitPolicy';
 
@@ -254,8 +254,8 @@ export const ReportProcessingScreen = ({
   const handleSaveAfterFailure = () =>
     onSaveForLater?.(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
 
-  // Referencia para el ciudadano: la mediana medida por foto (REP-3828), redondeada a 5 s
-  const approxSeconds = Math.max(5, Math.round((MEASURED_MEDIAN_PER_PHOTO_MS * photoCount) / 5000) * 5);
+  // Referencia para el ciudadano: lo medido en staging (REP-3855, O-01), no la mediana de REP-3828
+  const expectedWait = describeExpectedWait(photoCount);
 
   // Manejador para volver atrás y tomar una nueva foto
   const handleBackToCapture = () => {
@@ -386,7 +386,7 @@ export const ReportProcessingScreen = ({
                 className="m-0 mt-2 text-rep-body text-rep-camera-ink-muted desktop:text-rep-body-d"
               >
                 {photoCount > 1
-                  ? `Con ${photoCount} fotos tarda unos ${approxSeconds} segundos. No tenés que hacer nada más: cuando termina, el reporte sale.`
+                  ? `Con ${photoCount} fotos tarda ${expectedWait}. No tenés que hacer nada más: cuando termina, el reporte sale.`
                   : 'Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.'}
               </p>
               {photoCount > 1 && (

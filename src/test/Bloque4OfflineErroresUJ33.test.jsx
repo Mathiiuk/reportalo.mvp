@@ -136,8 +136,8 @@ describe('REP-3791 Bloque 4 · Sin conexión y errores del reporte (UJ v3.3 · M
     render(<MemoryRouter><PendingReportsPage /></MemoryRouter>);
 
     expect(await screen.findByText('Contenedor desbordado')).toBeInTheDocument();
-    expect(screen.getByText('1 reporte guardado en este teléfono')).toBeInTheDocument();
-    expect(screen.getByText('Falta protegerse la foto: requiere conexión.')).toBeInTheDocument();
+    expect(screen.getByText('1 reporte guardado en este dispositivo')).toBeInTheDocument();
+    expect(screen.getByText('Falta terminar de proteger la foto. Lo seguimos intentando solo.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reintentar ahora/i })).toBeInTheDocument();
   });
 

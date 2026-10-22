@@ -591,7 +591,7 @@ export const processEvidenceThroughQuarantine = async ({
 export const PIPELINE_STEPS = [
   'Analizando la foto',
   'Pixelando rostros',
-  'Quitando ubicación y datos del teléfono',
+  'Quitando ubicación y datos del dispositivo',
 ];
 
 /**

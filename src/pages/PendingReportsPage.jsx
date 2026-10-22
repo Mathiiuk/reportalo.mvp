@@ -10,7 +10,6 @@ import { DESCRIPTION_MIN_LENGTH, DESCRIPTION_MAX_LENGTH, validateDescription } f
 import { PENDING_SYNC_EVENT } from '../components/common/PendingSyncManager';
 import { AdjustLocationModal } from '../components/report/AdjustLocationModal';
 import { getCategoryTone } from '../components/report/categoryTone';
-import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { createEvidenceItem, ALLOWED_EVIDENCE_MIME_TYPES, MAX_EVIDENCE_SIZE_BYTES } from '../types/evidence';
 
 const ICON_MAP = { construction: Construction, local_shipping: Truck, eco: Leaf, storefront: Store };
@@ -65,7 +64,7 @@ const draftReasons = (draft) => {
  * Diseño: el ícono y el título van arriba y todo lo demás ocupa el ancho completo debajo, para que el texto no quede
  * apretado contra el borde derecho.
  */
-const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocation, onAddPhoto, onDiscard }) => {
+const PendingDraftCard = ({ draft, deviceWord, isOnline = true, onSaveDescription, onConfirmLocation, onAddPhoto, onDiscard }) => {
   const tone = getCategoryTone(draft.selectedCategory || {});
   const Icon = ICON_MAP[draft.selectedCategory?.icon] || HelpCircle;
   const place = draft.customLocation?.localityLabel || draft.address || 'Ubicación guardada';
@@ -161,7 +160,7 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocat
           <ul data-testid="pending-reason" className="m-0 flex list-none flex-col gap-1 p-0 text-rep-label font-semibold text-rep-danger">
             <li className="inline-flex items-start gap-1.5">
               <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-              <span>Este reporte no tiene fotos en {deviceWord === 'computadora' ? 'esta' : 'este'} {deviceWord}. Agregá una para poder enviarlo.</span>
+              <span>Este reporte no tiene fotos en este {deviceWord}. Agregá una para poder enviarlo.</span>
             </li>
           </ul>
         ) : reasons.length > 0 ? (
@@ -176,7 +175,8 @@ const PendingDraftCard = ({ draft, deviceWord, onSaveDescription, onConfirmLocat
         ) : (
           <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-warning-ink">
             <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-            Falta protegerse la foto: requiere conexión.
+            {/* REP-3855 (O-02): con conexión, el reporte llegó acá por demora, no por falta de señal */}
+            {isOnline ? 'Falta terminar de proteger la foto. Lo seguimos intentando solo.' : 'Falta protegerse la foto: requiere conexión.'}
           </span>
         )}
 
@@ -324,7 +324,8 @@ export const PendingReportsPage = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   // Borrador cuya ubicación se está confirmando (abre el modal del asistente)
   const [locationDraft, setLocationDraft] = useState(null);
-  const deviceWord = useIsDesktopLayout() ? 'computadora' : 'teléfono';
+  // REP-3855 (O-03 y O-04): «dispositivo» para teléfono y computadora («este computadora» era un error de concordancia)
+  const deviceWord = 'dispositivo';
 
   const loadDrafts = useCallback(async () => {
     const list = await getAllPendingSyncReports().catch(() => []);
@@ -488,6 +489,7 @@ export const PendingReportsPage = () => {
                   key={draft.client_side_id}
                   draft={draft}
                   deviceWord={deviceWord}
+                  isOnline={isOnline}
                   onSaveDescription={handleSaveDescription}
                   onConfirmLocation={setLocationDraft}
                   onAddPhoto={handleAddPhoto}
@@ -498,7 +500,9 @@ export const PendingReportsPage = () => {
 
             <p className="m-0 mt-4 flex items-start gap-2 text-rep-label text-rep-ink-muted">
               <Lock aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-              Las fotos en cola quedan solo en tu {deviceWord} hasta que haya conexión.
+              {isOnline
+                ? `Las fotos en cola quedan solo en tu ${deviceWord} hasta que se envíen.`
+                : `Las fotos en cola quedan solo en tu ${deviceWord} hasta que haya conexión.`}
             </p>
 
             <button
