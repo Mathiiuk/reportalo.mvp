@@ -19,15 +19,26 @@ export const SOCIAL_ASSISTANCE_SERVICE_CODE = 'VULNERABILIDAD_SOCIAL';
 /** Atributo del catálogo donde route_report busca la prestación del reporte. */
 const PRESTACION_ATTRIBUTE_CODE = 'prestacion';
 
-/** Opciones de la pregunta del paso 2. `key` es el value_key de service_attribute_values. */
+/**
+ * Opciones de la pregunta del paso 2. `key` es la respuesta del vecino y `prestacion`, el value_key de
+ * service_attribute_values que se guarda para route_report.
+ * REP-3841 (Hernán, 21/10): «No sé» se trata como si hubiera menores, con el canal de niñez. Es la misma precaución
+ * que la precedencia de niñez (R-4).
+ */
 export const SOCIAL_ASSISTANCE_OPTIONS = [
-  { key: 'situacion_de_calle', label: 'Solo personas adultas' },
-  { key: 'situacion_de_calle_ninez', label: 'Hay niñas, niños o adolescentes' },
+  { key: 'situacion_de_calle', label: 'Solo personas adultas', prestacion: 'situacion_de_calle' },
+  { key: 'situacion_de_calle_ninez', label: 'Hay niñas, niños o adolescentes', prestacion: 'situacion_de_calle_ninez' },
+  { key: 'no_se', label: 'No sé', prestacion: 'situacion_de_calle_ninez' },
 ];
 
-const OPTION_KEYS = SOCIAL_ASSISTANCE_OPTIONS.map((option) => option.key);
+export const UNKNOWN_AUDIENCE_KEY = 'no_se';
 
-export const isValidSocialAssistanceKey = (key) => OPTION_KEYS.includes(key);
+const OPTION_BY_KEY = new Map(SOCIAL_ASSISTANCE_OPTIONS.map((option) => [option.key, option]));
+
+export const isValidSocialAssistanceKey = (key) => OPTION_BY_KEY.has(key);
+
+/** @returns {string|null} el value_key que se guarda para la respuesta del vecino */
+export const prestacionForAnswer = (key) => OPTION_BY_KEY.get(key)?.prestacion ?? null;
 
 /**
  * @param {{ id?: string, service_code?: string } | string | null} categoryOrCode categoría del formulario o service_code
@@ -64,7 +75,7 @@ export const saveSocialAssistancePrestacion = async ({ reportId, serviceId, pres
     const { error } = await supabase
       .from('infraction_attribute_responses')
       .upsert(
-        { report_id: reportId, attribute_id: attribute.id, selected_value: prestacionKey },
+        { report_id: reportId, attribute_id: attribute.id, selected_value: prestacionForAnswer(prestacionKey) },
         { onConflict: 'report_id,attribute_id', ignoreDuplicates: true }
       );
     if (error) return { success: false, error: error.message };

@@ -105,8 +105,18 @@ describe('REP-3841 · socialAssistanceService', () => {
     expect(isSocialAssistanceCategory(null)).toBe(false);
   });
 
-  it('las opciones son las prestaciones del catálogo', () => {
-    expect(SOCIAL_ASSISTANCE_OPTIONS.map((o) => o.key)).toEqual(['situacion_de_calle', 'situacion_de_calle_ninez']);
+  it('las opciones guardan prestaciones del catálogo, y «No sé» va con el canal de niñez (PO, 21/10)', () => {
+    expect(SOCIAL_ASSISTANCE_OPTIONS.map((o) => [o.key, o.prestacion])).toEqual([
+      ['situacion_de_calle', 'situacion_de_calle'],
+      ['situacion_de_calle_ninez', 'situacion_de_calle_ninez'],
+      ['no_se', 'situacion_de_calle_ninez'],
+    ]);
+  });
+
+  it('«No sé» se guarda como situacion_de_calle_ninez', async () => {
+    const result = await saveSocialAssistancePrestacion({ reportId: 'r2', serviceId: 's-vuln', prestacionKey: 'no_se' });
+    expect(result).toEqual({ success: true });
+    expect(fromCalls[1].row).toEqual({ report_id: 'r2', attribute_id: 'attr-prestacion', selected_value: 'situacion_de_calle_ninez' });
   });
 
   it('describe el canal verificado y los alternativos', () => {
@@ -186,6 +196,14 @@ describe('REP-3841 · pregunta del paso 2', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(onContinue).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent(/elegí una opción/i);
+  });
+
+  it('«No sé» se puede elegir y avisa que se indica el canal de niñez', () => {
+    const { onSelectPrestacion } = montarPaso({ prestacionKey: 'no_se' });
+    expect(screen.getByRole('radio', { name: 'No sé' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByTestId('social-audience-unknown-note')).toHaveTextContent('canal para niñas, niños y adolescentes');
+    fireEvent.click(screen.getByRole('radio', { name: 'Solo personas adultas' }));
+    expect(onSelectPrestacion).toHaveBeenCalledWith('situacion_de_calle');
   });
 
   it('elegir una opción informa la prestación y con respuesta continúa', () => {

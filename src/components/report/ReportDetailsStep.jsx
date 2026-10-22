@@ -18,7 +18,11 @@ import {
   DESCRIPTION_MAX_LENGTH,
   validateDescription,
 } from '../../services/reportDescription';
-import { SOCIAL_ASSISTANCE_OPTIONS, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
+import {
+  SOCIAL_ASSISTANCE_OPTIONS,
+  UNKNOWN_AUDIENCE_KEY,
+  isSocialAssistanceCategory,
+} from '../../services/socialAssistanceService';
 
 // Ícono Lucide por código de ícono de la categoría (bundleado, no depende de una fuente externa)
 const ICON_MAP = {
@@ -213,6 +217,8 @@ export const ReportDetailsStep = ({
                       aria-checked={isSelected}
                       onClick={() => onSelectPrestacion(option.key)}
                       className={`rep-focus flex min-h-touch items-center rounded-2xl border bg-rep-surface px-3.5 py-3 text-left text-rep-body font-bold text-rep-ink shadow-rep-card transition-colors duration-120 ${
+                        option.key === UNKNOWN_AUDIENCE_KEY ? 'col-span-2' : ''
+                      } ${
                         isSelected ? 'border-rep-accent ring-2 ring-rep-accent/30' : 'border-rep-border'
                       }`}
                     >
@@ -221,6 +227,12 @@ export const ReportDetailsStep = ({
                   );
                 })}
               </div>
+              {/* REP-3841: «No sé» va con el canal de niñez (decisión del PO); se dice para que no sorprenda */}
+              {prestacionKey === UNKNOWN_AUDIENCE_KEY && (
+                <p data-testid="social-audience-unknown-note" className="m-0 text-rep-label text-rep-ink-muted">
+                  Por precaución, te vamos a indicar el canal para niñas, niños y adolescentes.
+                </p>
+              )}
               {attemptedContinue && missingAudience && (
                 <p role="alert" className="m-0 text-rep-label text-rep-danger">
                   Elegí una opción para que te indiquemos el canal que corresponde.
