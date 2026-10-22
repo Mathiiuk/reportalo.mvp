@@ -106,7 +106,7 @@ describe('H-35: Pendientes con borradores trabados', () => {
     renderPage();
 
     const item = await screen.findByTestId('pending-report-item');
-    expect(within(item).getByText('Falta terminar de proteger la foto. Lo seguimos intentando solo.')).toBeInTheDocument();
+    expect(within(item).getByText('Tu reporte quedó pendiente de envío. Lo seguimos intentando solo.')).toBeInTheDocument();
     expect(within(item).queryByTestId('pending-description-input')).not.toBeInTheDocument();
   });
 
