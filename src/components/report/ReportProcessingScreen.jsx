@@ -6,7 +6,6 @@ import {
   PIPELINE_STEPS,
 } from '../../services/quarantinePipelineService';
 import {
-  describeExpectedWait,
   getProtectionWait,
   isConfirmedOffline,
   QUEUE_REASON,
@@ -254,9 +253,6 @@ export const ReportProcessingScreen = ({
   const handleSaveAfterFailure = () =>
     onSaveForLater?.(isConfirmedOffline() ? QUEUE_REASON.OFFLINE : QUEUE_REASON.SLOW);
 
-  // Referencia para el ciudadano: lo medido en staging (REP-3855, O-01), no la mediana de REP-3828
-  const expectedWait = describeExpectedWait(photoCount);
-
   // Manejador para volver atrás y tomar una nueva foto
   const handleBackToCapture = () => {
     if (onErrorBack) {
@@ -386,7 +382,8 @@ export const ReportProcessingScreen = ({
                 className="m-0 mt-2 text-rep-body text-rep-camera-ink-muted desktop:text-rep-body-d"
               >
                 {photoCount > 1
-                  ? `Con ${photoCount} fotos tarda ${expectedWait}. No tenés que hacer nada más: cuando termina, el reporte sale.`
+                  ? // REP-3846, ratificación del PO (22/10): sin número. Iván midió 63 a 68 s y la prueba local dio 34 s: depende de la red
+                    'Con varias fotos puede tardar un poco más. No tenés que hacer nada más: cuando termina, el reporte sale.'
                   : 'Tarda unos segundos y no tenés que hacer nada más: cuando termina, el reporte sale.'}
               </p>
               {photoCount > 1 && (

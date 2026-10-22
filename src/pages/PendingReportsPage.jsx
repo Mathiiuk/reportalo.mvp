@@ -175,8 +175,8 @@ const PendingDraftCard = ({ draft, deviceWord, isOnline = true, onSaveDescriptio
         ) : (
           <span className="inline-flex items-center gap-1.5 text-rep-label font-semibold text-rep-warning-ink">
             <Hourglass aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
-            {/* REP-3855 (O-02): con conexión, el reporte llegó acá por demora, no por falta de señal */}
-            {isOnline ? 'Falta terminar de proteger la foto. Lo seguimos intentando solo.' : 'Falta protegerse la foto: requiere conexión.'}
+            {/* REP-3855 (O-02): con conexión, el reporte llegó acá por demora, no por falta de señal. Mismo texto que E (PO, 22/10) */}
+            {isOnline ? 'Tu reporte quedó pendiente de envío. Lo seguimos intentando solo.' : 'Falta protegerse la foto: requiere conexión.'}
           </span>
         )}
 

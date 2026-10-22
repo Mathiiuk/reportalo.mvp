@@ -18,26 +18,6 @@
 /** Mediana medida por foto en REP-3828 (referencia, no se usa en el cálculo). */
 export const MEASURED_MEDIAN_PER_PHOTO_MS = 11300;
 
-/**
- * Tiempo por foto que se le anuncia al ciudadano. REP-3855 (QA de Iván, 22/10, staging): con 4 fotos y buena conexión
- * tardó 63, 67 y 68 s, unos 16 s por foto contando el alta del reporte. Con la mediana de REP-3828 la pantalla decía
- * «unos 45 segundos» y se quedaba corta (O-01).
- */
-export const EXPECTED_PER_PHOTO_MS = 16000;
-
-/**
- * Cuánto se le dice al ciudadano que tarda. Con 1 foto, «unos segundos»; desde los 55 s, «alrededor de un minuto»;
- * en el medio, el valor redondeado a 5 s.
- * @param {number} photoCount
- * @returns {string} por ejemplo «unos 30 segundos» o «alrededor de un minuto»
- */
-export const describeExpectedWait = (photoCount) => {
-  const photos = photoCountOf(photoCount);
-  if (photos <= 1) return 'unos segundos';
-  const seconds = Math.round((EXPECTED_PER_PHOTO_MS * photos) / 5000) * 5;
-  return seconds >= 55 ? 'alrededor de un minuto' : `unos ${seconds} segundos`;
-};
-
 const photoCountOf = (count) => Math.max(1, Math.floor(Number(count) || 0));
 
 /** Aviso «tarda más de lo habitual»: base + por foto. Con 1, 2, 3 y 4 fotos: 30, 45, 60 y 75 s. */

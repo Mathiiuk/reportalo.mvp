@@ -13,7 +13,6 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { ReportProcessingScreen } from '../components/report/ReportProcessingScreen';
 import {
   getProtectionWait,
-  describeExpectedWait,
   describeQueuedReport,
   QUEUE_REASON,
   MAX_WAIT_CEILING_MS,
@@ -80,17 +79,6 @@ describe('REP-3846 C · espera proporcional', () => {
   });
 });
 
-describe('REP-3855 O-01 · el tiempo anunciado sale de lo medido en staging', () => {
-  it('1 foto «unos segundos», 2 y 3 en segundos, 4 «alrededor de un minuto» (QA: 63 a 68 s)', () => {
-    expect([1, 2, 3, 4].map(describeExpectedWait)).toEqual([
-      'unos segundos',
-      'unos 30 segundos',
-      'unos 50 segundos',
-      'alrededor de un minuto',
-    ]);
-  });
-});
-
 describe('REP-3846 E · la pantalla dice lo que pasa', () => {
   it('con varias fotos informa el tiempo esperado y el avance real por foto', async () => {
     let reportar;
@@ -106,7 +94,7 @@ describe('REP-3846 E · la pantalla dice lo que pasa', () => {
         onProcessingComplete={vi.fn()}
       />
     );
-    expect(screen.getByTestId('processing-expected-time')).toHaveTextContent('Con 4 fotos tarda alrededor de un minuto');
+    expect(screen.getByTestId('processing-expected-time')).toHaveTextContent('Con varias fotos puede tardar un poco más');
     expect(screen.getByTestId('processing-photo-count')).toHaveTextContent('Protegiendo la foto 1 de 4');
     await waitFor(() => expect(reportar).toBeTypeOf('function'));
     act(() => reportar({ photosDone: 2, photoCount: 4 }));
