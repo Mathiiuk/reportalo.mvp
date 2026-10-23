@@ -327,6 +327,52 @@ const truncateForReason = (text: string): string =>
 const normalizeWhitespace = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
 /**
+ * Citas con elisión (RAG-S16, 16/10/2026). Gemini a veces saltea incisos con puntos suspensivos:
+ * en D3 (alumbrado en Avellaneda) cita la LOM art. 59 como "Constituyen obras públicas municipales:
+ * ... d) Las de infraestructura urbana…" en 10 de 70 corridas, y la validación literal las
+ * rechazaba aunque cada tramo es texto del fragmento. Prohibirlo en el prompt sacó las elisiones
+ * pero cambió lo que el modelo cita y dio "indeterminado" en 11 de 32 corridas de "Zona sin
+ * iluminación…" (antes 0). Ver docs/RAG-S16_citas_con_elision.md.
+ * Se acepta la elisión solo si cada tramo es literal, aparece en el orden de la cita, tiene al
+ * menos MIN_ELIDED_SEGMENT_CHARS caracteres (no se arma una frase juntando palabras sueltas) y lo
+ * salteado no contiene una negación ni una excepción (no se puede citar una prohibición sin su salvedad).
+ */
+const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
+const MIN_ELIDED_SEGMENT_CHARS = 15;
+const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
+// REP-3857: marca al principio o al final de la cita. Lo omitido en ese borde se revisa hasta el borde del fragmento.
+const ELISION_AT_START = /^(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)/;
+const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)$/;
+
+/** true si la cita es literal (tolerando espacios) o, con elisiones, si cada tramo cumple las reglas de arriba. */
+const quoteMatchesFragment = (quote: string, content: string): boolean => {
+  const normalizedQuote = normalizeWhitespace(quote);
+  // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+  if (normalizedQuote === '') return false;
+  const normalizedContent = normalizeWhitespace(content);
+  if (normalizedContent.includes(normalizedQuote)) return true;
+  if (!ELISION_MARKER.test(normalizedQuote)) return false;
+
+  const segments = normalizedQuote.split(ELISION_MARKER).map((s) => s.trim()).filter((s) => s !== '');
+  if (segments.length === 0 || segments.some((s) => s.length < MIN_ELIDED_SEGMENT_CHARS)) return false;
+  // REP-3861 H-01: con «...» al principio o al final, lo omitido llega hasta el borde del FRAGMENTO, no de la oración.
+  // Cortar en «. » dejaba pasar la salvedad cuando una abreviatura («art. 5», «inc. b)») partía la oración. Del lado
+  // seguro: si el fragmento omitido tiene una negación o una salvedad, se rechaza como en P0.
+  const markAtStart = ELISION_AT_START.test(normalizedQuote);
+  const markAtEnd = ELISION_AT_END.test(normalizedQuote);
+  // REP-3861 O-02: si un tramo aparece más de una vez se prueban todas las apariciones, no solo la primera.
+  const matchFrom = (i: number, from: number): boolean => {
+    if (i === segments.length) return !markAtEnd || !ELIDED_TEXT_GUARD.test(normalizedContent.slice(from));
+    for (let at = normalizedContent.indexOf(segments[i], from); at >= 0; at = normalizedContent.indexOf(segments[i], at + 1)) {
+      const omitted = i > 0 || markAtStart ? normalizedContent.slice(from, at) : '';
+      if (!ELIDED_TEXT_GUARD.test(omitted) && matchFrom(i + 1, at + segments[i].length)) return true;
+    }
+    return false;
+  };
+  return matchFrom(0, 0);
+};
+
+/**
  * Validación determinística (docx §8, capa 6 — "la más importante: no depende
  * de que el LLM se porte bien"). Nunca confía en el LLM.
  */
@@ -374,9 +420,7 @@ export const validateLlmAnalysis = (
     if (!fragment) {
       return { valid: false, reason: `fragment_id "${cita.fragment_id}" no está entre los fragmentos recuperados.` };
     }
-    const normalizedQuote = normalizeWhitespace(cita.cita_textual);
-    // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
-    if (normalizedQuote === '' || !normalizeWhitespace(fragment.content).includes(normalizedQuote)) {
+    if (!quoteMatchesFragment(cita.cita_textual, fragment.content)) {
       // Se guarda lo que el modelo intentó citar (status_reason): sin eso un rechazo no se
       // puede diagnosticar, p. ej. saber si difiere solo en saltos de línea o espacios.
       return { valid: false, reason: `La cita de "${cita.fragment_id}" no aparece literal en el fragmento. Cita del modelo: "${truncateForReason(cita.cita_textual)}"` };

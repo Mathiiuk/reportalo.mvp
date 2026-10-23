@@ -136,6 +136,65 @@ describe('REP-2908-VERIF ronda 6, C-2: validaciones existentes sin regresión', 
       expect(result.valid).toBe(false);
     });
 
+    describe('citas con elisión por tramos (RAG-S16, LOM art. 59 en D3)', () => {
+      const art59 =
+        'Constituyen obras públicas municipales:\n' +
+        'a) Las concernientes a los establecimientos e instituciones municipales.\n' +
+        'b) Las de ornato, salubridad, vivienda y urbanismo.\n' +
+        'c) Las atinentes a servicios públicos de competencia municipal.\n' +
+        'd) Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas.';
+      const incisoD =
+        'd) Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas.';
+
+      it.each([
+        ['"\\n..."', `Constituyen obras públicas municipales:\n... ${incisoD}`],
+        ['"..."', `Constituyen obras públicas municipales: ... ${incisoD}`],
+        ['"[...]"', `Constituyen obras públicas municipales: [...] ${incisoD}`],
+        ['"…"', `Constituyen obras públicas municipales: … ${incisoD}`],
+        ['"(...)"', `Constituyen obras públicas municipales: (...) ${incisoD}`],
+      ])('acepta los casos reales: tramos literales y en orden separados por %s', (_marca, cita) => {
+        expect(validate(art59, cita).valid).toBe(true);
+      });
+
+      it('acepta una elisión al principio o al final', () => {
+        expect(validate(art59, `... ${incisoD}`).valid).toBe(true);
+        expect(validate(art59, 'Constituyen obras públicas municipales: ...').valid).toBe(true);
+      });
+
+      it('rechaza si un tramo no es literal', () => {
+        expect(validate(art59, 'Constituyen obras públicas municipales: ... d) Las de infraestructura rural').valid).toBe(false);
+      });
+
+      it('rechaza tramos fuera de orden', () => {
+        expect(validate(art59, `${incisoD} ... Constituyen obras públicas municipales:`).valid).toBe(false);
+      });
+
+      it('rechaza tramos cortos (no se arma una frase juntando palabras sueltas)', () => {
+        expect(validate(art59, 'Constituyen ... iluminación').valid).toBe(false);
+      });
+
+      it('rechaza si lo salteado tiene una excepción o una negación', () => {
+        const fragmento = 'Queda prohibido estacionar sobre la vereda, salvo autorización expresa del municipio, en todo el ejido urbano.';
+        expect(validate(fragmento, 'Queda prohibido estacionar sobre la vereda ... en todo el ejido urbano.').valid).toBe(false);
+        const negado = 'El municipio podrá cobrar la tasa cuando el servicio no se preste en forma regular y continua.';
+        expect(validate(negado, 'El municipio podrá cobrar la tasa ... se preste en forma regular y continua.').valid).toBe(false);
+      });
+
+      it('no confunde "no" con una palabra que lo contiene', () => {
+        const fragmento = 'Corresponde al Concejo disponer la prestación de los servicios públicos. Las concernientes a los establecimientos quedan a cargo del municipio.';
+        expect(validate(fragmento, 'Corresponde al Concejo disponer ... quedan a cargo del municipio.').valid).toBe(true);
+      });
+
+      it('sin marca de elisión sigue exigiendo un único tramo literal', () => {
+        expect(validate(art59, `Constituyen obras públicas municipales: ${incisoD}`).valid).toBe(false);
+      });
+
+      it('rechaza una cita que es solo la marca de elisión', () => {
+        expect(validate(art59, '...').valid).toBe(false);
+        expect(validate(art59, ' [...] ').valid).toBe(false);
+      });
+    });
+
     it('el motivo del rechazo conserva la cita original del modelo, sin normalizar', () => {
       const result = validate('uno dos tres', 'uno\ncuatro');
       expect(result.reason).toContain('Cita del modelo: "uno\ncuatro"');

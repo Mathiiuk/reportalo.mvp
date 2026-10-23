@@ -133,7 +133,15 @@ describe('Validador: tolerancia a espacios en blanco (espejo en src/services/val
   });
 
   it('compara cita y fragmento normalizados y rechaza la cita vacía', () => {
-    expect(source).toMatch(/normalizedQuote === '' \|\| !normalizeWhitespace\(fragment\.content\)\.includes\(normalizedQuote\)/);
+    expect(source).toMatch(/if \(normalizedQuote === ''\) return false;/);
+    expect(source).toMatch(/if \(normalizedContent\.includes\(normalizedQuote\)\) return true;/);
+    expect(source).toMatch(/if \(!quoteMatchesFragment\(cita\.cita_textual, fragment\.content\)\) \{/);
+  });
+
+  it('la elisión por tramos tiene los mismos topes que el espejo (RAG-S16)', () => {
+    expect(source).toMatch(/const MIN_ELIDED_SEGMENT_CHARS = 15;/);
+    expect(source).toContain('const ELISION_MARKER = /\\[\\s*(?:\\.{3}|…)\\s*\\]|\\(\\s*(?:\\.{3}|…)\\s*\\)|\\.{3}|…/;');
+    expect(source).toContain('(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)');
   });
 
   it('ya no usa el includes exacto sobre el contenido crudo', () => {
