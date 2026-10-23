@@ -30,10 +30,27 @@ describe('REP-3857 · lo omitido en los bordes de la cita', () => {
     expect(quoteMatchesFragment('Se permite estacionar sobre la vereda (...)', fragmento)).toBe(false);
   });
 
-  it('una negación en otra oración no bloquea la elisión del borde', () => {
-    const fragmento = 'No corresponde la multa. Se permite estacionar sobre la vereda los domingos y feriados.';
+  it('sin negación ni salvedad en lo omitido del borde, la elisión se acepta', () => {
+    const fragmento = 'El titular debe mantener la vereda. Se permite estacionar sobre la vereda los domingos y feriados.';
     expect(quoteMatchesFragment('... Se permite estacionar sobre la vereda', fragmento)).toBe(true);
     expect(quoteMatchesFragment('Se permite estacionar sobre la vereda ...', fragmento)).toBe(true);
+  });
+
+  // REP-3861 H-01: antes lo omitido en el borde se revisaba solo hasta el «. » más cercano. Ahora llega al borde del
+  // fragmento: una negación en otra oración también bloquea (del lado seguro; la cita queda como en P0).
+  it('una negación en otra oración del fragmento también bloquea la elisión del borde', () => {
+    const fragmento = 'No corresponde la multa. Se permite estacionar sobre la vereda los domingos y feriados.';
+    expect(quoteMatchesFragment('... Se permite estacionar sobre la vereda', fragmento)).toBe(false);
+  });
+
+  it('V-53: una abreviatura («art. 5») no corta lo omitido y el «No» del principio se detecta', () => {
+    const fragmento = 'No podrá, conforme al art. 5 del presente, estacionar vehículos sobre la vereda del frente.';
+    expect(quoteMatchesFragment('... estacionar vehículos sobre la vereda del frente', fragmento)).toBe(false);
+  });
+
+  it('V-54: una abreviatura («inc. b)») no corta lo omitido y el «salvo» del final se detecta', () => {
+    const fragmento = 'Se permite estacionar sobre la vereda del frente según el inc. b) salvo en días hábiles.';
+    expect(quoteMatchesFragment('Se permite estacionar sobre la vereda del frente ...', fragmento)).toBe(false);
   });
 
   it('las cuatro salvedades compuestas del ticket se detectan en lo salteado', () => {
@@ -44,6 +61,19 @@ describe('REP-3857 · lo omitido en los bordes de la cita', () => {
         salvedad
       ).toBe(false);
     }
+  });
+});
+
+describe('REP-3861 O-02 · tramo que aparece más de una vez', () => {
+  it('prueba todas las apariciones del tramo, no solo la primera', () => {
+    const fragmento = 'Se permite estacionar de noche, salvo en verano; se permite estacionar de día en todo el ejido urbano.';
+    expect(quoteMatchesFragment('se permite estacionar ... en todo el ejido urbano', fragmento)).toBe(true);
+    expect(replicaRunners('se permite estacionar ... en todo el ejido urbano', fragmento)).toBe(true);
+  });
+
+  it('si ninguna aparición sirve, rechaza', () => {
+    const fragmento = 'Se permite estacionar de noche, salvo en verano; se permite estacionar, salvo feriados, en todo el ejido urbano.';
+    expect(quoteMatchesFragment('se permite estacionar ... en todo el ejido urbano', fragmento)).toBe(false);
   });
 });
 
@@ -63,9 +93,11 @@ describe('REP-3857 · saltos de línea', () => {
 
 describe('REP-3857 · las tres copias del validador son iguales', () => {
   const bloque = (fuente) =>
-    fuente.slice(fuente.indexOf('const ELISION_MARKER'), fuente.indexOf('const sentenceStartBefore'));
-  const funcionJs = (fuente) =>
-    fuente.slice(fuente.indexOf('const sentenceStartBefore'), fuente.indexOf('return true;\n};', fuente.indexOf('quoteMatchesFragment = ')));
+    fuente.slice(fuente.indexOf('const ELISION_MARKER'), fuente.indexOf('\n', fuente.indexOf('const ELISION_AT_END')));
+  const funcionJs = (fuente) => {
+    const desde = fuente.indexOf('quoteMatchesFragment = ');
+    return fuente.slice(desde, fuente.indexOf('\n};', desde));
+  };
 
   it('mismas constantes: marcas, tramo mínimo, salvedades y bordes', () => {
     expect(bloque(FUNCION)).not.toBe('');
@@ -79,13 +111,10 @@ describe('REP-3857 · las tres copias del validador son iguales', () => {
 
   it('la función, sin las anotaciones de tipos, tiene el mismo código', () => {
     const sinTipos = funcionJs(FUNCION)
-      .replace(/\(text: string, at: number\): number/g, '(text, at)')
-      .replace(/\(text: string, from: number\): number/g, '(text, from)')
       .replace(/\(quote: string, content: string\): boolean/g, '(quote, content)')
-      .replace(/: number \| null = null/g, ' = null')
-      .replace(/\(m\.index \?\? 0\)/g, 'm.index')
-      .replace(/\n\/\*\* true si la cita es literal[^\n]*\n/, '\n');
-    expect(sinTipos.replace(/^export /m, '')).toBe(funcionJs(ESPEJO).replace(/^export /m, ''));
+      .replace(/\(i: number, from: number\): boolean/g, '(i, from)');
+    expect(funcionJs(FUNCION)).not.toBe('');
+    expect(sinTipos).toBe(funcionJs(ESPEJO));
   });
 
   it('los dos JS dan lo mismo que el validador de los runners en casos reales', () => {
@@ -93,6 +122,8 @@ describe('REP-3857 · las tres copias del validador son iguales', () => {
       ['No se permite estacionar sobre la vereda en todo el ejido.', '... se permite estacionar sobre la vereda'],
       ['Constituyen obras públicas municipales:\nd) Las de infraestructura urbana.', 'Constituyen obras públicas municipales: ... d) Las de infraestructura urbana.'],
       ['uno dos tres', 'uno tres'],
+      ['No podrá, conforme al art. 5 del presente, estacionar vehículos sobre la vereda del frente.', '... estacionar vehículos sobre la vereda del frente'],
+      ['Se permite estacionar sobre la vereda del frente según el inc. b) salvo en días hábiles.', 'Se permite estacionar sobre la vereda del frente ...'],
     ];
     for (const [fragmento, cita] of casos) expect(replicaRunners(cita, fragmento)).toBe(quoteMatchesFragment(cita, fragmento));
   });

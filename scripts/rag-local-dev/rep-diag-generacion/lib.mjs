@@ -83,22 +83,9 @@ const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
 const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
 const MIN_ELIDED_SEGMENT_CHARS = 15;
 const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
-// REP-3857: marca al principio o al final de la cita. Lo omitido ahí se revisa hasta el borde de la oración.
+// REP-3857: marca al principio o al final de la cita. Lo omitido en ese borde se revisa hasta el borde del fragmento.
 const ELISION_AT_START = /^(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)/;
 const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)$/;
-const SENTENCE_BREAK = /[.;:]\s/g;
-
-/** Inicio de la oración que contiene `at` (después del último «. », «; » o «: »). */
-const sentenceStartBefore = (text, at) => {
-  let start = 0;
-  for (const m of text.slice(0, at).matchAll(SENTENCE_BREAK)) start = m.index + m[0].length;
-  return start;
-};
-/** Fin de la oración que sigue a `from` (el próximo «.», «;» o «:»), o el final del texto. */
-const sentenceEndAfter = (text, from) => {
-  const m = /[.;:](?:\s|$)/.exec(text.slice(from));
-  return m ? from + m.index : text.length;
-};
 
 export const quoteMatchesFragment = (quote, content) => {
   const normalizedQuote = normalizeWhitespace(quote);
@@ -109,26 +96,22 @@ export const quoteMatchesFragment = (quote, content) => {
   if (!ELISION_MARKER.test(normalizedQuote)) return false;
 
   const segments = normalizedQuote.split(ELISION_MARKER).map((s) => s.trim()).filter((s) => s !== '');
-  if (segments.length === 0) return false;
-  let searchFrom = 0;
-  let previousEnd = null;
-  let firstStart = null;
-  for (const segment of segments) {
-    if (segment.length < MIN_ELIDED_SEGMENT_CHARS) return false;
-    const at = normalizedContent.indexOf(segment, searchFrom);
-    if (at < 0) return false;
-    if (previousEnd !== null && ELIDED_TEXT_GUARD.test(normalizedContent.slice(previousEnd, at))) return false;
-    if (firstStart === null) firstStart = at;
-    previousEnd = at + segment.length;
-    searchFrom = previousEnd;
-  }
-  // REP-3857: con «...» al principio o al final, lo omitido llega hasta el borde de la oración. Ahí tampoco puede
-  // haber una negación ni una salvedad (p. ej. citar «... se permite estacionar» de «No se permite estacionar»).
-  if (ELISION_AT_START.test(normalizedQuote)
-    && ELIDED_TEXT_GUARD.test(normalizedContent.slice(sentenceStartBefore(normalizedContent, firstStart), firstStart))) return false;
-  if (ELISION_AT_END.test(normalizedQuote)
-    && ELIDED_TEXT_GUARD.test(normalizedContent.slice(previousEnd, sentenceEndAfter(normalizedContent, previousEnd)))) return false;
-  return true;
+  if (segments.length === 0 || segments.some((s) => s.length < MIN_ELIDED_SEGMENT_CHARS)) return false;
+  // REP-3861 H-01: con «...» al principio o al final, lo omitido llega hasta el borde del FRAGMENTO, no de la oración.
+  // Cortar en «. » dejaba pasar la salvedad cuando una abreviatura («art. 5», «inc. b)») partía la oración. Del lado
+  // seguro: si el fragmento omitido tiene una negación o una salvedad, se rechaza como en P0.
+  const markAtStart = ELISION_AT_START.test(normalizedQuote);
+  const markAtEnd = ELISION_AT_END.test(normalizedQuote);
+  // REP-3861 O-02: si un tramo aparece más de una vez se prueban todas las apariciones, no solo la primera.
+  const matchFrom = (i, from) => {
+    if (i === segments.length) return !markAtEnd || !ELIDED_TEXT_GUARD.test(normalizedContent.slice(from));
+    for (let at = normalizedContent.indexOf(segments[i], from); at >= 0; at = normalizedContent.indexOf(segments[i], at + 1)) {
+      const omitted = i > 0 || markAtStart ? normalizedContent.slice(from, at) : '';
+      if (!ELIDED_TEXT_GUARD.test(omitted) && matchFrom(i + 1, at + segments[i].length)) return true;
+    }
+    return false;
+  };
+  return matchFrom(0, 0);
 };
 
 /**
