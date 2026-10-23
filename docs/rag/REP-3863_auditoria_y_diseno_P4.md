@@ -75,3 +75,26 @@ Borrador en [`REP-3863_propuesta_migracion_P4.sql`](REP-3863_propuesta_migracion
 | Hernán (PO) | Artículo o fragmentos aceptables para las 8 leyes sin artículo. Confirmar que los 2 pares nuevos quedan para P5 |
 | Matías | Cuando esté medido P0: generar las filas de `c_prest` y las de vocabulario y vínculos desde el CSV, aplicar en staging con tu OK y correr las verificaciones de §6 |
 | Iván (REP-3864) | Auditoría de conteos y muestras |
+
+## 8. Revisión de Iván (REP-3863, 23/10) y cambios
+
+La propuesta ahora la **genera** `scripts/rep3863/generar_carga_p4.mjs` desde el dataset del PO: la migración trae los datos adentro y no se edita a mano. Uso: `node scripts/rep3863/generar_carga_p4.mjs <catalogo_fragmentos_2026-10-20.csv>`.
+
+| Punto | Qué se hizo |
+|---|---|
+| **48 contra 51** | No es un error: se cuenta distinto. **51** filas del CSV nombran un artículo. De esas, **3** tienen el artículo **sin cargar** en el corpus (Ley 2148 art. 4 ×2 y Ley 4036 art. 37). Quedan **48** con el artículo cargado. Cerrando la cuenta: 48 + 3 + 5 solo con la ley + 2 fuera del corpus = 58 |
+| **MIG-01** | `upsert_knowledge_fragment` se redefine en la misma migración. Reescribe solo las filas de categoría (`attribute_value_id is null`). Si versiona un fragmento, copia los vínculos de P4 a la versión vigente, pero solo en las categorías que siguen asignadas: nunca crea un par nuevo. La firma y los permisos no cambian. Así, una carga de corpus (REP-3837) ya no borra P4 en silencio |
+| **MIG-02** | `p4_prestacion_grupo` (107 filas) queda dentro de la migración, con la columna `como`: `nombre` (34), `equivalencia` (3) o `nueva` (70). Las 3 equivalencias apuntan a la clave de la base, así que se conservan «local trucho», «chicos en la calle» y los otros 4 términos |
+| **MIG-03** | **Antes** de cargar, aborta si no resuelven 107 prestaciones, 176 términos y los 57 vínculos. **Después**, aborta si aparece un par nuevo, si las filas de vínculo no son exactamente 466 o si los términos no son 176. No se descarta nada en silencio |
+| **MIG-04** | Las PK reales son `fragment_services_pkey (fragment_id, service_id)` y `service_keywords_pkey (service_id, keyword)`. **Ninguna de las dos tablas está en Realtime**: `supabase_realtime` publica solo `infractions`, `report_state_history` y `report_ai_analysis`. Consultas de solo lectura del 23/10 |
+| **MIG-05** | El rollback de prestaciones nuevas controla `infraction_attribute_responses`, `report_routing` (la clave va en `input`/`result` como JSON) y `service_keywords`. También vuelve atrás `upsert_knowledge_fragment` |
+| **MIG-07** | El catálogo no se sube (es un adjunto de REP-3859 con ids internos). El generador **valida su SHA-256** (`3602a434…e6cb7`) y aborta si no coincide. Los pares de staging se versionan en `dataset/pares_fragment_services_2026-10-23.json` (169) |
+| **Vínculos con inciso** | El emparejamiento ahora respeta el inciso. «LOM art. 27 incs. 1 y 6» toma solo esos dos fragmentos, no el 2, el 8 ni el 17. «4 bis» se toma como artículo, no como inciso: «Ley 13.927 art. 2» no arrastra el 2 bis |
+
+**Resultado del generador:**
+- 48 filas del CSV con artículo cargado se convierten en **57 vínculos** (fragmento, categoría, grupo) sobre pares que ya existen. Una norma puede tener varios fragmentos: por ejemplo, Ley 2148 art. 7.1.8 tiene 3 incisos cargados.
+- Esos vínculos dan **466 filas** en `fragment_services`: cada vínculo por cada prestación de su grupo.
+- **12 excepciones**, que no van a la base: 5 sin artículo, 3 con el artículo sin cargar, 2 fuera del corpus y 2 pares nuevos para P5 (Ley 6684 art. 26 inc. 16 → AMBIENTE y Ley 13.927 art. 2 → INFRAESTRUCTURA).
+- Las 70 prestaciones nuevas, con su clave, están en `docs/rag/REP-3863_c_prest_nuevas.sql`, para el loader de REP-2800.
+
+**No probado contra la base:** el SQL no se ejecutó, ni siquiera en una transacción revertida. Queda para el día que se aplique: primero un ensayo `begin … rollback` con el OK del LT y el aviso a QA.
