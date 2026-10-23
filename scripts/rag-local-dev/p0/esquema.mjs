@@ -180,13 +180,23 @@ const UUID_ORGANISMO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
  * corta en la primera cita inválida y rechaza la respuesta entera.
  * @param {Set<string>} agencias ids de agencies (lectura previa), para la regla del organismo sugerido
  */
-export const validarComoProduccion = (parsed, fragments, category, { estados, camposObligatorios, vulnerabilidad, agencias }) => {
+/**
+ * Regla de cita de la línea base P0 (v44): un único tramo literal, tolerando espacios en blanco. La usa
+ * --doble-validador para validar LAS MISMAS respuestas con la regla de P0 y con la de P1 (REP-3857).
+ */
+export const citaLiteralP0 = (quote, content) => {
+  const q = normalizeWhitespace(quote ?? '');
+  return q !== '' && normalizeWhitespace(content ?? '').includes(q);
+};
+const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
+
+export const validarComoProduccion = (parsed, fragments, category, { estados, camposObligatorios, vulnerabilidad, agencias, citaCoincide = quoteMatchesFragment }) => {
   const porId = new Map(fragments.map((f) => [f.fragment_id, f]));
   const citas = Array.isArray(parsed?.citas)
     ? parsed.citas.map((c) => {
         const fragment = porId.get(c?.fragment_id);
         const enContexto = Boolean(fragment);
-        const literal = enContexto && quoteMatchesFragment(c?.cita_textual ?? '', fragment.content);
+        const literal = enContexto && citaCoincide(c?.cita_textual ?? '', fragment.content);
         return { fragment_id: c?.fragment_id ?? null, en_contexto: enContexto, literal, pasa: enContexto && literal };
       })
     : [];
@@ -222,6 +232,9 @@ export const tokensSalida = (usage = {}) =>
  * Fila M2 de un caso y repetición, con el estado final que guardaría producción.
  * @param {{ camino: 'asistencia'|'sin_normativa'|'generacion', parsed?, validacion?, usage?, error?, latencia_ms, fragments }} r
  */
+/** Marcas de elisión que acepta el validador (REP-3857): «...», «…», «[...]» y «(...)». */
+const MARCA_ELISION = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
+
 export const filaM2 = (r, esperadosN1, articuloDe = () => null) => {
   const esperados = new Set(esperadosN1);
   if (r.camino === 'asistencia' || r.camino === 'sin_normativa') {
@@ -246,6 +259,9 @@ export const filaM2 = (r, esperadosN1, articuloDe = () => null) => {
     articulo: articuloDe(c.fragment_id),
     pasa_validador: v.citas[i]?.pasa ?? false,
     esperada_n1: esperados.has(c.fragment_id),
+    // REP-3857 (P1): el texto que citó el modelo y si usa elisión, para auditar las citas elididas aceptadas
+    cita_textual: c.cita_textual ?? null,
+    con_elision: MARCA_ELISION.test(c.cita_textual ?? ''),
   }));
   return {
     camino: 'generacion',
@@ -260,6 +276,17 @@ export const filaM2 = (r, esperadosN1, articuloDe = () => null) => {
     motivo: v.valid ? null : v.reason,
     // Acierto N1 crudo: la respuesta ACEPTADA cita al menos una norma esperada. Iván recalcula desde las citas.
     cita_esperada_n1: v.valid && citas.some((c) => c.esperada_n1),
+    // --doble-validador: la MISMA respuesta del modelo validada con la regla de P0 (cita literal). Así la única
+    // diferencia entre P0 y P1 es el validador, sin el ruido de la generación.
+    ...(r.validacionP0 && {
+      validador_p0: {
+        estado: r.validacionP0.valid ? r.parsed.estado : 'indeterminado',
+        rechazo_validador: !r.validacionP0.valid,
+        motivo: r.validacionP0.valid ? null : r.validacionP0.reason,
+        cita_esperada_n1: r.validacionP0.valid && (r.parsed.citas ?? []).some((c) => esperados.has(c.fragment_id)),
+        citas_pasan: (r.parsed.citas ?? []).map((_, i) => r.validacionP0.citas[i]?.pasa ?? false),
+      },
+    }),
     fragmentos_entregados: r.fragments.map((f) => f.fragment_id),
     input_tokens: r.usage?.promptTokenCount ?? null,
     output_tokens: tokensSalida(r.usage ?? {}),
@@ -281,9 +308,27 @@ export const resumenM2 = (resultados) => {
       llamadas_al_modelo: rs.filter((r) => r.llamo_al_modelo).length,
       acierto_n1: conEsperado.length ? conEsperado.filter((r) => r.cita_esperada_n1).length / conEsperado.length : null,
       tokens: { entrada: sum('input_tokens'), salida: sum('output_tokens') },
+      ...(rs.some((r) => r.validador_p0) && { doble_validador: dobleValidador(rs, conEsperado) }),
     };
   };
   return { todos: calc(resultados), computables: calc(resultados.filter((r) => !r.pendiente_po)) };
+};
+
+/** Mismas respuestas, dos reglas de cita: P0 (literal) contra P1 (elisión por tramos, REP-3857). */
+const dobleValidador = (rs, conEsperado) => {
+  const conDoble = rs.filter((r) => r.validador_p0);
+  const conEsp = conEsperado.filter((r) => r.validador_p0);
+  const acierto = (f) => (conEsp.length ? conEsp.filter(f).length / conEsp.length : null);
+  return {
+    filas_con_respuesta: conDoble.length,
+    rechazos_p0: conDoble.filter((r) => r.validador_p0.rechazo_validador).length,
+    rechazos_p1: conDoble.filter((r) => r.rechazo_validador).length,
+    acierto_n1_p0: acierto((r) => r.validador_p0.cita_esperada_n1),
+    acierto_n1_p1: acierto((r) => r.cita_esperada_n1),
+    rescatadas_por_p1: conDoble.filter((r) => r.validador_p0.rechazo_validador && !r.rechazo_validador).map((r) => `${r.caso_id} r${r.repeticion}`),
+    perdidas_por_p1: conDoble.filter((r) => !r.validador_p0.rechazo_validador && r.rechazo_validador).map((r) => `${r.caso_id} r${r.repeticion}`),
+    citas_con_elision: conDoble.reduce((a, r) => a + r.citas.filter((c) => c.con_elision).length, 0),
+  };
 };
 
 /** Estimación de llamadas a la API para --dry-run (no se llama a nada). */

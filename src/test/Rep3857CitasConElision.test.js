@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { quoteMatchesFragment } from '../services/validateLlmAnalysis';
 import { quoteMatchesFragment as replicaRunners } from '../../scripts/rag-local-dev/rep-diag-generacion/lib.mjs';
-import { validarComoProduccion, leerReglasValidador } from '../../scripts/rag-local-dev/p0/esquema.mjs';
+import { validarComoProduccion, leerReglasValidador, citaLiteralP0, filaM2, resumenM2 } from '../../scripts/rag-local-dev/p0/esquema.mjs';
 
 // En Windows el checkout puede traer CRLF: se compara el código, no el fin de línea
 const leer = (ruta) => readFileSync(resolve(__dirname, '../..', ruta), 'utf8').replace(/\r\n/g, '\n');
@@ -127,5 +127,45 @@ describe('REP-3857 · runner M2 (P1) con la regla nueva', () => {
       reglas
     );
     expect(r.valid).toBe(false);
+  });
+});
+
+describe('REP-3857 · --doble-validador: la misma respuesta con la regla de P0 y la de P1', () => {
+  const reglas = { ...leerReglasValidador(FUNCION), agencias: new Set() };
+  const base = { estado: 'fundamentado', es_infraccion: true, fundamento_ciudadano: 'x', fundamento_oficial: 'y', confianza: 0.9, organismo_sugerido_id: null };
+  const fragments = [
+    { fragment_id: 'f-lom59', content: 'Constituyen obras públicas municipales:' + String.fromCharCode(10) + 'a) Las concernientes a los establecimientos municipales.' + String.fromCharCode(10) + 'd) Las de infraestructura urbana, en especial las de iluminación.' },
+  ];
+  const parsed = { ...base, citas: [{ fragment_id: 'f-lom59', cita_textual: 'Constituyen obras públicas municipales: ... d) Las de infraestructura urbana' }] };
+  const fila = () =>
+    filaM2(
+      {
+        camino: 'generacion', parsed, fragments, usage: {}, latencia_ms: 1,
+        validacion: validarComoProduccion(parsed, fragments, 'INFRAESTRUCTURA', reglas),
+        validacionP0: validarComoProduccion(parsed, fragments, 'INFRAESTRUCTURA', { ...reglas, citaCoincide: citaLiteralP0 }),
+      },
+      ['f-lom59']
+    );
+
+  it('la regla de P0 rechaza la elisión y la de P1 la acepta, sobre la misma respuesta', () => {
+    const f = fila();
+    expect(f.rechazo_validador).toBe(false);
+    expect(f.cita_esperada_n1).toBe(true);
+    expect(f.validador_p0).toMatchObject({ rechazo_validador: true, estado: 'indeterminado', cita_esperada_n1: false });
+    expect(f.citas[0]).toMatchObject({ con_elision: true, cita_textual: parsed.citas[0].cita_textual });
+  });
+
+  it('el resumen cuenta la fila como rescatada por P1, sin pérdidas', () => {
+    const r = resumenM2([{ ...fila(), caso_id: 'P0-071', repeticion: 1, pendiente_po: false, esperados_n1: ['f-lom59'] }]);
+    expect(r.todos.doble_validador).toMatchObject({
+      rechazos_p0: 1, rechazos_p1: 0, acierto_n1_p0: 0, acierto_n1_p1: 1,
+      rescatadas_por_p1: ['P0-071 r1'], perdidas_por_p1: [], citas_con_elision: 1,
+    });
+  });
+
+  it('sin el modo, la fila no trae validador_p0 y el resumen no agrega el bloque', () => {
+    const f = filaM2({ camino: 'generacion', parsed, fragments, usage: {}, latencia_ms: 1, validacion: validarComoProduccion(parsed, fragments, 'INFRAESTRUCTURA', reglas) }, ['f-lom59']);
+    expect(f.validador_p0).toBeUndefined();
+    expect(resumenM2([{ ...f, caso_id: 'x', repeticion: 1, pendiente_po: false, esperados_n1: ['f-lom59'] }]).todos.doble_validador).toBeUndefined();
   });
 });
