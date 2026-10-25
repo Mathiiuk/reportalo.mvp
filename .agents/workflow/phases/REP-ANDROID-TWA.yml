@@ -1,0 +1,53 @@
+id: REP-ANDROID-TWA
+title: App Android (TWA) para Play Store
+status: ACTIVE
+created_at: '2026-10-24T23:44:10.797Z'
+updated_at: '2026-10-25T00:06:46.272Z'
+current_phase: 1
+max_attempts: 3
+phases:
+  - task_id: REP-ANDROID-TWA-1
+    title: Íconos PNG, manifest y Digital Asset Links
+    status: DONE
+    checks: 1
+    failed_streak: 0
+    fixes: []
+  - task_id: REP-ANDROID-TWA-2
+    title: Proyecto TWA Android con Bubblewrap y build local firmado
+    status: IN_PROGRESS
+    checks: 0
+    failed_streak: 0
+    fixes: []
+  - task_id: REP-ANDROID-TWA-3
+    title: Workflow de CI que compila y firma el AAB
+    status: PENDING
+    checks: 0
+    failed_streak: 0
+    fixes: []
+fixes: []
+healthcheck:
+  commands:
+    unit: pnpm test
+    build: pnpm build
+  runs: 0
+  failed_streak: 0
+  last_result: null
+log:
+  - at: '2026-10-24T23:44:10.798Z'
+    event: PLAN_START
+    detail: >-
+      Modo por fases activado con 3 fase(s): REP-ANDROID-TWA-1 →
+      REP-ANDROID-TWA-2 → REP-ANDROID-TWA-3
+  - at: '2026-10-24T23:44:10.798Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 1: `REP-ANDROID-TWA-1` Íconos PNG, manifest y Digital Asset
+      Links
+  - at: '2026-10-25T00:06:46.269Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-1` en verde (intento 1)
+  - at: '2026-10-25T00:06:46.271Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 2: `REP-ANDROID-TWA-2` Proyecto TWA Android con Bubblewrap y
+      build local firmado

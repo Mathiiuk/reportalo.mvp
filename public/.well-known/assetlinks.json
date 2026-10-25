@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ar.com.reportalo.app",
+      "sha256_cert_fingerprints": [
+        "91:31:A7:DF:03:F1:1D:C5:B5:A8:AD:BD:F4:17:EF:EA:A0:1B:A6:38:DC:35:A0:C4:1E:3E:63:83:05:F8:54:F3"
+      ]
+    }
+  }
+]
