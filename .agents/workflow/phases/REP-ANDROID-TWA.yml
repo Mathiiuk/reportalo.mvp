@@ -2,8 +2,8 @@ id: REP-ANDROID-TWA
 title: App Android (TWA) para Play Store
 status: ACTIVE
 created_at: '2026-10-24T23:44:10.797Z'
-updated_at: '2026-10-25T00:06:46.272Z'
-current_phase: 1
+updated_at: '2026-10-25T00:18:45.344Z'
+current_phase: 2
 max_attempts: 3
 phases:
   - task_id: REP-ANDROID-TWA-1
@@ -14,13 +14,13 @@ phases:
     fixes: []
   - task_id: REP-ANDROID-TWA-2
     title: Proyecto TWA Android con Bubblewrap y build local firmado
-    status: IN_PROGRESS
-    checks: 0
+    status: DONE
+    checks: 1
     failed_streak: 0
     fixes: []
   - task_id: REP-ANDROID-TWA-3
     title: Workflow de CI que compila y firma el AAB
-    status: PENDING
+    status: IN_PROGRESS
     checks: 0
     failed_streak: 0
     fixes: []
@@ -51,3 +51,11 @@ log:
     detail: >-
       Inicia fase 2: `REP-ANDROID-TWA-2` Proyecto TWA Android con Bubblewrap y
       build local firmado
+  - at: '2026-10-25T00:18:45.341Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-2` en verde (intento 1)
+  - at: '2026-10-25T00:18:45.343Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 3: `REP-ANDROID-TWA-3` Workflow de CI que compila y firma el
+      AAB

@@ -2,7 +2,7 @@ id: REP-ANDROID-TWA-3
 external_ref: ''
 title: Workflow de CI que compila y firma el AAB
 type: feat
-status: PLANNED
+status: IN_PROGRESS
 priority: medium
 owner: team-agent
 base_branch: staging

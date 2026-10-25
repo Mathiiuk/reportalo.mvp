@@ -2,7 +2,7 @@ id: REP-ANDROID-TWA-2
 external_ref: ''
 title: Proyecto TWA Android con Bubblewrap y build local firmado
 type: feat
-status: IN_PROGRESS
+status: READY_FOR_PR
 priority: medium
 owner: team-agent
 base_branch: staging
