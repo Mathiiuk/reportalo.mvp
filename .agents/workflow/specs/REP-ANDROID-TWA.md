@@ -30,11 +30,11 @@ Un AAB firmado (`ar.com.reportalo.app`) que abre la PWA de staging a pantalla co
 
 ## 5. Criterios de aceptación
 
-- [ ] AC-01: Cada ícono del manifest es un PNG que mide lo que declara; hay 192/512 `any` y 512 `maskable`.
-- [ ] AC-02: `assetlinks.json` delega `handle_all_urls` a `ar.com.reportalo.app` con huellas SHA-256 válidas y queda en `dist` tras `pnpm build`.
-- [ ] AC-03: `android/twa/twa-manifest.json` usa el mismo paquete, host de staging e íconos del manifest web.
-- [ ] AC-04: `pnpm android:build` genera un AAB y un APK firmados con la upload key.
-- [ ] AC-05: El workflow de CI compila y firma el AAB y lo publica como artifact.
+- [x] AC-01: Cada ícono del manifest es un PNG que mide lo que declara; hay 192/512 `any` y 512 `maskable`.
+- [x] AC-02: `assetlinks.json` delega `handle_all_urls` a `ar.com.reportalo.app` con huellas SHA-256 válidas y queda en `dist` tras `pnpm build`.
+- [x] AC-03: `android/twa/twa-manifest.json` usa el mismo paquete, host de staging e íconos del manifest web.
+- [x] AC-04: `pnpm android:build` genera un AAB y un APK firmados con la upload key.
+- [x] AC-05: El workflow de CI compila y firma el AAB y lo publica como artifact.
 
 ## 6. Restricciones
 

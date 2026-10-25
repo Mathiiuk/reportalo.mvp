@@ -2,7 +2,7 @@ id: REP-ANDROID-TWA
 external_ref: ''
 title: App Android para Play Store como TWA (Bubblewrap)
 type: feat
-status: PLANNED
+status: READY_FOR_PR
 priority: medium
 owner: team-agent
 base_branch: staging

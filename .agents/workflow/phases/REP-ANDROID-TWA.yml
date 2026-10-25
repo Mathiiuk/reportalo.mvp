@@ -1,8 +1,8 @@
 id: REP-ANDROID-TWA
 title: App Android (TWA) para Play Store
-status: ACTIVE
+status: COMPLETED
 created_at: '2026-10-24T23:44:10.797Z'
-updated_at: '2026-10-25T00:18:45.344Z'
+updated_at: '2026-10-25T00:22:05.192Z'
 current_phase: 2
 max_attempts: 3
 phases:
@@ -20,8 +20,8 @@ phases:
     fixes: []
   - task_id: REP-ANDROID-TWA-3
     title: Workflow de CI que compila y firma el AAB
-    status: IN_PROGRESS
-    checks: 0
+    status: DONE
+    checks: 1
     failed_streak: 0
     fixes: []
 fixes: []
@@ -29,9 +29,16 @@ healthcheck:
   commands:
     unit: pnpm test
     build: pnpm build
-  runs: 0
+  runs: 1
   failed_streak: 0
-  last_result: null
+  last_result:
+    at: '2026-10-25T00:22:05.191Z'
+    passed: true
+    gates:
+      - gate: unit
+        passed: true
+      - gate: build
+        passed: true
 log:
   - at: '2026-10-24T23:44:10.798Z'
     event: PLAN_START
@@ -59,3 +66,12 @@ log:
     detail: >-
       Inicia fase 3: `REP-ANDROID-TWA-3` Workflow de CI que compila y firma el
       AAB
+  - at: '2026-10-25T00:20:36.328Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-3` en verde (intento 1)
+  - at: '2026-10-25T00:20:36.329Z'
+    event: PHASES_DONE
+    detail: Todas las fases completadas. Pendiente healthcheck final.
+  - at: '2026-10-25T00:22:05.192Z'
+    event: HEALTHCHECK_PASS
+    detail: Healthcheck final en verde (ejecución 1). Plan completado.
