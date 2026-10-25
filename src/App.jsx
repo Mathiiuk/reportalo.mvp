@@ -9,6 +9,7 @@ import { PwaUpdater } from './components/common/PwaUpdater';
 import { getSelectableLocalities } from './services/localitiesService';
 import { PendingSyncManager } from './components/common/PendingSyncManager';
 import { getSessionMarker, getResumePath, clearResumePath } from './lib/sessionMarker';
+import { OperatorRoute } from './components/panel/OperatorRoute';
 import { readStoredSession } from './lib/storedSession';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
@@ -37,6 +38,8 @@ const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m =>
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const AcercaPage = React.lazy(() => import('./pages/AcercaPage').then(m => ({ default: m.AcercaPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+// REP-3747 · panel de organismos (operadores de un organismo de prueba)
+const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => ({ default: m.PanelPage })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
 // pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
@@ -78,6 +81,13 @@ const ProtectedRoute = ({ children }) => {
       return <Navigate to="/sesion-vencida" replace state={{ from: `${location.pathname}${location.search}` }} />;
     }
     return <Navigate to="/" replace />;
+  }
+
+  // REP-3747: el operador que abrió /panel sin sesión vuelve al panel después del login, sin pasar por el
+  // onboarding del vecino. Si la cuenta no es de operador, el panel lo manda a /acceso-restringido.
+  const resumePath = getResumePath();
+  if (resumePath?.startsWith('/panel')) {
+    return <Navigate to={resumePath} replace />;
   }
 
   const onboardingCompleted =
@@ -313,6 +323,15 @@ export const AppRoutes = () => {
       />
       {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
       <Route path="/acceso-restringido" element={<ForbiddenPage />} />
+      {/* REP-3747 — panel de organismos: solo operadores; los datos los protege la base */}
+      <Route
+        path="/panel"
+        element={
+          <OperatorRoute>
+            <PanelPage />
+          </OperatorRoute>
+        }
+      />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </React.Suspense>
