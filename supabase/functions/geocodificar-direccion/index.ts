@@ -19,8 +19,12 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Política de Nominatim: identificar la aplicación (los User-Agent por defecto de las librerías no sirven)
+// Política de Nominatim: identificar la aplicación (los User-Agent por defecto de las librerías no sirven).
+// OJO (25/10/2026): desde la red de Edge Functions de Supabase, Nominatim responde 403 aun con User-Agent y Referer,
+// mientras que desde la base (pg_net) la misma consulta responde 200. Mientras siga así, esta función devuelve
+// { address: null, reason: 'proveedor_403' } y la app sigue con la carga manual de calle y altura.
 const USER_AGENT = 'Reportalo-MVP/1.0 (https://reportalo.com.ar; info@reportalo.com.ar)';
+const REFERER = 'https://reportalo.com.ar/';
 const TIMEOUT_MS = 3500;
 
 const json = (body: unknown, status = 200) =>
@@ -43,7 +47,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const response = await fetch(buildReverseUrl(lat as number, lng as number), {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      headers: { 'User-Agent': USER_AGENT, Referer: REFERER, Accept: 'application/json' },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!response.ok) return json({ address: null, reason: `proveedor_${response.status}` });

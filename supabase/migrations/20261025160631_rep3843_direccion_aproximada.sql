@@ -26,6 +26,11 @@
 --   línea de dirección del texto.
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 25/10/2026, con aprobación de Matías. Versión registrada 20261025160631; el archivo
+-- se renombró para coincidir. Verificado con sesiones simuladas: R-4 (avenida guardada → Ministerio; secundaria →
+-- Comuna 12), borrador con «Dirección aproximada» / «Dirección no disponible», tercero ve la calle sin altura y no lee
+-- citizen_reports, dueño ve calle y altura, la vista no tiene address_number.
 
 begin;
 

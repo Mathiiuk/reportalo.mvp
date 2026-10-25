@@ -48,3 +48,11 @@ Todo lo anterior (columnas, vista, proxy, sugerencia y corrección, borrador loc
 
 ## 7. Fuera de alcance
 Rellenar la dirección de reportes viejos (PM 25/10). Caché de respuestas: el volumen no lo justifica; si crece, se agrega en el proxy sin tocar la app.
+
+## 8. Hallazgo al desplegar (25/10, después de aplicar)
+Desde la red de **Edge Functions de Supabase**, Nominatim responde **403** a la consulta inversa, aun con User-Agent y Referer. La misma consulta desde la **base** (pg_net) responde 200. El proxy funciona y cae al respaldo sin romper nada, pero hoy **no sugiere**.
+
+Opciones:
+- **(A) Geocodificar en la base al guardar el reporte (pg_net + tarea periódica).** Mantiene la privacidad del vecino y ya está probado que funciona. No hay sugerencia antes de enviar, pero la carga manual sigue en el modal, y la dirección queda antes de que se genere el borrador (que espera al análisis). **Recomendada.**
+- (B) Consultar Nominatim desde el navegador. Funciona con tráfico moderado, pero la IP del vecino llega a OSMF y se pierde poder cambiar de proveedor sin actualizar la app.
+- (C) Otro proveedor con API key (Geoapify, LocationIQ, MapTiler). Requiere crear una cuenta y aceptar condiciones y costos: decisión del equipo.
