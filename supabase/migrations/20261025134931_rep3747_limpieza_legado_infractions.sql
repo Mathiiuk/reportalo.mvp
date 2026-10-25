@@ -17,6 +17,9 @@
 -- ROLLBACK: las definiciones están en las copias de la base del 19/10 (no se reponen: estaban rotas o sin uso).
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 25/10/2026, con aprobación de Matías. Versión registrada 20261025134931; el archivo se renombró
+-- para coincidir. Verificado: el trigger audit_ia y las 2 funciones ya no existen; infractions sigue con 0 filas.
 
 begin;
 

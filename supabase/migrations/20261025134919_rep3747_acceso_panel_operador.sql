@@ -42,6 +42,11 @@
 --     drop column jurisdiction_level;`
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 25/10/2026, con aprobación de Matías. Versión registrada 20261025134919; el archivo se renombró
+-- para coincidir. Verificado con sesiones simuladas: CABA atiende la Comuna 6 y no Avellaneda; Avellaneda solo
+-- Avellaneda; el operador no lee citizen_reports y conserva fundamento, fotos e historial; el dueño no pierde nada;
+-- el tercero no ve nada ajeno; anon no ejecuta las funciones.
 
 begin;
 
