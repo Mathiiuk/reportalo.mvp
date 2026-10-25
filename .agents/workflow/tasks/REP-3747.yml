@@ -1,0 +1,57 @@
+id: REP-3747
+external_ref: https://unlz2026.atlassian.net/browse/REP-3747
+title: >-
+  Acceso al panel como operador de organismo de prueba (rol, RLS, organismos
+  is_test)
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: Matías Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - >-
+      supabase/migrations (agencies.is_test, profile_attends_report versionada,
+      alcance CABA, limpieza legado)
+    - src/context/AuthContext.jsx
+    - src/App.jsx (ruta /panel protegida por rol)
+    - src/pages/panel/
+    - src/test
+  environments:
+    - local
+requirements:
+  - >-
+    agencies.is_test y renombrar las 2 filas de prueba a Reportalo CABA /
+    Reportalo Avellaneda (organismo de prueba)
+  - Reportalo CABA atiende toda la Ciudad (reglas §2), Avellaneda su subdivisión
+  - profile_attends_report pasa a migración versionada
+  - Frontend reconoce el rol organismo; la autorización real queda en RLS/RPC
+  - >-
+    Operadores vinculados a 2 casillas reales acordadas con Iván (sin login
+    nuevo)
+  - >-
+    Limpieza: drop trigger audit_ia, get_infraction_stats() y
+    get_auth_user_jurisdiction() (OK Hernán 24/10, sin dependencias en staging)
+acceptance_criteria:
+  - Operador de prueba entra al panel con Google/magic link
+  - >-
+    Ciudadano por UI/URL/API: acceso denegado y vuelta a la app
+    (/acceso-restringido)
+  - 'Operador CABA pide recursos de Avellaneda por URL/API: rechazado por RLS'
+  - 'Sesión vencida: exige autenticación'
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build
