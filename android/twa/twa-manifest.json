@@ -1,0 +1,60 @@
+{
+  "packageId": "ar.com.reportalo.app",
+  "host": "reportalo-staging.vercel.app",
+  "name": "Reportalo — Tu ciudad. Tu voz.",
+  "launcherName": "Reportalo",
+  "display": "standalone",
+  "themeColor": "#1E6FCB",
+  "themeColorDark": "#000000",
+  "navigationColor": "#1E6FCB",
+  "navigationColorDark": "#1E6FCB",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#F4F7FB",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://reportalo-staging.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://reportalo-staging.vercel.app/icons/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "~/.reportalo-android/upload-keystore.jks",
+    "alias": "upload"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Abrir mapa",
+      "shortName": "Mapa",
+      "url": "https://reportalo-staging.vercel.app/map",
+      "chosenIconUrl": "https://reportalo-staging.vercel.app/icons/icon-192.png"
+    },
+    {
+      "name": "Nuevo reporte",
+      "shortName": "Reportar",
+      "url": "https://reportalo-staging.vercel.app/map",
+      "chosenIconUrl": "https://reportalo-staging.vercel.app/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "unknown",
+  "webManifestUrl": "https://reportalo-staging.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://reportalo-staging.vercel.app/",
+  "minSdkVersion": 24,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

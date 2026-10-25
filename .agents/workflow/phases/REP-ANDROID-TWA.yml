@@ -1,0 +1,77 @@
+id: REP-ANDROID-TWA
+title: App Android (TWA) para Play Store
+status: COMPLETED
+created_at: '2026-10-24T23:44:10.797Z'
+updated_at: '2026-10-25T00:22:05.192Z'
+current_phase: 2
+max_attempts: 3
+phases:
+  - task_id: REP-ANDROID-TWA-1
+    title: Íconos PNG, manifest y Digital Asset Links
+    status: DONE
+    checks: 1
+    failed_streak: 0
+    fixes: []
+  - task_id: REP-ANDROID-TWA-2
+    title: Proyecto TWA Android con Bubblewrap y build local firmado
+    status: DONE
+    checks: 1
+    failed_streak: 0
+    fixes: []
+  - task_id: REP-ANDROID-TWA-3
+    title: Workflow de CI que compila y firma el AAB
+    status: DONE
+    checks: 1
+    failed_streak: 0
+    fixes: []
+fixes: []
+healthcheck:
+  commands:
+    unit: pnpm test
+    build: pnpm build
+  runs: 1
+  failed_streak: 0
+  last_result:
+    at: '2026-10-25T00:22:05.191Z'
+    passed: true
+    gates:
+      - gate: unit
+        passed: true
+      - gate: build
+        passed: true
+log:
+  - at: '2026-10-24T23:44:10.798Z'
+    event: PLAN_START
+    detail: >-
+      Modo por fases activado con 3 fase(s): REP-ANDROID-TWA-1 →
+      REP-ANDROID-TWA-2 → REP-ANDROID-TWA-3
+  - at: '2026-10-24T23:44:10.798Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 1: `REP-ANDROID-TWA-1` Íconos PNG, manifest y Digital Asset
+      Links
+  - at: '2026-10-25T00:06:46.269Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-1` en verde (intento 1)
+  - at: '2026-10-25T00:06:46.271Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 2: `REP-ANDROID-TWA-2` Proyecto TWA Android con Bubblewrap y
+      build local firmado
+  - at: '2026-10-25T00:18:45.341Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-2` en verde (intento 1)
+  - at: '2026-10-25T00:18:45.343Z'
+    event: FEAT_START
+    detail: >-
+      Inicia fase 3: `REP-ANDROID-TWA-3` Workflow de CI que compila y firma el
+      AAB
+  - at: '2026-10-25T00:20:36.328Z'
+    event: FEAT_CHECK_PASS
+    detail: Check de `REP-ANDROID-TWA-3` en verde (intento 1)
+  - at: '2026-10-25T00:20:36.329Z'
+    event: PHASES_DONE
+    detail: Todas las fases completadas. Pendiente healthcheck final.
+  - at: '2026-10-25T00:22:05.192Z'
+    event: HEALTHCHECK_PASS
+    detail: Healthcheck final en verde (ejecución 1). Plan completado.
