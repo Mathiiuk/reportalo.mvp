@@ -140,6 +140,8 @@ export const sendPendingDraft = async (draft, userId) => {
       description: draft.description,
       latitud: lat,
       longitud: lng,
+      // REP-3843: la dirección viaja en el borrador local junto con la ubicación
+      address: draft.customLocation?.address ?? null,
     });
     if (!creation.success) {
       // El ciudadano ve el mensaje pensado para él, no el detalle técnico (REP-2204). El motivo real se

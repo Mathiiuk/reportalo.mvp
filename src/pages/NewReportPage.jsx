@@ -550,6 +550,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           description,
           latitud: lat,
           longitud: lng,
+          // REP-3843: dirección aproximada confirmada en el modal de ubicación (opcional)
+          address: customLocation?.address ?? null,
         })
       );
 
@@ -834,6 +836,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             <AdjustLocationModal
               initialCoordinates={activeCoords}
               initialLocalityId={customLocation?.localityId}
+              initialAddress={customLocation?.address}
               isGpsUnavailable={isGpsUnavailable}
               isGpsDenied={isGpsDenied}
               onRetryGps={refreshLocation}

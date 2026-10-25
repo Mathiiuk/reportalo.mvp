@@ -27,7 +27,7 @@ const EVIDENCE_BUCKET = 'report-evidences';
  */
 export const PUBLIC_REPORTS_VIEW = 'public_citizen_reports';
 /** Columnas del resumen que se muestran en el detalle, propio o ajeno (la vista también las tiene). */
-const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at,
+const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at, address_street,
       services ( service_name, service_code ),
       localities ( name )`;
 /** Cuánto vive una URL firmada de las fotos del reporte. Se vuelve a pedir cada vez que se abre el detalle. */
@@ -99,7 +99,8 @@ export const getReportDetail = async (reportId, userId) => {
   if (userId) {
     const own = await supabase
       .from('citizen_reports')
-      .select(`id, client_side_id, user_id, ${PUBLIC_REPORT_COLUMNS}`)
+      // REP-3843: la altura solo la lee el dueño (la vista pública no la tiene, REP-3876 §8)
+      .select(`id, client_side_id, user_id, address_number, ${PUBLIC_REPORT_COLUMNS}`)
       .eq('id', reportId)
       .maybeSingle();
     if (own.error) {

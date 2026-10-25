@@ -14,6 +14,25 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { BUCKET_PUBLIC_EVIDENCES, PRIVATE_EVIDENCE_CACHE_CONTROL } from './quarantinePipelineService';
 import { validateDescription } from './reportDescription';
+import { classifyRoadType } from './geocodingService';
+
+/**
+ * REP-3843: dirección aproximada → columnas de citizen_reports. Limpia lo que la base rechazaría (altura que no es
+ * número de puerta, altura sin calle) en vez de hacer fallar el envío: la dirección es opcional.
+ * @param {{ street?: string|null, number?: string|null, roadType?: string|null, source?: string|null } | null | undefined} address
+ */
+export const toAddressColumns = (address) => {
+  const street = address?.street?.trim() || null;
+  if (!street) return { address_street: null, address_number: null, address_road_type: null, address_source: null };
+  const number = address?.number?.trim() ?? '';
+  return {
+    address_street: street.slice(0, 120),
+    address_number: /^\d{1,5}[A-Za-z]?$/.test(number) ? number : null,
+    // Si el vecino corrigió la calle, el tipo sale del nombre que quedó
+    address_road_type: address?.source === 'corregida' ? classifyRoadType(street) : address?.roadType ?? classifyRoadType(street),
+    address_source: address?.source === 'corregida' ? 'corregida' : 'sugerida',
+  };
+};
 
 /**
  * E-3: arma la fila de citizen_reports. Idempotente por client_side_id — si
@@ -79,6 +98,7 @@ export const createCitizenReport = async ({
   description,
   latitud,
   longitud,
+  address = null,
 }) => {
   if (!isSupabaseConfigured) {
     return { success: false, error: 'Supabase no está configurado.', userMessage: MESSAGE_GENERIC };
@@ -116,6 +136,8 @@ export const createCitizenReport = async ({
           description: cleanDescription,
           latitud,
           longitud,
+          // REP-3843: dirección aproximada (opcional; sin ella el reporte se envía igual)
+          ...toAddressColumns(address),
           // Sin current_state_code a propósito: al insertar la base usa su valor por defecto (RECIBIDO) y,
           // si el envío se reintenta (mismo client_side_id), el upsert no pisa el estado que el reporte ya
           // tenga (al enviarse pasa solo a En revisión, REP-3798).
