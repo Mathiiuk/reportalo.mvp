@@ -25,6 +25,10 @@
 -- `drop function public.redact_contact_info(text);`.
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 25/10/2026, con aprobación de Matías. La versión quedó registrada como
+-- 20261025131830; el archivo se renombró para coincidir. Verificado: 481 filas en la vista, 2 descripciones
+-- redactadas, 0 correos visibles, anon sin acceso, mismas 9 columnas. El frontend no cambia.
 
 begin;
 
