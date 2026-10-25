@@ -26,9 +26,9 @@
 --   4. Texto D7 en la transición EN_ANALISIS → DERIVADO.
 --   5. get_panel_inbox(): la bandeja del operador con sesión. Sin descripción, user_id ni fotos.
 --
--- Fuera de alcance: los reportes reales sin prestación (hoy, todos) no entran, según §3. Si Hernán decide aceptar
--- «pendiente_sin_canal» dentro del piloto, el cambio es la condición `delivery_status = 'borrador_generado'` del punto
--- 1 y la del punto 2. No se tocan estados ni entregas históricas.
+-- Fuera de alcance: los reportes reales sin prestación (hoy, todos) no entran, por la regla §3. Previsto en el riesgo
+-- S-6 de la viabilidad del PO y resuelto por el PM (25/10): QA con reportes nuevos + casos de prueba
+-- (docs/runbooks/REP-3000_datos_de_prueba_bandeja.md). No se tocan estados ni entregas históricas.
 --
 -- ROLLBACK:
 --   `drop trigger trg_report_ai_analysis_deliver on public.report_ai_analysis;`
