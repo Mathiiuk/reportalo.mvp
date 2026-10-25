@@ -38,6 +38,12 @@
 --   transición: notes y approved_by anteriores (20261015140000_rep2502_estados_definidos_por_el_po.sql)
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 25/10/2026, con aprobación de Matías. Versión registrada 20261025142623; el archivo
+-- se renombró para coincidir. Verificado con sesiones simuladas (17/17): INFORMADO visibles para operadores 13 → 0;
+-- entrega con prestación → DERIVADO con motivo de entrega interna (CABA y Avellaneda); fuera de alcance e INFORMADO
+-- excluidos; el trigger genera la entrega sin tocar el análisis; cada operador ve solo su bandeja y el ciudadano nada;
+-- authenticated no ejecuta la entrega y anon no ejecuta la bandeja.
 
 begin;
 
