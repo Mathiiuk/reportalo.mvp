@@ -76,8 +76,47 @@ export const sha256 = (text) => crypto.createHash('sha256').update(text, 'utf8')
 const normalizeWhitespace = (text) => text.replace(/\s+/g, ' ').trim();
 
 /**
+ * Réplica de index.ts (RAG-S16, citas con elisión): se acepta una cita con "...", "…" o "[...]" solo si
+ * cada tramo es literal, en el orden de la cita, de al menos MIN_ELIDED_SEGMENT_CHARS caracteres, y lo
+ * salteado no contiene una negación ni una excepción. Ver docs/RAG-S16_citas_con_elision.md.
+ */
+const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
+const MIN_ELIDED_SEGMENT_CHARS = 15;
+const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
+// REP-3857: marca al principio o al final de la cita. Lo omitido en ese borde se revisa hasta el borde del fragmento.
+const ELISION_AT_START = /^(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)/;
+const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)$/;
+
+export const quoteMatchesFragment = (quote, content) => {
+  const normalizedQuote = normalizeWhitespace(quote);
+  // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
+  if (normalizedQuote === '') return false;
+  const normalizedContent = normalizeWhitespace(content);
+  if (normalizedContent.includes(normalizedQuote)) return true;
+  if (!ELISION_MARKER.test(normalizedQuote)) return false;
+
+  const segments = normalizedQuote.split(ELISION_MARKER).map((s) => s.trim()).filter((s) => s !== '');
+  if (segments.length === 0 || segments.some((s) => s.length < MIN_ELIDED_SEGMENT_CHARS)) return false;
+  // REP-3861 H-01: con «...» al principio o al final, lo omitido llega hasta el borde del FRAGMENTO, no de la oración.
+  // Cortar en «. » dejaba pasar la salvedad cuando una abreviatura («art. 5», «inc. b)») partía la oración. Del lado
+  // seguro: si el fragmento omitido tiene una negación o una salvedad, se rechaza como en P0.
+  const markAtStart = ELISION_AT_START.test(normalizedQuote);
+  const markAtEnd = ELISION_AT_END.test(normalizedQuote);
+  // REP-3861 O-02: si un tramo aparece más de una vez se prueban todas las apariciones, no solo la primera.
+  const matchFrom = (i, from) => {
+    if (i === segments.length) return !markAtEnd || !ELIDED_TEXT_GUARD.test(normalizedContent.slice(from));
+    for (let at = normalizedContent.indexOf(segments[i], from); at >= 0; at = normalizedContent.indexOf(segments[i], at + 1)) {
+      const omitted = i > 0 || markAtStart ? normalizedContent.slice(from, at) : '';
+      if (!ELIDED_TEXT_GUARD.test(omitted) && matchFrom(i + 1, at + segments[i].length)) return true;
+    }
+    return false;
+  };
+  return matchFrom(0, 0);
+};
+
+/**
  * Réplica reducida de validateLlmAnalysis: id citado dentro del contexto, cita literal (tolerando espacios en
- * blanco) y regla de "asistencia". Sirve para ver si una respuesta habría pasado la validación del servidor.
+ * blanco y elisiones por tramos) y regla de "asistencia". Sirve para ver si una respuesta habría pasado la validación del servidor.
  */
 export const validateRun = (parsed, fragments, category) => {
   if (!parsed || typeof parsed !== 'object') return { valid: false, reason: 'La respuesta no es un objeto.' };
@@ -89,8 +128,7 @@ export const validateRun = (parsed, fragments, category) => {
   for (const cita of parsed.citas) {
     const fragment = byId.get(cita?.fragment_id);
     if (!fragment) return { valid: false, reason: `fragment_id "${cita?.fragment_id}" fuera del contexto.` };
-    const quote = normalizeWhitespace(cita.cita_textual ?? '');
-    if (quote === '' || !normalizeWhitespace(fragment.content).includes(quote)) {
+    if (!quoteMatchesFragment(cita.cita_textual ?? '', fragment.content)) {
       return { valid: false, reason: `cita de "${cita.fragment_id}" no literal.` };
     }
   }

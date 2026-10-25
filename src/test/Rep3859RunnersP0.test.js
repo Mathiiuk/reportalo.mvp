@@ -96,7 +96,7 @@ describe('REP-3859 · validador fiel a producción', () => {
     expect(reglas.vulnerabilidad).toBe('VULNERABILIDAD_SOCIAL');
     // Paridad: las mismas reglas que valida la función, en el mismo orden
     const cuerpo = fuente.slice(fuente.indexOf('export const validateLlmAnalysis'), fuente.indexOf('type AnalysisResult'));
-    const orden = ['requiredFields', 'RAG_RESULT_STATUSES.includes', "'asistencia'", 'Array.isArray(analysis.citas)', 'fragmentsById.get', 'normalizeWhitespace(fragment.content).includes'];
+    const orden = ['requiredFields', 'RAG_RESULT_STATUSES.includes', "'asistencia'", 'Array.isArray(analysis.citas)', 'fragmentsById.get', 'quoteMatchesFragment(cita.cita_textual'];
     const posiciones = orden.map((t) => cuerpo.indexOf(t));
     expect(posiciones.every((p) => p >= 0)).toBe(true);
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
