@@ -13,7 +13,8 @@ import { AuthContext } from '../context/AuthContext';
 const fromMock = vi.fn();
 vi.mock('../lib/supabaseClient', () => ({
   isSupabaseConfigured: true,
-  supabase: { from: (...args) => fromMock(...args) },
+  // La bandeja (REP-3000) se pide por RPC; acá alcanza con una vacía
+  supabase: { from: (...args) => fromMock(...args), rpc: async () => ({ data: [], error: null }) },
 }));
 
 import { OperatorRoute } from '../components/panel/OperatorRoute';
