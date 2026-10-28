@@ -15,7 +15,8 @@
 --   5. get_panel_report_detail suma las acciones posibles (salen del catálogo), el «tomado» y el historial.
 --   6. Índices del historial y de los eventos por reporte.
 --
--- No se aplica sola: se corre a mano en staging con el OK de Matías. Ensayada el 28/10 con ROLLBACK y sesiones
+-- APLICADA en staging el 28/10/2026 con el OK de Matías (versión registrada 20261028164553; el archivo se
+-- renombró para coincidir). Verificación después de aplicar, con sesiones simuladas y ROLLBACK: 17/17. Ensayada el 28/10 con ROLLBACK y sesiones
 -- simuladas (operador CABA, operador Avellaneda, vecino, anon): 20/20. Staging quedó intacta.
 -- Reversión: volver a crear change_report_state(uuid, text, text) desde 20261013160000, borrar take_report, la
 -- columna escalated_to y el tipo de evento, reinsertar ESCALADO → EN_DISCREPANCIA y las etiquetas anteriores.
