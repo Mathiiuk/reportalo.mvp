@@ -27,8 +27,8 @@ import { getStatusConfig, normalizeReportState } from '../report/reportStatus';
 // en el dispositivo y nunca llega a la base.
 const MAP_STATE_FILTERS = ['todos', 'enviado', 'en_revision', 'notificado', 'resuelto', 'descartado'];
 
-// «Notificado al responsable» no entra en el panel de filtros, que es angosto.
-const FILTER_SHORT_LABELS = { notificado: 'Notificado' };
+// REP-3001: las etiquetas ya son cortas («Derivado»), así que no hace falta abreviar ninguna.
+const FILTER_SHORT_LABELS = {};
 
 const filterLabel = (filter) => {
   if (filter === 'todos') return 'Todos los reclamos';

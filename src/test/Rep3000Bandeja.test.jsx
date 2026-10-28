@@ -28,7 +28,7 @@ const FILA = {
   created_at: '2026-10-25T13:00:00Z',
   zone: 'Balvanera',
   state_code: 'DERIVADO',
-  state_label: 'Derivado al organismo',
+  state_label: 'Derivado', // REP-3001: etiqueta unificada
 };
 
 const montar = () =>
@@ -48,7 +48,7 @@ describe('REP-3000 · bandeja en /panel', () => {
     expect(fila).toHaveAttribute('href', `/panel/reportes/${FILA.report_id}`);
     expect(within(fila).getByText('Tránsito')).toBeInTheDocument();
     expect(within(fila).getByText('Balvanera')).toBeInTheDocument();
-    expect(within(fila).getByText('Derivado al organismo')).toBeInTheDocument();
+    expect(within(fila).getByText('Derivado')).toBeInTheDocument();
     expect(rpcMock).toHaveBeenCalledWith('get_panel_inbox');
   });
 

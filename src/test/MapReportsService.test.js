@@ -45,8 +45,8 @@ describe('REP-3787 H-36: reportes reales en el mapa', () => {
 
   it('UT-MAP-01: traduce el codigo de estado de la base a la etiqueta del §10', () => {
     expect(mapRowToMarker(row()).status).toBe('En revisión');
-    expect(mapRowToMarker(row({ current_state_code: 'DERIVADO' })).status).toBe('Notificado al responsable');
-    expect(mapRowToMarker(row({ current_state_code: 'DESESTIMADO' })).status).toBe('Descartado');
+    expect(mapRowToMarker(row({ current_state_code: 'DERIVADO' })).status).toBe('Derivado'); // REP-3001: misma etiqueta que el panel
+    expect(mapRowToMarker(row({ current_state_code: 'DESESTIMADO' })).status).toBe('Desestimado');
   });
 
   it('UT-MAP-02: entrega las coordenadas en el orden que espera MapLibre', () => {

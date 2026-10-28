@@ -33,3 +33,48 @@ export const getPanelReportDetail = async (reportId) => {
 /** Número de caso legible (Hernán D4): «Caso N° 00042». */
 export const formatCaseNumber = (caseNumber) =>
   caseNumber == null ? null : `Caso N° ${String(caseNumber).padStart(5, '0')}`;
+
+// REP-3001 · Mensajes claros para cada rechazo de la base (escenario 4)
+const ACTION_ERRORS = {
+  sin_permiso: 'No tenés permiso para cambiar este reporte.',
+  transicion_no_definida: 'El reporte ya cambió de estado y esa acción no está disponible. Actualizamos la pantalla.',
+  mismo_estado: 'El reporte ya cambió de estado y esa acción no está disponible. Actualizamos la pantalla.',
+  estado_no_permite: 'El reporte ya cambió de estado y esa acción no está disponible. Actualizamos la pantalla.',
+  motivo_requerido: 'Escribí el motivo.',
+  destino_requerido: 'Indicá a qué organismo o área corresponde.',
+  reporte_inexistente: 'Este reporte no está disponible para tu organismo.',
+};
+const GENERIC_ERROR = 'No pudimos guardar el cambio. Revisá tu conexión y volvé a intentar.';
+
+const toActionResult = ({ data, error }) => {
+  if (error) return { ok: false, message: GENERIC_ERROR };
+  if (!data?.ok) return { ok: false, code: data?.code, message: ACTION_ERRORS[data?.code] ?? GENERIC_ERROR };
+  return { ok: true, data };
+};
+
+/**
+ * REP-3001 · «Tomar el caso»: el reporte sigue Derivado y queda quién y cuándo (evento TOMADO_POR_ORGANISMO).
+ * La base no duplica el evento si se toma dos veces.
+ *
+ * @param {string} reportId
+ * @returns {Promise<{ ok: boolean, code?: string, message?: string, data?: object }>}
+ */
+export const takeReport = async (reportId) => toActionResult(await supabase.rpc('take_report', { p_report_id: reportId }));
+
+/**
+ * REP-3001 · Rechazar (Escalado, Desestimado, En discrepancia) o marcar Resuelto. change_report_state valida el
+ * catálogo, el motivo y, en el escalado, a quién; si rechaza, el estado no cambia y queda registrado el intento.
+ *
+ * @param {string} reportId
+ * @param {{ toState: string, reason: string, escalatedTo?: string|null }} accion
+ * @returns {Promise<{ ok: boolean, code?: string, message?: string, data?: object }>}
+ */
+export const changePanelReportState = async (reportId, { toState, reason, escalatedTo = null }) =>
+  toActionResult(
+    await supabase.rpc('change_report_state', {
+      p_report_id: reportId,
+      p_to_state: toState,
+      p_reason: reason,
+      p_escalated_to: escalatedTo,
+    })
+  );

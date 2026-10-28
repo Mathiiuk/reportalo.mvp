@@ -242,7 +242,7 @@ describe('REP-3841 · «Reporte enviado» de Vulnerabilidad social', () => {
     expect(screen.getByTestId('success-destination-channel')).toHaveTextContent(/^108 · Línea 108/);
   });
 
-  it('el recorrido es Enviado → Informado, sin «Notificado al responsable» ni «Resuelto»', async () => {
+  it('el recorrido es Enviado → Informado, sin «Derivado» ni «Resuelto»', async () => {
     rpcMock.mockResolvedValue({ data: CALLE_ADULTOS_CABA, error: null });
     montarAcuse();
     expect(screen.getByTestId('tracker-step-enviado')).toBeInTheDocument();

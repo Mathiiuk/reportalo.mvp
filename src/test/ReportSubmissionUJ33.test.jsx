@@ -42,11 +42,11 @@ describe('REP-3791 Bloque 2 · Revisión, consentimiento y envío (UJ v3.3)', ()
     expect(onViewTerms).toHaveBeenCalledTimes(1);
   });
 
-  it('UT-B2-04: el tracker tiene los cuatro estados reales y el cierre alternativo «Descartado»', () => {
+  it('UT-B2-04: el tracker tiene los cuatro estados reales y el cierre alternativo «Desestimado» (REP-3001)', () => {
     render(<ReportSuccessScreen onViewReport={vi.fn()} onReturnToMap={vi.fn()} />);
-    ['Enviado', 'En revisión', 'Notificado al responsable', 'Resuelto'].forEach((label) => {
+    ['Enviado', 'En revisión', 'Derivado', 'Resuelto'].forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });
-    expect(screen.getByText('Descartado')).toBeInTheDocument();
+    expect(screen.getByText('Desestimado')).toBeInTheDocument();
   });
 });

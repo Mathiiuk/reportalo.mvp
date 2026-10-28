@@ -8,13 +8,14 @@ export const REPORT_STATUS = {
   borrador: { label: 'Pendiente', tone: 'warning' },
   enviado: { label: 'Enviado', tone: 'success' },
   en_revision: { label: 'En revisión', tone: 'accent' },
-  notificado: { label: 'Notificado al responsable', tone: 'notice' },
+  // REP-3001 (reglas del panel §4 y §6): el vecino lee la misma etiqueta que el operador
+  notificado: { label: 'Derivado', tone: 'notice' },
   resuelto: { label: 'Resuelto', tone: 'success' },
-  descartado: { label: 'Descartado', tone: 'neutral' },
+  descartado: { label: 'Desestimado', tone: 'neutral' },
   // REP-2502 (H-2, PO 15/10/2026): estados nuevos. INFORMADO = se le indicó al vecino el canal que corresponde,
   // sin derivar a un organismo (vulnerabilidad social). ESCALADO y EN_DISCREPANCIA los pone el organismo.
   informado: { label: 'Informado', tone: 'notice' },
-  escalado: { label: 'Escalado a otro organismo', tone: 'notice' },
+  escalado: { label: 'Escalado', tone: 'notice' },
   en_discrepancia: { label: 'En discrepancia', tone: 'warning' },
 };
 
@@ -44,7 +45,7 @@ const DB_STATE_ALIASES = {
 
 // Pasos del tracker: uno por estado real; «descartado» es un cierre alternativo, no un paso
 export const TRACKER_STEPS = ['enviado', 'en_revision', 'notificado', 'resuelto'];
-// REP-3841: Vulnerabilidad social no se deriva: Enviado → Informado, sin «Notificado al responsable» ni «Resuelto»
+// REP-3841: Vulnerabilidad social no se deriva: Enviado → Informado, sin «Derivado» ni «Resuelto»
 export const SOCIAL_TRACKER_STEPS = ['enviado', 'informado'];
 
 // Estados que se muestran como un paso extra al final del recorrido, no dentro de los 4 pasos
@@ -93,9 +94,9 @@ export const formatListDate = (value, now = new Date()) => {
 /**
  * Arma la línea de tiempo del detalle (M16 / D17) a partir del estado actual, la fecha de envío
  * y el historial (`report_state_history`). Si el historial no está disponible, igual marca como
- * hechos los pasos anteriores al estado actual, sin fecha.
+ * hechos los pasos anteriores al estado actual, sin fecha. `taken` es el «tomado» del organismo (REP-3001), si hubo.
  */
-export const buildTimeline = ({ currentState, createdAt, history = [], socialAssistance = false }) => {
+export const buildTimeline = ({ currentState, createdAt, history = [], socialAssistance = false, taken = null }) => {
   const current = normalizeReportState(currentState) ?? 'enviado';
   const entries = history
     .map((entry) => ({ ...entry, state: normalizeReportState(entry.state_code) }))
@@ -156,14 +157,48 @@ export const buildTimeline = ({ currentState, createdAt, history = [], socialAss
     };
   });
 
-  if (isExtra) {
+  // REP-3001 (reglas §6): después de Derivado, el «tomado» y cada Escalado o En discrepancia por el que pasó, en orden.
+  // «Tomado» es un paso hecho, nunca el actual: el reporte sigue Derivado, no Resuelto.
+  const afterNotified = [];
+  if (taken?.taken_at) {
+    afterNotified.push({
+      key: 'tomado',
+      label: 'El organismo tomó tu reporte',
+      done: true,
+      current: false,
+      date: formatShortDateTime(taken.taken_at),
+      detail: taken.agency || null,
+      note: null,
+    });
+  }
+  const intermediates = entries.filter((entry) => AFTER_NOTIFIED_STATES.includes(entry.state));
+  // Sin historial legible, el estado actual igual aparece (sin fecha)
+  if (AFTER_NOTIFIED_STATES.includes(current) && intermediates.at(-1)?.state !== current) {
+    intermediates.push({ state: current });
+  }
+  intermediates.forEach((entry, index) => {
+    const isLast = index === intermediates.length - 1;
+    afterNotified.push({
+      key: afterNotified.some((step) => step.key === entry.state) ? `${entry.state}-${index}` : entry.state,
+      label: REPORT_STATUS[entry.state].label,
+      done: true,
+      current: isLast && entry.state === current,
+      date: formatShortDateTime(entry.changed_at),
+      // D-05: el destino es texto libre del operador; no se afirma que se haya enviado a ningún lado
+      detail: entry.escalated_to ? `El organismo indicó que corresponde a: ${entry.escalated_to}` : null,
+      note: entry.notes || null,
+    });
+  });
+  steps.splice(TRACKER_STEPS.indexOf('notificado') + 1, 0, ...afterNotified);
+
+  if (current === 'descartado') {
     const entry = lastEntryFor(current);
     steps.push({
       key: current,
       label: REPORT_STATUS[current].label,
       done: true,
       current: true,
-      discarded: current === 'descartado',
+      discarded: true,
       date: formatShortDateTime(entry?.changed_at),
       note: entry?.notes || null,
     });

@@ -14,12 +14,12 @@ const SUCCESS_POLL_INTERVAL_MS = 5000;
 const TRACKER_STEPS = [
   { key: 'enviado', label: 'Enviado' },
   { key: 'en_revision', label: 'En revisión' },
-  { key: 'notificado', label: 'Notificado al responsable' },
+  { key: 'notificado', label: 'Derivado' },
   { key: 'resuelto', label: 'Resuelto' },
 ];
 
 // REP-3841: Vulnerabilidad social no se deriva a ningún organismo. El backend la deja en INFORMADO (se le indicó al
-// vecino el canal), así que el recorrido no promete «Notificado al responsable» ni «Resuelto».
+// vecino el canal), así que el recorrido no promete «Derivado» ni «Resuelto».
 const SOCIAL_TRACKER_STEPS = [
   { key: 'enviado', label: 'Enviado' },
   { key: 'informado', label: 'Informado' },
@@ -119,7 +119,7 @@ export const ReportSuccessScreen = ({
     intervalMs: SUCCESS_POLL_INTERVAL_MS,
     onUpdate: ({ stateCode: next }) => setStateCode(next),
   });
-  // Pasos alcanzados: hasta el estado actual (un cierre como Descartado deja el tracker donde estaba)
+  // Pasos alcanzados: hasta el estado actual (un cierre como Desestimado deja el tracker donde estaba)
   // REP-3845: destino real del reporte (route_report). Mientras responde, no se muestra ningún organismo supuesto.
   const [destination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
   // REP-3841: con Vulnerabilidad social, el canal verificado que se le indica al vecino (null si el catálogo no tiene)
@@ -281,7 +281,7 @@ export const ReportSuccessScreen = ({
                 <div className="mt-4 flex items-start gap-2 border-t border-rep-divider pt-3 desktop:hidden">
                   <Ban aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-ink-muted" strokeWidth={2} />
                   <span className="text-rep-label font-medium text-rep-ink-muted">
-                    También puede cerrarse como <strong className="font-bold text-rep-ink-label">Descartado</strong>, con el motivo a la vista.
+                    También puede cerrarse como <strong className="font-bold text-rep-ink-label">Desestimado</strong>, con el motivo a la vista.
                   </span>
                 </div>
               </section>

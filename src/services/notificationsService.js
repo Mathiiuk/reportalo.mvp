@@ -39,7 +39,6 @@ export const markAllNotificationsRead = () => {
 const titleForState = (code, reportCode) => {
   const state = normalizeReportState(code);
   const label = getStatusConfig(code).label;
-  if (state === 'notificado') return `${reportCode} fue notificado al responsable`;
   if (state === 'resuelto') return `${reportCode} se resolvió`;
   if (state === 'descartado') return `${reportCode} se cerró como ${label}`;
   if (state === 'informado') return `Te informamos el canal que corresponde para ${reportCode}`;
