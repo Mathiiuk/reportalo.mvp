@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Building2, ChevronRight, MapPin } from 'lucide-react';
 import { useNoIndex } from '../../hooks/useNoIndex';
 import { useOperator } from '../../components/panel/OperatorRoute';
-import { getPanelInbox } from '../../services/panelService';
+import { getPanelInbox, formatCaseNumber } from '../../services/panelService';
 
 // Fecha corta en hora argentina, igual para todos los operadores
 const formatearFecha = (iso) =>
@@ -85,6 +85,9 @@ export const PanelPage = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-rep-label font-bold text-rep-ink-label">{reporte.report_code}</span>
+                      {reporte.case_number != null && (
+                        <span className="text-rep-label font-semibold text-rep-ink-muted">{formatCaseNumber(reporte.case_number)}</span>
+                      )}
                       <span className="text-rep-body font-bold text-rep-ink">{reporte.category || 'Sin categoría'}</span>
                     </div>
                     <div className="mt-1 flex items-center gap-3 text-rep-label text-rep-ink-muted">
