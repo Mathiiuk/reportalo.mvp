@@ -160,7 +160,8 @@ export const mapRowToMarker = (row) => {
     pinColor: tone.base,
     // MapLibre espera [lng, lat], al revés que la intuición
     coordinates: [toCoordinate(row.longitud), toCoordinate(row.latitud)],
-    address: row.localities?.name || 'Ubicación sin localidad',
+    // REP-3843: la calle (sin altura: la vista pública no la tiene, REP-3876 §8) y la zona
+    address: [row.address_street, row.localities?.name || 'Ubicación sin localidad'].filter(Boolean).join(', '),
     date: formatDate(row.created_at),
   };
 };
@@ -189,7 +190,7 @@ export const getPublicMapReports = async ({ limit = MAP_REPORTS_LIMIT, bounds = 
     let query = supabase
       .from(PUBLIC_REPORTS_VIEW)
       .select(
-        'id, description, latitud, longitud, current_state_code, created_at, services ( service_name ), localities ( name )'
+        'id, description, latitud, longitud, current_state_code, created_at, address_street, services ( service_name ), localities ( name )'
       );
     query = bounds
       ? query

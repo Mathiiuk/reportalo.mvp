@@ -30,6 +30,7 @@ import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../
 import { useReportImageAnalysis } from '../hooks/useReportImageAnalysis';
 import { useReportStateLive } from '../hooks/useReportStateLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
+import { formatAddress } from '../services/geocodingService';
 import { AppDesktopHeader } from '../components/layout/AppLayout';
 
 const CARD = 'rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:p-5';
@@ -330,6 +331,11 @@ export const ReportDetailPage = () => {
     (typeof report.latitud === 'number'
       ? `${report.latitud.toFixed(4)}, ${report.longitud.toFixed(4)}`
       : 'Ubicación no disponible');
+  // REP-3843 / REP-3876 §8: el autor ve calle y altura; un tercero, solo la calle (la vista pública no trae altura)
+  const addressLabel = formatAddress(
+    { street: report.address_street, number: report.address_number },
+    { withNumber: isOwner }
+  );
   const isClosed = isClosedState(state);
   const reportCode = formatReportCode(report.id);
   const categoryName = report.services?.service_name || 'Sin categoría';
@@ -469,9 +475,12 @@ export const ReportDetailPage = () => {
 
             <div className={`${CARD} order-5 flex items-center gap-2.5 desktop:order-none`}>
               <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} />
-              <span className="min-w-0 truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">
-                {locationLabel}
-              </span>
+              <div className="min-w-0">
+                <span data-testid="report-detail-address" className="block truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">
+                  {addressLabel}
+                </span>
+                <span className="block truncate text-rep-label text-rep-ink-muted">{locationLabel}</span>
+              </div>
             </div>
 
             {isOwner && !isClosed && (
