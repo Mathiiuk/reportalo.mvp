@@ -92,7 +92,7 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       // Card 2: Timeline
       expect(screen.getByText('Enviado')).toBeInTheDocument();
       expect(screen.getByText('En revisión')).toBeInTheDocument();
-      expect(screen.getByText('Notificado al responsable')).toBeInTheDocument();
+      expect(screen.getByText('Derivado')).toBeInTheDocument();
       expect(screen.getByText('Resuelto')).toBeInTheDocument();
       expect(
         screen.getByText(/También puede cerrarse como/i)

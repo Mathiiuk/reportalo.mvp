@@ -45,7 +45,7 @@ const DETALLE = {
   created_at: '2026-10-25T13:00:00Z',
   category: 'Tránsito',
   state_code: 'DERIVADO',
-  state_label: 'Derivado al organismo',
+  state_label: 'Derivado', // REP-3001: etiqueta unificada
   description: 'Camión sobre la vereda, llamar al [teléfono oculto]',
   locality: 'Caballito',
   subdivision: 'Comuna 6',
@@ -76,7 +76,7 @@ describe('REP-3749 · detalle del reporte en el panel', () => {
     expect(rpcMock).toHaveBeenCalledWith('get_panel_report_detail', { p_report_id: DETALLE.report_id });
     expect(screen.getByText('#RP-9B182245')).toBeInTheDocument();
     expect(screen.getByText('Tránsito')).toBeInTheDocument();
-    expect(screen.getByText('Derivado al organismo')).toBeInTheDocument();
+    expect(screen.getByText('Derivado')).toBeInTheDocument();
     expect(screen.getByText('Avenida Rivadavia 5000')).toBeInTheDocument();
     expect(screen.getByText(/\[teléfono oculto\]/)).toBeInTheDocument();
     expect(await screen.findByRole('img', { name: /foto anonimizada 1/i })).toHaveAttribute('src', 'https://firmada/csid/foto.webp');

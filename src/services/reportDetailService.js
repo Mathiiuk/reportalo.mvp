@@ -189,7 +189,8 @@ export const getReportStateHistory = async (reportId) => {
 
   const { data, error } = await supabase
     .from('report_state_history')
-    .select('id, state_code, changed_at, notes')
+    // REP-3001: escalated_to = a qué organismo o área lo pasó el operador (texto libre, sin envío real)
+    .select('id, state_code, changed_at, notes, escalated_to')
     .eq('report_id', reportId)
     .order('changed_at', { ascending: true });
 
@@ -198,6 +199,32 @@ export const getReportStateHistory = async (reportId) => {
   }
 
   return { success: true, history: data ?? [] };
+};
+
+/**
+ * REP-3001 · «El organismo tomó tu reporte»: el evento TOMADO_POR_ORGANISMO, con el nombre del organismo de prueba.
+ * Lo lee el dueño por la policy `read own or attended` de report_events. No se pide quién lo tomó (actor_profile_id).
+ * Si no se puede leer, la línea de tiempo sigue sin ese paso.
+ *
+ * @param {string} reportId UUID de citizen_reports.id
+ * @returns {Promise<{ taken_at: string, agency: string|null }|null>}
+ */
+export const getReportTakenEvent = async (reportId) => {
+  if (!isSupabaseConfigured || !reportId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('report_events')
+      .select('occurred_at, agencies ( name )')
+      .eq('report_id', reportId)
+      .eq('event_type_code', 'TOMADO_POR_ORGANISMO')
+      .order('occurred_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return { taken_at: data.occurred_at, agency: data.agencies?.name ?? null };
+  } catch {
+    return null;
+  }
 };
 /*
  * NOTA DE MIGRACIÓN (REP-3791 Bloque 3, 21/09/2026)
@@ -211,9 +238,9 @@ export const getReportStateHistory = async (reportId) => {
  *
  *   RECIBIDO     -> Enviado
  *   EN_ANALISIS  -> En revisión
- *   DERIVADO     -> Notificado al responsable
+ *   DERIVADO     -> Notificado al responsable (REP-3001: hoy «Derivado», la misma etiqueta que el panel)
  *   RESUELTO     -> Resuelto
- *   DESESTIMADO  -> Descartado (cierre alternativo)
+ *   DESESTIMADO  -> Descartado (cierre alternativo; REP-3001: hoy «Desestimado»)
  *
  * Esos cinco son los códigos REALES de public.report_states en producción
  * (proyecto CiudadAR), verificados contra la base el 21/09/2026: 17 reportes,

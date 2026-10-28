@@ -5,6 +5,7 @@ import { useNoIndex } from '../../hooks/useNoIndex';
 import { useOperator } from '../../components/panel/OperatorRoute';
 import { getPanelReportDetail, formatCaseNumber } from '../../services/panelService';
 import { signEvidenceImages } from '../../services/reportDetailService';
+import { PanelReportActions, PanelReportHistory } from '../../components/panel/PanelReportActions';
 
 // Calle y altura si existen (REP-3843); el operador ve las dos (REP-3876 §8)
 const formatAddress = ({ street, number }) =>
@@ -66,7 +67,8 @@ const Fundamento = ({ foundation }) => {
 };
 
 /**
- * REP-3749 · Detalle de un reporte para el operador del organismo de prueba (escritorio).
+ * REP-3749 · Detalle de un reporte para el operador del organismo de prueba (escritorio). REP-3001 suma las acciones
+ * (tomar, rechazar, marcar resuelto) y el historial.
  * Todo lo que se muestra lo decide la base (get_panel_report_detail): sin identidad, sin contactos, sin foto original.
  */
 export const PanelReportDetailPage = () => {
@@ -81,6 +83,12 @@ export const PanelReportDetailPage = () => {
     const resultado = await getPanelReportDetail(id);
     setEstado(resultado);
     if (resultado.status === 'ok') setFotos(await signEvidenceImages(resultado.report.images));
+  }, [id]);
+
+  // REP-3001: después de una acción se relee el detalle sin vaciar la pantalla (las fotos no cambian)
+  const releer = useCallback(async () => {
+    const resultado = await getPanelReportDetail(id);
+    if (resultado.status !== 'error') setEstado(resultado);
   }, [id]);
 
   useEffect(() => {
@@ -177,7 +185,8 @@ export const PanelReportDetailPage = () => {
               <Fundamento foundation={reporte.foundation} />
             </section>
 
-            {/* REP-3001: acá van las acciones del operador (tomar, rechazar, marcar resuelto) */}
+            <PanelReportActions report={reporte} onChanged={releer} />
+            <PanelReportHistory history={reporte.history} />
           </div>
         )}
       </main>

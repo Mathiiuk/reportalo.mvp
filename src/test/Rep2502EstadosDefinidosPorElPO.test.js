@@ -102,7 +102,8 @@ describe('REP-2502 H-2 · la app muestra los estados nuevos', () => {
   it('UT-2502B-12: INFORMADO, ESCALADO y EN_DISCREPANCIA tienen etiqueta propia (no «Sin estado» ni el código crudo)', () => {
     expect(normalizeReportState('INFORMADO')).toBe('informado');
     expect(getStatusConfig('INFORMADO').label).toBe('Informado');
-    expect(getStatusConfig('ESCALADO').label).toBe('Escalado a otro organismo');
+    // REP-3001: misma etiqueta que el panel (reglas §4)
+    expect(getStatusConfig('ESCALADO').label).toBe('Escalado');
     expect(getStatusConfig('EN_DISCREPANCIA').label).toBe('En discrepancia');
   });
 
@@ -138,7 +139,9 @@ describe('REP-2502 H-2 · la app muestra los estados nuevos', () => {
     const byKey = Object.fromEntries(steps.map((s) => [s.key, s]));
     expect(byKey.notificado.done).toBe(true);
     expect(byKey.resuelto.done).toBe(false);
-    expect(steps.at(-1).key).toBe('escalado');
+    // REP-3001: el paso extra va después de Derivado y antes de Resuelto, que sigue pendiente
+    expect(byKey.escalado.current).toBe(true);
+    expect(steps.map((s) => s.key)).toEqual(['enviado', 'en_revision', 'notificado', 'escalado', 'resuelto']);
   });
 
   it('UT-2502B-16: los estados de siempre se comportan igual (sin regresión)', () => {

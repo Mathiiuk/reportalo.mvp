@@ -210,12 +210,12 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     expect(await screen.findByTestId('status-pill')).toHaveTextContent('En revisión');
   });
 
-  it('UT-DET-07b: un reporte desestimado se muestra como Descartado, no como en curso', async () => {
+  it('UT-DET-07b: un reporte desestimado se muestra como Desestimado (REP-3001), no como en curso', async () => {
     // El estado DESESTIMADO del catalogo real mapea al cierre alternativo del §10.
     // Sin la traduccion, el ciudadano veria el codigo crudo en un reporte cerrado.
     getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'DESESTIMADO' } });
     renderPage();
-    expect(await screen.findByTestId('status-pill')).toHaveTextContent('Descartado');
+    expect(await screen.findByTestId('status-pill')).toHaveTextContent('Desestimado');
   });
 
   it('UT-DET-08: informa cuando el reporte no tiene evidencia adjunta', async () => {

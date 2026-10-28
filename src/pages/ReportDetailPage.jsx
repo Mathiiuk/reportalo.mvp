@@ -19,7 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/reportDetailService';
+import { getReportDetail, getReportStateHistory, getReportTakenEvent, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
 import { ReportVisualVerification } from '../components/report/ReportVisualVerification';
 import { StatusPill } from '../components/report/StatusPill';
@@ -167,6 +167,8 @@ export const ReportDetailPage = () => {
 
   const [report, setReport] = useState(null);
   const [stateHistory, setStateHistory] = useState([]);
+  // REP-3001: «El organismo tomó tu reporte» (evento, no estado); null si no lo tomó o no se pudo leer
+  const [takenEvent, setTakenEvent] = useState(null);
   const [loadingReport, setLoadingReport] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -191,11 +193,12 @@ export const ReportDetailPage = () => {
 
     // El historial se pide en paralelo: si RLS no lo deja leer, la pantalla sigue
     // sirviendo (la línea de tiempo se deriva igual del estado actual del reporte).
-    Promise.all([getReportDetail(id, user?.id), getReportStateHistory(id)]).then(([detail, historyResult]) => {
+    Promise.all([getReportDetail(id, user?.id), getReportStateHistory(id), getReportTakenEvent(id)]).then(([detail, historyResult, taken]) => {
       if (!isMounted) return;
       if (detail.success) {
         setReport(detail.data);
         setStateHistory(historyResult.success ? historyResult.history : []);
+        setTakenEvent(taken);
       } else {
         setLoadError(detail.error);
       }
@@ -324,6 +327,7 @@ export const ReportDetailPage = () => {
     currentState: report.current_state_code,
     createdAt: report.created_at,
     history: stateHistory,
+    taken: takenEvent,
     socialAssistance: isSocialAssistance,
   });
   const locationLabel =
@@ -569,9 +573,9 @@ export const ReportDetailPage = () => {
                       >
                         {step.label}
                       </span>
-                      {(step.date || step.note) && (
+                      {(step.date || step.detail || step.note) && (
                         <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
-                          {[step.date, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
+                          {[step.date, step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
                         </span>
                       )}
                     </div>
