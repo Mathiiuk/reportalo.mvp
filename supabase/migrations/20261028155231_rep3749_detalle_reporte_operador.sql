@@ -25,6 +25,13 @@
 --   `alter table public.citizen_reports drop column case_number;`
 --
 -- No se aplica sola: la migración se corre a mano en staging.
+--
+-- APLICADA en la base Reportalo el 28/10/2026, con aprobación de Matías. Versión registrada 20261028155231; el archivo
+-- se renombró para coincidir. Verificado con sesiones simuladas: todos los reportes con número de caso; el operador de
+-- CABA recibe solo las claves del contrato (sin user_id ni client_side_id), con dirección, fotos y fundamento; ajeno,
+-- ciudadano e inexistente → null; anon no ejecuta el detalle ni la bandeja.
+--
+-- Usa address_street / address_number de REP-3843 (migración 20261025160631, ya aplicada en staging).
 
 begin;
 
