@@ -1,0 +1,47 @@
+id: REP-3749
+external_ref: https://unlz2026.atlassian.net/browse/REP-3749
+title: Detalle seguro del reporte para el operador
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: Matías Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - supabase/migrations (RPC/vista de detalle para operador)
+    - src/pages/panel/PanelDetallePage.jsx
+    - src/test
+  environments:
+    - local
+requirements:
+  - >-
+    Categoría, fecha, estado, coordenadas, calle y altura si existen, foto
+    anonimizada, descripción redactada (REP-3874), fundamento y urgencia si
+    existen
+  - >-
+    Sanción visible con «sanción prevista por la norma; Reportalo no aplica
+    sanciones» o «la norma no registra sanción» (Hernán 24/10); al vecino se le
+    sigue ocultando
+  - Nunca identidad, user_id, foto original, mails/teléfonos
+  - 'Reporte ajeno, inexistente o error: mensaje veraz sin datos'
+  - >-
+    Número de caso solo si 3747 y 3000 están entregados el martes 27/10; si no,
+    S19
+acceptance_criteria:
+  - Escenarios 1–5 de REP-3749
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build

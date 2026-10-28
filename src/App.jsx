@@ -40,6 +40,8 @@ const AcercaPage = React.lazy(() => import('./pages/AcercaPage').then(m => ({ de
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 // REP-3747 · panel de organismos (operadores de un organismo de prueba)
 const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => ({ default: m.PanelPage })));
+// REP-3749 · detalle de un reporte para el operador
+const PanelReportDetailPage = React.lazy(() => import('./pages/panel/PanelReportDetailPage').then(m => ({ default: m.PanelReportDetailPage })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
 // pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
@@ -329,6 +331,14 @@ export const AppRoutes = () => {
         element={
           <OperatorRoute>
             <PanelPage />
+          </OperatorRoute>
+        }
+      />
+      <Route
+        path="/panel/reportes/:id"
+        element={
+          <OperatorRoute>
+            <PanelReportDetailPage />
           </OperatorRoute>
         }
       />
