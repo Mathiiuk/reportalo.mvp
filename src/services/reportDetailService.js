@@ -189,8 +189,9 @@ export const getReportStateHistory = async (reportId) => {
 
   const { data, error } = await supabase
     .from('report_state_history')
-    // REP-3001: escalated_to = a qué organismo o área lo pasó el operador (texto libre, sin envío real)
-    .select('id, state_code, changed_at, notes, escalated_to')
+    // REP-3001: escalated_to = a qué organismo o área lo pasó el operador (texto libre, sin envío real);
+    // REP-3001: escalated_contact = su contacto, opcional
+    .select('id, state_code, changed_at, notes, escalated_to, escalated_contact')
     .eq('report_id', reportId)
     .order('changed_at', { ascending: true });
 
