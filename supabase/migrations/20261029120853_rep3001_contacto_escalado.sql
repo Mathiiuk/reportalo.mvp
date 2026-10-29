@@ -7,6 +7,9 @@
 --   2. change_report_state suma p_escalated_contact (opcional). Misma validación que en 20261028164553.
 --   3. get_panel_report_detail suma el contacto en el historial.
 --
+-- APLICADA en staging el 29/10/2026 con el OK de Matías (versión registrada 20261029120853; el archivo se renombró para
+-- coincidir). Verificación después de aplicar, con sesiones simuladas y ROLLBACK: 14/14.
+--
 -- Reversión: volver a crear change_report_state(uuid, text, text, text) desde 20261028164553, get_panel_report_detail
 -- desde la migración del detalle de REP-3749, y borrar la columna escalated_contact.
 -- =====================================================================================================================
