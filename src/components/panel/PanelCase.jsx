@@ -200,7 +200,8 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
       setState(result);
       if (result.status === 'ok') {
         onLoaded?.(result.report);
-        setPhotos(await signEvidenceImages(result.report.images ?? []));
+        // Al releer después de una acción las fotos no cambian: no se vuelven a firmar (evita el parpadeo)
+        if (!silent) setPhotos(await signEvidenceImages(result.report.images ?? []));
       }
     },
     [id, onLoaded]
