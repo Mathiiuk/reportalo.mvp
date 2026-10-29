@@ -13,7 +13,8 @@ export const useOperator = () => useContext(OperatorContext);
  * REP-3747 · Ruta del panel de organismos: solo operadores de un organismo de prueba.
  *
  * Es un guard de experiencia de uso; los datos los protege la base. Sin sesión, guarda la dirección para volver
- * después del login (ProtectedRoute la retoma) y no hace pasar al operador por el onboarding del vecino. Si la
+ * después del login (ProtectedRoute la retoma), lo manda al ingreso del panel (/panel/ingresar) y no lo hace pasar
+ * por el onboarding del vecino. Si la
  * cuenta no es de operador, lleva a /acceso-restringido (caso 6 de las reglas v1.0).
  */
 export const OperatorRoute = ({ children }) => {
@@ -31,7 +32,8 @@ export const OperatorRoute = ({ children }) => {
 
   if (!session) {
     saveResumePath(destino);
-    return <Navigate to="/login" replace />;
+    // REP-3747 (decisión 4A): el operador entra por el ingreso propio del panel, que no crea cuentas
+    return <Navigate to="/panel/ingresar" replace />;
   }
 
   if (status === 'loading') return <AppLoadingScreen message="Verificando tu acceso..." />;
