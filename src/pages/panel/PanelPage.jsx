@@ -1,113 +1,98 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Building2, ChevronRight, MapPin } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Ms, PanelTopBar, TestBanner, ToastRegion, useMaterialSymbols, useToasts } from '../../components/panel/PanelShell';
+import { PanelInbox } from '../../components/panel/PanelInbox';
+import { isFilter } from '../../components/panel/panelFormat';
 import { useNoIndex } from '../../hooks/useNoIndex';
+import { useAuth } from '../../hooks/useAuth';
 import { useOperator } from '../../components/panel/OperatorRoute';
-import { getPanelInbox, formatCaseNumber } from '../../services/panelService';
-
-// Fecha corta en hora argentina, igual para todos los operadores
-const formatearFecha = (iso) =>
-  new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' });
+import { getPanelInbox } from '../../services/panelService';
+import { signEvidenceImages } from '../../services/reportDetailService';
 
 /**
- * REP-3747 / REP-3000 · Panel de organismos (escritorio): el organismo de prueba del operador y su bandeja.
- * Qué reportes entran lo decide la base; esta pantalla solo los muestra. Cada fila lleva al detalle (REP-3749).
+ * REP-3747 / REP-3000 · Panel de organismos con el diseño de Iván (29/10): bandeja a la izquierda y, a la derecha, el
+ * caso elegido (REP-3749). El filtro va en ?f=.
+ * Qué reportes entran y qué se puede hacer con cada uno lo decide la base; esta pantalla solo lo muestra.
  */
 export const PanelPage = () => {
   useNoIndex();
+  useMaterialSymbols();
+  const { id } = useParams();
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const operador = useOperator();
-  const organismo = operador?.agency;
-  const [estado, setEstado] = useState({ status: 'loading', reports: [] });
+  const agency = operador?.agency;
+  const { user, signOut } = useAuth() ?? {};
+  const { toasts, dismiss } = useToasts();
 
-  const cargar = useCallback(async () => {
-    setEstado({ status: 'loading', reports: [] });
-    const resultado = await getPanelInbox();
-    setEstado(resultado.success ? { status: 'ready', reports: resultado.reports } : { status: 'error', reports: [] });
+  const fromUrl = params.get('f');
+  const [filter, setFilter] = useState(isFilter(fromUrl) ? fromUrl : 'por-tomar');
+  const [sort, setSort] = useState('desc');
+  const [inbox, setInbox] = useState({ status: 'loading', reports: [] });
+  const [thumbs, setThumbs] = useState({});
+
+  const loadInbox = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setInbox({ status: 'loading', reports: [] });
+    const result = await getPanelInbox();
+    if (!result.success) {
+      // Sin lista ni recuentos viejos: algunos reportes pueden haber cambiado de estado
+      setInbox({ status: 'error', reports: [], code: result.code, at: new Date() });
+      return;
+    }
+    setInbox({ status: 'ready', reports: result.reports });
+    // Miniatura: la primera foto anonimizada de cada fila, firmada
+    const conFoto = result.reports.filter((r) => r.first_image_url).map((r) => ({ id: r.report_id, image_url: r.first_image_url }));
+    const firmadas = await signEvidenceImages(conFoto);
+    setThumbs(Object.fromEntries(firmadas.map((f) => [f.id, f.image_url])));
   }, []);
 
   useEffect(() => {
-    cargar();
-  }, [cargar]);
+    loadInbox();
+  }, [loadInbox]);
+
+  const changeFilter = (next) => {
+    setFilter(next);
+    setParams({ f: next }, { replace: true });
+  };
+
+  const inboxHref = `/panel?f=${filter}`;
+  const caseHref = (reportId) => `/panel/reportes/${reportId}?f=${filter}`;
+
+  const handleSignOut = async () => {
+    await signOut?.();
+    navigate('/panel/ingresar', { replace: true });
+  };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-rep-bg font-manrope">
-      <header className="flex items-center gap-3 border-b border-rep-divider bg-rep-surface px-6 py-4">
-        <Building2 aria-hidden="true" className="h-6 w-6 text-rep-ink-label" strokeWidth={2.25} />
-        <div className="min-w-0">
-          <h1 className="m-0 text-rep-section-d text-rep-ink">Panel de organismos</h1>
-          <p className="m-0 truncate text-rep-label font-semibold text-rep-ink-muted">{organismo?.name}</p>
-        </div>
-        {organismo?.is_test && (
-          <span className="ml-auto rounded-full border border-rep-border px-3 py-1 text-rep-label font-bold text-rep-ink-label">
-            Entorno de prueba
-          </span>
-        )}
-      </header>
-
-      <main className="mx-auto max-w-[960px] px-6 py-10">
-        <h2 className="m-0 mb-4 text-rep-title text-rep-ink">Bandeja</h2>
-
-        {estado.status === 'loading' && <p className="m-0 text-rep-body text-rep-ink-muted">Cargando la bandeja...</p>}
-
-        {estado.status === 'error' && (
-          <section className="rounded-xl border border-rep-border bg-rep-surface px-6 py-8 text-center">
-            <p role="alert" className="m-0 text-rep-body text-rep-ink-muted">
-              No pudimos cargar la bandeja. Revisá tu conexión y volvé a intentar.
-            </p>
-            <button
-              type="button"
-              onClick={cargar}
-              className="rep-focus mt-4 min-h-touch rounded-[13px] border-0 bg-rep-accent px-6 text-rep-button text-rep-on-accent"
-            >
-              Reintentar
-            </button>
-          </section>
-        )}
-
-        {estado.status === 'ready' && estado.reports.length === 0 && (
-          <section className="rounded-xl border border-rep-border bg-rep-surface px-6 py-10 text-center">
-            <h3 className="m-0 text-rep-title text-rep-ink">Todavía no hay reportes en tu bandeja</h3>
-            <p className="m-0 mt-2 text-rep-body text-rep-ink-muted">
-              Acá vas a ver los reportes de tu jurisdicción que lleguen a este organismo de prueba. Ningún municipio real
-              recibe estos reportes.
-            </p>
-          </section>
-        )}
-
-        {estado.status === 'ready' && estado.reports.length > 0 && (
-          <ul className="m-0 list-none divide-y divide-rep-divider overflow-hidden rounded-xl border border-rep-border bg-rep-surface p-0">
-            {estado.reports.map((reporte) => (
-              <li key={reporte.report_id}>
-                <Link
-                  to={`/panel/reportes/${reporte.report_id}`}
-                  className="rep-focus flex items-center gap-4 px-5 py-4 text-inherit no-underline hover:bg-rep-bg"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-rep-label font-bold text-rep-ink-label">{reporte.report_code}</span>
-                      {reporte.case_number != null && (
-                        <span className="text-rep-label font-semibold text-rep-ink-muted">{formatCaseNumber(reporte.case_number)}</span>
-                      )}
-                      <span className="text-rep-body font-bold text-rep-ink">{reporte.category || 'Sin categoría'}</span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-3 text-rep-label text-rep-ink-muted">
-                      <span className="flex items-center gap-1">
-                        <MapPin aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
-                        <span>{reporte.zone || 'Zona no disponible'}</span>
-                      </span>
-                      <span>{formatearFecha(reporte.created_at)}</span>
-                    </div>
-                  </div>
-                  <span className="rounded-full border border-rep-border px-3 py-1 text-rep-label font-bold text-rep-ink-label">
-                    {reporte.state_label || reporte.state_code}
-                  </span>
-                  <ChevronRight aria-hidden="true" className="h-5 w-5 text-rep-ink-faint" strokeWidth={2.25} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+    <div className={`op-panel${id ? ' is-case' : ''}`}>
+      <PanelTopBar agency={agency} email={user?.email} onSignOut={handleSignOut} inboxHref={inboxHref} />
+      <TestBanner agency={agency} />
+      <div className="main">
+        <PanelInbox
+          inbox={inbox}
+          thumbs={thumbs}
+          filter={filter}
+          sort={sort}
+          currentId={id}
+          agency={agency}
+          onFilter={changeFilter}
+          onSort={() => setSort((s) => (s === 'desc' ? 'asc' : 'desc'))}
+          onRetry={() => loadInbox()}
+          caseHref={caseHref}
+        />
+        <section className="detail" aria-label="Detalle">
+          <div className="placeholder">
+            <div className="state">
+              <div className="state-ic">
+                <Ms name="left_click" />
+              </div>
+              <h2>Elegí un caso</h2>
+              <p>Abrí un reporte de la lista para ver las fotos, la ubicación y el historial.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <ToastRegion toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 };

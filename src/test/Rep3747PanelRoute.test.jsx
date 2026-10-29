@@ -68,8 +68,9 @@ describe('REP-3747 · ruta /panel', () => {
   it('UT-3747-F1: un operador de prueba ve el panel de su organismo', async () => {
     perfil({ role: 'organismo', agency: { id: 'a1', name: 'Reportalo CABA (organismo de prueba)', code: 'reportalo_caba', is_test: true } });
     montar(sesion('op-1'));
-    expect(await screen.findByRole('heading', { name: /panel de organismos/i })).toBeInTheDocument();
-    expect(screen.getByText('Reportalo CABA (organismo de prueba)')).toBeInTheDocument();
+    // REP-3000: con el diseño de Iván el título de la vista es «Bandeja» y el organismo va en la cabecera
+    expect(await screen.findByRole('heading', { level: 1, name: 'Bandeja' })).toBeInTheDocument();
+    expect(screen.getAllByText('Reportalo CABA (organismo de prueba)').length).toBeGreaterThan(0);
     // Lee solo la fila propia
     expect(pedido.tabla).toBe('profiles');
     expect(pedido.eq).toEqual(['id', 'op-1']);
@@ -89,7 +90,7 @@ describe('REP-3747 · ruta /panel', () => {
 
   it('UT-3747-F4: sin sesión pide el ingreso del panel y guarda /panel para volver después', async () => {
     montar({ session: null, user: null, loading: false });
-    // Ingreso propio del panel, que no crea cuentas (decisión 4A de Matías, 29/10)
+    // Decisión 4A de Matías (29/10): ingreso propio del panel, que no crea cuentas
     await waitFor(() => expect(screen.getByTestId('ruta')).toHaveTextContent('/panel/ingresar'));
     expect(getResumePath()).toBe('/panel');
     expect(fromMock).not.toHaveBeenCalled();
@@ -108,7 +109,7 @@ describe('REP-3747 · ruta /panel', () => {
         </MemoryRouter>
       </AuthContext.Provider>
     );
-    expect(await screen.findByText('Reportalo Avellaneda (organismo de prueba)')).toBeInTheDocument();
+    expect((await screen.findAllByText('Reportalo Avellaneda (organismo de prueba)')).length).toBeGreaterThan(0);
     await waitFor(() => expect(getResumePath()).toBeNull());
   });
 
@@ -116,6 +117,6 @@ describe('REP-3747 · ruta /panel', () => {
     perfil(null, { message: 'network' });
     montar(sesion('op-3'));
     expect(await screen.findByRole('alert')).toHaveTextContent(/no pudimos verificar tu acceso/i);
-    expect(screen.queryByRole('heading', { name: /panel de organismos/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Bandeja' })).not.toBeInTheDocument();
   });
 });
