@@ -10,6 +10,7 @@ import { getSelectableLocalities } from './services/localitiesService';
 import { PendingSyncManager } from './components/common/PendingSyncManager';
 import { getSessionMarker, getResumePath, clearResumePath } from './lib/sessionMarker';
 import { OperatorRoute } from './components/panel/OperatorRoute';
+import { useOperatorProfile } from './services/operatorService';
 import { readStoredSession } from './lib/storedSession';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
@@ -62,10 +63,22 @@ const NewReportRoute = () => {
   return <NewReportPage key={location.state?.restartKey ?? 'nuevo-reporte'} />;
 };
 
+// REP-3747: pantallas a las que vuelve el login del vecino (Google y enlace van a /onboarding). Una cuenta de organismo
+// que llega a una de ellas va directo al panel; si después abre otra pantalla a mano, puede.
+const OPERATOR_LANDINGS = ['/', '/login', '/onboarding', '/permisos'];
+
+/** Estado del perfil de operador, solo en las pantallas de llegada (en el resto no se consulta). */
+const useOperatorLanding = (session, user, pathname) => {
+  const landing = OPERATOR_LANDINGS.includes(pathname);
+  const { status } = useOperatorProfile(session && landing ? user?.id : null);
+  return { checking: Boolean(session && landing && status === 'loading'), isOperator: landing && status === 'operator' };
+};
+
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
   const location = useLocation();
+  const operatorLanding = useOperatorLanding(session, user, location.pathname);
 
   // UJ v3.3 · M23: al llegar a la pantalla que se estaba usando antes de que venciera la
   // sesión, se olvida. Se compara con pathname + search porque así la guarda
@@ -94,6 +107,10 @@ const ProtectedRoute = ({ children }) => {
   if (resumePath?.startsWith('/panel')) {
     return <Navigate to={resumePath} replace />;
   }
+
+  // REP-3747: el operador que entró por el login del vecino no pasa por el onboarding ni los permisos: va al panel
+  if (operatorLanding.checking) return <AppLoadingScreen message="Cargando Reportalo..." />;
+  if (operatorLanding.isOperator) return <Navigate to="/panel" replace />;
 
   const onboardingCompleted =
     typeof window !== 'undefined' &&
@@ -130,9 +147,16 @@ const ProtectedRoute = ({ children }) => {
 // Componente para redirigir si el usuario ya está autenticado hacia el panel o onboarding
 const PublicRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
+  const location = useLocation();
+  const operatorLanding = useOperatorLanding(session, user, location.pathname);
 
-  if (loading) {
+  if (loading || operatorLanding.checking) {
     return <AppLoadingScreen message="Iniciando Reportalo..." />;
+  }
+
+  // REP-3747: con sesión de organismo, la bienvenida y el login llevan al panel
+  if (session && operatorLanding.isOperator) {
+    return <Navigate to="/panel" replace />;
   }
 
   if (session) {
