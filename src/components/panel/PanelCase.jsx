@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ms } from './PanelShell';
 import { StateBadge } from './PanelInbox';
+import { PanelCaseMap } from './PanelCaseMap';
 import {
   CONTACT_MARK,
   FINAL_STATES,
@@ -191,6 +192,7 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
   const [state, setState] = useState({ status: 'loading', report: null });
   const [photos, setPhotos] = useState([]);
   const [lightbox, setLightbox] = useState(null);
+  const [showMap, setShowMap] = useState(false);
 
   const load = useCallback(
     async ({ silent = false } = {}) => {
@@ -276,9 +278,6 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
       ? `${STATE_LABEL[report.state_code]} ${dayWord(lastFinal.changed_at)} · ${hhmm(lastFinal.changed_at)}`
       : `Reportado ${dayWord(report.created_at)} · ${hhmm(report.created_at)}`;
   const hasCoords = typeof report.latitud === 'number' && typeof report.longitud === 'number';
-  const mapUrl = hasCoords
-    ? `https://www.openstreetmap.org/?mlat=${report.latitud}&mlon=${report.longitud}#map=18/${report.latitud}/${report.longitud}`
-    : null;
 
   const descBlock = (
     <div>
@@ -318,25 +317,41 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
             )}
           </div>
 
-          <section className="card loc" aria-label="Ubicación">
-            <span className="loc-pin">
-              <Ms name="location_on" fill />
-            </span>
-            <div className="loc-main">
-              <div className="lbl">Ubicación</div>
-              <div className="loc-l">
-                <b>{[addressLabel(report), report.locality].filter(Boolean).join(' · ')}</b>
-                <span>
-                  {[ROAD_TYPE[report.address_road_type], report.subdivision, hasCoords ? `${coordLabel(report.latitud)}, ${coordLabel(report.longitud)}` : null]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
+          <section className="card loc-card" aria-label="Ubicación">
+            <div className="loc">
+              <span className="loc-pin">
+                <Ms name="location_on" fill />
+              </span>
+              <div className="loc-main">
+                <div className="lbl">Ubicación</div>
+                <div className="loc-l">
+                  <b>{[addressLabel(report), report.locality].filter(Boolean).join(' · ')}</b>
+                  <span>
+                    {[ROAD_TYPE[report.address_road_type], report.subdivision, hasCoords ? `${coordLabel(report.latitud)}, ${coordLabel(report.longitud)}` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                </div>
               </div>
+              {/* Matías, 29/10: el mapa se abre dentro del panel, con solo este caso */}
+              {hasCoords && (
+                <button
+                  type="button"
+                  className="map-btn"
+                  data-tip={showMap ? 'Ocultar el mapa' : 'Ver en el mapa'}
+                  aria-label={showMap ? 'Ocultar el mapa' : 'Ver en el mapa'}
+                  aria-expanded={showMap}
+                  aria-controls="case-map"
+                  onClick={() => setShowMap((v) => !v)}
+                >
+                  <Ms name={showMap ? 'close_fullscreen' : 'map'} />
+                </button>
+              )}
             </div>
-            {mapUrl && (
-              <a className="map-btn" href={mapUrl} target="_blank" rel="noopener noreferrer" data-tip="Ver en el mapa" aria-label="Ver en el mapa (se abre en una pestaña nueva)">
-                <Ms name="map" />
-              </a>
+            {showMap && hasCoords && (
+              <div id="case-map">
+                <PanelCaseMap latitud={report.latitud} longitud={report.longitud} label={[addressLabel(report), report.locality].filter(Boolean).join(' · ')} />
+              </div>
             )}
           </section>
 

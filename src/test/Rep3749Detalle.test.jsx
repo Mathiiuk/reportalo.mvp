@@ -5,10 +5,31 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 const rpcMock = vi.fn();
+// MapLibre no corre en jsdom: se registra qué mapa y qué pin se pidieron
+const mapas = [];
+vi.mock('../lib/maplibreLoader', () => ({
+  loadMapLibre: async () => ({
+    Map: class {
+      constructor(opciones) {
+        mapas.push({ opciones, pines: [] });
+      }
+      remove() {}
+    },
+    Marker: class {
+      setLngLat(lngLat) {
+        mapas.at(-1).pines.push(lngLat);
+        return this;
+      }
+      addTo() {
+        return this;
+      }
+    },
+  }),
+}));
 vi.mock('../lib/supabaseClient', () => ({
   isSupabaseConfigured: true,
   supabase: {
@@ -97,17 +118,28 @@ describe('REP-3749 · detalle del caso', () => {
     vi.useRealTimers();
   });
 
-  it('UT-3749-D1: encabezado con caso y estado, categoría, código y fecha; ubicación completa y enlace al mapa', async () => {
+  it('UT-3749-D1: encabezado con caso y estado, categoría, código y fecha; ubicación completa y botón del mapa', async () => {
     responder();
     montar();
     expect(await screen.findByRole('heading', { level: 1, name: 'Caso N° 000042' })).toBeInTheDocument();
     expect(rpcMock).toHaveBeenCalledWith('get_panel_report_detail', { p_report_id: ID });
     expect(screen.getByText(/#RP-9B182245 · Tránsito · Reportado el 25\/10 · 10:00/)).toBeInTheDocument();
     expect(screen.getByText('Avenida Rivadavia 5000 · Caballito')).toBeInTheDocument();
-    const mapa = screen.getByRole('link', { name: /ver en el mapa/i });
-    expect(mapa).toHaveAttribute('target', '_blank');
-    expect(mapa.getAttribute('href')).toContain('mlat=-34.6043');
+    expect(screen.getByRole('button', { name: 'Ver en el mapa' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText(/no se muestran la identidad ni los datos de contacto/i)).toBeInTheDocument();
+  });
+
+  it('UT-3749-D9: «Ver en el mapa» abre, dentro del panel, un mapa con solo este caso; se vuelve a ocultar', async () => {
+    mapas.length = 0;
+    responder();
+    montar();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver en el mapa' }));
+    expect(await screen.findByRole('img', { name: /mapa con la ubicación del caso: avenida rivadavia 5000 · caballito/i })).toBeInTheDocument();
+    await waitFor(() => expect(mapas).toHaveLength(1));
+    expect(mapas[0].opciones.center).toEqual([-58.4395, -34.6043]);
+    expect(mapas[0].pines).toEqual([[-58.4395, -34.6043]]);
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar el mapa' }));
+    expect(screen.queryByRole('img', { name: /mapa con la ubicación/i })).not.toBeInTheDocument();
   });
 
   it('UT-3749-D2: sin dirección dice «Dirección no disponible»', async () => {

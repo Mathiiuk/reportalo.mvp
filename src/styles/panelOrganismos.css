@@ -217,6 +217,11 @@
 .op-panel .map-btn:hover { background: var(--rep-accent-line); text-decoration: none; }
 .op-panel [data-tip]::after { content: attr(data-tip); position: absolute; right: 0; bottom: calc(100% + 8px); background: #243447; color: #fff; font: 700 11.5px var(--rep-font); padding: 6px 9px; border-radius: 8px; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(3px); transition: opacity .12s, transform .12s; z-index: 5; }
 .op-panel [data-tip]:hover::after, .op-panel [data-tip]:focus-visible::after { opacity: 1; transform: none; }
+.op-panel .loc-card { padding: 0; }
+.op-panel .loc-card .loc { border: 0; }
+.op-panel .case-map { height: 260px; margin: 0 12px 12px; border-radius: 11px; overflow: hidden; background: var(--org-photo-bg); }
+.op-panel .case-map-err { margin: 0 14px 12px; }
+.op-panel .case-pin { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--rep-accent); border: 3px solid #fff; box-shadow: 0 2px 8px rgba(20, 40, 80, .35); }
 .op-panel .media-one { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
 .op-panel .photo { display: block; width: 100%; border-radius: 13px; background: var(--org-photo-bg) center/cover no-repeat; position: relative; cursor: zoom-in; }
 .op-panel .photo:focus-visible { outline-offset: 3px; }
