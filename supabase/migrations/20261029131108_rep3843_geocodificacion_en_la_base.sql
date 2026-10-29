@@ -18,6 +18,10 @@
 -- datos del vecino.
 -- No hay sugerencia antes de enviar: el vecino puede seguir cargando la dirección a mano en el modal.
 --
+-- APLICADA en staging el 29/10/2026 con el OK de Matías (versión registrada 20261029131108; archivo renombrado).
+-- Verificado: la app no accede a la cola ni al despacho; la tarea corre cada 10 s; con el caso 479 llegó «Avenida
+-- Corrientes», tipo avenida, origen geocodificada, en 1 intento (pedido 4399).
+--
 -- Reversión: `select cron.unschedule('report-geocoding-dispatch');`, borrar el trigger trg_enqueue_report_geocoding, las
 -- funciones dispatch_report_geocoding, enqueue_report_geocoding y parse_nominatim_address, la tabla report_geocoding, y
 -- volver la regla citizen_reports_address_check a ('sugerida', 'corregida') después de limpiar los 'geocodificada'.
