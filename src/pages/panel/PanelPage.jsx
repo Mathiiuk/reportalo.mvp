@@ -11,8 +11,8 @@ import { getPanelInbox } from '../../services/panelService';
 import { signEvidenceImages } from '../../services/reportDetailService';
 
 /**
- * REP-3747 / REP-3000 / REP-3749 · Panel de organismos con el diseño de Iván (29/10): bandeja a la izquierda y caso a
- * la derecha. Sirve /panel y /panel/reportes/:id; el filtro va en ?f=.
+ * REP-3747 / REP-3000 / REP-3749 / REP-3001 · Panel de organismos, con el diseño de Iván (29/10):
+ * bandeja a la izquierda y caso a la derecha. Sirve /panel y /panel/reportes/:id; el filtro va en ?f=.
  * Qué reportes entran y qué se puede hacer con cada uno lo decide la base; esta pantalla solo lo muestra.
  */
 export const PanelPage = () => {
@@ -24,7 +24,7 @@ export const PanelPage = () => {
   const operador = useOperator();
   const agency = operador?.agency;
   const { user, signOut } = useAuth() ?? {};
-  const { toasts, dismiss } = useToasts();
+  const { toasts, toast, dismiss } = useToasts();
 
   const fromUrl = params.get('f');
   const [filter, setFilter] = useState(isFilter(fromUrl) ? fromUrl : 'por-tomar');
@@ -64,6 +64,7 @@ export const PanelPage = () => {
     [fromUrl]
   );
 
+  const reloadInbox = useCallback(() => loadInbox({ silent: true }), [loadInbox]);
   const inboxHref = `/panel?f=${filter}`;
   const caseHref = (reportId) => `/panel/reportes/${reportId}?f=${filter}`;
 
@@ -95,6 +96,8 @@ export const PanelPage = () => {
             id={id}
             agencyName={agency?.name ?? ''}
             inboxHref={inboxHref}
+            toast={toast}
+            onChanged={reloadInbox}
             onLoaded={onCaseLoaded}
           />
         ) : (

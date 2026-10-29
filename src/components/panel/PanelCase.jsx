@@ -17,18 +17,34 @@ import {
   hasHiddenContact,
   hhmm,
 } from './panelFormat';
-import { getPanelReportDetail } from '../../services/panelService';
+import { changePanelReportState, getPanelReportDetail, takeReport } from '../../services/panelService';
 import { signEvidenceImages } from '../../services/reportDetailService';
 
 /*
- * REP-3749 · Detalle del caso con el diseño de Iván (LEEME §5.2): lo que se muestra lo decide la base
- * (get_panel_report_detail). Las acciones (tomar, rechazar, marcar resuelto) llegan con REP-3001.
+ * REP-3749 / REP-3001 · Detalle del caso con el diseño de Iván (LEEME §5.2 y §5.3), sobre el contrato de la base:
+ * lo que se muestra y lo que se puede hacer lo decide la base (get_panel_report_detail y su `actions`).
  */
 
 // Textos del PO (Hernán, 24/10)
 const SANCTION_NOTICE = 'Sanción prevista por la norma; Reportalo no aplica sanciones.';
 const NO_SANCTION = 'La norma no registra sanción.';
 const NOT_AVAILABLE = 'Este reporte no está disponible para tu organismo.';
+const REASON_MAX = 500;
+
+// Opciones de «Rechazar» (reglas §5), en el orden del diseño
+const REJECT = {
+  ESCALADO: { title: 'Corresponde a otro organismo o área', submit: 'Escalar el reporte', icon: 'alt_route' },
+  DESESTIMADO: { title: 'No hay reclamo o está mal formulado', submit: 'Desestimar', icon: 'block' },
+  EN_DISCREPANCIA: { title: 'Lo reportado no coincide con lo que se constata', submit: 'Registrar discrepancia', icon: 'difference' },
+};
+const REASON_PLACEHOLDER = {
+  RESUELTO: 'Ej.: Se reparó el 28/10.',
+  ESCALADO: 'Ej.: Corresponde a la concesionaria de la autopista.',
+  DESESTIMADO: 'Ej.: La foto no muestra un problema en la vía pública.',
+  EN_DISCREPANCIA: 'Ej.: En la inspección del 28/10 la vereda estaba en buen estado.',
+};
+// Rechazos de la base que significan que el caso cambió mientras el operador miraba
+const STALE_CODES = ['transicion_no_definida', 'mismo_estado', 'estado_no_permite'];
 
 /** Descripción con las marcas de REP-3874 como etiquetas. */
 const Description = ({ text }) => {
@@ -135,6 +151,194 @@ const TimelineItem = ({ item }) => (
   </li>
 );
 
+/** Diálogo de «Marcar resuelto» o «Rechazar»: motivo obligatorio y, si se escala, a quién (contacto opcional). */
+const ActionDialog = ({ dialog, report, onChange, onClose, onSubmit }) => {
+  const ref = useRef(null);
+  const { type, option, options, form, sending, error } = dialog;
+  const valid = form.reason.trim().length > 0 && (option !== 'ESCALADO' || form.to.trim().length > 0);
+
+  useEffect(() => {
+    ref.current?.querySelector('[data-field]')?.focus();
+  }, [type]);
+
+  // Foco atrapado en el diálogo
+  const onKeyDown = (event) => {
+    if (event.key !== 'Tab') return;
+    const focusables = [...ref.current.querySelectorAll('button:not([disabled]), input, textarea')];
+    if (!focusables.length) return;
+    const [first, last] = [focusables[0], focusables[focusables.length - 1]];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  const reasonField = (
+    <div className="field">
+      <label className="field-l" htmlFor="f-reason">
+        Motivo <span className="req">OBLIGATORIO</span>
+        <span className="count">{`${form.reason.length}/${REASON_MAX}`}</span>
+      </label>
+      <textarea
+        id="f-reason"
+        className="textarea"
+        data-field="reason"
+        maxLength={REASON_MAX}
+        placeholder={REASON_PLACEHOLDER[option]}
+        aria-describedby="h-reason"
+        value={form.reason}
+        onChange={(e) => onChange({ reason: e.target.value })}
+      />
+      <div className="hint" id="h-reason">
+        {form.reason.trim() ? 'El vecino lee este motivo en «Mis reportes».' : 'Sin motivo no se puede guardar: es la respuesta que lee el vecino.'}
+      </div>
+    </div>
+  );
+
+  const submitLabel = type === 'resolve' ? 'Marcar resuelto' : REJECT[option].submit;
+  const submitIcon = type === 'resolve' ? 'task_alt' : REJECT[option].icon;
+
+  return (
+    <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !sending && onClose()}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="m-h" ref={ref} onKeyDown={onKeyDown}>
+        <div className="modal-h">
+          <div>
+            <h2 id="m-h">{type === 'resolve' ? 'Marcar como resuelto' : 'Rechazar el reporte'}</h2>
+            <p>{`${caseLabel(report.case_number)} · ${report.category || 'Sin categoría'}`}</p>
+          </div>
+          <button type="button" className="icon-btn" aria-label="Cerrar" onClick={onClose} disabled={sending}>
+            <Ms name="close" />
+          </button>
+        </div>
+
+        {type === 'resolve' ? (
+          <>
+            <div className="trans" aria-label="Cambio de estado">
+              <StateBadge code={report.state_code} label={report.state_label} />
+              <Ms name="arrow_forward" />
+              <StateBadge code="RESUELTO" />
+            </div>
+            {reasonField}
+            <div className="warn">
+              <Ms name="lock" />
+              <span>Un reporte resuelto no se puede revertir desde el panel.</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="txt" style={{ margin: 0 }}>
+              Elegí qué pasa con el reporte. El motivo es obligatorio y lo lee el vecino.
+            </p>
+            <fieldset className="options">
+              <legend className="sr-only">Qué pasa con el reporte</legend>
+              {options.map((key) => (
+                <div key={key} className="option">
+                  <label>
+                    <input type="radio" name="rj" value={key} checked={option === key} onChange={() => onChange({}, key)} />
+                    <span>{REJECT[key].title}</span>
+                    <StateBadge code={key} />
+                  </label>
+                  {option === key && (
+                    <div className="option-body">
+                      {key === 'ESCALADO' && (
+                        <>
+                          <div className="field">
+                            <label className="field-l" htmlFor="f-to">
+                              ¿A quién corresponde? <span className="req">OBLIGATORIO</span>
+                            </label>
+                            <input
+                              id="f-to"
+                              className="input"
+                              data-field="to"
+                              autoComplete="off"
+                              maxLength={200}
+                              placeholder="Ej.: Concesionaria de la autopista"
+                              value={form.to}
+                              onChange={(e) => onChange({ to: e.target.value })}
+                            />
+                          </div>
+                          <div className="field">
+                            <label className="field-l" htmlFor="f-contact">
+                              Contacto del destino <span className="opt">OPCIONAL</span>
+                            </label>
+                            <input
+                              id="f-contact"
+                              className="input"
+                              autoComplete="off"
+                              maxLength={200}
+                              placeholder="Correo, teléfono o web"
+                              aria-describedby="h-contact"
+                              value={form.contact}
+                              onChange={(e) => onChange({ contact: e.target.value })}
+                            />
+                            <div className="hint" id="h-contact">
+                              El vecino lo ve junto al destino, para seguir el reclamo.
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      {reasonField}
+                      {key === 'DESESTIMADO' && (
+                        <div className="warn">
+                          <Ms name="lock" />
+                          <span>Un reporte desestimado no se puede revertir desde el panel.</span>
+                        </div>
+                      )}
+                      {key !== 'DESESTIMADO' && (
+                        <div className="inline-note">
+                          <Ms name="info" />
+                          <span>
+                            {key === 'EN_DISCREPANCIA'
+                              ? 'El caso sigue en curso: después lo podés resolver, desestimar o escalar.'
+                              : 'El caso sigue en curso hasta que se resuelva.'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </fieldset>
+          </>
+        )}
+
+        {error && (
+          <div className="field-err" role="alert">
+            <Ms name="error" />
+            <span>{error}</span>
+          </div>
+        )}
+        <div className="modal-f">
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={sending}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className={`btn ${type === 'resolve' ? 'btn-success' : 'btn-danger'}`}
+            disabled={!valid || sending}
+            onClick={onSubmit}
+          >
+            {sending ? (
+              <>
+                <span className="spin" aria-hidden="true" />
+                <span>Guardando…</span>
+              </>
+            ) : (
+              <>
+                <Ms name={submitIcon} />
+                <span>{submitLabel}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /** Visor de fotos: flechas, miniaturas y teclado (← → Esc). */
 const Lightbox = ({ photos, index, onStep, onGo, onClose }) => {
   const closeRef = useRef(null);
@@ -186,13 +390,17 @@ const Lightbox = ({ photos, index, onStep, onGo, onClose }) => {
 };
 
 /**
- * @param {{ id: string, agencyName: string, inboxHref: string, onLoaded?: (report: object) => void }} props
+ * @param {{ id: string, agencyName: string, inboxHref: string, toast: Function, onChanged: Function,
+ *   onLoaded?: (report: object) => void }} props
  */
-export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
+export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoaded }) => {
   const [state, setState] = useState({ status: 'loading', report: null });
   const [photos, setPhotos] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [dialog, setDialog] = useState(null);
   const [lightbox, setLightbox] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const triggerRef = useRef(null);
 
   const load = useCallback(
     async ({ silent = false } = {}) => {
@@ -210,23 +418,90 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
   );
 
   useEffect(() => {
+    setDialog(null);
     setLightbox(null);
     load();
   }, [load]);
 
-  // Teclado del visor: ← → y Esc
+  // Teclado: visor (← → Esc) y Esc para cerrar el diálogo
   useEffect(() => {
-    if (!lightbox) return undefined;
+    if (!lightbox && !dialog) return undefined;
     const onKey = (event) => {
-      if (event.key === 'Escape') setLightbox(null);
-      if (event.key === 'ArrowRight') setLightbox((lb) => ({ i: Math.min(photos.length - 1, lb.i + 1) }));
-      if (event.key === 'ArrowLeft') setLightbox((lb) => ({ i: Math.max(0, lb.i - 1) }));
+      if (lightbox) {
+        if (event.key === 'Escape') setLightbox(null);
+        if (event.key === 'ArrowRight') setLightbox((lb) => ({ i: Math.min(photos.length - 1, lb.i + 1) }));
+        if (event.key === 'ArrowLeft') setLightbox((lb) => ({ i: Math.max(0, lb.i - 1) }));
+        return;
+      }
+      if (event.key === 'Escape' && !dialog.sending) closeDialog();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   });
 
   const report = state.report;
+
+  const closeDialog = () => {
+    setDialog(null);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  };
+
+  const openDialog = (type, event) => {
+    triggerRef.current = event.currentTarget;
+    const options = ['ESCALADO', 'DESESTIMADO', 'EN_DISCREPANCIA'].filter((s) => report.actions?.includes(s));
+    setDialog({
+      type,
+      option: type === 'resolve' ? 'RESUELTO' : options[0],
+      options,
+      form: { reason: '', to: '', contact: '' },
+      sending: false,
+      error: null,
+    });
+  };
+
+  const take = async () => {
+    if (busy || report.taken) return;
+    setBusy(true);
+    const result = await takeReport(report.report_id);
+    if (result.ok) {
+      await load({ silent: true });
+      onChanged();
+      toast('Tomaste el caso. Sigue Derivado y el vecino ve «El organismo tomó tu reporte».');
+    } else {
+      toast(result.message || 'No pudimos tomar el caso. Probá de nuevo.', 'err');
+    }
+    setBusy(false);
+  };
+
+  const submit = async () => {
+    const d = dialog;
+    if (!d || d.sending) return;
+    setDialog({ ...d, sending: true, error: null });
+    const escalating = d.option === 'ESCALADO';
+    const result = await changePanelReportState(report.report_id, {
+      toState: d.option,
+      reason: d.form.reason.trim(),
+      escalatedTo: escalating ? d.form.to.trim() : null,
+      escalatedContact: escalating && d.form.contact.trim() ? d.form.contact.trim() : null,
+    });
+    if (!result.ok) {
+      setDialog({ ...d, sending: false, error: result.message });
+      // El caso cambió mientras se miraba: se relee sin cerrar el diálogo
+      if (STALE_CODES.includes(result.code)) load({ silent: true });
+      return;
+    }
+    setDialog(null);
+    await load({ silent: true });
+    onChanged();
+    toast(
+      {
+        RESUELTO: `${caseLabel(report.case_number)} marcado como resuelto. El vecino ya ve el motivo.`,
+        DESESTIMADO: 'Reporte desestimado. El vecino ve el motivo en «Mis reportes».',
+        ESCALADO: `Reporte escalado a ${d.form.to.trim()}. El vecino ve el destino y el motivo.`,
+        EN_DISCREPANCIA: 'Discrepancia registrada. El caso sigue en curso.',
+      }[d.option]
+    );
+  };
 
   if (state.status === 'loading') {
     return (
@@ -270,7 +545,11 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
     );
   }
 
+  const actions = report.actions ?? [];
   const final = FINAL_STATES.includes(report.state_code);
+  const canReject = actions.some((s) => s !== 'RESUELTO');
+  const canResolve = actions.includes('RESUELTO');
+  const canTake = report.state_code === 'DERIVADO';
   const timeline = buildPanelTimeline({ history: report.history, taken: report.taken, agencyName });
   const lastFinal = [...(report.history ?? [])].reverse().find((h) => h.state_code === report.state_code);
   const meta =
@@ -304,16 +583,43 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
               <div className="dhead-id">
                 <h1 id="case-h">{caseLabel(report.case_number)}</h1>
                 <StateBadge code={report.state_code} label={report.state_label} />
-                {report.state_code === 'DERIVADO' && report.taken && <StateBadge code="TOMADO" />}
+                {canTake && report.taken && <StateBadge code="TOMADO" />}
               </div>
               <div className="dtitle">{report.category || 'Sin categoría'}</div>
               <div className="dmeta">{`${report.report_code} · ${report.category || 'Sin categoría'} · ${meta}`}</div>
             </div>
-            {final && (
+            {final ? (
               <span className="final-chip">
                 <Ms name="lock" />
                 <span>Estado final</span>
               </span>
+            ) : (
+              <div className="actions">
+                {canReject && (
+                  <button type="button" className="btn btn-danger" onClick={(e) => openDialog('reject', e)}>
+                    <Ms name="block" />
+                    <span>Rechazar</span>
+                  </button>
+                )}
+                {canResolve && (
+                  <button type="button" className="btn btn-success" onClick={(e) => openDialog('resolve', e)}>
+                    <Ms name="task_alt" />
+                    <span>Marcar resuelto</span>
+                  </button>
+                )}
+                {canTake &&
+                  (report.taken ? (
+                    <button type="button" className="btn btn-done" disabled>
+                      <Ms name="check" />
+                      <span>Caso tomado</span>
+                    </button>
+                  ) : (
+                    <button type="button" className={`btn btn-primary${busy ? ' is-busy' : ''}`} onClick={take} aria-busy={busy}>
+                      {busy ? <span className="spin" aria-hidden="true" /> : <Ms name="front_hand" />}
+                      <span>{busy ? 'Tomando…' : 'Tomar el caso'}</span>
+                    </button>
+                  ))}
+              </div>
             )}
           </div>
 
@@ -442,6 +748,17 @@ export const PanelCase = ({ id, agencyName, inboxHref, onLoaded }) => {
         </div>
       </div>
 
+      {dialog && (
+        <ActionDialog
+          dialog={dialog}
+          report={report}
+          onChange={(fields, option) =>
+            setDialog((d) => ({ ...d, option: option ?? d.option, error: option ? null : d.error, form: { ...d.form, ...fields } }))
+          }
+          onClose={closeDialog}
+          onSubmit={submit}
+        />
+      )}
       {lightbox && photos.length > 0 && (
         <Lightbox
           photos={photos}

@@ -67,15 +67,17 @@ export const takeReport = async (reportId) => toActionResult(await supabase.rpc(
  * catálogo, el motivo y, en el escalado, a quién; si rechaza, el estado no cambia y queda registrado el intento.
  *
  * @param {string} reportId
- * @param {{ toState: string, reason: string, escalatedTo?: string|null }} accion
+ * @param {{ toState: string, reason: string, escalatedTo?: string|null, escalatedContact?: string|null }} accion
+ *   escalatedContact: contacto opcional del destino del escalado (diseño de Iván, decisión 3A)
  * @returns {Promise<{ ok: boolean, code?: string, message?: string, data?: object }>}
  */
-export const changePanelReportState = async (reportId, { toState, reason, escalatedTo = null }) =>
+export const changePanelReportState = async (reportId, { toState, reason, escalatedTo = null, escalatedContact = null }) =>
   toActionResult(
     await supabase.rpc('change_report_state', {
       p_report_id: reportId,
       p_to_state: toState,
       p_reason: reason,
       p_escalated_to: escalatedTo,
+      p_escalated_contact: escalatedContact,
     })
   );

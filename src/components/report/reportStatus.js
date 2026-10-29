@@ -185,7 +185,12 @@ export const buildTimeline = ({ currentState, createdAt, history = [], socialAss
       current: isLast && entry.state === current,
       date: formatShortDateTime(entry.changed_at),
       // D-05: el destino es texto libre del operador; no se afirma que se haya enviado a ningún lado
-      detail: entry.escalated_to ? `El organismo indicó que corresponde a: ${entry.escalated_to}` : null,
+      // REP-3001: con el contacto del destino, si el operador lo cargó
+      detail: entry.escalated_to
+        ? [`El organismo indicó que corresponde a: ${entry.escalated_to}`, entry.escalated_contact ? `Contacto: ${entry.escalated_contact}` : null]
+            .filter(Boolean)
+            .join(' · ')
+        : null,
       note: entry.notes || null,
     });
   });
