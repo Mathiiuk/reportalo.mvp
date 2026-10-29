@@ -10,7 +10,8 @@ import { supabase } from '../lib/supabaseClient';
  */
 export const getPanelInbox = async () => {
   const { data, error } = await supabase.rpc('get_panel_inbox');
-  if (error) return { success: false, reports: [], error: error.message };
+  // Con el diseño de Iván, el código sale en el error de carga («Error {código} · dd/mm · hh:mm»)
+  if (error) return { success: false, reports: [], error: error.message, code: error.code || error.status || null };
   return { success: true, reports: data ?? [] };
 };
 
