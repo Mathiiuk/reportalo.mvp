@@ -2,7 +2,7 @@ id: REP-3843
 external_ref: https://unlz2026.atlassian.net/browse/REP-3843
 title: Dirección aproximada con calle y altura, visibilidad por rol
 type: fix
-status: READY_FOR_PR
+status: IN_PROGRESS
 priority: high
 owner: Matías Krepchuk
 base_branch: staging
