@@ -6,6 +6,9 @@
 -- curso»), la fecha de cierre, la calle y la altura, la cantidad de fotos y la primera (miniatura, ya anonimizada).
 -- Sigue sin descripción, identidad ni contactos.
 --
+-- APLICADA en staging el 29/10/2026 con el OK de Matías (versión registrada 20261029120801; el archivo se renombró para
+-- coincidir). Verificación después de aplicar, con sesiones simuladas y ROLLBACK: 14/14.
+--
 -- Reversión: volver a crear get_panel_inbox desde 20261028155231_rep3749_detalle_reporte_operador.sql.
 -- =====================================================================================================================
 
