@@ -1,4 +1,4 @@
-import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL, addPlugins } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { StaleWhileRevalidate } from 'workbox-strategies';
@@ -9,6 +9,18 @@ clientsClaim();
 
 // Toma el control inmediato sin esperar
 self.skipWaiting();
+
+// Nunca guardar HTML como si fuera un .js o un .css. Si falta un archivo de una versión anterior y el servidor responde
+// con index.html (200), guardarlo dejaba la pantalla rota aunque el archivo volviera (ver lib/chunkReload).
+addPlugins([
+  {
+    cacheWillUpdate: async ({ request, response }) => {
+      const isAsset = /\.(js|css)$/.test(new URL(request.url).pathname);
+      const isHtml = (response?.headers.get('content-type') || '').includes('text/html');
+      return isAsset && isHtml ? null : response;
+    },
+  },
+]);
 
 precacheAndRoute(self.__WB_MANIFEST || []);
 

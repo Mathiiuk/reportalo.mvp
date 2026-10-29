@@ -6,9 +6,13 @@ import App from './App';
 import '@fontsource-variable/manrope';
 import './index.css';
 import { initTheme } from './lib/themePreference';
+import { installChunkReloadHandler } from './lib/chunkReload';
 
 // Tema guardado en el dispositivo (H-09), aplicado antes del primer render de React
 initTheme();
+
+// Después de un deploy, una pestaña vieja que pide un archivo que ya no existe recarga una vez (ver chunkReload)
+installChunkReloadHandler();
 
 // Limpieza automática de Service Workers antiguos en entorno de desarrollo para evitar conflictos con Vite ESM/HMR
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator && import.meta.env.DEV) {
