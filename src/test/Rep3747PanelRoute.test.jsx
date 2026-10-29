@@ -87,9 +87,10 @@ describe('REP-3747 · ruta /panel', () => {
     await waitFor(() => expect(screen.getByTestId('ruta')).toHaveTextContent('/acceso-restringido'));
   });
 
-  it('UT-3747-F4: sin sesión pide login y guarda /panel para volver después', async () => {
+  it('UT-3747-F4: sin sesión pide el ingreso del panel y guarda /panel para volver después', async () => {
     montar({ session: null, user: null, loading: false });
-    await waitFor(() => expect(screen.getByTestId('ruta')).toHaveTextContent('/login'));
+    // Ingreso propio del panel, que no crea cuentas (decisión 4A de Matías, 29/10)
+    await waitFor(() => expect(screen.getByTestId('ruta')).toHaveTextContent('/panel/ingresar'));
     expect(getResumePath()).toBe('/panel');
     expect(fromMock).not.toHaveBeenCalled();
   });

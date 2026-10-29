@@ -42,6 +42,9 @@ const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => (
 const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => ({ default: m.PanelPage })));
 // REP-3749 · detalle de un reporte para el operador
 const PanelReportDetailPage = React.lazy(() => import('./pages/panel/PanelReportDetailPage').then(m => ({ default: m.PanelReportDetailPage })));
+// REP-3747 · ingreso propio del panel y redirección de /organismo (diseño de Iván, 29/10)
+const PanelLoginPage = React.lazy(() => import('./pages/panel/PanelLoginPage').then(m => ({ default: m.PanelLoginPage })));
+const OrganismoRedirect = React.lazy(() => import('./pages/panel/OrganismoRedirect').then(m => ({ default: m.OrganismoRedirect })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
 // pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
@@ -342,6 +345,8 @@ export const AppRoutes = () => {
           </OperatorRoute>
         }
       />
+      <Route path="/panel/ingresar" element={<PanelLoginPage />} />
+      <Route path="/organismo/*" element={<OrganismoRedirect />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </React.Suspense>
