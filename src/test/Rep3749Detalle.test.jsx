@@ -1,11 +1,11 @@
 /**
  * @file Rep3749Detalle.test.jsx
- * @description REP-3749: pantalla del detalle del reporte para el operador. Muestra solo lo que devuelve la base
- * (get_panel_report_detail), con la leyenda de sanciones del PO y mensajes veraces cuando falta algo.
+ * @description REP-3749: detalle del caso con el diseño de Iván (LEEME §5.2). Conserva los requisitos de la pantalla
+ * anterior: lo que se muestra lo decide la base (get_panel_report_detail), con los textos del PO (sanciones, ajeno).
  */
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 const rpcMock = vi.fn();
@@ -20,107 +20,177 @@ vi.mock('../lib/supabaseClient', () => ({
     },
   },
 }));
-
 vi.mock('../components/panel/OperatorRoute', () => ({
   useOperator: () => ({ role: 'organismo', agency: { id: 'a1', name: 'Reportalo CABA (organismo de prueba)', is_test: true } }),
 }));
+vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ user: { email: 'operador@prueba.ar' }, signOut: vi.fn() }) }));
 
-import { PanelReportDetailPage } from '../pages/panel/PanelReportDetailPage';
+import { PanelPage } from '../pages/panel/PanelPage';
 
-const CITA_NORMA = {
-  reference: 'Ley 451 (CABA) — Art. 6.1.37',
-  document_type: 'ley',
-  document_number: '451',
-  source_title: 'Régimen de Faltas',
-  quoted_text: 'El/la conductor/a de un vehículo que cause la obstrucción...',
-  source_url: 'https://boletinoficial.buenosaires.gob.ar/x',
-  foundation_type: 'conducta_prohibida',
-};
-const CITA_SANCION = { ...CITA_NORMA, reference: 'Ley 451 — Art. 6.1.38', quoted_text: 'Multa de 100 a 500 unidades fijas', foundation_type: 'sancion' };
+const ID = '9b182245-aaaa-bbbb-cccc-000000000000';
+const AGENCIA = 'Reportalo CABA (organismo de prueba)';
+const CITA_NORMA = { reference: 'Ley 451 (CABA) — Art. 6.1.54', quoted_text: 'estacione sobre las aceras', source_url: 'https://bo/x', foundation_type: 'conducta_prohibida' };
+const CITA_SANCION = { reference: 'Ley 451 — Art. 6.1.55', quoted_text: 'Multa de 100 a 500 unidades fijas', foundation_type: 'sancion' };
+const img = (n) => ({ id: `img-${n}`, image_url: `https://x/storage/v1/object/public/report-evidences/csid/f${n}.webp` });
 
-const DETALLE = {
-  report_id: '9b182245-aaaa-bbbb-cccc-000000000000',
+const BASE = {
+  report_id: ID,
   report_code: '#RP-9B182245',
   case_number: 42,
   created_at: '2026-10-25T13:00:00Z',
   category: 'Tránsito',
   state_code: 'DERIVADO',
-  state_label: 'Derivado', // REP-3001: etiqueta unificada
-  description: 'Camión sobre la vereda, llamar al [teléfono oculto]',
+  state_label: 'Derivado',
+  description: 'Auto sobre la vereda, llamar al [teléfono oculto]',
   locality: 'Caballito',
   subdivision: 'Comuna 6',
   latitud: -34.6043,
   longitud: -58.4395,
   address_street: 'Avenida Rivadavia',
   address_number: '5000',
-  images: [{ id: 'img-1', image_url: 'https://x/storage/v1/object/public/report-evidences/csid/foto.webp' }],
+  address_road_type: 'avenida',
+  images: [img(1)],
   foundation: { status: 'fundamento_preliminar', citations: [CITA_NORMA, CITA_SANCION], disclaimer: 'Fundamento preliminar...' },
+  actions: ['DESESTIMADO', 'EN_DISCREPANCIA', 'ESCALADO', 'RESUELTO'],
+  taken: null,
+  history: [
+    { state_code: 'EN_ANALISIS', changed_at: '2026-10-25T13:01:00Z', notes: 'Análisis automático en curso', actor_type: 'sistema', agency: null },
+    { state_code: 'DERIVADO', changed_at: '2026-10-25T14:00:00Z', notes: 'Entrega interna al operador de prueba', actor_type: 'sistema', agency: null },
+  ],
+};
+
+// La RPC del detalle devuelve `detalle` hasta que una acción sale bien; después, `despues`
+const responder = ({ detalle = BASE, despues = detalle, accion = { ok: true }, bandeja = [] } = {}) => {
+  let hecho = false;
+  rpcMock.mockImplementation(async (nombre) => {
+    if (nombre === 'get_panel_inbox') return { data: bandeja, error: null };
+    if (nombre === 'get_panel_report_detail') return { data: hecho ? despues : detalle, error: null };
+    if (accion?.ok) hecho = true;
+    return { data: accion, error: null };
+  });
 };
 
 const montar = () =>
   render(
-    <MemoryRouter initialEntries={[`/panel/reportes/${DETALLE.report_id}`]}>
+    <MemoryRouter initialEntries={[`/panel/reportes/${ID}`]}>
       <Routes>
-        <Route path="/panel/reportes/:id" element={<PanelReportDetailPage />} />
+        <Route path="/panel" element={<PanelPage />} />
+        <Route path="/panel/reportes/:id" element={<PanelPage />} />
       </Routes>
     </MemoryRouter>
   );
 
-describe('REP-3749 · detalle del reporte en el panel', () => {
-  beforeEach(() => rpcMock.mockReset());
+const dialogo = () => screen.getByRole('dialog');
 
-  it('UT-3749-F1: muestra caso, categoría, estado, dirección completa, descripción filtrada, fotos firmadas y fundamento', async () => {
-    rpcMock.mockResolvedValue({ data: DETALLE, error: null });
-    montar();
-    expect(await screen.findByRole('heading', { name: /caso n° 00042/i })).toBeInTheDocument();
-    expect(rpcMock).toHaveBeenCalledWith('get_panel_report_detail', { p_report_id: DETALLE.report_id });
-    expect(screen.getByText('#RP-9B182245')).toBeInTheDocument();
-    expect(screen.getByText('Tránsito')).toBeInTheDocument();
-    expect(screen.getByText('Derivado')).toBeInTheDocument();
-    expect(screen.getByText('Avenida Rivadavia 5000')).toBeInTheDocument();
-    expect(screen.getByText(/\[teléfono oculto\]/)).toBeInTheDocument();
-    expect(await screen.findByRole('img', { name: /foto anonimizada 1/i })).toHaveAttribute('src', 'https://firmada/csid/foto.webp');
-    expect(screen.getByText('Ley 451 (CABA) — Art. 6.1.37')).toBeInTheDocument();
+// Una semana después de los hechos: las fechas salen como «el dd/mm», no «hoy» ni «ayer»
+const congelar = () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-05T15:00:00Z'));
+};
+
+describe('REP-3749 · detalle del caso', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    congelar();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
-  it('UT-3749-F2: la sanción lleva la leyenda del PO', async () => {
-    rpcMock.mockResolvedValue({ data: DETALLE, error: null });
+  it('UT-3749-D1: encabezado con caso y estado, categoría, código y fecha; ubicación completa y enlace al mapa', async () => {
+    responder();
     montar();
-    expect(await screen.findByText(/multa de 100 a 500 unidades fijas/i)).toBeInTheDocument();
-    expect(screen.getByText('Sanción prevista por la norma; Reportalo no aplica sanciones.')).toBeInTheDocument();
-    expect(screen.queryByText(/la norma no registra sanción/i)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Caso N° 000042' })).toBeInTheDocument();
+    expect(rpcMock).toHaveBeenCalledWith('get_panel_report_detail', { p_report_id: ID });
+    expect(screen.getByText(/#RP-9B182245 · Tránsito · Reportado el 25\/10 · 10:00/)).toBeInTheDocument();
+    expect(screen.getByText('Avenida Rivadavia 5000 · Caballito')).toBeInTheDocument();
+    const mapa = screen.getByRole('link', { name: /ver en el mapa/i });
+    expect(mapa).toHaveAttribute('target', '_blank');
+    expect(mapa.getAttribute('href')).toContain('mlat=-34.6043');
+    expect(screen.getByText(/no se muestran la identidad ni los datos de contacto/i)).toBeInTheDocument();
   });
 
-  it('UT-3749-F3: sin sanción citada → «La norma no registra sanción»; sin dirección → «Dirección no disponible»', async () => {
-    rpcMock.mockResolvedValue({
-      data: { ...DETALLE, address_street: null, address_number: null, foundation: { ...DETALLE.foundation, citations: [CITA_NORMA] } },
-      error: null,
-    });
+  it('UT-3749-D2: sin dirección dice «Dirección no disponible»', async () => {
+    responder({ detalle: { ...BASE, address_street: null, address_number: null } });
+    montar();
+    expect(await screen.findByText(/^Dirección no disponible/)).toBeInTheDocument();
+  });
+
+  it('UT-3749-D3: la descripción marca los contactos ocultos y lo aclara', async () => {
+    responder();
+    montar();
+    expect(await screen.findByText('teléfono oculto')).toHaveClass('mask');
+    expect(screen.getByText('Se ocultaron datos de contacto escritos por el vecino.')).toBeInTheDocument();
+  });
+
+  it('UT-3749-D4: fundamento con la leyenda del PO para sanciones; sin sanción, «La norma no registra sanción»', async () => {
+    responder();
+    const { unmount } = montar();
+    expect(await screen.findByText('Sanción prevista por la norma; Reportalo no aplica sanciones.')).toBeInTheDocument();
+    expect(screen.getByText('Ley 451 (CABA) — Art. 6.1.54')).toBeInTheDocument();
+    unmount();
+    responder({ detalle: { ...BASE, foundation: { status: 'fundamento_preliminar', citations: [CITA_NORMA] } } });
     montar();
     expect(await screen.findByText('La norma no registra sanción.')).toBeInTheDocument();
-    expect(screen.getByText('Dirección no disponible')).toBeInTheDocument();
   });
 
-  it('UT-3749-F4: fundamento pendiente o sin verificar se dice tal cual, sin citas inventadas', async () => {
-    rpcMock.mockResolvedValue({ data: { ...DETALLE, foundation: { status: 'pendiente', citations: [] } }, error: null });
+  it('UT-3749-D5: una foto se amplía en el visor; varias se ven en fila y el visor las recorre con el teclado', async () => {
+    responder({ detalle: { ...BASE, images: [img(1), img(2), img(3), img(4)] } });
     montar();
-    expect(await screen.findByText(/el análisis todavía no terminó/i)).toBeInTheDocument();
-    expect(screen.queryByText(/la norma no registra sanción/i)).not.toBeInTheDocument();
+    expect(await screen.findByText('Fotos · 4')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir foto 1 de 4' }));
+    const visor = screen.getByRole('dialog', { name: 'Foto 1 de 4' });
+    expect(within(visor).getByRole('img')).toHaveAttribute('src', 'https://firmada/csid/f1.webp');
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(screen.getByRole('dialog', { name: 'Foto 2 de 4' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('UT-3749-F5: reporte ajeno o inexistente → «no está disponible para tu organismo» (caso 5 PO)', async () => {
-    rpcMock.mockResolvedValue({ data: null, error: null });
+  it('UT-3749-D6: historial con fecha, estado, organismo solo en acciones del organismo, motivo y destino', async () => {
+    responder({
+      detalle: {
+        ...BASE,
+        state_code: 'ESCALADO',
+        state_label: 'Escalado',
+        actions: ['DESESTIMADO', 'RESUELTO'],
+        taken: { taken_at: '2026-10-26T12:00:00Z', agency: AGENCIA },
+        history: [
+          ...BASE.history,
+          { state_code: 'ESCALADO', changed_at: '2026-10-27T12:00:00Z', notes: 'Es una autopista', actor_type: 'organismo', agency: AGENCIA, escalated_to: 'AUSA' },
+        ],
+      },
+    });
+    montar();
+    const historial = await screen.findByRole('list', { name: /historial/i });
+    const items = within(historial).getAllByRole('listitem');
+    expect(items.map((li) => li.querySelector('strong').textContent)).toEqual([
+      'Análisis automático',
+      `Entró a la bandeja de ${AGENCIA}`,
+      `Tomado por ${AGENCIA}`,
+      'Escalado',
+    ]);
+    const escalado = items[3];
+    expect(within(escalado).getByText(AGENCIA)).toBeInTheDocument();
+    expect(within(escalado).getByText('AUSA')).toBeInTheDocument();
+    expect(within(escalado).getByText(/«Es una autopista»/)).toBeInTheDocument();
+    // Las entradas del sistema no llevan organismo
+    expect(within(items[0]).queryByText(AGENCIA)).not.toBeInTheDocument();
+  });
+
+  it('UT-3749-D7: ajeno o inexistente → «Este reporte no está disponible para tu organismo» (caso 5 PO)', async () => {
+    responder({ detalle: null });
     montar();
     expect(await screen.findByText('Este reporte no está disponible para tu organismo.')).toBeInTheDocument();
-    expect(screen.queryByText('#RP-9B182245')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Volver a la bandeja' })).toHaveAttribute('href', '/panel?f=por-tomar');
   });
 
-  it('UT-3749-F6: error de carga con reintento', async () => {
-    rpcMock.mockResolvedValueOnce({ data: null, error: { message: 'network' } });
-    rpcMock.mockResolvedValueOnce({ data: DETALLE, error: null });
+  it('UT-3749-D8: error de carga del caso con reintento', async () => {
+    rpcMock.mockImplementation(async (n) => (n === 'get_panel_inbox' ? { data: [], error: null } : { data: null, error: { message: 'x' } }));
     montar();
-    expect(await screen.findByRole('alert')).toHaveTextContent(/no pudimos cargar el reporte/i);
+    expect(await screen.findByText(/no pudimos cargar el caso/i)).toBeInTheDocument();
+    responder();
     fireEvent.click(screen.getByRole('button', { name: /reintentar/i }));
-    expect(await screen.findByRole('heading', { name: /caso n° 00042/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Caso N° 000042' })).toBeInTheDocument();
   });
 });

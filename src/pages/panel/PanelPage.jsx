@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Ms, PanelTopBar, TestBanner, ToastRegion, useMaterialSymbols, useToasts } from '../../components/panel/PanelShell';
 import { PanelInbox } from '../../components/panel/PanelInbox';
-import { isFilter } from '../../components/panel/panelFormat';
+import { PanelCase } from '../../components/panel/PanelCase';
+import { bucketOf, isFilter } from '../../components/panel/panelFormat';
 import { useNoIndex } from '../../hooks/useNoIndex';
 import { useAuth } from '../../hooks/useAuth';
 import { useOperator } from '../../components/panel/OperatorRoute';
@@ -10,8 +11,8 @@ import { getPanelInbox } from '../../services/panelService';
 import { signEvidenceImages } from '../../services/reportDetailService';
 
 /**
- * REP-3747 / REP-3000 · Panel de organismos con el diseño de Iván (29/10): bandeja a la izquierda y, a la derecha, el
- * caso elegido (REP-3749). El filtro va en ?f=.
+ * REP-3747 / REP-3000 / REP-3749 · Panel de organismos con el diseño de Iván (29/10): bandeja a la izquierda y caso a
+ * la derecha. Sirve /panel y /panel/reportes/:id; el filtro va en ?f=.
  * Qué reportes entran y qué se puede hacer con cada uno lo decide la base; esta pantalla solo lo muestra.
  */
 export const PanelPage = () => {
@@ -55,6 +56,14 @@ export const PanelPage = () => {
     setParams({ f: next }, { replace: true });
   };
 
+  // Al abrir un caso sin filtro en la dirección, la bandeja se ubica en el filtro del caso
+  const onCaseLoaded = useCallback(
+    (report) => {
+      if (!isFilter(fromUrl)) setFilter(bucketOf({ ...report, taken: Boolean(report.taken) }));
+    },
+    [fromUrl]
+  );
+
   const inboxHref = `/panel?f=${filter}`;
   const caseHref = (reportId) => `/panel/reportes/${reportId}?f=${filter}`;
 
@@ -80,17 +89,27 @@ export const PanelPage = () => {
           onRetry={() => loadInbox()}
           caseHref={caseHref}
         />
-        <section className="detail" aria-label="Detalle">
-          <div className="placeholder">
-            <div className="state">
-              <div className="state-ic">
-                <Ms name="left_click" />
+        {id ? (
+          <PanelCase
+            key={id}
+            id={id}
+            agencyName={agency?.name ?? ''}
+            inboxHref={inboxHref}
+            onLoaded={onCaseLoaded}
+          />
+        ) : (
+          <section className="detail" aria-label="Detalle">
+            <div className="placeholder">
+              <div className="state">
+                <div className="state-ic">
+                  <Ms name="left_click" />
+                </div>
+                <h2>Elegí un caso</h2>
+                <p>Abrí un reporte de la lista para ver las fotos, la ubicación y el historial.</p>
               </div>
-              <h2>Elegí un caso</h2>
-              <p>Abrí un reporte de la lista para ver las fotos, la ubicación y el historial.</p>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
       <ToastRegion toasts={toasts} onDismiss={dismiss} />
     </div>

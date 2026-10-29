@@ -41,8 +41,6 @@ const AcercaPage = React.lazy(() => import('./pages/AcercaPage').then(m => ({ de
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 // REP-3747 · panel de organismos (operadores de un organismo de prueba)
 const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => ({ default: m.PanelPage })));
-// REP-3749 · detalle de un reporte para el operador
-const PanelReportDetailPage = React.lazy(() => import('./pages/panel/PanelReportDetailPage').then(m => ({ default: m.PanelReportDetailPage })));
 // REP-3747 · ingreso propio del panel y redirección de /organismo (diseño de Iván, 29/10)
 const PanelLoginPage = React.lazy(() => import('./pages/panel/PanelLoginPage').then(m => ({ default: m.PanelLoginPage })));
 const OrganismoRedirect = React.lazy(() => import('./pages/panel/OrganismoRedirect').then(m => ({ default: m.OrganismoRedirect })));
@@ -361,11 +359,12 @@ export const AppRoutes = () => {
           </OperatorRoute>
         }
       />
+      {/* REP-3749 — con el diseño de Iván, el caso se abre al lado de la bandeja, en la misma pantalla */}
       <Route
         path="/panel/reportes/:id"
         element={
           <OperatorRoute>
-            <PanelReportDetailPage />
+            <PanelPage />
           </OperatorRoute>
         }
       />
