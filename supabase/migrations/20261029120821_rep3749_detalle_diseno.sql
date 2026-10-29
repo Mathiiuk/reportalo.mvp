@@ -7,6 +7,9 @@
 --   - en el historial, el tipo de actor y el organismo, este último solo en acciones de un organismo. Nunca el
 --     operador: changed_by no sale.
 --
+-- APLICADA en staging el 29/10/2026 con el OK de Matías (versión registrada 20261029120821; el archivo se renombró para
+-- coincidir). Verificación después de aplicar, con sesiones simuladas y ROLLBACK: 14/14.
+--
 -- Reversión: volver a crear get_panel_report_detail desde 20261028164553_rep3001_acciones_del_operador.sql.
 -- =====================================================================================================================
 
