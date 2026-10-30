@@ -44,7 +44,7 @@ describe('REP-3791 Bloque 2 · Revisión, consentimiento y envío (UJ v3.3)', ()
 
   it('UT-B2-04: el tracker tiene los cuatro estados reales y el cierre alternativo «Desestimado» (REP-3001)', () => {
     render(<ReportSuccessScreen onViewReport={vi.fn()} onReturnToMap={vi.fn()} />);
-    ['Enviado', 'En revisión', 'Derivado', 'Resuelto'].forEach((label) => {
+    ['Recibido', 'En análisis', 'Derivado', 'Resuelto'].forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });
     expect(screen.getByText('Desestimado')).toBeInTheDocument();

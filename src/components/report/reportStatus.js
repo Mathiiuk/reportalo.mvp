@@ -6,8 +6,9 @@
  */
 export const REPORT_STATUS = {
   borrador: { label: 'Pendiente', tone: 'warning' },
-  enviado: { label: 'Enviado', tone: 'success' },
-  en_revision: { label: 'En revisión', tone: 'accent' },
+  // REP-3001 (reglas §4): mismas etiquetas que el panel, «Recibido» y «En análisis»
+  enviado: { label: 'Recibido', tone: 'success' },
+  en_revision: { label: 'En análisis', tone: 'accent' },
   // REP-3001 (reglas del panel §4 y §6): el vecino lee la misma etiqueta que el operador
   notificado: { label: 'Derivado', tone: 'notice' },
   resuelto: { label: 'Resuelto', tone: 'success' },
@@ -45,7 +46,7 @@ const DB_STATE_ALIASES = {
 
 // Pasos del tracker: uno por estado real; «descartado» es un cierre alternativo, no un paso
 export const TRACKER_STEPS = ['enviado', 'en_revision', 'notificado', 'resuelto'];
-// REP-3841: Vulnerabilidad social no se deriva: Enviado → Informado, sin «Derivado» ni «Resuelto»
+// REP-3841: Vulnerabilidad social no se deriva: Recibido → Informado, sin «Derivado» ni «Resuelto»
 export const SOCIAL_TRACKER_STEPS = ['enviado', 'informado'];
 
 // Estados que se muestran como un paso extra al final del recorrido, no dentro de los 4 pasos

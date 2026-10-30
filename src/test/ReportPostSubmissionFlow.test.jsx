@@ -90,8 +90,8 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       expect(screen.queryByText('Municipio de Avellaneda')).not.toBeInTheDocument();
 
       // Card 2: Timeline
-      expect(screen.getByText('Enviado')).toBeInTheDocument();
-      expect(screen.getByText('En revisión')).toBeInTheDocument();
+      expect(screen.getByText('Recibido')).toBeInTheDocument();
+      expect(screen.getByText('En análisis')).toBeInTheDocument();
       expect(screen.getByText('Derivado')).toBeInTheDocument();
       expect(screen.getByText('Resuelto')).toBeInTheDocument();
       expect(

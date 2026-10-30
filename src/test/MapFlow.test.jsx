@@ -25,7 +25,7 @@ const MAP_REPORTS = [
     description: 'Bache de gran tamaño que dificulta el tránsito vehicular.',
     category: 'Infraestructura',
     categoryIcon: 'traffic',
-    status: 'En revisión',
+    status: 'En análisis',
     stateCode: 'EN_ANALISIS',
     pinColor: '#1E6FCB',
     coordinates: [-58.3816, -34.6037],
@@ -51,7 +51,7 @@ const MAP_REPORTS = [
     description: 'El semáforo de la esquina no funciona.',
     category: 'Tránsito',
     categoryIcon: 'car_crash',
-    status: 'En revisión',
+    status: 'En análisis',
     stateCode: 'EN_ANALISIS',
     pinColor: '#F78E35',
     coordinates: [-58.3662, -34.6624],
@@ -283,9 +283,9 @@ describe('REP-2600: Visualizar /mapa como pantalla principal ciudadana', () => {
     fireEvent.click(screen.getByRole('button', { name: /filtros del mapa/i }));
     expect(screen.getByText(/Filtrar reclamos/i)).toBeInTheDocument();
 
-    // El filtro usa las etiquetas del §10: «En revisión» es EN_ANALISIS en la base.
+    // El filtro usa las etiquetas del §10: «En análisis» es EN_ANALISIS en la base.
     // Solo rep-1 y rep-3 están en ese estado.
-    fireEvent.click(screen.getByRole('button', { name: /^En revisión$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^En análisis$/i }));
 
     // Al seleccionar, el modal se cierra automáticamente y sólo quedan marcadores de ese filtro
     await waitFor(() => {

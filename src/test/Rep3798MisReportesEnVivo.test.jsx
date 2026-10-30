@@ -62,13 +62,13 @@ describe('REP-3798 · Mis reportes en vivo', () => {
   it('UT-LIVE-11: si un reporte cambia de estado, la fila se actualiza sola y se refresca la campana', async () => {
     mount();
     const first = await screen.findByTestId('report-row');
-    expect(within(first).getByText('Enviado')).toBeInTheDocument();
+    expect(within(first).getByText('Recibido')).toBeInTheDocument();
 
     getMyReportsMock.mockResolvedValue({ success: true, reports: [row('EN_ANALISIS')] });
     // El intervalo arranca unos ms después de montar: se avanza un poco de más
     await act(async () => { await vi.advanceTimersByTimeAsync(REPORTS_POLL_INTERVAL_MS + 2000); });
 
-    const updated = await screen.findByText('En revisión');
+    const updated = await screen.findByText('En análisis');
     expect(updated).toBeInTheDocument();
     expect(refreshMock).toHaveBeenCalledWith('u1', { force: true });
   });

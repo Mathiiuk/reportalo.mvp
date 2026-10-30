@@ -1,7 +1,7 @@
 /**
  * @file useReportStateLive.js
  * @description Estado del reporte en vivo (REP-3798): cuando el municipio cambia el estado de un reporte
- * (En revisión → Notificado → Resuelto / Descartado), la pantalla de detalle se entera sin recargar.
+ * (En análisis → Derivado → Resuelto / Desestimado), la pantalla de detalle se entera sin recargar.
  *
  * Los estados cambian por fuera de la app (los actualiza quien atiende el reporte), así que el ciudadano
  * solo los ve si la pantalla se actualiza sola. Estrategia de dos capas, la misma de useReportAnalysisLive:
