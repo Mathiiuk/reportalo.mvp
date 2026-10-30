@@ -47,6 +47,7 @@ vi.mock('../components/panel/OperatorRoute', () => ({
 vi.mock('../hooks/useAuth', () => ({ useAuth: () => ({ user: { email: 'operador@prueba.ar' }, signOut: vi.fn() }) }));
 
 import { PanelPage } from '../pages/panel/PanelPage';
+import { buildPanelTimeline, shortReference } from '../components/panel/panelFormat';
 
 const ID = '9b182245-aaaa-bbbb-cccc-000000000000';
 const AGENCIA = 'Reportalo CABA (organismo de prueba)';
@@ -123,7 +124,9 @@ describe('REP-3749 · detalle del caso', () => {
     montar();
     expect(await screen.findByRole('heading', { level: 1, name: 'Caso N° 000042' })).toBeInTheDocument();
     expect(rpcMock).toHaveBeenCalledWith('get_panel_report_detail', { p_report_id: ID });
-    expect(screen.getByText(/#RP-9B182245 · Tránsito · Reportado el 25\/10 · 10:00/)).toBeInTheDocument();
+    // La categoría es el título: no se repite debajo (diseño D41)
+    expect(screen.getByText('#RP-9B182245 · Reportado el 25/10 · 10:00')).toBeInTheDocument();
+    expect(screen.getAllByText('Tránsito')).toHaveLength(1);
     expect(screen.getByText('Avenida Rivadavia 5000 · Caballito')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ver en el mapa' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText(/no se muestran la identidad ni los datos de contacto/i)).toBeInTheDocument();
@@ -155,15 +158,34 @@ describe('REP-3749 · detalle del caso', () => {
     expect(screen.getByText('Se ocultaron datos de contacto escritos por el vecino.')).toBeInTheDocument();
   });
 
-  it('UT-3749-D4: fundamento con la leyenda del PO para sanciones; sin sanción, «La norma no registra sanción»', async () => {
+  it('UT-3749-D4: fundamento en una línea por norma (D41); el texto, la fuente y las sanciones con la leyenda del PO, al desplegar', async () => {
     responder();
     const { unmount } = montar();
-    expect(await screen.findByText('Sanción prevista por la norma; Reportalo no aplica sanciones.')).toBeInTheDocument();
-    expect(screen.getByText('Ley 451 (CABA) — Art. 6.1.54')).toBeInTheDocument();
+    expect(await screen.findByText('Ley 451 (CABA), art. 6.1.54')).toHaveAttribute('title', 'Ley 451 (CABA) — Art. 6.1.54');
+    expect(screen.queryByText(/estacione sobre las aceras/)).not.toBeInTheDocument();
+    const ver = screen.getByRole('button', { name: 'Ver el texto de las normas' });
+    expect(ver).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(ver);
+    expect(ver).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/«estacione sobre las aceras»/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Fuente oficial' })).toHaveAttribute('href', 'https://bo/x');
+    expect(screen.getByText('Sanción prevista por la norma; Reportalo no aplica sanciones.')).toBeInTheDocument();
+    expect(screen.getByText(/«Multa de 100 a 500 unidades fijas»/)).toBeInTheDocument();
     unmount();
     responder({ detalle: { ...BASE, foundation: { status: 'fundamento_preliminar', citations: [CITA_NORMA] } } });
     montar();
-    expect(await screen.findByText('La norma no registra sanción.')).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver el texto de las normas' }));
+    expect(screen.getByText('La norma no registra sanción.')).toBeInTheDocument();
+  });
+
+  it('UT-3749-D10: la referencia de la norma se acorta a ley, artículo e inciso', () => {
+    expect(shortReference('Ley 2148 (CABA) — Código de Tránsito y Transporte > Título VII > Artículo 7.1.9 (prohibiciones generales) > inciso h)')).toBe(
+      'Ley 2148 (CABA), art. 7.1.9, inc. h)'
+    );
+    expect(shortReference('Ley 451 (CABA) — Régimen de Faltas > Artículo 6.1.52 (estacionamiento o detención prohibida)')).toBe('Ley 451 (CABA), art. 6.1.52');
+    // Sin artículo reconocible queda como vino
+    expect(shortReference('Ordenanza 7180 — Capítulo II')).toBe('Ordenanza 7180 — Capítulo II');
+    expect(shortReference(null)).toBe('');
   });
 
   it('UT-3749-D5: una foto se amplía en el visor; varias se ven en fila y el visor las recorre con el teclado', async () => {
@@ -196,18 +218,36 @@ describe('REP-3749 · detalle del caso', () => {
     montar();
     const historial = await screen.findByRole('list', { name: /historial/i });
     const items = within(historial).getAllByRole('listitem');
+    // El alta del reporte abre el historial aunque la base no guarde esa fila (D44)
     expect(items.map((li) => li.querySelector('strong').textContent)).toEqual([
+      'Reporte creado',
       'Análisis automático',
       `Entró a la bandeja de ${AGENCIA}`,
       `Tomado por ${AGENCIA}`,
       'Escalado',
     ]);
-    const escalado = items[3];
+    const escalado = items[4];
     expect(within(escalado).getByText(AGENCIA)).toBeInTheDocument();
     expect(within(escalado).getByText('AUSA')).toBeInTheDocument();
     expect(within(escalado).getByText(/«Es una autopista»/)).toBeInTheDocument();
     // Las entradas del sistema no llevan organismo
-    expect(within(items[0]).queryByText(AGENCIA)).not.toBeInTheDocument();
+    expect(within(items[1]).queryByText(AGENCIA)).not.toBeInTheDocument();
+    // Los registros automáticos van sin motivo: son textos internos, no una decisión (D44)
+    expect(within(historial).queryByText(/Análisis automático en curso/)).not.toBeInTheDocument();
+    expect(within(historial).queryByText(/Entrega interna/)).not.toBeInTheDocument();
+    expect(within(items[0]).getByText('25/10')).toBeInTheDocument();
+  });
+
+  it('UT-3749-D11: si la base ya guarda «Recibido», no se duplica el alta', () => {
+    const items = buildPanelTimeline({
+      createdAt: '2026-10-25T13:00:00Z',
+      history: [
+        { state_code: 'RECIBIDO', changed_at: '2026-10-25T13:00:01Z', notes: 'Alta', actor_type: 'sistema' },
+        { state_code: 'EN_ANALISIS', changed_at: '2026-10-25T13:01:00Z', notes: 'x', actor_type: 'sistema' },
+      ],
+    });
+    expect(items.map((i) => i.label)).toEqual(['Reporte creado', 'Análisis automático']);
+    expect(items.every((i) => i.reason === null)).toBe(true);
   });
 
   it('UT-3749-D7: ajeno o inexistente → «Este reporte no está disponible para tu organismo» (caso 5 PO)', async () => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ms } from './PanelShell';
 import { StateBadge } from './PanelInbox';
@@ -10,6 +10,7 @@ import {
   STATE_LABEL,
   addressLabel,
   buildPanelTimeline,
+  shortReference,
   caseLabel,
   coordLabel,
   dayWord,
@@ -64,6 +65,8 @@ const Description = ({ text }) => {
 
 /** Fundamento tal como lo verificó la base: citas y sanciones con la leyenda del PO, o el estado si no hay. */
 const Foundation = ({ foundation }) => {
+  const [open, setOpen] = useState(false);
+  const textId = useId();
   const citations = foundation?.citations ?? [];
   if (foundation?.status !== 'fundamento_preliminar' || citations.length === 0) {
     const text =
@@ -76,31 +79,44 @@ const Foundation = ({ foundation }) => {
   const sanctions = citations.filter((c) => c.foundation_type === 'sancion');
   return (
     <>
+      {/* Diseño D41: una línea por norma. El texto, la fuente y las sanciones (con la leyenda del PO), al desplegar */}
       {norms.map((c, i) => (
-        <div key={`n-${i}`} className="txt">
-          <b>{c.reference}</b>
-          {c.quoted_text && <div>«{c.quoted_text}»</div>}
-          {c.source_url && (
-            <a href={c.source_url} target="_blank" rel="noopener noreferrer">
-              Fuente oficial
-            </a>
-          )}
+        <div key={`r-${i}`} className="txt">
+          <b title={c.reference}>{shortReference(c.reference)}</b>
         </div>
       ))}
-      {sanctions.length > 0 ? (
-        <div className="txt">
-          <div className="hint">{SANCTION_NOTICE}</div>
-          {sanctions.map((c, i) => (
-            <div key={`s-${i}`}>
+      <div className="hint">Análisis automático · lo valida el operador</div>
+      <button type="button" className="link-btn" aria-expanded={open} aria-controls={textId} onClick={() => setOpen((v) => !v)}>
+        {open ? 'Ocultar el texto de las normas' : 'Ver el texto de las normas'}
+      </button>
+      {open && (
+        <div id={textId} className="legal-text">
+          {norms.map((c, i) => (
+            <div key={`n-${i}`} className="txt">
               <b>{c.reference}</b>
               {c.quoted_text && <div>«{c.quoted_text}»</div>}
+              {c.source_url && (
+                <a href={c.source_url} target="_blank" rel="noopener noreferrer">
+                  Fuente oficial
+                </a>
+              )}
             </div>
           ))}
+          {sanctions.length > 0 ? (
+            <div className="txt">
+              <div className="hint">{SANCTION_NOTICE}</div>
+              {sanctions.map((c, i) => (
+                <div key={`s-${i}`}>
+                  <b>{c.reference}</b>
+                  {c.quoted_text && <div>«{c.quoted_text}»</div>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            norms.length > 0 && <div className="hint">{NO_SANCTION}</div>
+          )}
         </div>
-      ) : (
-        norms.length > 0 && <div className="hint">{NO_SANCTION}</div>
       )}
-      <div className="hint">Análisis automático · lo valida el operador</div>
     </>
   );
 };
@@ -550,7 +566,7 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
   const canReject = actions.some((s) => s !== 'RESUELTO');
   const canResolve = actions.includes('RESUELTO');
   const canTake = report.state_code === 'DERIVADO';
-  const timeline = buildPanelTimeline({ history: report.history, taken: report.taken, agencyName });
+  const timeline = buildPanelTimeline({ history: report.history, taken: report.taken, agencyName, createdAt: report.created_at });
   const lastFinal = [...(report.history ?? [])].reverse().find((h) => h.state_code === report.state_code);
   const meta =
     final && lastFinal
@@ -586,7 +602,7 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
                 {canTake && report.taken && <StateBadge code="TOMADO" />}
               </div>
               <div className="dtitle">{report.category || 'Sin categoría'}</div>
-              <div className="dmeta">{`${report.report_code} · ${report.category || 'Sin categoría'} · ${meta}`}</div>
+              <div className="dmeta">{`${report.report_code} · ${meta}`}</div>
             </div>
             {final ? (
               <span className="final-chip">

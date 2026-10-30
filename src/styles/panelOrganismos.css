@@ -205,6 +205,9 @@
 .op-panel .lbl { font: 800 10px var(--rep-font); letter-spacing: .6px; color: var(--rep-muted); text-transform: uppercase; }
 .op-panel .txt { font: 600 13px/1.5 var(--rep-font); color: var(--rep-text-2); margin-top: 3px; text-wrap: pretty; }
 .op-panel .hint { font: 500 11.5px/1.4 var(--rep-font); color: var(--rep-muted); margin-top: 3px; }
+.op-panel .link-btn { margin-top: 6px; padding: 0; border: 0; background: none; font: 700 12px var(--rep-font); color: var(--rep-accent); cursor: pointer; }
+.op-panel .link-btn:hover { color: var(--rep-accent-hover); text-decoration: underline; }
+.op-panel .legal-text { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rep-border-2); }
 .op-panel .mask { font: 700 11px var(--rep-font); color: var(--org-chip-mask-text); background: var(--org-chip-mask); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
 .op-panel .loc { display: flex; align-items: center; gap: 13px; padding: 10px 12px 10px 10px; }
 .op-panel .loc-pin { width: 50px; height: 50px; flex: none; border-radius: 11px; background: var(--rep-accent-soft); color: var(--rep-accent); display: flex; align-items: center; justify-content: center; }
