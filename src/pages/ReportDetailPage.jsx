@@ -562,6 +562,8 @@ export const ReportDetailPage = () => {
 
           {isOwner && (
             <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
+              {/* D50: la decisión del organismo va primero */}
+              {response && <OrganismResponse response={response} />}
               <ReportAiAnalysisPanel
                 analysis={analysis}
                 loading={loadingAnalysis}
@@ -574,7 +576,6 @@ export const ReportDetailPage = () => {
           )}
 
           <div className="order-4 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-3 desktop:gap-4">
-            {response && <OrganismResponse response={response} />}
             <section data-testid="report-timeline" aria-label="Historial del reporte" className={CARD}>
               <p className="m-0 mb-3 text-[11px] font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">Seguimiento</p>
               <ol className="m-0 flex list-none flex-col p-0">
