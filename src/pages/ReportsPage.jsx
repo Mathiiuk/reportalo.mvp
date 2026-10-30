@@ -60,6 +60,8 @@ export const ReportsPage = ({ embedded = false, currentId = null }) => {
   const navigate = useNavigate();
   // Miniaturas firmadas por reporte (el bucket de evidencias es privado)
   const [thumbs, setThumbs] = useState({});
+  // Al lado del reporte abierto, la fila de ese reporte queda a la vista
+  const currentRowRef = useRef(null);
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [myReports, setMyReports] = useState([]);
@@ -146,6 +148,10 @@ export const ReportsPage = ({ embedded = false, currentId = null }) => {
 
   const currentReports = myReports;
 
+  useEffect(() => {
+    if (embedded && currentId) currentRowRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [embedded, currentId, myReports.length, isLoadingReports]);
+
   // Firma de las miniaturas: una sola llamada para todas las que falten
   useEffect(() => {
     const pending = myReports.filter((r) => r.image && !(r.id in thumbs));
@@ -196,7 +202,7 @@ export const ReportsPage = ({ embedded = false, currentId = null }) => {
           </div>
 
           {/* Filtros con recuento (M17 · D18) */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <div className={`no-scrollbar flex items-center gap-2 pb-1 md:pb-0 ${embedded ? 'flex-wrap' : 'overflow-x-auto'}`}>
             {[
               { key: 'todos', label: 'Todos', count: countTodos },
               { key: 'en curso', label: 'En curso', count: countEnCurso },
@@ -301,6 +307,7 @@ export const ReportsPage = ({ embedded = false, currentId = null }) => {
                     onClick={() => navigate(`/reportes/${report.id}`)}
                     data-testid="report-row"
                     aria-current={report.id === currentId ? 'page' : undefined}
+                    ref={report.id === currentId ? currentRowRef : undefined}
                     className={`rep-focus flex w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] ${
                       report.id === currentId ? 'border-rep-accent bg-rep-accent-soft' : 'border-rep-border bg-rep-surface shadow-rep-card'
                     }`}

@@ -418,7 +418,7 @@ export const ReportDetailPage = () => {
       <div className="flex flex-1">
       {/* Diseño v2 (D49): en escritorio, la lista de Mis reportes queda a la izquierda del reporte abierto */}
       {isDesktop && isOwner && (
-        <aside className="w-[340px] shrink-0 border-r border-rep-divider">
+        <aside className="sticky top-[65px] h-[calc(100dvh-65px)] w-[340px] shrink-0 self-start border-r border-rep-divider">
           <ReportsPage embedded currentId={report.id} />
         </aside>
       )}
