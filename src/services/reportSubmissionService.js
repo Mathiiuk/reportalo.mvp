@@ -140,7 +140,7 @@ export const createCitizenReport = async ({
           ...toAddressColumns(address),
           // Sin current_state_code a propósito: al insertar la base usa su valor por defecto (RECIBIDO) y,
           // si el envío se reintenta (mismo client_side_id), el upsert no pisa el estado que el reporte ya
-          // tenga (al enviarse pasa solo a En revisión, REP-3798).
+          // tenga (al enviarse pasa solo a En análisis, REP-3798).
         },
         // REP-3810: ignoreDuplicates (ON CONFLICT DO NOTHING) en vez de DO UPDATE. El ciudadano solo tiene
         // policy de INSERT en citizen_reports: ante un client_side_id ya existente, DO UPDATE lo rechazaba

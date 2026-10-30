@@ -57,7 +57,7 @@ export const FAQ_ITEMS = [
     id: 'seguimiento',
     question: '¿Cómo sigo el estado de mi reporte?',
     answer: [
-      'Entrá a **Mis reportes**. Cada reporte muestra su estado (Enviado, En revisión, Derivado, Escalado, En discrepancia, Resuelto o Desestimado) y su recorrido. Los cambios de estado también aparecen en tus notificaciones.',
+      'Entrá a **Mis reportes**. Cada reporte muestra su estado (Recibido, En análisis, Derivado, Escalado, En discrepancia, Resuelto o Desestimado) y su recorrido. Los cambios de estado también aparecen en tus notificaciones.',
     ],
   },
   {

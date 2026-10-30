@@ -50,7 +50,7 @@ const reporte = (id, stateCode = 'EN_ANALISIS', extra = {}) => ({
   description: `Descripción del reporte ${id}.`,
   category: 'Tránsito',
   categoryIcon: 'car_crash',
-  status: 'En revisión',
+  status: 'En análisis',
   stateCode,
   pinColor: '#1E6FCB',
   coordinates: [-58.4, -34.6],

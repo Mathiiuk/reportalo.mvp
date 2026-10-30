@@ -86,24 +86,24 @@ export const OnboardingPage = () => {
         'Vas viendo en qué estado está tu reclamo, quién lo tiene que resolver y qué fundamento legal lo respalda.',
       renderIllustration: (heightClass) => (
         <div className={`${heightClass} rounded-[20px] bg-rep-accent-soft border border-rep-border flex flex-col justify-center gap-2.5 px-7 shadow-inner text-left`}>
-          {/* 1. Enviado */}
+          {/* 1. Recibido */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full bg-rep-success flex items-center justify-center text-white flex-shrink-0">
               <Check className="w-[12px] h-[12px]" strokeWidth={3} />
             </span>
             <span className="font-bold text-[12px] text-rep-ink">
-              Enviado
+              Recibido
             </span>
           </div>
           <div className="w-[2px] h-[12px] bg-[#CFD8E2] ml-2 -my-1" />
 
-          {/* 2. En revisión */}
+          {/* 2. En análisis */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full bg-rep-accent flex items-center justify-center text-white flex-shrink-0">
               <Eye className="w-[12px] h-[12px]" strokeWidth={2.5} />
             </span>
             <span className="font-bold text-[12px] text-rep-ink">
-              En revisión
+              En análisis
             </span>
           </div>
           <div className="w-[2px] h-[12px] bg-[#CFD8E2] ml-2 -my-1" />

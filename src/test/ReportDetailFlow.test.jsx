@@ -207,7 +207,7 @@ describe('REP-3789: detalle del reporte y fundamento jurídico', () => {
     // los traduce a las etiquetas del §10 del UJ v3.3 (H-23).
     getReportDetail.mockResolvedValue({ success: true, data: { ...baseReport, current_state_code: 'EN_ANALISIS' } });
     renderPage();
-    expect(await screen.findByTestId('status-pill')).toHaveTextContent('En revisión');
+    expect(await screen.findByTestId('status-pill')).toHaveTextContent('En análisis');
   });
 
   it('UT-DET-07b: un reporte desestimado se muestra como Desestimado (REP-3001), no como en curso', async () => {

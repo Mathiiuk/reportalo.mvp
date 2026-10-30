@@ -238,8 +238,8 @@ export const getReportTakenEvent = async (reportId) => {
  * La fuente de verdad pasó a ser src/components/report/reportStatus.js, que
  * traduce los códigos de la base a las etiquetas del §10:
  *
- *   RECIBIDO     -> Enviado
- *   EN_ANALISIS  -> En revisión
+ *   RECIBIDO     -> Enviado (REP-3001: hoy «Recibido», la misma etiqueta que el panel)
+ *   EN_ANALISIS  -> En revisión (REP-3001: hoy «En análisis»)
  *   DERIVADO     -> Notificado al responsable (REP-3001: hoy «Derivado», la misma etiqueta que el panel)
  *   RESUELTO     -> Resuelto
  *   DESESTIMADO  -> Descartado (cierre alternativo; REP-3001: hoy «Desestimado»)

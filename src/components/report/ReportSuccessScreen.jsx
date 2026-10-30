@@ -7,13 +7,13 @@ import { normalizeReportState } from './reportStatus';
 import { routeReport, describeRoutingDestination } from '../../services/reportRoutingService';
 import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
 
-// El acuse se entera más rápido que el detalle: el paso a «En revisión» ocurre a los pocos segundos del envío
+// El acuse se entera más rápido que el detalle: el paso a «En análisis» ocurre a los pocos segundos del envío
 const SUCCESS_POLL_INTERVAL_MS = 5000;
 
 // Tracker alineado a la base (UJ v3.3 §10 «Taxonomía de estados»): un paso por estado real
 const TRACKER_STEPS = [
-  { key: 'enviado', label: 'Enviado' },
-  { key: 'en_revision', label: 'En revisión' },
+  { key: 'enviado', label: 'Recibido' },
+  { key: 'en_revision', label: 'En análisis' },
   { key: 'notificado', label: 'Derivado' },
   { key: 'resuelto', label: 'Resuelto' },
 ];
@@ -21,7 +21,7 @@ const TRACKER_STEPS = [
 // REP-3841: Vulnerabilidad social no se deriva a ningún organismo. El backend la deja en INFORMADO (se le indicó al
 // vecino el canal), así que el recorrido no promete «Derivado» ni «Resuelto».
 const SOCIAL_TRACKER_STEPS = [
-  { key: 'enviado', label: 'Enviado' },
+  { key: 'enviado', label: 'Recibido' },
   { key: 'informado', label: 'Informado' },
 ];
 
@@ -90,7 +90,7 @@ const formatClock = (date) =>
  * envío que originó la aceptación de los términos (REP-3543).
  *
  * `reportId` (opcional): el id del reporte recién creado. Con él, el tracker avanza solo cuando el estado
- * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Enviado» a «En revisión» (REP-3798).
+ * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Recibido» a «En análisis» (REP-3798).
  * También con él se pide el destino a route_report (REP-3845): organismo y canal salen del catálogo aprobado,
  * nunca de la localidad escrita en pantalla. Sin reportId no se muestra ningún organismo.
  *
@@ -110,7 +110,7 @@ export const ReportSuccessScreen = ({
   desktopTopBar = null,
 }) => {
   const isDesktop = useIsDesktopLayout();
-  // Estado en vivo: arranca en Enviado y avanza cuando la base lo cambia
+  // Estado en vivo: arranca en Recibido y avanza cuando la base lo cambia
   const [stateCode, setStateCode] = useState('RECIBIDO');
   useReportStateLive({
     reportId,

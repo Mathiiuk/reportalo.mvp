@@ -91,7 +91,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
 
   it('UT-B3-04: StatusPill muestra la etiqueta del §10 aunque la base use otro código', () => {
     render(<StatusPill state="EN_ANALISIS" />);
-    expect(screen.getByTestId('status-pill')).toHaveTextContent('En revisión');
+    expect(screen.getByTestId('status-pill')).toHaveTextContent('En análisis');
     expect(screen.getByTestId('status-pill')).toHaveAttribute('data-state', 'en_revision');
   });
 
@@ -127,7 +127,7 @@ describe('REP-3791 Bloque 3 · Detalle del reporte y fundamento legal (UJ v3.3 �
     renderDetail();
 
     expect(await screen.findByText('#RP-ABCD1234')).toBeInTheDocument();
-    expect(screen.getByTestId('status-pill')).toHaveTextContent('En revisión');
+    expect(screen.getByTestId('status-pill')).toHaveTextContent('En análisis');
     await waitFor(() => expect(screen.getByTestId('rag-panel')).toHaveAttribute('data-status', 'fundamentado'));
     expect(screen.getByText('Ley 13.927 > Art. 1')).toBeInTheDocument();
     expect(screen.getByTestId('rag-panel-agency')).toHaveTextContent('Policía de Tránsito');
