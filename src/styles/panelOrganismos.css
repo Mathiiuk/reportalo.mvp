@@ -265,7 +265,8 @@
 .op-panel .tl-why { margin-top: 7px; background: var(--rep-surface-2); border: 1px solid var(--rep-border-2); border-radius: 10px; padding: 8px 11px; font: 500 12.5px/1.45 var(--rep-font); color: var(--rep-text-2); }
 .op-panel .tl-why .lbl { margin-right: 7px; font-size: 9px; }
 .op-panel .tl-why dl { margin: 0 0 4px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
-.op-panel .tl-why dt { color: var(--rep-muted); font-weight: 700; }
+.op-panel .tl-why dt { color: var(--rep-muted); font-weight: 700; white-space: nowrap; }
+.op-panel .tl-why dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .op-panel .tl-why dd { margin: 0; }
 .op-panel .note { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; border-radius: 12px; background: var(--rep-surface); border: 1px solid var(--rep-border); font: 500 12px/1.5 var(--rep-font); color: var(--rep-text-3); }
 .op-panel .note .ms { font-size: 17px; color: var(--rep-accent); margin-top: 1px; }
