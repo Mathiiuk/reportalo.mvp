@@ -19,12 +19,14 @@ describe('REP-3001 · mismas etiquetas de estado en el panel y en la app del vec
     );
     expect(getStatusConfig('RECIBIDO').label).toBe('Recibido');
     expect(getStatusConfig('EN_ANALISIS').label).toBe('En análisis');
+    // La lista usa la píldora corta: tampoco puede decir otra cosa que el panel («Notificado» quedó del UJ v3.3)
+    expect(leer('components/report/StatusPill.jsx')).toMatch(/const SHORT_LABELS = \{\};/);
   });
 
   it('UT-3001-E2: el acuse de envío, el onboarding y la ayuda no usan las etiquetas viejas', () => {
     ['components/report/ReportSuccessScreen.jsx', 'pages/OnboardingPage.jsx', 'content/faqContent.js'].forEach((archivo) => {
       const codigo = leer(archivo).replace(/\/\/.*$|\/\*[\s\S]*?\*\/|\{\/\*[\s\S]*?\*\/\}/gm, '');
-      expect(codigo, archivo).not.toMatch(/\bEnviado\b|En revisión/);
+      expect(codigo, archivo).not.toMatch(/\bEnviado\b|En revisión|Notificado/);
     });
     expect(leer('components/report/ReportSuccessScreen.jsx')).toMatch(/label: 'Recibido'/);
     expect(leer('content/faqContent.js')).toMatch(/Recibido, En análisis, Derivado/);

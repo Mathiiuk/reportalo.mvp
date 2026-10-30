@@ -383,7 +383,8 @@ export const getMyReports = async (userId) => {
   const { data, error } = await supabase
     .from('citizen_reports')
     .select(
-      'id, client_side_id, description, current_state_code, created_at, services(service_name), localities(name)'
+      // Diseño v2 (D49): la fila lleva miniatura y la calle con altura (el autor la ve; el mapa público, no)
+      'id, client_side_id, description, current_state_code, created_at, address_street, address_number, services(service_name), localities(name), report_images(id, image_url, created_at)'
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false });

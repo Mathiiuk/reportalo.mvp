@@ -10,8 +10,9 @@ const TONE_CLASS = {
   neutral: 'bg-rep-track text-rep-ink-label',
 };
 
-// En listados largos la píldora usa la forma corta (M17 · D18)
-const SHORT_LABELS = { notificado: 'Notificado' };
+// En listados largos la píldora usa la forma corta (M17 · D18). REP-3001 (reglas §4): Derivado se lee igual que en
+// el panel, también en la lista; ya no hay forma corta distinta («Notificado» quedó del UJ v3.3)
+const SHORT_LABELS = {};
 
 /**
  * Píldora de estado del reporte (componente nombrado en el §10 del UJ v3.3: «StatusPill»).
