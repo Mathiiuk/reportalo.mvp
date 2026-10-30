@@ -17,13 +17,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight, FlaskConical } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getReportDetail, getReportStateHistory, getReportTakenEvent, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
 import { ReportVisualVerification } from '../components/report/ReportVisualVerification';
 import { StatusPill } from '../components/report/StatusPill';
-import { buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
+import { buildOrganismResponse, buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
 import { routeReport } from '../services/reportRoutingService';
 import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../services/socialAssistanceService';
@@ -34,6 +34,41 @@ import { formatAddress } from '../services/geocodingService';
 import { AppDesktopHeader } from '../components/layout/AppLayout';
 
 const CARD = 'rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:p-5';
+
+// Aclaración de staging debajo de la respuesta (diseño v2, D49 a D52): un organismo de prueba no hace trámite oficial
+const stagingNote = ({ state, agency }) => {
+  if (state === 'escalado') return `Staging: ${agency} registró a quién corresponde, pero el reporte no se envió.`;
+  if (state === 'notificado') return `Staging: la cuenta de ${agency} es de prueba y el reporte no tiene trámite oficial.`;
+  return `Staging: lo marcó la cuenta de prueba de ${agency}.`;
+};
+
+/**
+ * REP-3001 · Respuesta del organismo arriba del seguimiento (D49 a D52): estado, a quién corresponde, motivo textual,
+ * qué organismo de prueba lo marcó y cuándo. Nunca «Resuelto por el Estado» ni «enviado a».
+ */
+const OrganismResponse = ({ response }) => (
+  <section aria-label="Respuesta del organismo" className={`${CARD} flex flex-col gap-1.5`}>
+    <h2 className="m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">{response.label}</h2>
+    {response.summary && <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">{response.summary}</p>}
+    {response.escalatedTo && (
+      <p className="m-0 text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{`Corresponde a: ${response.escalatedTo}`}</p>
+    )}
+    {response.contact && <p className="m-0 text-rep-label text-rep-ink-body desktop:text-rep-label-d">{`Contacto: ${response.contact}`}</p>}
+    {response.reason && <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">{`«${response.reason}»`}</p>}
+    {response.reason && (response.agency || response.date) && (
+      <p className="m-0 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">{[response.agency, response.date].filter(Boolean).join(' · ')}</p>
+    )}
+    {response.state === 'descartado' && (
+      <p className="m-0 text-rep-label text-rep-ink-body desktop:text-rep-label-d">Si el problema sigue, podés hacer un reporte nuevo con otra foto.</p>
+    )}
+    {response.isTest && response.agency && (
+      <p className="m-0 mt-1 flex items-start gap-2 rounded-xl bg-rep-bg px-3 py-2 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
+        <FlaskConical aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+        <span>{stagingNote(response)}</span>
+      </p>
+    )}
+  </section>
+);
 
 const isServerImage = (url) => /^https?:\/\//i.test(String(url ?? ''));
 
@@ -323,13 +358,17 @@ export const ReportDetailPage = () => {
   const isOwner = isOwnedBy(report, user?.id);
   const activePhoto = images[activePhotoIndex] ?? images[0] ?? null;
   const state = normalizeReportState(report.current_state_code);
-  const timeline = buildTimeline({
+  const response = isOwner ? buildOrganismResponse({ currentState: report.current_state_code, history: stateHistory, taken: takenEvent }) : null;
+  const builtTimeline = buildTimeline({
     currentState: report.current_state_code,
     createdAt: report.created_at,
     history: stateHistory,
     taken: takenEvent,
     socialAssistance: isSocialAssistance,
   });
+  // El motivo y el destino de la última decisión ya están en la respuesta: no se repiten en el seguimiento (D50)
+  const repeated = response?.reason ? builtTimeline.map((step) => step.note).lastIndexOf(response.reason) : -1;
+  const timeline = builtTimeline.map((step, index) => (index === repeated ? { ...step, note: null, detail: null } : step));
   const locationLabel =
     report.localities?.name ||
     (typeof report.latitud === 'number'
@@ -484,6 +523,10 @@ export const ReportDetailPage = () => {
                   {addressLabel}
                 </span>
                 <span className="block truncate text-rep-label text-rep-ink-muted">{locationLabel}</span>
+                {/* REP-3843 §8 (D49): el autor ve la altura; el mapa público, no */}
+                {isOwner && report.address_street && (
+                  <span className="mt-1 block text-rep-label text-rep-ink-muted">Vos ves calle y altura. En el mapa público se ve sin altura.</span>
+                )}
               </div>
             </div>
 
@@ -519,6 +562,8 @@ export const ReportDetailPage = () => {
 
           {isOwner && (
             <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
+              {/* D50: la decisión del organismo va primero */}
+              {response && <OrganismResponse response={response} />}
               <ReportAiAnalysisPanel
                 analysis={analysis}
                 loading={loadingAnalysis}
@@ -530,60 +575,59 @@ export const ReportDetailPage = () => {
             </div>
           )}
 
-          <section
-            data-testid="report-timeline"
-            aria-label="Historial del reporte"
-            className={`${CARD} order-4 desktop:order-none desktop:col-start-2 desktop:row-start-3`}
-          >
-            <ol className="m-0 flex list-none flex-col p-0">
-              {timeline.map((step, index) => {
-                const isLast = index === timeline.length - 1;
-                return (
-                  <li
-                    key={step.key}
-                    data-testid={`timeline-step-${step.key}`}
-                    data-reached={String(Boolean(step.done))}
-                    aria-current={step.current ? 'step' : undefined}
-                    className="relative flex gap-3 pb-4 last:pb-0"
-                  >
-                    {!isLast && (
-                      <span
-                        aria-hidden="true"
-                        className={`absolute left-[11px] top-7 h-[calc(100%-24px)] w-[2px] ${step.done && timeline[index + 1]?.done ? 'bg-rep-success/50' : 'bg-rep-track'}`}
-                      />
-                    )}
-                    {step.discarded ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-track text-rep-ink-label">
-                        <Ban aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      </span>
-                    ) : step.current && !['enviado', 'resuelto', 'informado'].includes(step.key) ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent">
-                        <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      </span>
-                    ) : step.done ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent">
-                        <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={3} />
-                      </span>
-                    ) : (
-                      <span aria-hidden="true" className="relative h-6 w-6 shrink-0 rounded-full border-2 border-rep-track bg-rep-surface" />
-                    )}
-                    <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
-                      <span
-                        className={`text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
-                      >
-                        {step.label}
-                      </span>
-                      {(step.date || step.detail || step.note) && (
-                        <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
-                          {[step.date, step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
-                        </span>
+          <div className="order-4 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-3 desktop:gap-4">
+            <section data-testid="report-timeline" aria-label="Historial del reporte" className={CARD}>
+              <p className="m-0 mb-3 text-[11px] font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">Seguimiento</p>
+              <ol className="m-0 flex list-none flex-col p-0">
+                {timeline.map((step, index) => {
+                  const isLast = index === timeline.length - 1;
+                  return (
+                    <li
+                      key={step.key}
+                      data-testid={`timeline-step-${step.key}`}
+                      data-reached={String(Boolean(step.done))}
+                      aria-current={step.current ? 'step' : undefined}
+                      className="relative flex gap-3 pb-4 last:pb-0"
+                    >
+                      {!isLast && (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute left-[11px] top-7 h-[calc(100%-24px)] w-[2px] ${step.done && timeline[index + 1]?.done ? 'bg-rep-success/50' : 'bg-rep-track'}`}
+                        />
                       )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+                      {step.discarded ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-track text-rep-ink-label">
+                          <Ban aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : step.current && !['enviado', 'resuelto', 'informado'].includes(step.key) ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent">
+                          <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : step.done ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent">
+                          <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={3} />
+                        </span>
+                      ) : (
+                        <span aria-hidden="true" className="relative h-6 w-6 shrink-0 rounded-full border-2 border-rep-track bg-rep-surface" />
+                      )}
+                      <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
+                        <span
+                          className={`text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
+                        >
+                          {step.label}
+                        </span>
+                        {(step.date || step.detail || step.note) && (
+                          <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
+                            {[step.date, step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          </div>
         </div>
       </div>
 
