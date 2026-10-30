@@ -1,4 +1,5 @@
 -- REP-3843 · Reportes anteriores a la cola de geocodificación
+-- APLICADA en staging el 30/10/2026 (versión 20261030125132): 484 reportes en la cola.
 --
 -- La geocodificación en la base (20261029131108) solo encola los reportes nuevos. Los guardados antes quedaron sin calle
 -- y el panel los muestra como «Dirección no disponible» (revisión del diseño de Iván, 30/10). Entran a la misma cola:
