@@ -1,4 +1,5 @@
 -- REP-3747 · La app no puede escribir en profiles (revisión de seguridad del 30/10)
+-- APLICADA en staging el 30/10/2026 (versión 20261030152556): anon y authenticated quedan solo con SELECT.
 --
 -- Ser operador depende de profiles.role = 'organismo' y profiles.agency_id, que asigna una persona del equipo. Hoy un
 -- vecino no puede cambiarlos solo porque profiles no tiene ninguna política de escritura (solo «read own profile»).
