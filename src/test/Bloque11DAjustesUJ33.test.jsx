@@ -74,9 +74,12 @@ describe('REP-3791 Bloque 11-D · Ajustes finos', () => {
     expect(code).toHaveTextContent('#RP-A1B2C3D4');
     expect(category).toHaveTextContent('Tránsito');
     expect(code.compareDocumentPosition(category) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(row).toHaveTextContent('Wilde · 09/08');
-    // La descripción no es el título de la fila (queda como texto de ayuda)
-    expect(row).not.toHaveTextContent('Bache profundo en la esquina');
+    // REP-3001 · diseño v2 de Iván (D49): reemplaza la fila de M17. «#RP · Categoría» con la fecha, la descripción
+    // como título y abajo el lugar
+    expect(code).toHaveTextContent('#RP-A1B2C3D4 · Tránsito');
+    expect(row).toHaveTextContent('09/08');
+    expect(row).toHaveTextContent('Bache profundo en la esquina');
+    expect(row).toHaveTextContent('Wilde');
   });
 
   it('UT-B11D-03: M19 marca «Sin aceptar» cuando todavía no se aceptaron los términos', async () => {

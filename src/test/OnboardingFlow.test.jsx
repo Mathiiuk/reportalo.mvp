@@ -46,7 +46,7 @@ describe('REP-3519: Flujo de Onboarding Ciudadano de 3 Pasos', () => {
       expect(screen.getByRole('heading', { name: /Seguí cada reporte/i })).toBeInTheDocument();
       expect(screen.getByText(/Recibido/i)).toBeInTheDocument();
       expect(screen.getByText(/En análisis/i)).toBeInTheDocument();
-      expect(screen.getByText(/Notificado/i)).toBeInTheDocument();
+      expect(screen.getByText(/Derivado/i)).toBeInTheDocument();
       expect(screen.getByText(/Resuelto/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Empezar/i })).toBeInTheDocument();
     });

@@ -148,13 +148,18 @@ export const buildTimeline = ({ currentState, createdAt, history = [], socialAss
   const steps = TRACKER_STEPS.map((state, index) => {
     const entry = lastEntryFor(state);
     const done = index <= reachedIndex;
+    // Diseño v2 (D49): Derivado dice a qué bandeja llegó; el texto de la entrega interna lo arma la base
+    const inbox = state === 'notificado' ? entry?.notes?.match(/operador de prueba de (.+?)\. Ningún/)?.[1] : null;
     return {
       key: state,
-      label: REPORT_STATUS[state].label,
+      // Hasta que el organismo decide, el último paso no promete «Resuelto»: puede terminar en otro estado (D49)
+      label: state === 'resuelto' && !done ? 'Respuesta del organismo' : REPORT_STATUS[state].label,
       done,
       current: !isExtra && index === reachedIndex,
       date: formatShortDateTime(entry?.changed_at ?? (state === 'enviado' ? createdAt : null)),
-      note: entry?.notes || null,
+      detail: inbox ? `Bandeja de ${inbox}` : null,
+      // Los registros automáticos («Análisis automático en curso», la entrega interna) son textos internos
+      note: entry?.actor_type === 'sistema' ? null : entry?.notes || null,
     };
   });
 

@@ -108,11 +108,11 @@ export const OnboardingPage = () => {
           </div>
           <div className="w-[2px] h-[12px] bg-[#CFD8E2] ml-2 -my-1" />
 
-          {/* 3. Notificado */}
+          {/* 3. Derivado */}
           <div className="flex items-center gap-2.5">
             <span className="w-[18px] h-[18px] rounded-full border-2 border-[#CFD8E2] flex-shrink-0" />
             <span className="font-bold text-[12px] text-rep-ink-faint">
-              Notificado
+              Derivado
             </span>
           </div>
           <div className="w-[2px] h-[12px] bg-[#CFD8E2] ml-2 -my-1" />

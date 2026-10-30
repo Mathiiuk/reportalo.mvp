@@ -17,7 +17,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight, FlaskConical } from 'lucide-react';
+import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight, FlaskConical, ShieldCheck } from 'lucide-react';
+import { ReportsPage } from './ReportsPage';
 import { useAuth } from '../hooks/useAuth';
 import { getReportDetail, getReportStateHistory, getReportTakenEvent, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
@@ -71,6 +72,14 @@ const OrganismResponse = ({ response }) => (
 );
 
 const isServerImage = (url) => /^https?:\/\//i.test(String(url ?? ''));
+
+// Diseño v2 (D49): la foto lleva la marca de protegida (rostros y patentes difuminados) sobre la imagen
+const ProtectedBadge = () => (
+  <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(20,30,45,.74)] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[.4px] text-white">
+    <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+    Foto protegida
+  </span>
+);
 
 // El pie de las fotos solo promete anonimización si todas vienen del servidor:
 // una URL local (blob:) no pasó por el pipeline de cuarentena (H-25).
@@ -406,12 +415,22 @@ export const ReportDetailPage = () => {
       {/* D17 (REP-3791 Bloque 11-B): barra global de la app. En teléfono (M16) no va: la pantalla
           tiene su propia cabecera con «volver». */}
       {isDesktop && <AppDesktopHeader activeTab="reportes" className="sticky top-0 flex" />}
-      <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-6 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:max-w-[1200px] desktop:px-10 desktop:py-8">
+      <div className="flex flex-1">
+      {/* Diseño v2 (D49): en escritorio, la lista de Mis reportes queda a la izquierda del reporte abierto */}
+      {isDesktop && isOwner && (
+        <aside className="w-[340px] shrink-0 border-r border-rep-divider">
+          <ReportsPage embedded currentId={report.id} />
+        </aside>
+      )}
+      <div className="mx-auto w-full min-w-0 max-w-lg flex-1 px-4 pb-6 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:max-w-[1200px] desktop:px-10 desktop:py-8">
         {/* Cabecera de teléfono (M16): volver + número + estado */}
         {!isDesktop && (
           <header className="flex items-center gap-1 py-2">
             <BackButton className="-ml-2" />
-            <h1 className="m-0 flex-1 text-rep-title text-rep-ink">{reportCode}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="m-0 text-rep-title text-rep-ink">{reportCode}</h1>
+              <span className="block truncate text-rep-label text-rep-ink-muted">{categoryName}</span>
+            </div>
             <StatusPill state={report.current_state_code} />
           </header>
         )}
@@ -446,13 +465,14 @@ export const ReportDetailPage = () => {
                           type="button"
                           onClick={() => setViewerIndex(idx)}
                           aria-label={`Ver foto ${idx + 1} completa`}
-                          className={`rep-focus block overflow-hidden ${
+                          className={`rep-focus relative block overflow-hidden ${
                             isCarousel
                               ? 'w-[45%] shrink-0 snap-start rounded-xl'
                               : `w-full rounded-xl ${images.length === 1 ? 'col-span-2' : ''}`
                           }`}
                         >
                           <ReportPhoto src={img.image_url} alt={`Foto ${idx + 1} del reporte`} className="h-32 w-full" />
+                          {idx === 0 && isServerImage(img.image_url) && <ProtectedBadge />}
                         </button>
                       ))}
                     </div>
@@ -464,7 +484,7 @@ export const ReportDetailPage = () => {
                         type="button"
                         onClick={() => activePhoto && setViewerIndex(activePhotoIndex)}
                         aria-label={`Ver foto ${activePhotoIndex + 1} completa`}
-                        className="rep-focus block overflow-hidden rounded-2xl"
+                        className="rep-focus relative block overflow-hidden rounded-2xl"
                       >
                         <ReportPhoto
                           key={activePhoto?.id}
@@ -472,6 +492,7 @@ export const ReportDetailPage = () => {
                           alt={`Foto ${activePhotoIndex + 1} del reporte`}
                           className="h-[300px] w-full"
                         />
+                        {isServerImage(activePhoto?.image_url) && <ProtectedBadge />}
                       </button>
                       <div className="flex items-center gap-2">
                         {images.map((img, idx) => (
@@ -507,7 +528,7 @@ export const ReportDetailPage = () => {
             {/* Categoría y descripción. El mockup de M16 no las dibuja, pero sin
                 ellas el ciudadano no puede leer lo que él mismo reportó: se
                 conservan de REP-3789 y se restilan con los tokens del UJ v3.3. */}
-            <div className={`${CARD} order-2 flex flex-col gap-1.5 desktop:order-none`}>
+            <div className={`${CARD} order-5 flex flex-col gap-1.5 desktop:order-none`}>
               <span className="text-rep-label font-bold text-rep-ink-label desktop:text-rep-label-d">
                 {categoryName}
               </span>
@@ -516,7 +537,7 @@ export const ReportDetailPage = () => {
               </p>
             </div>
 
-            <div className={`${CARD} order-5 flex items-center gap-2.5 desktop:order-none`}>
+            <div className={`${CARD} order-2 flex items-center gap-2.5 desktop:order-none`}>
               <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} />
               <div className="min-w-0">
                 <span data-testid="report-detail-address" className="block truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">
@@ -557,25 +578,14 @@ export const ReportDetailPage = () => {
               <BackButton className="-ml-3" />
               <h1 className="m-0 text-rep-title-d text-rep-ink">{reportCode}</h1>
               <StatusPill state={report.current_state_code} />
+              <span className="text-rep-body-d text-rep-ink-muted">{`· ${categoryName}`}</span>
             </div>
           )}
 
-          {isOwner && (
-            <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
-              {/* D50: la decisión del organismo va primero */}
-              {response && <OrganismResponse response={response} />}
-              <ReportAiAnalysisPanel
-                analysis={analysis}
-                loading={loadingAnalysis}
-                error={analysisError}
-                socialChannel={socialChannel.channel}
-                socialChannelLoading={socialChannel.loading}
-              />
-              <ReportVisualVerification results={imageAnalyses} images={images} categoryName={categoryName} />
-            </div>
-          )}
 
-          <div className="order-4 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-3 desktop:gap-4">
+          <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
+            {/* D50: la decisión del organismo va primero */}
+            {response && <OrganismResponse response={response} />}
             <section data-testid="report-timeline" aria-label="Historial del reporte" className={CARD}>
               <p className="m-0 mb-3 text-[11px] font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">Seguimiento</p>
               <ol className="m-0 flex list-none flex-col p-0">
@@ -610,15 +620,18 @@ export const ReportDetailPage = () => {
                       ) : (
                         <span aria-hidden="true" className="relative h-6 w-6 shrink-0 rounded-full border-2 border-rep-track bg-rep-surface" />
                       )}
-                      <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
-                        <span
-                          className={`text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
-                        >
-                          {step.label}
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
+                        <span className="flex items-baseline gap-2">
+                          <span
+                            className={`min-w-0 flex-1 text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
+                          >
+                            {step.label}
+                          </span>
+                          {step.date && <span className="shrink-0 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">{step.date}</span>}
                         </span>
-                        {(step.date || step.detail || step.note) && (
+                        {(step.detail || step.note) && (
                           <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
-                            {[step.date, step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
+                            {[step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
                           </span>
                         )}
                       </div>
@@ -628,7 +641,22 @@ export const ReportDetailPage = () => {
               </ol>
             </section>
           </div>
+
+          {isOwner && (
+            <div className="order-4 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-3 desktop:gap-4">
+              {/* Matías, 30/10: el diseño v2 no los dibuja; quedan debajo del seguimiento */}
+              <ReportAiAnalysisPanel
+                analysis={analysis}
+                loading={loadingAnalysis}
+                error={analysisError}
+                socialChannel={socialChannel.channel}
+                socialChannelLoading={socialChannel.loading}
+              />
+              <ReportVisualVerification results={imageAnalyses} images={images} categoryName={categoryName} />
+            </div>
+          )}
         </div>
+      </div>
       </div>
 
       {viewerIndex !== null && (

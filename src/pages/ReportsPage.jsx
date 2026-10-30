@@ -10,6 +10,8 @@ import { isClosedState, formatReportCode, formatListDate } from '../components/r
 import { StatusPill } from '../components/report/StatusPill';
 import { EmptyState } from '../components/common/EmptyState';
 import { getAllPendingSyncReports } from '../services/offlineStorageService';
+import { signEvidenceImages } from '../services/reportDetailService';
+import { formatAddress } from '../services/geocodingService';
 
 // Insignias del listado. El agrupamiento sale de reportStatus (fuente única de
 // verdad, REP-3791 Bloque 3), que traduce los códigos reales de la base
@@ -26,12 +28,17 @@ const OPEN_BADGE = { status: 'En curso', statusColor: 'bg-[#FFF6E9] text-[#E08A0
 export const REPORTS_POLL_INTERVAL_MS = 20000;
 
 // Adapta una fila real de citizen_reports al formato de tarjeta ya usado por el listado (REP-2500).
-// UJ v3.3 · M17 / D18 (REP-3791 Bloque 11-D): la fila muestra el número («#RP-2048»), debajo la
-// categoría (destacada para que se lea de un vistazo) y abajo el lugar con la fecha corta («Wilde · 09/08»).
+// Diseño v2 de Iván (D49 a D52, REP-3001): miniatura, «#RP · Categoría» con la fecha, la descripción y la calle
+// con altura, que el autor ve (REP-3843 §8). Sin calle, el barrio.
 const mapReportRow = (row) => {
   const badge = isClosedState(row.current_state_code) ? CLOSED_BADGE : OPEN_BADGE;
   const category = row.services?.service_name || 'Sin categoría';
+  const firstImage = [...(row.report_images ?? [])].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0] ?? null;
+  const street = row.address_street?.trim()
+    ? formatAddress({ street: row.address_street, number: row.address_number }, { withNumber: true })
+    : null;
   return {
+    image: firstImage,
     id: row.id,
     stateCode: row.current_state_code,
     code: formatReportCode(row.id),
@@ -41,12 +48,18 @@ const mapReportRow = (row) => {
     status: badge.status,
     statusColor: badge.statusColor,
     date: formatListDate(row.created_at),
-    address: row.localities?.name || 'Localidad sin especificar',
+    address: [street, row.localities?.name].filter(Boolean).join(', ') || 'Localidad sin especificar',
   };
 };
 
-export const ReportsPage = () => {
+/**
+ * @param {{ embedded?: boolean, currentId?: string }} props embedded: la lista al lado del reporte abierto, en
+ *   escritorio (D49), sin la cabecera ni la barra de la app; currentId: el reporte que se está viendo.
+ */
+export const ReportsPage = ({ embedded = false, currentId = null }) => {
   const navigate = useNavigate();
+  // Miniaturas firmadas por reporte (el bucket de evidencias es privado)
+  const [thumbs, setThumbs] = useState({});
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [myReports, setMyReports] = useState([]);
@@ -133,6 +146,23 @@ export const ReportsPage = () => {
 
   const currentReports = myReports;
 
+  // Firma de las miniaturas: una sola llamada para todas las que falten
+  useEffect(() => {
+    const pending = myReports.filter((r) => r.image && !(r.id in thumbs));
+    if (pending.length === 0) return undefined;
+    let isMounted = true;
+    signEvidenceImages(pending.map((r) => r.image))
+      .then((signed) => {
+        if (!isMounted) return;
+        const byImage = new Map(signed.map((img) => [img.id, img.image_url]));
+        setThumbs((prev) => ({ ...prev, ...Object.fromEntries(pending.map((r) => [r.id, byImage.get(r.image.id) ?? null])) }));
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [myReports, thumbs]);
+
   const filteredReports = currentReports.filter((r) => {
     if (activeFilter === 'todos') return true;
     if (activeFilter === 'en curso') return r.status === 'En curso';
@@ -152,13 +182,18 @@ export const ReportsPage = () => {
 
   const showDrafts = pendingDrafts.length > 0 && activeFilter !== 'concluidos';
 
-  return (
-    <AppLayout activeTab="reportes">
-      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+  const body = (
+        <div className={embedded ? 'flex w-full flex-col gap-4' : 'mx-auto flex w-full max-w-5xl flex-col gap-4'}>
           {/* Título y filtros: apilados en el teléfono (M17), en una sola fila en escritorio (D18) */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-          <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
+          <div className={`flex flex-col gap-4 ${embedded ? '' : 'md:flex-row md:items-center md:gap-6'}`}>
+          <div>
+            {embedded ? (
+              <h2 className="m-0 text-rep-title text-rep-ink">Mis reportes</h2>
+            ) : (
+              <h1 className="m-0 text-rep-title text-rep-ink md:text-rep-title-d">Mis reportes</h1>
+            )}
+            <p className="m-0 mt-0.5 text-rep-label text-rep-ink-muted md:text-rep-label-d">Tus reportes y su estado</p>
+          </div>
 
           {/* Filtros con recuento (M17 · D18) */}
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
@@ -262,39 +297,62 @@ export const ReportsPage = () => {
                 <li key={report.id}>
                   <motion.button
                     type="button"
-                    whileHover={{ y: -2 }}
+                    whileHover={embedded ? undefined : { y: -2 }}
                     onClick={() => navigate(`/reportes/${report.id}`)}
                     data-testid="report-row"
-                    className="rep-focus flex w-full items-start gap-3 rounded-2xl border border-rep-border bg-rep-surface p-4 text-left shadow-rep-card transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] md:items-center"
+                    aria-current={report.id === currentId ? 'page' : undefined}
+                    className={`rep-focus flex w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition-[filter] duration-120 hover:brightness-[.98] dark:hover:brightness-[1.04] ${
+                      report.id === currentId ? 'border-rep-accent bg-rep-accent-soft' : 'border-rep-border bg-rep-surface shadow-rep-card'
+                    }`}
                   >
+                    {/* Miniatura de la foto ya protegida (D49) */}
+                    <span className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-rep-divider">
+                      {thumbs[report.id] && <img src={thumbs[report.id]} alt="" className="h-full w-full object-cover" />}
+                    </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5" title={report.description || undefined}>
-                      <span data-testid="report-row-code" className="block truncate text-rep-label font-semibold text-rep-ink-muted md:text-rep-label-d">
-                        {report.code}
+                      <span className="flex items-baseline gap-2">
+                        <span data-testid="report-row-code" className="min-w-0 flex-1 truncate text-rep-label font-semibold text-rep-ink-muted md:text-rep-label-d">
+                          {report.title}
+                        </span>
+                        {report.date && <span className="shrink-0 text-rep-label text-rep-ink-faint">{report.date}</span>}
                       </span>
-                      <span data-testid="report-row-category" className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">
+                      <span data-testid="report-row-category" className="sr-only">
                         {report.category}
                       </span>
-                      <span className="block truncate text-rep-label text-rep-ink-muted md:text-rep-label-d">
-                        {report.address}
-                        {report.date ? ` · ${report.date}` : ''}
+                      <span className="block truncate text-rep-body font-bold text-rep-ink md:text-rep-body-d">
+                        {report.description || report.category}
+                      </span>
+                      <span className="block truncate text-rep-label text-rep-ink-muted md:text-rep-label-d">{report.address}</span>
+                      <span className="mt-1">
+                        {report.stateCode ? (
+                          <StatusPill state={report.stateCode} short />
+                        ) : (
+                          <span className="rounded-lg bg-rep-accent-soft px-2.5 py-1 text-rep-pill uppercase tracking-wide text-rep-accent">
+                            {report.status}
+                          </span>
+                        )}
                       </span>
                     </span>
-
-                    {report.stateCode ? (
-                      <StatusPill state={report.stateCode} short className="shrink-0" />
-                    ) : (
-                      <span className="shrink-0 rounded-lg bg-rep-accent-soft px-2.5 py-1 text-rep-pill uppercase tracking-wide text-rep-accent">
-                        {report.status}
-                      </span>
-                    )}
-                    <ChevronRight aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-rep-ink-faint md:block" />
+                    {!embedded && <ChevronRight aria-hidden="true" className="hidden h-4 w-4 shrink-0 self-center text-rep-ink-faint md:block" />}
                   </motion.button>
                 </li>
               ))}
             </ul>
           )}
         </div>
-      </div>
+  );
+
+  if (embedded) {
+    return (
+      <nav aria-label="Mis reportes" className="h-full overflow-y-auto bg-rep-surface px-4 py-5">
+        {body}
+      </nav>
+    );
+  }
+
+  return (
+    <AppLayout activeTab="reportes">
+      <div className="flex-1 overflow-y-auto bg-rep-bg px-4 pb-28 pt-5 sm:px-6 md:px-10 desktop:pb-10">{body}</div>
     </AppLayout>
   );
 };
