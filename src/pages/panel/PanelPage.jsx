@@ -95,6 +95,7 @@ export const PanelPage = () => {
             key={id}
             id={id}
             agencyName={agency?.name ?? ''}
+            agency={agency}
             inboxHref={inboxHref}
             toast={toast}
             onChanged={reloadInbox}

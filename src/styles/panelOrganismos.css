@@ -377,6 +377,7 @@
 .op-panel.is-case > .top, .op-panel.is-case > .banner { display: none; }
 .op-panel .mbar { display: flex; flex: none; align-items: center; gap: 6px; background: var(--rep-surface); border-bottom: 1px solid var(--rep-border-2); padding: 6px 8px; min-height: 54px; }
 .op-panel .mbar h1 { margin: 0; font: 800 15px var(--rep-font); color: var(--rep-text); white-space: nowrap; }
+.op-panel .mbar .mbar-h { margin: 0 2px 0 0; font: 800 15px var(--rep-font); color: var(--rep-text); white-space: nowrap; }
 .op-panel .mbar .badge { font-size: 8.5px; padding: 3px 7px; }
 .op-panel .mbanner { display: flex; }
 .op-panel .detail-scroll { padding: 12px 14px 18px; gap: 10px; }
