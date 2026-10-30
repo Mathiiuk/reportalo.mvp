@@ -118,9 +118,9 @@ export const PanelTopBar = ({ agency, email, onSignOut, inboxHref = '/panel' }) 
 };
 
 /** Franja de staging: solo para organismos marcados de prueba en la base (agencies.is_test). */
-export const TestBanner = ({ agency }) =>
+export const TestBanner = ({ agency, className = '' }) =>
   agency?.is_test ? (
-    <div className="banner" role="note">
+    <div className={`banner${className ? ` ${className}` : ''}`} role="note">
       <Ms name="science" />
       <span>
         Organismo de prueba en staging.<span className="long"> Ningún reporte de este panel se envía a un municipio real.</span>

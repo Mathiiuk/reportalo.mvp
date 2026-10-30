@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ms } from './PanelShell';
+import { Ms, TestBanner } from './PanelShell';
 import { StateBadge } from './PanelInbox';
 import { PanelCaseMap } from './PanelCaseMap';
 import {
@@ -10,6 +10,7 @@ import {
   STATE_LABEL,
   addressLabel,
   buildPanelTimeline,
+  shortReference,
   caseLabel,
   coordLabel,
   dayWord,
@@ -19,6 +20,10 @@ import {
 } from './panelFormat';
 import { changePanelReportState, getPanelReportDetail, takeReport } from '../../services/panelService';
 import { signEvidenceImages } from '../../services/reportDetailService';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+
+// Teléfono del diseño v2 (M33 a M48): mismo corte que panelOrganismos.css
+const PHONE_QUERY = '(max-width: 767px)';
 
 /*
  * REP-3749 / REP-3001 · Detalle del caso con el diseño de Iván (LEEME §5.2 y §5.3), sobre el contrato de la base:
@@ -64,6 +69,8 @@ const Description = ({ text }) => {
 
 /** Fundamento tal como lo verificó la base: citas y sanciones con la leyenda del PO, o el estado si no hay. */
 const Foundation = ({ foundation }) => {
+  const [open, setOpen] = useState(false);
+  const textId = useId();
   const citations = foundation?.citations ?? [];
   if (foundation?.status !== 'fundamento_preliminar' || citations.length === 0) {
     const text =
@@ -76,31 +83,44 @@ const Foundation = ({ foundation }) => {
   const sanctions = citations.filter((c) => c.foundation_type === 'sancion');
   return (
     <>
+      {/* Diseño D41: una línea por norma. El texto, la fuente y las sanciones (con la leyenda del PO), al desplegar */}
       {norms.map((c, i) => (
-        <div key={`n-${i}`} className="txt">
-          <b>{c.reference}</b>
-          {c.quoted_text && <div>«{c.quoted_text}»</div>}
-          {c.source_url && (
-            <a href={c.source_url} target="_blank" rel="noopener noreferrer">
-              Fuente oficial
-            </a>
-          )}
+        <div key={`r-${i}`} className="txt">
+          <b title={c.reference}>{shortReference(c.reference)}</b>
         </div>
       ))}
-      {sanctions.length > 0 ? (
-        <div className="txt">
-          <div className="hint">{SANCTION_NOTICE}</div>
-          {sanctions.map((c, i) => (
-            <div key={`s-${i}`}>
+      <div className="hint">Análisis automático · lo valida el operador</div>
+      <button type="button" className="link-btn" aria-expanded={open} aria-controls={textId} onClick={() => setOpen((v) => !v)}>
+        {open ? 'Ocultar el texto de las normas' : 'Ver el texto de las normas'}
+      </button>
+      {open && (
+        <div id={textId} className="legal-text">
+          {norms.map((c, i) => (
+            <div key={`n-${i}`} className="txt">
               <b>{c.reference}</b>
               {c.quoted_text && <div>«{c.quoted_text}»</div>}
+              {c.source_url && (
+                <a href={c.source_url} target="_blank" rel="noopener noreferrer">
+                  Fuente oficial
+                </a>
+              )}
             </div>
           ))}
+          {sanctions.length > 0 ? (
+            <div className="txt">
+              <div className="hint">{SANCTION_NOTICE}</div>
+              {sanctions.map((c, i) => (
+                <div key={`s-${i}`}>
+                  <b>{c.reference}</b>
+                  {c.quoted_text && <div>«{c.quoted_text}»</div>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            norms.length > 0 && <div className="hint">{NO_SANCTION}</div>
+          )}
         </div>
-      ) : (
-        norms.length > 0 && <div className="hint">{NO_SANCTION}</div>
       )}
-      <div className="hint">Análisis automático · lo valida el operador</div>
     </>
   );
 };
@@ -204,6 +224,8 @@ const ActionDialog = ({ dialog, report, onChange, onClose, onSubmit }) => {
   return (
     <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !sending && onClose()}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="m-h" ref={ref} onKeyDown={onKeyDown}>
+        {/* En el teléfono el diálogo es una hoja inferior (M36 y M39) */}
+        <div className="grab" aria-hidden="true" />
         <div className="modal-h">
           <div>
             <h2 id="m-h">{type === 'resolve' ? 'Marcar como resuelto' : 'Rechazar el reporte'}</h2>
@@ -389,11 +411,77 @@ const Lightbox = ({ photos, index, onStep, onGo, onClose }) => {
   );
 };
 
+/** Teléfono (M35): el caso se abre encima de la lista, con «volver» y la franja corta de prueba. */
+const MobileBar = ({ inboxHref, agency, children }) => (
+  <>
+    <nav className="mbar" aria-label="Caso abierto">
+      <Link className="icon-btn" to={inboxHref} aria-label="Volver a la bandeja">
+        <Ms name="arrow_back" />
+      </Link>
+      {children}
+    </nav>
+    <TestBanner agency={agency} className="mbanner" />
+  </>
+);
+
+/** Teléfono (M34b): carrusel con contador «1 / 4»; la siguiente foto asoma y los puntos marcan cuál se ve. */
+const PhotoCarousel = ({ photos, onOpen }) => {
+  const ref = useRef(null);
+  const [current, setCurrent] = useState(0);
+  const n = photos.length;
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el?.children.length) return;
+    const step = el.children[0].offsetWidth + 8;
+    setCurrent(Math.min(n - 1, Math.max(0, Math.round(el.scrollLeft / (step || 1)))));
+  };
+  const go = (i) => {
+    const el = ref.current;
+    const target = el?.children[i];
+    if (target) el.scrollTo?.({ left: target.offsetLeft - el.children[0].offsetLeft, behavior: 'smooth' });
+    setCurrent(i);
+  };
+  return (
+    <>
+      <div className="carousel" ref={ref} role="group" aria-label={`Fotos del reporte. Deslizá para ver las ${n}.`} onScroll={onScroll}>
+        {photos.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            className="photo"
+            style={{ backgroundImage: `url('${p.image_url}')` }}
+            aria-label={`Ver la foto ${i + 1} de ${n}`}
+            onClick={() => onOpen(i)}
+          >
+            {i === 0 && (
+              <span className="shield">
+                <Ms name="shield" fill />
+                FOTO PROTEGIDA
+              </span>
+            )}
+            {n > 1 && <span className="count-ph">{`${i + 1} / ${n}`}</span>}
+          </button>
+        ))}
+      </div>
+      {n > 1 && (
+        <div className="dots" role="group" aria-label="Elegir foto">
+          {photos.map((p, i) => (
+            <button key={p.id} type="button" aria-label={`Ir a la foto ${i + 1}`} aria-current={i === current} onClick={() => go(i)} />
+          ))}
+        </div>
+      )}
+      <div className="ph-cap m">{`Rostros y patentes difuminados. ${n > 1 ? 'Las originales no se guardan.' : 'La foto original no se guarda.'}`}</div>
+    </>
+  );
+};
+
 /**
- * @param {{ id: string, agencyName: string, inboxHref: string, toast: Function, onChanged: Function,
+ * @param {{ id: string, agencyName: string, agency?: object, inboxHref: string, toast: Function, onChanged: Function,
  *   onLoaded?: (report: object) => void }} props
  */
-export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoaded }) => {
+export const PanelCase = ({ id, agencyName, agency, inboxHref, toast, onChanged, onLoaded }) => {
+  const phone = useMediaQuery(PHONE_QUERY);
+  const [histOpen, setHistOpen] = useState(false);
   const [state, setState] = useState({ status: 'loading', report: null });
   const [photos, setPhotos] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -506,6 +594,11 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
   if (state.status === 'loading') {
     return (
       <section className="detail" aria-busy="true">
+        {phone && (
+          <MobileBar inboxHref={inboxHref} agency={agency}>
+            <div className="skel" style={{ height: 16, width: 120 }} />
+          </MobileBar>
+        )}
         <div className="detail-scroll">
           <div className="detail-inner">
             <div className="skel" style={{ height: 22, width: 220 }} />
@@ -522,6 +615,11 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
     const notAvailable = state.status === 'not_available';
     return (
       <section className="detail">
+        {phone && (
+          <MobileBar inboxHref={inboxHref} agency={agency}>
+            <span className="mbar-h">Caso</span>
+          </MobileBar>
+        )}
         <div className="placeholder">
           <div className="state err" role="alert">
             <div className="state-ic">
@@ -550,13 +648,15 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
   const canReject = actions.some((s) => s !== 'RESUELTO');
   const canResolve = actions.includes('RESUELTO');
   const canTake = report.state_code === 'DERIVADO';
-  const timeline = buildPanelTimeline({ history: report.history, taken: report.taken, agencyName });
+  const timeline = buildPanelTimeline({ history: report.history, taken: report.taken, agencyName, createdAt: report.created_at });
   const lastFinal = [...(report.history ?? [])].reverse().find((h) => h.state_code === report.state_code);
   const meta =
     final && lastFinal
       ? `${STATE_LABEL[report.state_code]} ${dayWord(lastFinal.changed_at)} · ${hhmm(lastFinal.changed_at)}`
       : `Reportado ${dayWord(report.created_at)} · ${hhmm(report.created_at)}`;
   const hasCoords = typeof report.latitud === 'number' && typeof report.longitud === 'number';
+  // En el teléfono el historial se pliega, salvo con el caso cerrado (M37)
+  const histShown = !phone || final || histOpen;
 
   const descBlock = (
     <div>
@@ -576,8 +676,16 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
 
   return (
     <section className="detail" aria-labelledby="case-h">
+      {phone && (
+        <MobileBar inboxHref={inboxHref} agency={agency}>
+          <span className="mbar-h">{caseLabel(report.case_number)}</span>
+          <StateBadge code={report.state_code} label={report.state_label} />
+          {canTake && report.taken && <StateBadge code="TOMADO" />}
+        </MobileBar>
+      )}
       <div className="detail-scroll">
         <div className="detail-inner">
+          {phone && photos.length > 0 && <PhotoCarousel photos={photos} onOpen={(i) => setLightbox({ i })} />}
           <div className="dhead">
             <div style={{ minWidth: 0 }}>
               <div className="dhead-id">
@@ -586,9 +694,10 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
                 {canTake && report.taken && <StateBadge code="TOMADO" />}
               </div>
               <div className="dtitle">{report.category || 'Sin categoría'}</div>
-              <div className="dmeta">{`${report.report_code} · ${report.category || 'Sin categoría'} · ${meta}`}</div>
+              <div className="dmeta">{`${report.report_code} · ${meta}`}</div>
             </div>
-            {final ? (
+            {/* En el teléfono las acciones van en la barra de abajo */}
+            {phone ? null : final ? (
               <span className="final-chip">
                 <Ms name="lock" />
                 <span>Estado final</span>
@@ -661,7 +770,12 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
             )}
           </section>
 
-          {photos.length > 1 ? (
+          {phone ? (
+            <section className="card desc-2col">
+              {descBlock}
+              {legalBlock}
+            </section>
+          ) : photos.length > 1 ? (
             <>
               <section className="card gallery-card" aria-label="Fotos del reporte">
                 <div className="gallery-h">
@@ -720,16 +834,30 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
             </div>
           )}
 
-          <section className="card tl-card is-open" aria-labelledby="tl-h">
+          <section className={`card tl-card${histShown ? ' is-open' : ''}`} aria-labelledby="tl-h">
             <div className="tl-h">
               <Ms name="history" />
               <h2 id="tl-h">{final ? 'Historial completo' : 'Historial'}</h2>
+              {phone && !final && (
+                <button
+                  type="button"
+                  className="icon-btn tl-toggle"
+                  aria-expanded={histShown}
+                  aria-controls="tl-list"
+                  aria-label={histShown ? 'Ocultar historial' : 'Mostrar historial'}
+                  onClick={() => setHistOpen((v) => !v)}
+                >
+                  <Ms name={histShown ? 'expand_less' : 'expand_more'} />
+                </button>
+              )}
             </div>
-            <ol className="tl" aria-labelledby="tl-h">
-              {timeline.map((item, i) => (
-                <TimelineItem key={`${item.code}-${item.at}-${i}`} item={item} />
-              ))}
-            </ol>
+            {histShown && (
+              <ol className="tl" id="tl-list" aria-labelledby="tl-h">
+                {timeline.map((item, i) => (
+                  <TimelineItem key={`${item.code}-${item.at}-${i}`} item={item} />
+                ))}
+              </ol>
+            )}
           </section>
 
           {final && (
@@ -747,6 +875,36 @@ export const PanelCase = ({ id, agencyName, inboxHref, toast, onChanged, onLoade
           </div>
         </div>
       </div>
+
+      {/* Teléfono (M36): las tres acciones fijas abajo, con los colores de escritorio */}
+      {phone && !final && (
+        <div className="mactions" role="group" aria-label="Acciones del caso">
+          {canReject && (
+            <button type="button" className="btn btn-danger" onClick={(e) => openDialog('reject', e)}>
+              <Ms name="block" />
+              <span>Rechazar</span>
+            </button>
+          )}
+          {canResolve && (
+            <button type="button" className="btn btn-success" onClick={(e) => openDialog('resolve', e)}>
+              <Ms name="task_alt" />
+              <span>Marcar resuelto</span>
+            </button>
+          )}
+          {canTake &&
+            (report.taken ? (
+              <button type="button" className="btn btn-done" disabled>
+                <Ms name="check" />
+                <span>Tomado</span>
+              </button>
+            ) : (
+              <button type="button" className={`btn btn-primary${busy ? ' is-busy' : ''}`} onClick={take} aria-busy={busy}>
+                {busy ? <span className="spin" aria-hidden="true" /> : <Ms name="front_hand" />}
+                <span>{busy ? 'Tomando…' : 'Tomar el caso'}</span>
+              </button>
+            ))}
+        </div>
+      )}
 
       {dialog && (
         <ActionDialog

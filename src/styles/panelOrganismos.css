@@ -205,6 +205,9 @@
 .op-panel .lbl { font: 800 10px var(--rep-font); letter-spacing: .6px; color: var(--rep-muted); text-transform: uppercase; }
 .op-panel .txt { font: 600 13px/1.5 var(--rep-font); color: var(--rep-text-2); margin-top: 3px; text-wrap: pretty; }
 .op-panel .hint { font: 500 11.5px/1.4 var(--rep-font); color: var(--rep-muted); margin-top: 3px; }
+.op-panel .link-btn { margin-top: 6px; padding: 0; border: 0; background: none; font: 700 12px var(--rep-font); color: var(--rep-accent); cursor: pointer; }
+.op-panel .link-btn:hover { color: var(--rep-accent-hover); text-decoration: underline; }
+.op-panel .legal-text { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rep-border-2); }
 .op-panel .mask { font: 700 11px var(--rep-font); color: var(--org-chip-mask-text); background: var(--org-chip-mask); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
 .op-panel .loc { display: flex; align-items: center; gap: 13px; padding: 10px 12px 10px 10px; }
 .op-panel .loc-pin { width: 50px; height: 50px; flex: none; border-radius: 11px; background: var(--rep-accent-soft); color: var(--rep-accent); display: flex; align-items: center; justify-content: center; }
@@ -262,7 +265,8 @@
 .op-panel .tl-why { margin-top: 7px; background: var(--rep-surface-2); border: 1px solid var(--rep-border-2); border-radius: 10px; padding: 8px 11px; font: 500 12.5px/1.45 var(--rep-font); color: var(--rep-text-2); }
 .op-panel .tl-why .lbl { margin-right: 7px; font-size: 9px; }
 .op-panel .tl-why dl { margin: 0 0 4px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
-.op-panel .tl-why dt { color: var(--rep-muted); font-weight: 700; }
+.op-panel .tl-why dt { color: var(--rep-muted); font-weight: 700; white-space: nowrap; }
+.op-panel .tl-why dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .op-panel .tl-why dd { margin: 0; }
 .op-panel .note { display: flex; align-items: flex-start; gap: 9px; padding: 11px 13px; border-radius: 12px; background: var(--rep-surface); border: 1px solid var(--rep-border); font: 500 12px/1.5 var(--rep-font); color: var(--rep-text-3); }
 .op-panel .note .ms { font-size: 17px; color: var(--rep-accent); margin-top: 1px; }
@@ -374,6 +378,7 @@
 .op-panel.is-case > .top, .op-panel.is-case > .banner { display: none; }
 .op-panel .mbar { display: flex; flex: none; align-items: center; gap: 6px; background: var(--rep-surface); border-bottom: 1px solid var(--rep-border-2); padding: 6px 8px; min-height: 54px; }
 .op-panel .mbar h1 { margin: 0; font: 800 15px var(--rep-font); color: var(--rep-text); white-space: nowrap; }
+.op-panel .mbar .mbar-h { margin: 0 2px 0 0; font: 800 15px var(--rep-font); color: var(--rep-text); white-space: nowrap; }
 .op-panel .mbar .badge { font-size: 8.5px; padding: 3px 7px; }
 .op-panel .mbanner { display: flex; }
 .op-panel .detail-scroll { padding: 12px 14px 18px; gap: 10px; }

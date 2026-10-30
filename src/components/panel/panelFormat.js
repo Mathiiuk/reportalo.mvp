@@ -85,10 +85,25 @@ export const CONTACT_MARK = /\[(correo oculto|teléfono oculto)\]/gi;
 export const hasHiddenContact = (text) => new RegExp(CONTACT_MARK.source, 'i').test(text ?? '');
 
 /**
- * Historial del caso para el panel: estados de report_state_history + el evento «tomado», en orden. El organismo
- * aparece solo en acciones de un organismo (la base no manda el operador).
+ * Referencia de la norma en una línea, como en el diseño (D41): «Ley 2148 (CABA), art. 7.1.9, inc. h)». La completa
+ * queda en el texto desplegable. Si no se reconoce el artículo, vuelve como vino.
  */
-export const buildPanelTimeline = ({ history = [], taken = null, agencyName = '' }) => {
+export const shortReference = (reference) => {
+  if (!reference) return '';
+  const [law, rest = ''] = reference.split(/\s+—\s+/);
+  const segments = rest.split(/\s*>\s*/);
+  const article = segments.map((s) => s.match(/^art(?:ículo|iculo|\.)\s*([\w.]+)/i)).find(Boolean);
+  if (!article) return reference;
+  const clause = segments.map((s) => s.match(/^inciso\s+(.+)$/i)).find(Boolean);
+  return [law, `art. ${article[1].replace(/\.$/, '')}`, clause ? `inc. ${clause[1]}` : null].filter(Boolean).join(', ');
+};
+
+/**
+ * Historial del caso para el panel: estados de report_state_history + el evento «tomado», en orden. El organismo
+ * aparece solo en acciones de un organismo (la base no manda el operador). Como en D44, arranca con el alta del
+ * reporte (la base no guarda esa fila) y los registros automáticos van sin motivo: son textos internos.
+ */
+export const buildPanelTimeline = ({ history = [], taken = null, agencyName = '', createdAt = null }) => {
   const label = (entry) =>
     ({
       RECIBIDO: 'Reporte creado',
@@ -107,12 +122,17 @@ export const buildPanelTimeline = ({ history = [], taken = null, agencyName = ''
     code: entry.state_code,
     label: label(entry),
     actor: entry.actor_type === 'organismo' ? entry.agency : null,
-    reason: entry.notes || null,
+    reason: entry.actor_type === 'sistema' ? null : entry.notes || null,
     escalatedTo: entry.escalated_to || null,
     contact: entry.escalated_contact || null,
   }));
   if (taken?.taken_at) {
     items.push({ at: taken.taken_at, kind: 'event', code: 'TOMADO', label: `Tomado por ${taken.agency}`, actor: taken.agency });
   }
-  return items.sort((a, b) => new Date(a.at) - new Date(b.at));
+  items.sort((a, b) => new Date(a.at) - new Date(b.at));
+  // El alta va siempre primero: created_at puede quedar unos milisegundos después del primer estado
+  if (createdAt && !history.some((entry) => entry.state_code === 'RECIBIDO')) {
+    items.unshift({ at: createdAt, kind: 'state', code: 'RECIBIDO', label: 'Reporte creado', actor: null, reason: null, escalatedTo: null, contact: null });
+  }
+  return items;
 };
