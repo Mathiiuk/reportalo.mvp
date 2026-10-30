@@ -81,12 +81,15 @@ describe('REP-3535: Landing institucional Municipios', () => {
     expect(document.getElementById('privacidad').className).toMatch(/scroll-mt-/);
   });
 
-  it('Sin CTA comerciales: no aparecen planes, demo, contratación, «Ingresar» ni la nota de correo oficial', () => {
+  // Matías, 30/10: el diseño v2 de Iván (D40) suma el acceso al panel para organismos (REP-3747). Lo comercial sigue afuera.
+  it('Sin CTA comerciales: no aparecen planes, demo, contratación ni la nota de correo oficial; «Ingresar» solo en el acceso para organismos', () => {
     renderLanding();
 
     const text = document.body.textContent;
-    [/Ver planes/i, /\bPlanes\b/i, /Solicitar una demo/i, /Contratar Reportalo/i, /Ingresar/i, /correo oficial/i, /próximamente/i]
+    [/Ver planes/i, /\bPlanes\b/i, /Solicitar una demo/i, /Contratar Reportalo/i, /correo oficial/i, /próximamente/i]
       .forEach((pattern) => expect(text).not.toMatch(pattern));
+    screen.getByRole('region', { name: 'Ingresar al panel' }).remove();
+    expect(document.body.textContent).not.toMatch(/Ingresar/i);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 
