@@ -212,6 +212,47 @@ export const buildTimeline = ({ currentState, createdAt, history = [], socialAss
   return steps;
 };
 
+// Decisiones del organismo que el vecino ve arriba del seguimiento (reglas §6, diseño v2 D50 a D52)
+const ORGANISM_DECISIONS = ['resuelto', 'descartado', 'escalado', 'en_discrepancia'];
+
+/**
+ * REP-3001 · Respuesta del organismo para «Mis reportes» (diseño v2 de Iván, D49 a D52): el estado, el motivo textual,
+ * a quién corresponde si se escaló, qué organismo de prueba lo marcó y cuándo. Derivado y tomado muestra que llegó a
+ * la bandeja. Sin decisión ni derivación, null.
+ */
+export const buildOrganismResponse = ({ currentState, history = [], taken = null }) => {
+  const current = normalizeReportState(currentState);
+  if (current === 'notificado') {
+    if (!taken?.taken_at) return null;
+    return {
+      state: current,
+      label: REPORT_STATUS[current].label,
+      summary: `Llegó a la bandeja de ${taken.agency || 'un organismo de prueba'}.`,
+      reason: null,
+      escalatedTo: null,
+      contact: null,
+      agency: taken.agency || null,
+      isTest: true,
+      date: formatShortDateTime(taken.taken_at),
+    };
+  }
+  if (!ORGANISM_DECISIONS.includes(current)) return null;
+  const entry = [...history].reverse().find((h) => normalizeReportState(h.state_code) === current);
+  if (!entry) return null;
+  return {
+    state: current,
+    label: REPORT_STATUS[current].label,
+    summary: null,
+    reason: entry.notes || null,
+    escalatedTo: entry.escalated_to || null,
+    contact: entry.escalated_contact || null,
+    agency: entry.agencies?.name || null,
+    isTest: Boolean(entry.agencies?.is_test),
+    date: formatShortDateTime(entry.changed_at),
+    changedAt: entry.changed_at,
+  };
+};
+
 // Estados de cierre del §10. Lo usa el listado de Mis reportes para la insignia.
 export const CLOSED_STATES = ['resuelto', 'descartado', 'informado'];
 
