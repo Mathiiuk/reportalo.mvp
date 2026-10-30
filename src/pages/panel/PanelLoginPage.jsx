@@ -1,52 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Ms, PanelTopBar, useMaterialSymbols } from '../../components/panel/PanelShell';
+import { usePanelSignIn } from '../../components/panel/usePanelSignIn';
 import { useNoIndex } from '../../hooks/useNoIndex';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabaseClient';
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Supabase responde así cuando el correo no tiene cuenta y no se permite crearla
-const NO_ACCOUNT = /signups? not allowed|otp_disabled|user not found/i;
-
-/**
- * REP-3747 · Ingreso del panel (diseño de Iván, D40; decisión 4A de Matías, 29/10).
- *
- * Pide el enlace con shouldCreateUser: false, así un correo nuevo no crea cuenta. La respuesta es siempre la misma:
- * nadie puede averiguar qué correos son de un organismo. Si una cuenta sin organismo entra igual, OperatorRoute la
- * manda a /acceso-restringido (caso 6 de las reglas).
- */
+/** REP-3747 · Ingreso del panel (diseño de Iván, D40). El pedido del enlace vive en usePanelSignIn. */
 export const PanelLoginPage = () => {
   useNoIndex();
   useMaterialSymbols();
   const { session } = useAuth();
-  const [email, setEmail] = useState('');
-  const [step, setStep] = useState('form');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
+  const { email, setEmail, sentTo, step, sending, error, submit, reset } = usePanelSignIn();
 
   if (session) return <Navigate to="/panel" replace />;
-
-  const submit = async (event) => {
-    event.preventDefault();
-    const normalized = email.trim().toLowerCase();
-    if (!EMAIL.test(normalized)) {
-      setError('Escribí un correo válido, por ejemplo nombre@organismo.gob.ar.');
-      return;
-    }
-    setSending(true);
-    setError(null);
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: normalized,
-      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/panel` },
-    });
-    setSending(false);
-    if (otpError && !NO_ACCOUNT.test(`${otpError.message ?? ''} ${otpError.code ?? ''}`)) {
-      setError('No pudimos enviar el enlace. Probá de nuevo en unos minutos.');
-      return;
-    }
-    setStep('sent');
-  };
 
   return (
     <div className="op-panel">
@@ -59,16 +25,13 @@ export const PanelLoginPage = () => {
             </div>
             <h1>Revisá tu correo</h1>
             <p>
-              Si el correo corresponde a un organismo, te llega el enlace a <b>{email.trim().toLowerCase()}</b>. Abrilo desde
+              Si el correo corresponde a un organismo, te llega el enlace a <b>{sentTo}</b>. Abrilo desde
               este dispositivo.
             </p>
             <button
               type="button"
               className="btn btn-ghost btn-block"
-              onClick={() => {
-                setStep('form');
-                setError(null);
-              }}
+              onClick={reset}
             >
               Usar otro correo
             </button>
@@ -95,10 +58,7 @@ export const PanelLoginPage = () => {
                     aria-describedby="login-msg"
                     aria-invalid={error ? 'true' : undefined}
                     value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError(null);
-                    }}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div id="login-msg">
