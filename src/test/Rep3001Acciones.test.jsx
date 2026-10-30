@@ -233,17 +233,18 @@ describe('REP-3001 · acciones', () => {
     const historial = await screen.findByRole('list', { name: /historial/i });
     const items = within(historial).getAllByRole('listitem');
     expect(items.map((li) => li.querySelector('strong').textContent)).toEqual([
+      'Reporte creado',
       'Análisis automático',
       `Entró a la bandeja de ${AGENCIA}`,
       `Tomado por ${AGENCIA}`,
       'Escalado',
     ]);
-    const escalado = items[3];
+    const escalado = items[4];
     expect(within(escalado).getByText(AGENCIA)).toBeInTheDocument();
     expect(within(escalado).getByText('AUSA')).toBeInTheDocument();
     expect(within(escalado).getByText('contacto@ausa.ar')).toBeInTheDocument();
     expect(within(escalado).getByText(/«Es una autopista»/)).toBeInTheDocument();
     // Las entradas del sistema no llevan organismo
-    expect(within(items[0]).queryByText(AGENCIA)).not.toBeInTheDocument();
+    expect(within(items[1]).queryByText(AGENCIA)).not.toBeInTheDocument();
   });
 });
