@@ -250,6 +250,14 @@ describe('REP-3749 · detalle del caso', () => {
     expect(items.every((i) => i.reason === null)).toBe(true);
   });
 
+  it('UT-3749-D12: «Reporte creado» va primero aunque la fecha del reporte sea apenas posterior al primer estado', () => {
+    const items = buildPanelTimeline({
+      createdAt: '2026-10-21T17:30:30.900Z',
+      history: [{ state_code: 'EN_ANALISIS', changed_at: '2026-10-21T17:30:30.584Z', notes: 'x', actor_type: 'sistema' }],
+    });
+    expect(items.map((i) => i.label)).toEqual(['Reporte creado', 'Análisis automático']);
+  });
+
   it('UT-3749-D7: ajeno o inexistente → «Este reporte no está disponible para tu organismo» (caso 5 PO)', async () => {
     responder({ detalle: null });
     montar();

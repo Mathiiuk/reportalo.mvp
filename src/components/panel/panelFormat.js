@@ -126,11 +126,13 @@ export const buildPanelTimeline = ({ history = [], taken = null, agencyName = ''
     escalatedTo: entry.escalated_to || null,
     contact: entry.escalated_contact || null,
   }));
-  if (createdAt && !history.some((entry) => entry.state_code === 'RECIBIDO')) {
-    items.push({ at: createdAt, kind: 'state', code: 'RECIBIDO', label: 'Reporte creado', actor: null, reason: null, escalatedTo: null, contact: null });
-  }
   if (taken?.taken_at) {
     items.push({ at: taken.taken_at, kind: 'event', code: 'TOMADO', label: `Tomado por ${taken.agency}`, actor: taken.agency });
   }
-  return items.sort((a, b) => new Date(a.at) - new Date(b.at));
+  items.sort((a, b) => new Date(a.at) - new Date(b.at));
+  // El alta va siempre primero: created_at puede quedar unos milisegundos después del primer estado
+  if (createdAt && !history.some((entry) => entry.state_code === 'RECIBIDO')) {
+    items.unshift({ at: createdAt, kind: 'state', code: 'RECIBIDO', label: 'Reporte creado', actor: null, reason: null, escalatedTo: null, contact: null });
+  }
+  return items;
 };
