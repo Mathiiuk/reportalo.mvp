@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Ms, PanelTopBar, TestBanner, ToastRegion, useMaterialSymbols, useToasts } from '../../components/panel/PanelShell';
+import { Ms, PanelTopBar, TestBanner, ToastRegion, useMaterialSymbols, usePanelTheme, useToasts } from '../../components/panel/PanelShell';
 import { PanelInbox } from '../../components/panel/PanelInbox';
 import { PanelCase } from '../../components/panel/PanelCase';
 import { bucketOf, isFilter } from '../../components/panel/panelFormat';
@@ -18,6 +18,7 @@ import { signEvidenceImages } from '../../services/reportDetailService';
 export const PanelPage = () => {
   useNoIndex();
   useMaterialSymbols();
+  const [theme, toggleTheme] = usePanelTheme();
   const { id } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,8 +75,15 @@ export const PanelPage = () => {
   };
 
   return (
-    <div className={`op-panel${id ? ' is-case' : ''}`}>
-      <PanelTopBar agency={agency} email={user?.email} onSignOut={handleSignOut} inboxHref={inboxHref} />
+    <div className={`op-panel${id ? ' is-case' : ''}`} data-theme={theme}>
+      <PanelTopBar
+        agency={agency}
+        email={user?.email}
+        onSignOut={handleSignOut}
+        inboxHref={inboxHref}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
       <TestBanner agency={agency} />
       <div className="main">
         <PanelInbox

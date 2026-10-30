@@ -1,5 +1,5 @@
 /* REP-3747 · Panel de organismos: estilos del diseño de Iván (29/10, REP-3876 v2), con alcance .op-panel para no
-   tocar la app del vecino. Teléfono y modo oscuro quedan en el S19 (decisión 1A de Matías); las reglas ya vienen. */
+   tocar la app del vecino. Teléfono y modo oscuro sumados el 30/10 (Matías); el oscuro va en data-theme de .op-panel. */
 .op-panel {
   --rep-bg: #F4F7FB;
   --rep-surface: #FFFFFF;

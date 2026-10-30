@@ -25,6 +25,44 @@ export const useMaterialSymbols = () => {
   }, []);
 };
 
+/*
+ * Modo oscuro del panel (diseño v2 de Iván, LEEME §4.9). Vale solo para el panel: va en data-theme de .op-panel, con
+ * su propia clave, así la app del vecino sigue con su conmutador apagado (lib/themePreference) y no se toca su tema.
+ */
+export const PANEL_THEME_KEY = 'reportalo_panel_theme';
+
+const readPanelTheme = () => {
+  try {
+    return window.localStorage.getItem(PANEL_THEME_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+};
+
+/** @returns {['light'|'dark', () => void]} el tema del panel y cómo alternarlo; se aplica en todas las pestañas */
+export const usePanelTheme = () => {
+  const [theme, setTheme] = useState(readPanelTheme);
+  useEffect(() => {
+    const onStorage = (event) => {
+      if (event.key === PANEL_THEME_KEY) setTheme(event.newValue === 'dark' ? 'dark' : 'light');
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+  const toggle = useCallback(() => {
+    setTheme((current) => {
+      const next = current === 'dark' ? 'light' : 'dark';
+      try {
+        window.localStorage.setItem(PANEL_THEME_KEY, next);
+      } catch {
+        // Sin almacenamiento el tema dura hasta recargar
+      }
+      return next;
+    });
+  }, []);
+  return [theme, toggle];
+};
+
 /** Ícono decorativo: el texto de la ligadura no se lee (aria-hidden). */
 export const Ms = ({ name, fill = false, className = '' }) => (
   <span className={`ms${fill ? ' fill' : ''}${className ? ` ${className}` : ''}`} aria-hidden="true">
@@ -33,7 +71,7 @@ export const Ms = ({ name, fill = false, className = '' }) => (
 );
 
 /** Cabecera del panel: marca, sección, organismo (con PRUEBA si es de prueba) y menú de la cuenta. */
-export const PanelTopBar = ({ agency, email, onSignOut, inboxHref = '/panel' }) => {
+export const PanelTopBar = ({ agency, email, onSignOut, inboxHref = '/panel', theme = 'light', onToggleTheme }) => {
   const [open, setOpen] = useState(false);
   const wrap = useRef(null);
 
@@ -73,6 +111,17 @@ export const PanelTopBar = ({ agency, email, onSignOut, inboxHref = '/panel' }) 
         </nav>
       )}
       <div className="top-right">
+        {onToggleTheme && (
+          <button
+            type="button"
+            className="icon-btn"
+            data-action="theme"
+            aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+            onClick={onToggleTheme}
+          >
+            <Ms name={theme === 'dark' ? 'light_mode' : 'dark_mode'} />
+          </button>
+        )}
         {agency && (
           <div className="acct-slot">
             <span className="acct">

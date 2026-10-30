@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { Ms, PanelTopBar, useMaterialSymbols } from '../../components/panel/PanelShell';
+import { Ms, PanelTopBar, useMaterialSymbols, usePanelTheme } from '../../components/panel/PanelShell';
 import { usePanelSignIn } from '../../components/panel/usePanelSignIn';
 import { useNoIndex } from '../../hooks/useNoIndex';
 import { useAuth } from '../../hooks/useAuth';
@@ -11,12 +11,13 @@ export const PanelLoginPage = () => {
   useMaterialSymbols();
   const { session } = useAuth();
   const { email, setEmail, sentTo, step, sending, error, submit, reset } = usePanelSignIn();
+  const [theme, toggleTheme] = usePanelTheme();
 
   if (session) return <Navigate to="/panel" replace />;
 
   return (
-    <div className="op-panel">
-      <PanelTopBar agency={null} />
+    <div className="op-panel" data-theme={theme}>
+      <PanelTopBar agency={null} theme={theme} onToggleTheme={toggleTheme} />
       <main className="login">
         {step === 'sent' ? (
           <div className="login-card">
