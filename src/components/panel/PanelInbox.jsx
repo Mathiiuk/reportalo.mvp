@@ -49,7 +49,8 @@ const Row = ({ report, thumb, href, current }) => (
         {report.category || 'Sin categoría'}
       </span>
       <span className="row-sub" style={{ display: 'block' }}>
-        {[report.address_street?.trim() ? addressLabel(report) : null, report.zone].filter(Boolean).join(' · ') || 'Zona no disponible'}
+        {/* Como en D41: «Pasco 1150, Gerli» */}
+        {[report.address_street?.trim() ? addressLabel(report) : null, report.zone].filter(Boolean).join(', ') || 'Zona no disponible'}
       </span>
       <span className="badges">
         <StateBadge code={report.state_code} label={report.state_label} />

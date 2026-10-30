@@ -87,14 +87,23 @@ describe('REP-3000 · bandeja', () => {
     expect(screen.getAllByRole('link', { name: /caso n°/i })).toHaveLength(2);
   });
 
-  it('UT-3000-B2: cada fila muestra caso, código, antigüedad, categoría, dirección · barrio, estado, miniatura firmada y fotos', async () => {
+  it('UT-3000-B9: sin calle, la fila muestra solo el barrio', async () => {
+    rpcMock.mockResolvedValue({ data: [{ ...BANDEJA[0], address_street: null, address_number: null }], error: null });
+    montar();
+    const fila = await screen.findByRole('link', { name: /caso n° 000001/i });
+    expect(within(fila).getByText('Caballito')).toBeInTheDocument();
+    expect(within(fila).queryByText(/Dirección no disponible/)).not.toBeInTheDocument();
+  });
+
+  it('UT-3000-B2: cada fila muestra caso, código, antigüedad, categoría, dirección y barrio, estado, miniatura firmada y fotos', async () => {
     rpcMock.mockResolvedValue({ data: BANDEJA, error: null });
     montar();
     const fila1 = await screen.findByRole('link', { name: /caso n° 000001/i });
     expect(fila1).toHaveAttribute('href', `/panel/reportes/${BANDEJA[0].report_id}?f=por-tomar`);
     expect(within(fila1).getByText('#RP-00000001')).toBeInTheDocument();
     expect(within(fila1).getByText('Hace 1 h')).toBeInTheDocument();
-    expect(within(fila1).getByText('Avenida Rivadavia 5000 · Caballito')).toBeInTheDocument();
+    // Como en D41: «Pasco 1150, Gerli»
+    expect(within(fila1).getByText('Avenida Rivadavia 5000, Caballito')).toBeInTheDocument();
     expect(within(fila1).getByText('Derivado')).toBeInTheDocument();
     expect(within(fila1).getByLabelText('3 fotos')).toBeInTheDocument();
     expect(fila1.querySelector('.thumb').getAttribute('style')).toContain('https://firmada/c1/a.webp');
