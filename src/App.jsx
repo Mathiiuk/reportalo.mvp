@@ -99,16 +99,16 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
-  // REP-3747: el operador que abrió /panel sin sesión vuelve al panel después del login, sin pasar por el
-  // onboarding del vecino. Si la cuenta no es de operador, el panel lo manda a /acceso-restringido.
-  const resumePath = getResumePath();
-  if (resumePath?.startsWith('/panel')) {
-    return <Navigate to={resumePath} replace />;
-  }
-
-  // REP-3747: el operador que entró por el login del vecino no pasa por el onboarding ni los permisos: va al panel
+  // REP-3747: el operador que entró por el login del vecino no pasa por el onboarding ni los permisos: va al panel,
+  // a la dirección del panel que había abierto sin sesión si la hay
   if (operatorLanding.checking) return <AppLoadingScreen message="Cargando Reportalo..." />;
-  if (operatorLanding.isOperator) return <Navigate to="/panel" replace />;
+  const resumePath = getResumePath();
+  if (operatorLanding.isOperator) {
+    return <Navigate to={resumePath?.startsWith('/panel') ? resumePath : '/panel'} replace />;
+  }
+  // Matías, 30/10: un vecino con una dirección del panel guardada en ese navegador (alguien abrió /panel sin sesión)
+  // terminaba en «Error 403» al entrar con Google. Esa dirección es solo para operadores: se descarta.
+  if (resumePath?.startsWith('/panel')) clearResumePath();
 
   const onboardingCompleted =
     typeof window !== 'undefined' &&

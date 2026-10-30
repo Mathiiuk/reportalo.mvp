@@ -6,8 +6,11 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+
+// Dirección en la que terminó la app (las pantallas se cargan en diferido: el texto puede llegar tarde)
+const Ruta = () => <span data-testid="ruta">{useLocation().pathname}</span>;
 
 const fromMock = vi.fn();
 vi.mock('../lib/supabaseClient', () => ({
@@ -16,7 +19,7 @@ vi.mock('../lib/supabaseClient', () => ({
 }));
 
 import { AppRoutes } from '../App';
-import { clearResumePath } from '../lib/sessionMarker';
+import { clearResumePath, getResumePath, saveResumePath } from '../lib/sessionMarker';
 
 const perfil = (fila) =>
   fromMock.mockImplementation(() => {
@@ -32,6 +35,7 @@ const montar = (entrada) =>
     <AuthContext.Provider value={sesion}>
       <MemoryRouter initialEntries={[entrada]}>
         <AppRoutes />
+        <Ruta />
       </MemoryRouter>
     </AuthContext.Provider>
   );
@@ -62,5 +66,31 @@ describe('REP-3747 · el operador entra directo al panel', () => {
     await waitFor(() => expect(fromMock).toHaveBeenCalled());
     await waitFor(() => expect(screen.queryByText(/cargando reportalo/i)).not.toBeInTheDocument());
     expect(screen.queryByText('Reportalo CABA (organismo de prueba)')).not.toBeInTheDocument();
+  });
+
+  // Matías, 30/10: abrió /panel sin sesión en ese navegador, después entró como vecino con Google y la app lo llevó
+  // al panel, que le mostró «Error 403 - Acceso Denegado». La dirección guardada del panel es solo para operadores.
+  it('UT-3747-D4: un vecino con una dirección del panel guardada sigue su recorrido y la dirección se borra', async () => {
+    saveResumePath('/panel');
+    perfil({ role: 'ciudadano', agency: null });
+    montar('/onboarding');
+    await waitFor(() => expect(fromMock).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText(/cargando reportalo|verificando tu acceso/i)).not.toBeInTheDocument());
+    // Nunca pasa por el panel ni por el 403
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByTestId('ruta').textContent).toBe('/onboarding');
+    expect(screen.queryByText(/acceso denegado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Reportalo CABA (organismo de prueba)')).not.toBeInTheDocument();
+    expect(getResumePath()).toBeNull();
+  });
+
+  it('UT-3747-D5: un operador con una dirección del panel guardada vuelve ahí, no al inicio del panel', async () => {
+    saveResumePath('/panel?f=cerrados');
+    perfil(OPERADOR);
+    montar('/onboarding');
+    await waitFor(async () => {
+      const botones = await screen.findAllByRole('button', { name: /cerrados/i });
+      expect(botones.some((b) => b.getAttribute('aria-pressed') === 'true')).toBe(true);
+    });
   });
 });
