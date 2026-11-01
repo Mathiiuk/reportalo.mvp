@@ -1,0 +1,51 @@
+id: REP-3000
+external_ref: https://unlz2026.atlassian.net/browse/REP-3000
+title: 'Bandeja del organismo de prueba: solo elegibles con borrador, DERIVADO interno'
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: Matías Krepchuk
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - >-
+      supabase/migrations (regla de elegibilidad de bandeja, DERIVADO por
+      entrega interna)
+    - src/services/panelService.js
+    - src/pages/panel/PanelBandejaPage.jsx
+    - src/test
+  environments:
+    - local
+requirements:
+  - >-
+    Entran solo reportes de la jurisdicción con borrador_generado; nunca
+    INFORMADO, fuera de alcance (EN_ANALISIS sin borrador), sin destino o fuera
+    del piloto
+  - Filtro en base (RLS/función), no en pantalla
+  - >-
+    Entrada a bandeja = DERIVADO por entrega interna al operador de prueba
+    (D-03/D7); sin migración masiva de históricos
+  - >-
+    Listado con categoría, fecha, zona, estado y acceso al detalle; vacío y
+    error veraces
+  - El destinatario real del borrador sigue siendo el catálogo REP-2806/2801
+acceptance_criteria:
+  - >-
+    Escenarios 1–5 de REP-3000 (admitidos y DERIVADO, exclusiones, aislamiento,
+    vacío/error, destinatario real preservado)
+requires_approval: false
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: true
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  build: pnpm build

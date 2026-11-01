@@ -6,15 +6,17 @@
  */
 export const REPORT_STATUS = {
   borrador: { label: 'Pendiente', tone: 'warning' },
-  enviado: { label: 'Enviado', tone: 'success' },
-  en_revision: { label: 'En revisión', tone: 'accent' },
-  notificado: { label: 'Notificado al responsable', tone: 'notice' },
+  // REP-3001 (reglas §4): mismas etiquetas que el panel, «Recibido» y «En análisis»
+  enviado: { label: 'Recibido', tone: 'success' },
+  en_revision: { label: 'En análisis', tone: 'accent' },
+  // REP-3001 (reglas del panel §4 y §6): el vecino lee la misma etiqueta que el operador
+  notificado: { label: 'Derivado', tone: 'notice' },
   resuelto: { label: 'Resuelto', tone: 'success' },
-  descartado: { label: 'Descartado', tone: 'neutral' },
+  descartado: { label: 'Desestimado', tone: 'neutral' },
   // REP-2502 (H-2, PO 15/10/2026): estados nuevos. INFORMADO = se le indicó al vecino el canal que corresponde,
   // sin derivar a un organismo (vulnerabilidad social). ESCALADO y EN_DISCREPANCIA los pone el organismo.
   informado: { label: 'Informado', tone: 'notice' },
-  escalado: { label: 'Escalado a otro organismo', tone: 'notice' },
+  escalado: { label: 'Escalado', tone: 'notice' },
   en_discrepancia: { label: 'En discrepancia', tone: 'warning' },
 };
 
@@ -44,7 +46,7 @@ const DB_STATE_ALIASES = {
 
 // Pasos del tracker: uno por estado real; «descartado» es un cierre alternativo, no un paso
 export const TRACKER_STEPS = ['enviado', 'en_revision', 'notificado', 'resuelto'];
-// REP-3841: Vulnerabilidad social no se deriva: Enviado → Informado, sin «Notificado al responsable» ni «Resuelto»
+// REP-3841: Vulnerabilidad social no se deriva: Recibido → Informado, sin «Derivado» ni «Resuelto»
 export const SOCIAL_TRACKER_STEPS = ['enviado', 'informado'];
 
 // Estados que se muestran como un paso extra al final del recorrido, no dentro de los 4 pasos
@@ -93,9 +95,9 @@ export const formatListDate = (value, now = new Date()) => {
 /**
  * Arma la línea de tiempo del detalle (M16 / D17) a partir del estado actual, la fecha de envío
  * y el historial (`report_state_history`). Si el historial no está disponible, igual marca como
- * hechos los pasos anteriores al estado actual, sin fecha.
+ * hechos los pasos anteriores al estado actual, sin fecha. `taken` es el «tomado» del organismo (REP-3001), si hubo.
  */
-export const buildTimeline = ({ currentState, createdAt, history = [], socialAssistance = false }) => {
+export const buildTimeline = ({ currentState, createdAt, history = [], socialAssistance = false, taken = null }) => {
   const current = normalizeReportState(currentState) ?? 'enviado';
   const entries = history
     .map((entry) => ({ ...entry, state: normalizeReportState(entry.state_code) }))
@@ -146,30 +148,115 @@ export const buildTimeline = ({ currentState, createdAt, history = [], socialAss
   const steps = TRACKER_STEPS.map((state, index) => {
     const entry = lastEntryFor(state);
     const done = index <= reachedIndex;
+    // Diseño v2 (D49): Derivado dice a qué bandeja llegó; el texto de la entrega interna lo arma la base
+    const inbox = state === 'notificado' ? entry?.notes?.match(/operador de prueba de (.+?)\. Ningún/)?.[1] : null;
     return {
       key: state,
-      label: REPORT_STATUS[state].label,
+      // Hasta que el organismo decide, el último paso no promete «Resuelto»: puede terminar en otro estado (D49)
+      label: state === 'resuelto' && !done ? 'Respuesta del organismo' : REPORT_STATUS[state].label,
       done,
       current: !isExtra && index === reachedIndex,
       date: formatShortDateTime(entry?.changed_at ?? (state === 'enviado' ? createdAt : null)),
-      note: entry?.notes || null,
+      detail: inbox ? `Bandeja de ${inbox}` : null,
+      // Los registros automáticos («Análisis automático en curso», la entrega interna) son textos internos
+      note: entry?.actor_type === 'sistema' ? null : entry?.notes || null,
     };
   });
 
-  if (isExtra) {
+  // REP-3001 (reglas §6): después de Derivado, el «tomado» y cada Escalado o En discrepancia por el que pasó, en orden.
+  // «Tomado» es un paso hecho, nunca el actual: el reporte sigue Derivado, no Resuelto.
+  const afterNotified = [];
+  if (taken?.taken_at) {
+    afterNotified.push({
+      key: 'tomado',
+      label: 'El organismo tomó tu reporte',
+      done: true,
+      current: false,
+      date: formatShortDateTime(taken.taken_at),
+      detail: taken.agency || null,
+      note: null,
+    });
+  }
+  const intermediates = entries.filter((entry) => AFTER_NOTIFIED_STATES.includes(entry.state));
+  // Sin historial legible, el estado actual igual aparece (sin fecha)
+  if (AFTER_NOTIFIED_STATES.includes(current) && intermediates.at(-1)?.state !== current) {
+    intermediates.push({ state: current });
+  }
+  intermediates.forEach((entry, index) => {
+    const isLast = index === intermediates.length - 1;
+    afterNotified.push({
+      key: afterNotified.some((step) => step.key === entry.state) ? `${entry.state}-${index}` : entry.state,
+      label: REPORT_STATUS[entry.state].label,
+      done: true,
+      current: isLast && entry.state === current,
+      date: formatShortDateTime(entry.changed_at),
+      // D-05: el destino es texto libre del operador; no se afirma que se haya enviado a ningún lado
+      // REP-3001: con el contacto del destino, si el operador lo cargó
+      detail: entry.escalated_to
+        ? [`El organismo indicó que corresponde a: ${entry.escalated_to}`, entry.escalated_contact ? `Contacto: ${entry.escalated_contact}` : null]
+            .filter(Boolean)
+            .join(' · ')
+        : null,
+      note: entry.notes || null,
+    });
+  });
+  steps.splice(TRACKER_STEPS.indexOf('notificado') + 1, 0, ...afterNotified);
+
+  if (current === 'descartado') {
     const entry = lastEntryFor(current);
     steps.push({
       key: current,
       label: REPORT_STATUS[current].label,
       done: true,
       current: true,
-      discarded: current === 'descartado',
+      discarded: true,
       date: formatShortDateTime(entry?.changed_at),
       note: entry?.notes || null,
     });
   }
 
   return steps;
+};
+
+// Decisiones del organismo que el vecino ve arriba del seguimiento (reglas §6, diseño v2 D50 a D52)
+const ORGANISM_DECISIONS = ['resuelto', 'descartado', 'escalado', 'en_discrepancia'];
+
+/**
+ * REP-3001 · Respuesta del organismo para «Mis reportes» (diseño v2 de Iván, D49 a D52): el estado, el motivo textual,
+ * a quién corresponde si se escaló, qué organismo de prueba lo marcó y cuándo. Derivado y tomado muestra que llegó a
+ * la bandeja. Sin decisión ni derivación, null.
+ */
+export const buildOrganismResponse = ({ currentState, history = [], taken = null }) => {
+  const current = normalizeReportState(currentState);
+  if (current === 'notificado') {
+    if (!taken?.taken_at) return null;
+    return {
+      state: current,
+      label: REPORT_STATUS[current].label,
+      summary: `Llegó a la bandeja de ${taken.agency || 'un organismo de prueba'}.`,
+      reason: null,
+      escalatedTo: null,
+      contact: null,
+      agency: taken.agency || null,
+      isTest: true,
+      date: formatShortDateTime(taken.taken_at),
+    };
+  }
+  if (!ORGANISM_DECISIONS.includes(current)) return null;
+  const entry = [...history].reverse().find((h) => normalizeReportState(h.state_code) === current);
+  if (!entry) return null;
+  return {
+    state: current,
+    label: REPORT_STATUS[current].label,
+    summary: null,
+    reason: entry.notes || null,
+    escalatedTo: entry.escalated_to || null,
+    contact: entry.escalated_contact || null,
+    agency: entry.agencies?.name || null,
+    isTest: Boolean(entry.agencies?.is_test),
+    date: formatShortDateTime(entry.changed_at),
+    changedAt: entry.changed_at,
+  };
 };
 
 // Estados de cierre del §10. Lo usa el listado de Mis reportes para la insignia.

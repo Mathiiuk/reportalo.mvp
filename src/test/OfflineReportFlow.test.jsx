@@ -102,7 +102,7 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
       const banner = screen.getByTestId('offline-status-banner');
       expect(banner).toBeInTheDocument();
       expect(banner).toHaveTextContent(/Sin conexión/i);
-      expect(banner).toHaveTextContent(/guardado en tu teléfono/i);
+      expect(banner).toHaveTextContent(/guardado en tu dispositivo/i);
     });
   });
 
@@ -162,7 +162,7 @@ describe('REP-2703: Flujo de Reporte Ciudadano Offline con IndexedDB', () => {
     expect(saveOfflineBtn).toHaveTextContent(/Guardar reporte sin conexión/i);
 
     // Verificamos el texto coloquial de las fotos en la tarjeta
-    expect(screen.getByText(/^guardado en tu teléfono$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^guardado en tu dispositivo$/i)).toBeInTheDocument();
     expect(screen.getByText(/Se enviará automáticamente cuando tengas señal/i)).toBeInTheDocument();
   });
 

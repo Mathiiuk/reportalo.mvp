@@ -18,6 +18,8 @@
 /** Mediana medida por foto en REP-3828 (referencia, no se usa en el cálculo). */
 export const MEASURED_MEDIAN_PER_PHOTO_MS = 11300;
 
+const photoCountOf = (count) => Math.max(1, Math.floor(Number(count) || 0));
+
 /** Aviso «tarda más de lo habitual»: base + por foto. Con 1, 2, 3 y 4 fotos: 30, 45, 60 y 75 s. */
 export const SLOW_NOTICE_BASE_MS = 15000;
 export const SLOW_NOTICE_PER_PHOTO_MS = 15000;
@@ -28,7 +30,6 @@ export const MAX_WAIT_PER_PHOTO_MS = 25000;
 /** Límite máximo documentado para la UX, sea cual sea la cantidad de fotos. */
 export const MAX_WAIT_CEILING_MS = 120000;
 
-const photoCountOf = (count) => Math.max(1, Math.floor(Number(count) || 0));
 
 /**
  * @param {number} photoCount cantidad de fotos del reporte (1 a 4)

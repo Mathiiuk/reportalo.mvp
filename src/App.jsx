@@ -9,6 +9,8 @@ import { PwaUpdater } from './components/common/PwaUpdater';
 import { getSelectableLocalities } from './services/localitiesService';
 import { PendingSyncManager } from './components/common/PendingSyncManager';
 import { getSessionMarker, getResumePath, clearResumePath } from './lib/sessionMarker';
+import { OperatorRoute } from './components/panel/OperatorRoute';
+import { useOperatorProfile } from './services/operatorService';
 import { readStoredSession } from './lib/storedSession';
 
 // Lazy loading de páginas (Code Splitting - FASE 1)
@@ -37,6 +39,11 @@ const ForbiddenPage = React.lazy(() => import('./pages/ForbiddenPage').then(m =>
 const NotFoundReportPage = React.lazy(() => import('./pages/NotFoundReportPage').then(m => ({ default: m.NotFoundReportPage })));
 const AcercaPage = React.lazy(() => import('./pages/AcercaPage').then(m => ({ default: m.AcercaPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+// REP-3747 · panel de organismos (operadores de un organismo de prueba)
+const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => ({ default: m.PanelPage })));
+// REP-3747 · ingreso propio del panel y redirección de /organismo (diseño de Iván, 29/10)
+const PanelLoginPage = React.lazy(() => import('./pages/panel/PanelLoginPage').then(m => ({ default: m.PanelLoginPage })));
+const OrganismoRedirect = React.lazy(() => import('./pages/panel/OrganismoRedirect').then(m => ({ default: m.OrganismoRedirect })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
 // pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
@@ -54,10 +61,22 @@ const NewReportRoute = () => {
   return <NewReportPage key={location.state?.restartKey ?? 'nuevo-reporte'} />;
 };
 
+// REP-3747: pantallas a las que vuelve el login del vecino (Google y enlace van a /onboarding). Una cuenta de organismo
+// que llega a una de ellas va directo al panel; si después abre otra pantalla a mano, puede.
+const OPERATOR_LANDINGS = ['/', '/login', '/onboarding', '/permisos'];
+
+/** Estado del perfil de operador, solo en las pantallas de llegada (en el resto no se consulta). */
+const useOperatorLanding = (session, user, pathname) => {
+  const landing = OPERATOR_LANDINGS.includes(pathname);
+  const { status } = useOperatorProfile(session && landing ? user?.id : null);
+  return { checking: Boolean(session && landing && status === 'loading'), isOperator: landing && status === 'operator' };
+};
+
 // Componente para proteger rutas autenticadas y forzar el flujo secuencial obligatorio
 const ProtectedRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
   const location = useLocation();
+  const operatorLanding = useOperatorLanding(session, user, location.pathname);
 
   // UJ v3.3 · M23: al llegar a la pantalla que se estaba usando antes de que venciera la
   // sesión, se olvida. Se compara con pathname + search porque así la guarda
@@ -79,6 +98,17 @@ const ProtectedRoute = ({ children }) => {
     }
     return <Navigate to="/" replace />;
   }
+
+  // REP-3747: el operador que entró por el login del vecino no pasa por el onboarding ni los permisos: va al panel,
+  // a la dirección del panel que había abierto sin sesión si la hay
+  if (operatorLanding.checking) return <AppLoadingScreen message="Cargando Reportalo..." />;
+  const resumePath = getResumePath();
+  if (operatorLanding.isOperator) {
+    return <Navigate to={resumePath?.startsWith('/panel') ? resumePath : '/panel'} replace />;
+  }
+  // Matías, 30/10: un vecino con una dirección del panel guardada en ese navegador (alguien abrió /panel sin sesión)
+  // terminaba en «Error 403» al entrar con Google. Esa dirección es solo para operadores: se descarta.
+  if (resumePath?.startsWith('/panel')) clearResumePath();
 
   const onboardingCompleted =
     typeof window !== 'undefined' &&
@@ -115,9 +145,16 @@ const ProtectedRoute = ({ children }) => {
 // Componente para redirigir si el usuario ya está autenticado hacia el panel o onboarding
 const PublicRoute = ({ children }) => {
   const { session, user, loading } = useAuth();
+  const location = useLocation();
+  const operatorLanding = useOperatorLanding(session, user, location.pathname);
 
-  if (loading) {
+  if (loading || operatorLanding.checking) {
     return <AppLoadingScreen message="Iniciando Reportalo..." />;
+  }
+
+  // REP-3747: con sesión de organismo, la bienvenida y el login llevan al panel
+  if (session && operatorLanding.isOperator) {
+    return <Navigate to="/panel" replace />;
   }
 
   if (session) {
@@ -313,6 +350,26 @@ export const AppRoutes = () => {
       />
       {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
       <Route path="/acceso-restringido" element={<ForbiddenPage />} />
+      {/* REP-3747 — panel de organismos: solo operadores; los datos los protege la base */}
+      <Route
+        path="/panel"
+        element={
+          <OperatorRoute>
+            <PanelPage />
+          </OperatorRoute>
+        }
+      />
+      {/* REP-3749 — con el diseño de Iván, el caso se abre al lado de la bandeja, en la misma pantalla */}
+      <Route
+        path="/panel/reportes/:id"
+        element={
+          <OperatorRoute>
+            <PanelPage />
+          </OperatorRoute>
+        }
+      />
+      <Route path="/panel/ingresar" element={<PanelLoginPage />} />
+      <Route path="/organismo/*" element={<OrganismoRedirect />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </React.Suspense>

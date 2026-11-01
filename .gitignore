@@ -22,3 +22,11 @@ scripts/rag-local-dev/rep3797/generation-experiment-results.json
 
 # REP-3866: versión, commit y fecha del build; lo genera scripts/build-info.mjs en cada build, no se versiona
 public/build-info.json
+
+# App Android (TWA): salida de Gradle y claves de firma
+android/twa/.gradle/
+android/twa/build/
+android/twa/app/build/
+android/twa/local.properties
+*.jks
+*.keystore

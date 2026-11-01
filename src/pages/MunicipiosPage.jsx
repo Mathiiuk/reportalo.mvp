@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 import { SiteFooter } from '../components/layout/SiteFooter';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, ScanFace, EyeOff, Gavel } from 'lucide-react';
+import { ArrowRight, ScanFace, EyeOff, Gavel, AtSign, Building2, MailCheck, CircleAlert } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { CityTexture } from '../components/common/CityTexture';
+import { usePanelSignIn } from '../components/panel/usePanelSignIn';
 
 /**
  * Landing institucional Municipios · UJ v3.3 D21 v2 (handoff REP-3830, REP-3535).
- * MVP solo informativo (decisión PO 15/10): qué es Reportalo, cómo funciona, privacidad
- * y «Ir al portal ciudadano». Planes, demo, contratación e «Ingresar» no se renderizan.
+ * MVP informativo (decisión PO 15/10): qué es Reportalo, cómo funciona, privacidad y «Ir al portal ciudadano».
+ * Planes, demo y contratación no se renderizan. Matías, 30/10: suma el acceso al panel para organismos del diseño v2
+ * de Iván (D40 y M33, REP-3747); «Cómo funciona» baja como fila de tres tarjetas.
  */
 
 // Destino de «Ir al portal ciudadano» — propuesta UX §07, pendiente de confirmación del PO.
@@ -63,6 +65,102 @@ const PRIVACY = [
 // Enlace principal: reposo / hover / foco / presionado (§04). Es <a>, no botón.
 const CTA_BASE =
   'rep-focus inline-flex min-h-touch items-center justify-center gap-2 rounded-xl py-3 font-bold no-underline transition-[background-color,transform] duration-120 active:scale-[.98]';
+
+/**
+ * REP-3747 · Acceso al panel (D40 y M33). Pide el enlace igual que /panel/ingresar: sin crear cuentas y con la misma
+ * respuesta para cualquier correo (decisión 4A). Por eso no muestra «Cuenta del Municipio de …» bajo el campo, como
+ * trae el diseño: revelaría qué correos son de un organismo.
+ */
+const OrganismAccess = ({ className = '' }) => {
+  const { email, setEmail, sentTo, step, sending, error, submit, reset } = usePanelSignIn();
+
+  return (
+    <section aria-label="Ingresar al panel" className={className}>
+      <div className="rounded-2xl border border-rep-border bg-rep-surface p-5 shadow-rep-card md:p-7">
+        {step === 'sent' ? (
+          <>
+            <MailCheck className="h-7 w-7 text-rep-accent" strokeWidth={2} aria-hidden="true" />
+            <h2 className="m-0 mt-3 text-[22px] font-extrabold tracking-[-0.5px] text-[#1F2C3D] md:text-[26px]">Revisá tu correo</h2>
+            <p className="m-0 mt-2 text-[14px] font-medium leading-[1.55] text-rep-ink-muted">
+              Si el correo corresponde a un organismo, te llega el enlace a <b className="text-rep-ink">{sentTo}</b>. Abrilo desde este
+              dispositivo.
+            </p>
+            <button
+              type="button"
+              onClick={reset}
+              className="rep-focus mt-4 min-h-touch w-full rounded-[13px] border border-rep-border bg-rep-surface px-4 text-[14px] font-bold text-rep-ink-body transition-colors hover:bg-rep-bg"
+            >
+              Usar otro correo
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="m-0 text-[11px] font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">Acceso para organismos</p>
+            <h2 className="m-0 mt-2 text-[22px] font-extrabold tracking-[-0.5px] text-[#1F2C3D] md:text-[26px]">Ingresar al panel</h2>
+            <p className="m-0 mt-1.5 text-[14px] font-medium leading-[1.55] text-rep-ink-muted">
+              Usá el correo de tu organismo. Te llega un enlace para entrar, sin contraseña.
+            </p>
+            <form onSubmit={submit} noValidate className="mt-4 flex flex-col gap-3">
+              <div>
+                <label htmlFor="org-email" className="mb-1.5 block text-[13px] font-bold text-rep-ink-label">
+                  Correo del organismo
+                </label>
+                <div
+                  className={`flex items-center gap-2.5 rounded-[13px] border bg-rep-surface px-[14px] py-[12px] transition-all focus-within:border-rep-accent focus-within:shadow-[0px_0px_0px_3px_rgba(30,111,203,0.12)] ${
+                    error ? 'border-rep-danger' : 'border-rep-border'
+                  }`}
+                >
+                  <AtSign className="h-[18px] w-[18px] flex-shrink-0 text-rep-ink-faint" strokeWidth={2} aria-hidden="true" />
+                  <input
+                    id="org-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="nombre@organismo.gob.ar"
+                    aria-describedby="org-email-msg"
+                    aria-invalid={error ? 'true' : undefined}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 border-0 bg-transparent p-0 text-rep-input font-medium text-rep-ink-body outline-none placeholder:text-rep-ink-faint"
+                  />
+                </div>
+                <div id="org-email-msg">
+                  {error && (
+                    <p role="alert" className="m-0 mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold text-rep-danger">
+                      <CircleAlert className="h-4 w-4 flex-none" strokeWidth={2.25} aria-hidden="true" />
+                      <span>{error}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={sending}
+                className="rep-focus inline-flex min-h-touch w-full items-center justify-center gap-2 rounded-[13px] border-0 bg-rep-accent px-4 text-[15px] font-extrabold text-rep-on-accent shadow-[0px_8px_18px_rgba(30,111,203,0.3)] transition-colors hover:bg-rep-accent-strong disabled:opacity-70"
+              >
+                <span>{sending ? 'Enviando…' : 'Enviarme el enlace'}</span>
+                {!sending && <ArrowRight className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />}
+              </button>
+            </form>
+            <p className="m-0 mt-4 flex items-start gap-2 text-[13px] font-medium leading-[1.5] text-rep-ink-muted">
+              <Building2 className="mt-[2px] h-4 w-4 flex-none" strokeWidth={2} aria-hidden="true" />
+              <span>
+                ¿Tu organismo todavía no tiene acceso? Escribinos a{' '}
+                <a
+                  href="mailto:info@reportalo.com.ar"
+                  className="rep-focus inline-flex min-h-touch items-center rounded font-bold text-rep-accent no-underline hover:underline"
+                >
+                  info@reportalo.com.ar
+                </a>
+                .
+              </span>
+            </p>
+          </>
+        )}
+      </div>
+    </section>
+  );
+};
 
 const scrollToSection = (id) => {
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -133,9 +231,9 @@ export const MunicipiosPage = () => {
 
       <main>
         <div className="mx-auto max-w-[1200px] px-[18px] md:px-8 lg:px-12">
-          {/* Hero + Cómo funciona */}
+          {/* Hero con el acceso para organismos: en el teléfono va después del título (M33); en escritorio, a la derecha (D40) */}
           <section aria-labelledby="hero-title" className="grid grid-cols-1 border-b border-rep-divider lg:grid-cols-[minmax(0,1fr)_480px]">
-            <div className="pb-6 pt-7 md:pb-10 md:pt-14 lg:pb-14 lg:pr-14 lg:pt-[72px]">
+            <div className="pt-7 md:pt-14 lg:col-start-1 lg:row-start-1 lg:pr-14 lg:pt-[72px]">
               <h1
                 id="hero-title"
                 className="m-0 max-w-[640px] text-balance text-[28px] font-extrabold leading-[1.08] tracking-[-0.8px] text-[#1F2C3D] md:text-[42px] md:tracking-[-1.6px] lg:text-[52px]"
@@ -145,7 +243,10 @@ export const MunicipiosPage = () => {
               <p className="mt-3 max-w-[580px] text-pretty text-[15px] font-medium leading-[1.6] text-rep-ink-muted md:mt-5 md:text-lg">
                 Recibí reportes georreferenciados, con fotos ya anonimizadas y la norma que aplica identificada. Tus inspectores trabajan casos, no capturas de pantalla.
               </p>
-              <ul className="m-0 mt-[22px] grid list-none grid-cols-3 gap-2 p-0 md:mt-12 md:flex md:flex-wrap md:gap-12">
+            </div>
+            <OrganismAccess className="-mx-[18px] mt-5 border-y border-rep-divider bg-rep-bg px-[18px] py-5 md:-mx-8 md:mt-8 md:px-8 md:py-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mr-12 lg:ml-0 lg:mt-0 lg:flex lg:flex-col lg:justify-center lg:border-y-0 lg:border-l lg:p-10" />
+            <div className="pb-6 md:pb-10 lg:col-start-1 lg:row-start-2 lg:pb-14 lg:pr-14">
+              <ul className="m-0 mt-[22px] grid list-none grid-cols-3 gap-2 p-0 md:mt-10 md:flex md:flex-wrap md:gap-12">
                 {STATS.map(({ value, label }) => (
                   <li key={label}>
                     <div className="text-xl font-extrabold leading-none text-rep-accent md:text-[32px]">{value}</div>
@@ -154,36 +255,33 @@ export const MunicipiosPage = () => {
                 ))}
               </ul>
             </div>
+          </section>
 
-            <aside
-              id="como-funciona"
-              aria-labelledby="how-title"
-              className="-mx-[18px] flex scroll-mt-[60px] flex-col gap-2.5 border-t border-rep-divider bg-rep-bg px-[18px] py-[22px] md:-mx-8 md:scroll-mt-[72px] md:gap-3.5 md:p-8 lg:-mr-12 lg:ml-0 lg:border-l lg:border-t-0 lg:p-10"
-            >
-              <h2 id="how-title" className="m-0 text-xs font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">
-                Cómo funciona
-              </h2>
-              <ol className="m-0 flex list-none flex-col gap-2.5 p-0 md:gap-3.5">
-                {STEPS.map(({ title, text }, index) => (
-                  <li key={title} className="flex items-center gap-3.5 rounded-2xl border border-rep-border bg-rep-surface p-3 md:items-start md:p-[18px]">
-                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[10px] bg-rep-accent-soft text-xs font-extrabold text-rep-accent md:h-[34px] md:w-[34px] md:text-sm">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="m-0 text-[15px] font-bold text-rep-ink">{title}</p>
-                      <p className="m-0 mt-[3px] hidden text-[13.5px] font-medium leading-[1.5] text-rep-ink-muted md:block">{text}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              <ul aria-label="Estados del reporte" className="m-0 mt-1 hidden list-none flex-wrap gap-[7px] p-0 md:flex">
-                {STATUS_PILLS.map(({ label, className }) => (
-                  <li key={label} className={`rounded-[7px] px-[9px] py-[5px] text-xs font-bold ${className}`}>
-                    {label}
-                  </li>
-                ))}
-              </ul>
-            </aside>
+          {/* Cómo funciona: fila de tres tarjetas, antes de Privacidad (D40) */}
+          <section id="como-funciona" aria-labelledby="how-title" className="scroll-mt-[60px] border-b border-rep-divider py-[26px] md:scroll-mt-[72px] md:py-14">
+            <h2 id="how-title" className="m-0 mb-3.5 text-[19px] font-extrabold tracking-[-0.6px] text-[#1F2C3D] md:mb-5 md:text-[28px]">
+              Cómo funciona
+            </h2>
+            <ol className="m-0 grid list-none grid-cols-1 gap-2.5 p-0 md:grid-cols-3 md:gap-5">
+              {STEPS.map(({ title, text }, index) => (
+                <li key={title} className="flex items-start gap-3.5 rounded-2xl border border-rep-border bg-rep-surface p-3.5 md:block md:p-[22px]">
+                  <span className="flex h-7 w-7 flex-none items-center justify-center rounded-[10px] bg-rep-accent-soft text-xs font-extrabold text-rep-accent md:h-[34px] md:w-[34px] md:text-sm">
+                    {index + 1}
+                  </span>
+                  <div className="md:mt-3">
+                    <p className="m-0 text-[15px] font-bold text-rep-ink md:text-base">{title}</p>
+                    <p className="m-0 mt-[3px] text-[13.5px] font-medium leading-[1.5] text-rep-ink-muted">{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <ul aria-label="Estados del reporte" className="m-0 mt-4 hidden list-none flex-wrap gap-[7px] p-0 md:flex">
+              {STATUS_PILLS.map(({ label, className }) => (
+                <li key={label} className={`rounded-[7px] px-[9px] py-[5px] text-xs font-bold ${className}`}>
+                  {label}
+                </li>
+              ))}
+            </ul>
           </section>
 
           {/* Privacidad y marco legal */}

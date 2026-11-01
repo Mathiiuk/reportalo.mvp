@@ -349,9 +349,12 @@ describe('REP-2201: Captura de evidencia desacoplada con diseño Journey v2', ()
       expect(enviado.service_id).toBe('service-e2e-1');
       expect(enviado.description).toBe('Bache enorme en la calle');
       expect(enviado.locality_id).toBe('loc-almagro');
+      // REP-3843: las 4 columnas de dirección aproximada van siempre; sin dirección confirmada, en null
       expect(Object.keys(enviado).sort()).toEqual(
-        ['client_side_id', 'description', 'latitud', 'locality_id', 'longitud', 'service_id', 'user_id']
+        ['address_number', 'address_road_type', 'address_source', 'address_street', 'client_side_id', 'description',
+          'latitud', 'locality_id', 'longitud', 'service_id', 'user_id']
       );
+      expect(enviado.address_street).toBeNull();
     }, 15000);
 
     // REP-2204: un doble toque en «Acepto y envío» no debe crear dos reportes

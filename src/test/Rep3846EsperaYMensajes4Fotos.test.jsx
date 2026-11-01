@@ -94,7 +94,7 @@ describe('REP-3846 E · la pantalla dice lo que pasa', () => {
         onProcessingComplete={vi.fn()}
       />
     );
-    expect(screen.getByTestId('processing-expected-time')).toHaveTextContent('Con 4 fotos tarda unos 45 segundos');
+    expect(screen.getByTestId('processing-expected-time')).toHaveTextContent('Con varias fotos puede tardar un poco más');
     expect(screen.getByTestId('processing-photo-count')).toHaveTextContent('Protegiendo la foto 1 de 4');
     await waitFor(() => expect(reportar).toBeTypeOf('function'));
     act(() => reportar({ photosDone: 2, photoCount: 4 }));

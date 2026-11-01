@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ReportFlowHeader } from './ReportFlowHeader';
 import { ConsentSheet } from './ConsentSheet';
 import { getCategoryTone } from './categoryTone';
-import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 import { getSubmissionReadiness } from '../../services/reportReadiness';
 
 const FIELD_LABEL =
@@ -35,9 +34,9 @@ export const ReportReviewStep = ({
 }) => {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [showPhotosGalleryModal, setShowPhotosGalleryModal] = useState(false);
-  const isDesktop = useIsDesktopLayout();
 
-  const deviceWord = isDesktop ? 'computadora' : 'teléfono';
+  // REP-3855 (O-04): una sola palabra para teléfono y computadora, como pide el criterio de redacción (O-03 de REP-3833)
+  const deviceWord = 'dispositivo';
   const isOfflineDraft = !isOnline || draftStatus === 'PENDING_SYNC';
   const photoCount = evidenceList.length;
   const photoLabel = `${photoCount} ${photoCount === 1 ? 'foto adjunta' : 'fotos adjuntas'}`;

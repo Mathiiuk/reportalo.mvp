@@ -1,5 +1,6 @@
 import React from 'react';
 import { WifiOff, RefreshCw } from 'lucide-react';
+import { isChunkLoadError, reloadOnceForNewVersion } from '../../lib/chunkReload';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -13,6 +14,8 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('[ErrorBoundary caught error]:', error, errorInfo);
+    // Archivo de una versión anterior (hubo un deploy): se recarga una vez para tomar la nueva
+    if (isChunkLoadError(error)) reloadOnceForNewVersion();
   }
 
   handleReload = () => {

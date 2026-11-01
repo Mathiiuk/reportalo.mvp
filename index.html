@@ -7,6 +7,27 @@
   <meta name="description" content="Reportalo - Reportá lo que ves en tu ciudad, con evidencia verificada y tu identidad protegida." />
   <title>Reportalo</title>
 
+  <!-- Después de un deploy, el service worker anterior puede entregar este index.html viejo cuando el nuevo ya borró
+       sus archivos: el archivo principal da 404 y la pantalla queda en blanco. Se recarga una sola vez, con la misma
+       marca y el mismo margen que src/lib/chunkReload.js (que no alcanza: vive dentro de ese archivo). -->
+  <script>
+    (function () {
+      var KEY = 'reportalo_chunk_reload_at';
+      window.addEventListener('error', function (event) {
+        var el = event.target;
+        if (!el || el.tagName !== 'SCRIPT' || !/\/assets\/index-[^/]+\.js$/.test(el.src || '')) return;
+        try {
+          var last = Number(sessionStorage.getItem(KEY)) || 0;
+          if (last && Date.now() - last < 30000) return;
+          sessionStorage.setItem(KEY, String(Date.now()));
+        } catch (e) {
+          return;
+        }
+        location.reload();
+      }, true);
+    })();
+  </script>
+
   <!-- Sin hojas de estilo externas: Manrope se sirve desde la app (src/main.jsx) y queda
        en el caché del service worker. Con Google Fonts, el teléfono no pintaba nada hasta
        que respondía fonts.googleapis.com: con poca señal eran ~12 s de pantalla negra. -->

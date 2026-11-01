@@ -7,21 +7,21 @@ import { normalizeReportState } from './reportStatus';
 import { routeReport, describeRoutingDestination } from '../../services/reportRoutingService';
 import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
 
-// El acuse se entera más rápido que el detalle: el paso a «En revisión» ocurre a los pocos segundos del envío
+// El acuse se entera más rápido que el detalle: el paso a «En análisis» ocurre a los pocos segundos del envío
 const SUCCESS_POLL_INTERVAL_MS = 5000;
 
 // Tracker alineado a la base (UJ v3.3 §10 «Taxonomía de estados»): un paso por estado real
 const TRACKER_STEPS = [
-  { key: 'enviado', label: 'Enviado' },
-  { key: 'en_revision', label: 'En revisión' },
-  { key: 'notificado', label: 'Notificado al responsable' },
+  { key: 'enviado', label: 'Recibido' },
+  { key: 'en_revision', label: 'En análisis' },
+  { key: 'notificado', label: 'Derivado' },
   { key: 'resuelto', label: 'Resuelto' },
 ];
 
 // REP-3841: Vulnerabilidad social no se deriva a ningún organismo. El backend la deja en INFORMADO (se le indicó al
-// vecino el canal), así que el recorrido no promete «Notificado al responsable» ni «Resuelto».
+// vecino el canal), así que el recorrido no promete «Derivado» ni «Resuelto».
 const SOCIAL_TRACKER_STEPS = [
-  { key: 'enviado', label: 'Enviado' },
+  { key: 'enviado', label: 'Recibido' },
   { key: 'informado', label: 'Informado' },
 ];
 
@@ -90,7 +90,7 @@ const formatClock = (date) =>
  * envío que originó la aceptación de los términos (REP-3543).
  *
  * `reportId` (opcional): el id del reporte recién creado. Con él, el tracker avanza solo cuando el estado
- * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Enviado» a «En revisión» (REP-3798).
+ * cambia: apenas se envía, la IA empieza a revisarlo y pasa de «Recibido» a «En análisis» (REP-3798).
  * También con él se pide el destino a route_report (REP-3845): organismo y canal salen del catálogo aprobado,
  * nunca de la localidad escrita en pantalla. Sin reportId no se muestra ningún organismo.
  *
@@ -110,7 +110,7 @@ export const ReportSuccessScreen = ({
   desktopTopBar = null,
 }) => {
   const isDesktop = useIsDesktopLayout();
-  // Estado en vivo: arranca en Enviado y avanza cuando la base lo cambia
+  // Estado en vivo: arranca en Recibido y avanza cuando la base lo cambia
   const [stateCode, setStateCode] = useState('RECIBIDO');
   useReportStateLive({
     reportId,
@@ -119,7 +119,7 @@ export const ReportSuccessScreen = ({
     intervalMs: SUCCESS_POLL_INTERVAL_MS,
     onUpdate: ({ stateCode: next }) => setStateCode(next),
   });
-  // Pasos alcanzados: hasta el estado actual (un cierre como Descartado deja el tracker donde estaba)
+  // Pasos alcanzados: hasta el estado actual (un cierre como Desestimado deja el tracker donde estaba)
   // REP-3845: destino real del reporte (route_report). Mientras responde, no se muestra ningún organismo supuesto.
   const [destination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
   // REP-3841: con Vulnerabilidad social, el canal verificado que se le indica al vecino (null si el catálogo no tiene)
@@ -281,7 +281,7 @@ export const ReportSuccessScreen = ({
                 <div className="mt-4 flex items-start gap-2 border-t border-rep-divider pt-3 desktop:hidden">
                   <Ban aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-rep-ink-muted" strokeWidth={2} />
                   <span className="text-rep-label font-medium text-rep-ink-muted">
-                    También puede cerrarse como <strong className="font-bold text-rep-ink-label">Descartado</strong>, con el motivo a la vista.
+                    También puede cerrarse como <strong className="font-bold text-rep-ink-label">Desestimado</strong>, con el motivo a la vista.
                   </span>
                 </div>
               </section>

@@ -350,7 +350,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
       markDraftPendingSync(clientSideId).catch(() => {});
       // Notificación coloquial y tranquilizadora al usuario
       toast.warning('Te quedaste sin conexión', {
-        description: 'Tus fotos y datos están guardados en tu teléfono y no se van a perder.',
+        description: 'Tus fotos y datos están guardados en tu dispositivo y no se van a perder.',
       });
     }
   }, [isOnline, clientSideId]);
@@ -550,6 +550,8 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
           description,
           latitud: lat,
           longitud: lng,
+          // REP-3843: dirección aproximada confirmada en el modal de ubicación (opcional)
+          address: customLocation?.address ?? null,
         })
       );
 
@@ -659,7 +661,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
         >
           <div className="flex items-center gap-1.5">
             <WifiOff className="w-[15px] h-[15px]" strokeWidth={2.25} />
-            <span>Estás sin conexión — Tu reporte quedó guardado en tu teléfono</span>
+            <span>Estás sin conexión — Tu reporte quedó guardado en tu dispositivo</span>
           </div>
         </div>
       )}
@@ -834,6 +836,7 @@ export const NewReportPage = ({ initialEvidenceList = [] }) => {
             <AdjustLocationModal
               initialCoordinates={activeCoords}
               initialLocalityId={customLocation?.localityId}
+              initialAddress={customLocation?.address}
               isGpsUnavailable={isGpsUnavailable}
               isGpsDenied={isGpsDenied}
               onRetryGps={refreshLocation}

@@ -17,24 +17,69 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Check, Eye, MapPin, FileText, Share2, ImageOff, Ban, X, ChevronLeft, ChevronRight, FlaskConical, ShieldCheck } from 'lucide-react';
+import { ReportsPage } from './ReportsPage';
 import { useAuth } from '../hooks/useAuth';
-import { getReportDetail, getReportStateHistory, isOwnedBy } from '../services/reportDetailService';
+import { getReportDetail, getReportStateHistory, getReportTakenEvent, isOwnedBy } from '../services/reportDetailService';
 import { ReportAiAnalysisPanel } from '../components/report/ReportAiAnalysisPanel';
 import { ReportVisualVerification } from '../components/report/ReportVisualVerification';
 import { StatusPill } from '../components/report/StatusPill';
-import { buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
+import { buildOrganismResponse, buildTimeline, formatReportCode, getStatusConfig, isClosedState, normalizeReportState } from '../components/report/reportStatus';
 import { useReportAnalysisLive } from '../hooks/useReportAnalysisLive';
 import { routeReport } from '../services/reportRoutingService';
 import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../services/socialAssistanceService';
 import { useReportImageAnalysis } from '../hooks/useReportImageAnalysis';
 import { useReportStateLive } from '../hooks/useReportStateLive';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
+import { formatAddress } from '../services/geocodingService';
 import { AppDesktopHeader } from '../components/layout/AppLayout';
 
 const CARD = 'rounded-2xl border border-rep-border bg-rep-surface p-4 shadow-rep-card desktop:p-5';
 
+// Aclaración de staging debajo de la respuesta (diseño v2, D49 a D52): un organismo de prueba no hace trámite oficial
+const stagingNote = ({ state, agency }) => {
+  if (state === 'escalado') return `Staging: ${agency} registró a quién corresponde, pero el reporte no se envió.`;
+  if (state === 'notificado') return `Staging: la cuenta de ${agency} es de prueba y el reporte no tiene trámite oficial.`;
+  return `Staging: lo marcó la cuenta de prueba de ${agency}.`;
+};
+
+/**
+ * REP-3001 · Respuesta del organismo arriba del seguimiento (D49 a D52): estado, a quién corresponde, motivo textual,
+ * qué organismo de prueba lo marcó y cuándo. Nunca «Resuelto por el Estado» ni «enviado a».
+ */
+const OrganismResponse = ({ response }) => (
+  <section aria-label="Respuesta del organismo" className={`${CARD} flex flex-col gap-1.5`}>
+    <h2 className="m-0 text-rep-title text-rep-ink desktop:text-rep-title-d">{response.label}</h2>
+    {response.summary && <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">{response.summary}</p>}
+    {response.escalatedTo && (
+      <p className="m-0 text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">{`Corresponde a: ${response.escalatedTo}`}</p>
+    )}
+    {response.contact && <p className="m-0 text-rep-label text-rep-ink-body desktop:text-rep-label-d">{`Contacto: ${response.contact}`}</p>}
+    {response.reason && <p className="m-0 text-rep-body text-rep-ink-body desktop:text-rep-body-d">{`«${response.reason}»`}</p>}
+    {response.reason && (response.agency || response.date) && (
+      <p className="m-0 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">{[response.agency, response.date].filter(Boolean).join(' · ')}</p>
+    )}
+    {response.state === 'descartado' && (
+      <p className="m-0 text-rep-label text-rep-ink-body desktop:text-rep-label-d">Si el problema sigue, podés hacer un reporte nuevo con otra foto.</p>
+    )}
+    {response.isTest && response.agency && (
+      <p className="m-0 mt-1 flex items-start gap-2 rounded-xl bg-rep-bg px-3 py-2 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
+        <FlaskConical aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+        <span>{stagingNote(response)}</span>
+      </p>
+    )}
+  </section>
+);
+
 const isServerImage = (url) => /^https?:\/\//i.test(String(url ?? ''));
+
+// Diseño v2 (D49): la foto lleva la marca de protegida (rostros y patentes difuminados) sobre la imagen
+const ProtectedBadge = () => (
+  <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(20,30,45,.74)] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[.4px] text-white">
+    <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+    Foto protegida
+  </span>
+);
 
 // El pie de las fotos solo promete anonimización si todas vienen del servidor:
 // una URL local (blob:) no pasó por el pipeline de cuarentena (H-25).
@@ -166,6 +211,8 @@ export const ReportDetailPage = () => {
 
   const [report, setReport] = useState(null);
   const [stateHistory, setStateHistory] = useState([]);
+  // REP-3001: «El organismo tomó tu reporte» (evento, no estado); null si no lo tomó o no se pudo leer
+  const [takenEvent, setTakenEvent] = useState(null);
   const [loadingReport, setLoadingReport] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -190,11 +237,12 @@ export const ReportDetailPage = () => {
 
     // El historial se pide en paralelo: si RLS no lo deja leer, la pantalla sigue
     // sirviendo (la línea de tiempo se deriva igual del estado actual del reporte).
-    Promise.all([getReportDetail(id, user?.id), getReportStateHistory(id)]).then(([detail, historyResult]) => {
+    Promise.all([getReportDetail(id, user?.id), getReportStateHistory(id), getReportTakenEvent(id)]).then(([detail, historyResult, taken]) => {
       if (!isMounted) return;
       if (detail.success) {
         setReport(detail.data);
         setStateHistory(historyResult.success ? historyResult.history : []);
+        setTakenEvent(taken);
       } else {
         setLoadError(detail.error);
       }
@@ -319,17 +367,27 @@ export const ReportDetailPage = () => {
   const isOwner = isOwnedBy(report, user?.id);
   const activePhoto = images[activePhotoIndex] ?? images[0] ?? null;
   const state = normalizeReportState(report.current_state_code);
-  const timeline = buildTimeline({
+  const response = isOwner ? buildOrganismResponse({ currentState: report.current_state_code, history: stateHistory, taken: takenEvent }) : null;
+  const builtTimeline = buildTimeline({
     currentState: report.current_state_code,
     createdAt: report.created_at,
     history: stateHistory,
+    taken: takenEvent,
     socialAssistance: isSocialAssistance,
   });
+  // El motivo y el destino de la última decisión ya están en la respuesta: no se repiten en el seguimiento (D50)
+  const repeated = response?.reason ? builtTimeline.map((step) => step.note).lastIndexOf(response.reason) : -1;
+  const timeline = builtTimeline.map((step, index) => (index === repeated ? { ...step, note: null, detail: null } : step));
   const locationLabel =
     report.localities?.name ||
     (typeof report.latitud === 'number'
       ? `${report.latitud.toFixed(4)}, ${report.longitud.toFixed(4)}`
       : 'Ubicación no disponible');
+  // REP-3843 / REP-3876 §8: el autor ve calle y altura; un tercero, solo la calle (la vista pública no trae altura)
+  const addressLabel = formatAddress(
+    { street: report.address_street, number: report.address_number },
+    { withNumber: isOwner }
+  );
   const isClosed = isClosedState(state);
   const reportCode = formatReportCode(report.id);
   const categoryName = report.services?.service_name || 'Sin categoría';
@@ -357,12 +415,22 @@ export const ReportDetailPage = () => {
       {/* D17 (REP-3791 Bloque 11-B): barra global de la app. En teléfono (M16) no va: la pantalla
           tiene su propia cabecera con «volver». */}
       {isDesktop && <AppDesktopHeader activeTab="reportes" className="sticky top-0 flex" />}
-      <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-6 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:max-w-[1200px] desktop:px-10 desktop:py-8">
+      <div className="flex flex-1">
+      {/* Diseño v2 (D49): en escritorio, la lista de Mis reportes queda a la izquierda del reporte abierto */}
+      {isDesktop && isOwner && (
+        <aside className="sticky top-[65px] h-[calc(100dvh-65px)] w-[340px] shrink-0 self-start border-r border-rep-divider">
+          <ReportsPage embedded currentId={report.id} />
+        </aside>
+      )}
+      <div className="mx-auto w-full min-w-0 max-w-lg flex-1 px-4 pb-6 pt-[max(8px,env(safe-area-inset-top,8px))] desktop:max-w-[1200px] desktop:px-10 desktop:py-8">
         {/* Cabecera de teléfono (M16): volver + número + estado */}
         {!isDesktop && (
           <header className="flex items-center gap-1 py-2">
             <BackButton className="-ml-2" />
-            <h1 className="m-0 flex-1 text-rep-title text-rep-ink">{reportCode}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="m-0 text-rep-title text-rep-ink">{reportCode}</h1>
+              <span className="block truncate text-rep-label text-rep-ink-muted">{categoryName}</span>
+            </div>
             <StatusPill state={report.current_state_code} />
           </header>
         )}
@@ -397,13 +465,14 @@ export const ReportDetailPage = () => {
                           type="button"
                           onClick={() => setViewerIndex(idx)}
                           aria-label={`Ver foto ${idx + 1} completa`}
-                          className={`rep-focus block overflow-hidden ${
+                          className={`rep-focus relative block overflow-hidden ${
                             isCarousel
                               ? 'w-[45%] shrink-0 snap-start rounded-xl'
                               : `w-full rounded-xl ${images.length === 1 ? 'col-span-2' : ''}`
                           }`}
                         >
                           <ReportPhoto src={img.image_url} alt={`Foto ${idx + 1} del reporte`} className="h-32 w-full" />
+                          {idx === 0 && isServerImage(img.image_url) && <ProtectedBadge />}
                         </button>
                       ))}
                     </div>
@@ -415,7 +484,7 @@ export const ReportDetailPage = () => {
                         type="button"
                         onClick={() => activePhoto && setViewerIndex(activePhotoIndex)}
                         aria-label={`Ver foto ${activePhotoIndex + 1} completa`}
-                        className="rep-focus block overflow-hidden rounded-2xl"
+                        className="rep-focus relative block overflow-hidden rounded-2xl"
                       >
                         <ReportPhoto
                           key={activePhoto?.id}
@@ -423,6 +492,7 @@ export const ReportDetailPage = () => {
                           alt={`Foto ${activePhotoIndex + 1} del reporte`}
                           className="h-[300px] w-full"
                         />
+                        {isServerImage(activePhoto?.image_url) && <ProtectedBadge />}
                       </button>
                       <div className="flex items-center gap-2">
                         {images.map((img, idx) => (
@@ -458,7 +528,7 @@ export const ReportDetailPage = () => {
             {/* Categoría y descripción. El mockup de M16 no las dibuja, pero sin
                 ellas el ciudadano no puede leer lo que él mismo reportó: se
                 conservan de REP-3789 y se restilan con los tokens del UJ v3.3. */}
-            <div className={`${CARD} order-2 flex flex-col gap-1.5 desktop:order-none`}>
+            <div className={`${CARD} order-5 flex flex-col gap-1.5 desktop:order-none`}>
               <span className="text-rep-label font-bold text-rep-ink-label desktop:text-rep-label-d">
                 {categoryName}
               </span>
@@ -467,11 +537,18 @@ export const ReportDetailPage = () => {
               </p>
             </div>
 
-            <div className={`${CARD} order-5 flex items-center gap-2.5 desktop:order-none`}>
+            <div className={`${CARD} order-2 flex items-center gap-2.5 desktop:order-none`}>
               <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} />
-              <span className="min-w-0 truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">
-                {locationLabel}
-              </span>
+              <div className="min-w-0">
+                <span data-testid="report-detail-address" className="block truncate text-rep-body font-bold text-rep-ink desktop:text-rep-body-d">
+                  {addressLabel}
+                </span>
+                <span className="block truncate text-rep-label text-rep-ink-muted">{locationLabel}</span>
+                {/* REP-3843 §8 (D49): el autor ve la altura; el mapa público, no */}
+                {isOwner && report.address_street && (
+                  <span className="mt-1 block text-rep-label text-rep-ink-muted">Vos ves calle y altura. En el mapa público se ve sin altura.</span>
+                )}
+              </div>
             </div>
 
             {isOwner && !isClosed && (
@@ -501,11 +578,73 @@ export const ReportDetailPage = () => {
               <BackButton className="-ml-3" />
               <h1 className="m-0 text-rep-title-d text-rep-ink">{reportCode}</h1>
               <StatusPill state={report.current_state_code} />
+              <span className="text-rep-body-d text-rep-ink-muted">{`· ${categoryName}`}</span>
             </div>
           )}
 
+
+          <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
+            {/* D50: la decisión del organismo va primero */}
+            {response && <OrganismResponse response={response} />}
+            <section data-testid="report-timeline" aria-label="Historial del reporte" className={CARD}>
+              <p className="m-0 mb-3 text-[11px] font-extrabold uppercase tracking-[.8px] text-rep-ink-muted">Seguimiento</p>
+              <ol className="m-0 flex list-none flex-col p-0">
+                {timeline.map((step, index) => {
+                  const isLast = index === timeline.length - 1;
+                  return (
+                    <li
+                      key={step.key}
+                      data-testid={`timeline-step-${step.key}`}
+                      data-reached={String(Boolean(step.done))}
+                      aria-current={step.current ? 'step' : undefined}
+                      className="relative flex gap-3 pb-4 last:pb-0"
+                    >
+                      {!isLast && (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute left-[11px] top-7 h-[calc(100%-24px)] w-[2px] ${step.done && timeline[index + 1]?.done ? 'bg-rep-success/50' : 'bg-rep-track'}`}
+                        />
+                      )}
+                      {step.discarded ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-track text-rep-ink-label">
+                          <Ban aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : step.current && !['enviado', 'resuelto', 'informado'].includes(step.key) ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent">
+                          <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </span>
+                      ) : step.done ? (
+                        <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent">
+                          <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={3} />
+                        </span>
+                      ) : (
+                        <span aria-hidden="true" className="relative h-6 w-6 shrink-0 rounded-full border-2 border-rep-track bg-rep-surface" />
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
+                        <span className="flex items-baseline gap-2">
+                          <span
+                            className={`min-w-0 flex-1 text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
+                          >
+                            {step.label}
+                          </span>
+                          {step.date && <span className="shrink-0 text-rep-label text-rep-ink-muted desktop:text-rep-label-d">{step.date}</span>}
+                        </span>
+                        {(step.detail || step.note) && (
+                          <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
+                            {[step.detail, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          </div>
+
           {isOwner && (
-            <div className="order-3 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-2 desktop:gap-4">
+            <div className="order-4 flex flex-col gap-3 desktop:order-none desktop:col-start-2 desktop:row-start-3 desktop:gap-4">
+              {/* Matías, 30/10: el diseño v2 no los dibuja; quedan debajo del seguimiento */}
               <ReportAiAnalysisPanel
                 analysis={analysis}
                 loading={loadingAnalysis}
@@ -516,62 +655,8 @@ export const ReportDetailPage = () => {
               <ReportVisualVerification results={imageAnalyses} images={images} categoryName={categoryName} />
             </div>
           )}
-
-          <section
-            data-testid="report-timeline"
-            aria-label="Historial del reporte"
-            className={`${CARD} order-4 desktop:order-none desktop:col-start-2 desktop:row-start-3`}
-          >
-            <ol className="m-0 flex list-none flex-col p-0">
-              {timeline.map((step, index) => {
-                const isLast = index === timeline.length - 1;
-                return (
-                  <li
-                    key={step.key}
-                    data-testid={`timeline-step-${step.key}`}
-                    data-reached={String(Boolean(step.done))}
-                    aria-current={step.current ? 'step' : undefined}
-                    className="relative flex gap-3 pb-4 last:pb-0"
-                  >
-                    {!isLast && (
-                      <span
-                        aria-hidden="true"
-                        className={`absolute left-[11px] top-7 h-[calc(100%-24px)] w-[2px] ${step.done && timeline[index + 1]?.done ? 'bg-rep-success/50' : 'bg-rep-track'}`}
-                      />
-                    )}
-                    {step.discarded ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-track text-rep-ink-label">
-                        <Ban aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      </span>
-                    ) : step.current && !['enviado', 'resuelto', 'informado'].includes(step.key) ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-accent text-rep-on-accent">
-                        <Eye aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      </span>
-                    ) : step.done ? (
-                      <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rep-success text-rep-on-accent">
-                        <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={3} />
-                      </span>
-                    ) : (
-                      <span aria-hidden="true" className="relative h-6 w-6 shrink-0 rounded-full border-2 border-rep-track bg-rep-surface" />
-                    )}
-                    <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
-                      <span
-                        className={`text-rep-body desktop:text-rep-body-d ${step.done ? 'font-bold text-rep-ink' : 'font-semibold text-rep-ink-muted'}`}
-                      >
-                        {step.label}
-                      </span>
-                      {(step.date || step.note) && (
-                        <span className="text-rep-label text-rep-ink-muted desktop:text-rep-label-d">
-                          {[step.date, step.note ? `«${step.note}»` : null].filter(Boolean).join(' · ')}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
         </div>
+      </div>
       </div>
 
       {viewerIndex !== null && (

@@ -11,6 +11,7 @@ import {
   isCoordinatesInBounds,
 } from '../../services/locationService';
 import { checkLocalityPinMismatch } from '../../services/localityCentroids';
+import { suggestAddress, classifyRoadType, OSM_ATTRIBUTION } from '../../services/geocodingService';
 import { LocalitySelector } from './LocalitySelector';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -36,6 +37,8 @@ const MAX_ZOOM = 19;
 export const AdjustLocationModal = ({
   initialCoordinates,
   initialLocalityId,
+  // REP-3843: dirección ya confirmada antes (al reabrir el modal no se pierde lo que el vecino corrigió)
+  initialAddress = null,
   onConfirm,
   onClose,
   // UJ v3.3 · M22 (REP-3791 Bloque 4): el GPS no respondió o el permiso está bloqueado
@@ -90,6 +93,48 @@ export const AdjustLocationModal = ({
   }, [currentCoords]);
 
   const addressDetails = resolveAddressDetails(currentCoords);
+
+  // REP-3843: dirección aproximada sugerida por el proxy (Nominatim) y corregible por el vecino. Es opcional: sin
+  // sugerencia se confirma igual. Se pide cuando el punto deja de moverse (y una vez por posición: 1 consulta/seg).
+  const [street, setStreet] = useState(initialAddress?.street ?? '');
+  const [streetNumber, setStreetNumber] = useState(initialAddress?.number ?? '');
+  const [addressSource, setAddressSource] = useState(initialAddress?.street ? initialAddress.source ?? 'sugerida' : null);
+  const editedAddressRef = useRef(initialAddress?.source === 'corregida');
+  useEffect(() => {
+    let vigente = true;
+    const [lng, lat] = currentCoords;
+    const espera = setTimeout(async () => {
+      const sugerida = await suggestAddress({ lat, lng });
+      // Lo que el vecino escribió a mano no se pisa con una sugerencia nueva
+      if (!vigente || editedAddressRef.current) return;
+      setStreet(sugerida?.street ?? '');
+      setStreetNumber(sugerida?.number ?? '');
+      setAddressSource(sugerida ? 'sugerida' : null);
+    }, 600);
+    return () => {
+      vigente = false;
+      clearTimeout(espera);
+    };
+  }, [currentCoords]);
+
+  const handleStreetChange = (value) => {
+    editedAddressRef.current = true;
+    setStreet(value);
+    setAddressSource('corregida');
+  };
+  const handleNumberChange = (value) => {
+    editedAddressRef.current = true;
+    setStreetNumber(value.replace(/[^0-9A-Za-z]/g, '').slice(0, 6));
+    setAddressSource('corregida');
+  };
+  const confirmedAddress = street.trim()
+    ? {
+        street: street.trim(),
+        number: streetNumber.trim() || null,
+        roadType: classifyRoadType(street),
+        source: addressSource === 'corregida' ? 'corregida' : 'sugerida',
+      }
+    : null;
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   useEffect(() => {
@@ -212,6 +257,7 @@ export const AdjustLocationModal = ({
       localityLabel,
       street: addressDetails.street,
       accuracy: addressDetails.accuracy,
+      address: confirmedAddress,
     });
   };
 
@@ -304,7 +350,7 @@ export const AdjustLocationModal = ({
             <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-rep-accent" strokeWidth={2.25} aria-hidden="true" />
             <div className="min-w-0">
               <div data-testid="adjust-street-address" className="text-[15px] font-extrabold leading-snug text-rep-ink">
-                {addressDetails.street}
+                {confirmedAddress ? [confirmedAddress.street, confirmedAddress.number].filter(Boolean).join(' ') : addressDetails.street}
               </div>
               <div className="mt-0.5 text-rep-label font-medium text-rep-ink-muted">
                 {localityLabel || addressDetails.locality}
@@ -312,7 +358,36 @@ export const AdjustLocationModal = ({
             </div>
           </div>
 
-          {/* R-4 (REP-2500): la localidad la elige el ciudadano; no hay geocodificación inversa */}
+          {/* REP-3843: dirección aproximada, sugerida y corregible. Opcional: vacía se confirma igual */}
+          <div className="mb-3 flex gap-2">
+            <label className="min-w-0 flex-1">
+              <span className="mb-1 block text-rep-label font-semibold text-rep-ink-muted">Calle</span>
+              <input
+                type="text"
+                value={street}
+                maxLength={120}
+                onChange={(e) => handleStreetChange(e.target.value)}
+                placeholder="Opcional"
+                className="rep-focus w-full rounded-xl border border-rep-border bg-rep-surface px-3 py-2 text-rep-body text-rep-ink"
+              />
+            </label>
+            <label className="w-24 shrink-0">
+              <span className="mb-1 block text-rep-label font-semibold text-rep-ink-muted">Altura</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={streetNumber}
+                onChange={(e) => handleNumberChange(e.target.value)}
+                placeholder="Opcional"
+                className="rep-focus w-full rounded-xl border border-rep-border bg-rep-surface px-3 py-2 text-rep-body text-rep-ink"
+              />
+            </label>
+          </div>
+          {addressSource === 'sugerida' && (
+            <p className="-mt-2 mb-3 text-[11px] text-rep-ink-faint">{OSM_ATTRIBUTION}</p>
+          )}
+
+          {/* R-4 (REP-2500): la localidad la elige el ciudadano; la dirección no la reemplaza */}
           <div className="mb-3">
             <LocalitySelector value={localityId} onChange={handleLocalityChange} />
           </div>

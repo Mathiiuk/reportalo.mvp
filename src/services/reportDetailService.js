@@ -27,7 +27,7 @@ const EVIDENCE_BUCKET = 'report-evidences';
  */
 export const PUBLIC_REPORTS_VIEW = 'public_citizen_reports';
 /** Columnas del resumen que se muestran en el detalle, propio o ajeno (la vista también las tiene). */
-const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at,
+const PUBLIC_REPORT_COLUMNS = `description, current_state_code, latitud, longitud, created_at, updated_at, address_street,
       services ( service_name, service_code ),
       localities ( name )`;
 /** Cuánto vive una URL firmada de las fotos del reporte. Se vuelve a pedir cada vez que se abre el detalle. */
@@ -99,7 +99,8 @@ export const getReportDetail = async (reportId, userId) => {
   if (userId) {
     const own = await supabase
       .from('citizen_reports')
-      .select(`id, client_side_id, user_id, ${PUBLIC_REPORT_COLUMNS}`)
+      // REP-3843: la altura solo la lee el dueño (la vista pública no la tiene, REP-3876 §8)
+      .select(`id, client_side_id, user_id, address_number, ${PUBLIC_REPORT_COLUMNS}`)
       .eq('id', reportId)
       .maybeSingle();
     if (own.error) {
@@ -188,7 +189,10 @@ export const getReportStateHistory = async (reportId) => {
 
   const { data, error } = await supabase
     .from('report_state_history')
-    .select('id, state_code, changed_at, notes')
+    // REP-3001: escalated_to = a qué organismo o área lo pasó el operador (texto libre, sin envío real);
+    // REP-3001: escalated_contact = su contacto, opcional
+    // REP-3001 (diseño v2, D50 a D52): qué organismo de prueba marcó la decisión; nunca quién la marcó (changed_by)
+    .select('id, state_code, changed_at, notes, escalated_to, escalated_contact, actor_type, agencies ( name, is_test )')
     .eq('report_id', reportId)
     .order('changed_at', { ascending: true });
 
@@ -197,6 +201,32 @@ export const getReportStateHistory = async (reportId) => {
   }
 
   return { success: true, history: data ?? [] };
+};
+
+/**
+ * REP-3001 · «El organismo tomó tu reporte»: el evento TOMADO_POR_ORGANISMO, con el nombre del organismo de prueba.
+ * Lo lee el dueño por la policy `read own or attended` de report_events. No se pide quién lo tomó (actor_profile_id).
+ * Si no se puede leer, la línea de tiempo sigue sin ese paso.
+ *
+ * @param {string} reportId UUID de citizen_reports.id
+ * @returns {Promise<{ taken_at: string, agency: string|null }|null>}
+ */
+export const getReportTakenEvent = async (reportId) => {
+  if (!isSupabaseConfigured || !reportId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('report_events')
+      .select('occurred_at, agencies ( name )')
+      .eq('report_id', reportId)
+      .eq('event_type_code', 'TOMADO_POR_ORGANISMO')
+      .order('occurred_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return { taken_at: data.occurred_at, agency: data.agencies?.name ?? null };
+  } catch {
+    return null;
+  }
 };
 /*
  * NOTA DE MIGRACIÓN (REP-3791 Bloque 3, 21/09/2026)
@@ -208,11 +238,11 @@ export const getReportStateHistory = async (reportId) => {
  * La fuente de verdad pasó a ser src/components/report/reportStatus.js, que
  * traduce los códigos de la base a las etiquetas del §10:
  *
- *   RECIBIDO     -> Enviado
- *   EN_ANALISIS  -> En revisión
- *   DERIVADO     -> Notificado al responsable
+ *   RECIBIDO     -> Enviado (REP-3001: hoy «Recibido», la misma etiqueta que el panel)
+ *   EN_ANALISIS  -> En revisión (REP-3001: hoy «En análisis»)
+ *   DERIVADO     -> Notificado al responsable (REP-3001: hoy «Derivado», la misma etiqueta que el panel)
  *   RESUELTO     -> Resuelto
- *   DESESTIMADO  -> Descartado (cierre alternativo)
+ *   DESESTIMADO  -> Descartado (cierre alternativo; REP-3001: hoy «Desestimado»)
  *
  * Esos cinco son los códigos REALES de public.report_states en producción
  * (proyecto CiudadAR), verificados contra la base el 21/09/2026: 17 reportes,

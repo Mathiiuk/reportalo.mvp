@@ -184,8 +184,8 @@ describe('REP-3820: la verificación visual en el detalle del reporte', () => {
     montarDetalle();
 
     await screen.findByTestId('visual-verification');
-    // El estado sigue siendo el del reporte (En análisis → «En revisión» al ciudadano): no se movió a ningún paso posterior
-    expect(screen.getAllByText(/en revisión/i).length).toBeGreaterThan(0);
+    // El estado sigue siendo el del reporte (En análisis, igual que en el panel): no se movió a ningún paso posterior
+    expect(screen.getAllByText(/en análisis/i).length).toBeGreaterThan(0);
     expect(screen.getByTestId('timeline-step-resuelto')).toHaveAttribute('data-reached', 'false');
   });
 

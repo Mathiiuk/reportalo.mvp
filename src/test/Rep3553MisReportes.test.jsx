@@ -71,7 +71,7 @@ describe('REP-3553: Mis reportes', () => {
     expect(within(filas[0]).getByTestId('report-row-code')).toHaveTextContent('#RP-00000001');
     expect(within(filas[0]).getByTestId('report-row-category')).toHaveTextContent('Tránsito');
     expect(filas[0]).toHaveTextContent('Wilde');
-    expect(filas[0]).toHaveTextContent(/en revisión/i);
+    expect(filas[0]).toHaveTextContent(/en análisis/i);
     expect(filas[1]).toHaveTextContent('Ambiente');
     expect(filas[1]).toHaveTextContent(/resuelto/i);
   });

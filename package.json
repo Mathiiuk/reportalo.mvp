@@ -7,6 +7,8 @@
     "dev": "node scripts/build-info.mjs && vite",
     "build": "node scripts/build-info.mjs && vite build",
     "preview": "vite preview",
+    "android:generar": "node scripts/android/generar-twa.mjs",
+    "android:build": "node scripts/android/compilar.mjs",
     "test": "vitest run",
     "agt:task": "agt task:new",
     "agt:loop": "agt task:loop",
@@ -27,6 +29,7 @@
     "tailwind-merge": "^3.0.1"
   },
   "devDependencies": {
+    "@bubblewrap/core": "1.27.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",

@@ -1,9 +1,9 @@
 # REP-3827 (D7) · Diagnóstico del tramo previo al alta: carga, anonimización y error 520
 
-**Fecha:** 13/10/2026 · **Responsable:** Matías · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
+**Fecha:** 13/10/2026 · **Actualizado:** 16/10/2026 (sección 4.1) · **Responsable:** Matías · **Entorno:** staging (proyecto Supabase `CiudadAR`) · **Horarios:** UTC (ART = UTC-3)
 **Script reproducible (solo lectura):** [`scripts/rep3827/huerfanas_report_evidences.sql`](../scripts/rep3827/huerfanas_report_evidences.sql)
 
-> **Estado:** diagnóstico parcial. **El error 520 en sí NO está reproducido ni su causa confirmada.** En cambio, al revisar el tramo previo al alta aparecieron hallazgos **confirmados con datos de la base y con el código**, que explican el comportamiento que Hernán vio en D8 y dejan basura en el bucket. **Se aplicaron las correcciones A y B** (sección 6); C, D y E quedan como propuestas para otro ticket.
+> **Estado (16/10/2026):** diagnóstico **cerrado**. El 520 de D7 **está ubicado** en los logs del 07/10: lo devolvió el borde de Supabase (gateway) en 39 ms y **el pedido nunca llegó al servicio de Storage**. Fue el **único** 5xx del día: un error transitorio de infraestructura, no del código de la app (sección 4.1). El reporte de B1-22 **no se perdió**: el borrador quedó en el dispositivo y se envió en el caso siguiente. Las correcciones A y B (sección 6) están aplicadas y validadas por QA (REP-3833). C, D y E quedan como propuestas para otro ticket.
 
 ---
 
@@ -15,7 +15,7 @@
 | H2 | Cuando la pantalla se rinde, el reporte pasa a la cola, pero **la primera tanda sigue procesando en segundo plano** y la cola **vuelve a procesar todo desde cero**: trabajo duplicado y **fotos protegidas guardadas sin reporte** | **Confirmado** (código + datos) |
 | H3 | Quien se queda esperando la pantalla «Reporte enviado» **no la ve nunca** en ese camino: ve el aviso «Reporte guardado con éxito» y vuelve al mapa. Es el comportamiento diseñado, pero explica «no confirmó en 120 s» de D8 | **Confirmado en el código**; lo que vio el probador es **inferencia** |
 | H4 | La subida a cuarentena **no reintenta** ante un error transitorio (como un 520) | **Confirmado en el código** |
-| H5 | La causa del 520 de D7 (origen, etapa, frecuencia) | **NO confirmada** |
+| H5 | La causa del 520 de D7 (origen, etapa, frecuencia) | **Ubicada (16/10):** borde de Supabase, sin llegar a Storage; único 5xx del 07/10 (sección 4.1) |
 
 ---
 
@@ -99,7 +99,37 @@ Los días con más casos son el 23/09 (29), el 24/09 (15) y el 02/10 (23); **no 
 - **Mis reportes vs Pendientes.** Hernán buscó el reporte en «Mis reportes». Un borrador que pasó a la cola vive en el dispositivo y se ve en **Pendientes**, no en «Mis reportes». No sé si el probador miró Pendientes.
 - **No consulté los logs del 07/10** del almacenamiento ni de las funciones: no sé si el plan de Supabase todavía los conserva.
 
-**Conclusión sobre D7:** el diagnóstico queda **abierto**. Sin el caso original no puedo ubicar el 520 con certeza ni decir si es frecuente. Lo que sí confirmé es que, si ocurre en la subida, **no se reintenta** (H4).
+**Conclusión sobre D7 (13/10):** el diagnóstico queda **abierto**. Sin el caso original no puedo ubicar el 520 con certeza ni decir si es frecuente. Lo que sí confirmé es que, si ocurre en la subida, **no se reintenta** (H4).
+
+> **Corrección (16/10):** dos afirmaciones de esta sección resultaron incorrectas. La fecha real de la tanda es el **07/10**, no el 08/10 (Hernán, REP-3827). Y sí existe un reporte con el texto de B1-22 en la ventana: `601fb52b` lleva el `client_side_id` del borrador que falló. Ver 4.1.
+
+### 4.1 El 520 en los logs del 07/10 (16/10/2026)
+
+Hernán repitió la tanda `B1-18` a `B2-27` el 16/10 con la red grabando: 10 de 10 reportes creados, 0 errores en 854 pedidos, **el 520 no se reprodujo** (HAR en el Drive del equipo). Con la fecha corregida, los logs de Supabase del **07/10** todavía estaban disponibles y se consultaron (`edge_logs`, `storage_logs`; consultas de solo lectura).
+
+**El pedido que falló**
+
+| Campo | Valor |
+|---|---|
+| Hora | **07/10/2026 20:59:40.784 UTC** (17:59:40 ART), 14 s después del alta de `B1-21` (`27a4fbe2`) |
+| Pedido | `POST /storage/v1/object/evidence-quarantine/<usuario>/temp_8a40b2f2-…_1791406780725.jpg` (supabase-js 2.112.4, web) |
+| Respuesta | **520**, `text/plain`, **39 ms** en el borde (colo `SCL`, `cf_ray a46fd4bbfe4a92cf-SCL`, `request_id 01a1182a-3170-7206-97f7-d72453df1ab3`) |
+| Del lado de Storage | **Ninguna entrada** en `storage_logs` para ese pedido. Las subidas anteriores y posteriores sí tienen su `storage.object.upload` |
+| Frecuencia | **Único 5xx de todo el 07/10** (00:00–24:00 ART): 1 de 7.853 pedidos al borde, 1 de 1.277 a Storage |
+
+**Lectura.** El 520 lo generó el borde de Supabase (Cloudflare + gateway) al no recibir una respuesta válida del servicio de origen: el pedido **no llegó a Storage** (no hay log) y la respuesta tardó 39 ms, contra 300–550 ms de una subida normal. No hay nada en el pedido que lo distinga de las subidas buenas (mismo cliente, misma ruta, mismo navegador). Es un **fallo transitorio de infraestructura del proveedor**, fuera del código de Reportalo. La causa interna del lado de Supabase no es observable con nuestro acceso y no se investiga más.
+
+**Qué pasó con el reporte.** El borrador del caso es `8a40b2f2-9921-4672-b951-2fd197fc32d6`:
+
+1. **20:59:40**: falla la subida (520). El código desplegado ese día (`e0e063c`) no reintentaba (H4): la pantalla mostró el error con «Reintentar protección», y el borrador quedó en el dispositivo como `DRAFT_LOCAL`. Por eso no apareció ni en «Mis reportes» ni en Pendientes.
+2. El script esperó 120 s y abrió un reporte nuevo para `B1-23`. Al abrirlo, la app **restauró el borrador en edición** (`getActiveDraftReport`, REP-2703), con el mismo `client_side_id`. El script lo completó con los datos de `B1-23`, que son iguales a los de `B1-22` (Gerli, Comercio irregular, mismo texto y misma foto).
+3. **21:01:54**: subida del mismo borrador → 200. **21:02:03**: alta de `601fb52b` con `client_side_id = 8a40b2f2…`.
+
+La planilla de Hernán (`bateria_completa_81.csv`) anota `601fb52b` como `B1-23`. Por el `client_side_id` es el borrador de `B1-22`: los dos casos quedaron en **un solo reporte**, sin duplicado ni pérdida de datos. Para un ciudadano real es el comportamiento diseñado: si la subida falla y sale de la pantalla, el borrador lo espera en el próximo reporte. La pérdida aparente es un efecto del script, que cargó un caso nuevo encima de un borrador restaurado.
+
+**Con las correcciones de hoy:** la corrección B (hasta 2 reintentos, 0,8 s y 2 s) habría resuelto este caso en el primer reintento: el pedido siguiente al mismo servicio respondió bien. QA lo validó con 520 simulados (REP-3833, D7-02 y D7-03: reporte enviado en 11,6 s y 13,6 s, sin error visible).
+
+**Conclusión sobre D7 (16/10):** causa **ubicada** (borde del proveedor, transitoria, aislada); recuperación **verificada** (sin pérdida ni duplicados); mitigación **aplicada y validada** (B). Se cierra.
 
 ---
 
@@ -107,14 +137,14 @@ Los días con más casos son el 23/09 (29), el 24/09 (15) y el 02/10 (23); **no 
 
 | Punto del ticket | Estado |
 |---|---|
-| Recuperar de Hernán el reporte D7 original (ID, hora con zona, pasos, capturas) | **Pendiente.** Tengo el plan (`B1-22`) y la ventana horaria, no la captura de consola con hora ni la URL del recurso |
-| Reproducir en staging con conectividad normal y degradada | **No hecho.** Requiere ejecutar envíos reales en la cuenta de staging; no lo hice sin acordarlo |
-| Comprobar que un fallo previo al alta conserva borrador e imágenes protegidas | **Parcial:** el código conserva el borrador (pasa a `PENDING_SYNC` y se reintenta cada 60 s) y los datos muestran que el alta final fue idempotente (el reporte `3091e5f5` se creó una sola vez). **No verifiqué en un dispositivo** qué ve el ciudadano si el fallo es de subida |
-| Regresión con QA en iPhone/Safari | **No hecho** |
+| Recuperar de Hernán el reporte D7 original (ID, hora con zona, pasos, capturas) | **Hecho (16/10).** Fecha corregida al 07/10 y ventana UTC; con eso se ubicó el pedido en los logs (4.1) |
+| Reproducir en staging con conectividad normal y degradada | **Hecho por Hernán (16/10, sin 520) y por QA (REP-3833, 520, 403 y corte de red simulados)** |
+| Comprobar que un fallo previo al alta conserva borrador e imágenes protegidas | **Hecho.** En el caso original el borrador quedó en el dispositivo y terminó en `601fb52b` (4.1). QA lo verificó con reintento manual y con la cola (REP-3833, D7-06b y D7-04), sin duplicados |
+| Regresión con QA en iPhone/Safari | **No hecho.** QA no cuenta con dispositivos Apple; Iván lo propone como tarea QA aparte (REP-3833, sección 8) |
 
 ---
 
-## 6. Correcciones propuestas (ninguna aplicada)
+## 6. Correcciones propuestas (A y B aplicadas)
 
 El ticket dice aplicar una corrección acotada **solo si la causa está confirmada**. H1–H4 están confirmadas en el código; el 520 (H5) no. Propongo, en este orden de menor a mayor impacto:
 
@@ -146,8 +176,18 @@ Con **A + B** se cubre el ticket con el menor riesgo. C, D y E son decisiones de
 
 ---
 
-## 7. Lo que necesito
+## 7. Cierre (16/10/2026)
 
-1. **De vos:** ¿aplico A y B en esta rama? ¿C, D o E van a otro ticket?
-2. **De Hernán:** la captura de la consola de `B1-22` con la **hora exacta** y la **URL completa** del recurso que devolvió 520, y qué mostraba la pantalla y qué había en **Pendientes**. Si puede repetir la tanda con la pestaña de red abierta, el HAR.
-3. **De Iván (QA):** una vez aplicadas las correcciones, regresión del recorrido de 1, 3 y 4 fotos y de un fallo simulado de subida, en iPhone/Safari y al menos otro entorno.
+| Criterio de aceptación | Estado |
+|---|---|
+| Caso original identificado y reproducido, o impedimento documentado | **Identificado** en los logs (4.1). La repetición de Hernán no lo reproduce: es consistente con un fallo transitorio |
+| Se distingue dónde ocurre el 520 y se conservan log, versión y tiempos | **Sí:** borde de Supabase, antes de Storage; `request_id`, `cf_ray`, hora y versión del cliente en 4.1 |
+| Sin pérdida de datos ante falla recuperable, reintento coherente y sin duplicados, verificado en staging | **Sí:** caso original sin pérdida (4.1) y regresión QA 9 de 9 (REP-3833) |
+| QA registra esperado/observado y dictamen | **Sí:** REP-3833, APROBADO CON LIMITACIÓN. La limitación era la causa del 520, que queda resuelta en 4.1 |
+
+**Queda fuera de este ticket** (va a otro, junto con las propuestas C, D y E):
+
+- **O-01 de QA (Alta):** con 4 fotos y buena señal, la pantalla se rinde a los 45 s y el aviso habla de falta de señal. Es H1 + H3; se resuelve con C o E, a decisión del PO.
+- **O-02 de QA (Media):** la corrección A no evita el reproceso cuando la cuarta foto ya arrancó antes de los 45 s. Es la parte de H2 que A no cubre (la cola vuelve a procesar todo) y la limpieza de huérfanas (D).
+- **O-05 y O-06 de QA (Baja):** texto del error 403 («Revisá tu conexión») y «Reintentar protección» ofrecido ante un error de formato (415).
+- **Validación en iPhone/Safari:** tarea QA aparte (REP-3833, sección 8).

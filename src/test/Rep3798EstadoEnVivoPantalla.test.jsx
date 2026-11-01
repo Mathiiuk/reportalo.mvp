@@ -71,8 +71,8 @@ describe('REP-3798 · el detalle cambia de estado en vivo', () => {
     });
 
     await waitFor(() => expect(liveParams.stateCode).toBe('EN_ANALISIS'));
-    expect(screen.getAllByText('En revisión').length).toBeGreaterThan(0);
-    expect(toast.info).toHaveBeenCalledWith('Tu reporte cambió de estado', { description: 'En revisión' });
+    expect(screen.getAllByText('En análisis').length).toBeGreaterThan(0);
+    expect(toast.info).toHaveBeenCalledWith('Tu reporte cambió de estado', { description: 'En análisis' });
   });
 
   it('UT-LIVE-10: quien mira un reporte ajeno ve el nuevo estado pero sin aviso personal', async () => {

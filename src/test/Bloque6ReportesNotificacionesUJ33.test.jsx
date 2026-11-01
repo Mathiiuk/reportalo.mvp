@@ -68,7 +68,7 @@ describe('REP-3791 Bloque 6 · Mis reportes y Notificaciones (UJ v3.3 · M17 / M
 
     expect(notifications).toHaveLength(3);
     expect(unreadCount).toBe(3);
-    expect(notifications.some((n) => n.title.includes('pasó a En revisión'))).toBe(true);
+    expect(notifications.some((n) => n.title.includes('pasó a En análisis'))).toBe(true);
     expect(notifications.some((n) => n.title.includes('se resolvió'))).toBe(true);
     expect(notifications.some((n) => n.title.includes('«Contenedor desbordado» sigue sin enviar'))).toBe(true);
     // El detalle conserva la nota del organismo

@@ -73,8 +73,10 @@ describe('REP-3554: contenido de las preguntas frecuentes', () => {
     expect(texto).not.toMatch(/https?:\/\//i);
     expect(texto).not.toMatch(/en \d+ (horas|días)|dentro de las próximas|a la brevedad|garantiz/i);
     // Frases del diseño original que la app hoy no cumple
-    expect(texto).not.toMatch(/sumarte|mapa de calor|derivado/i);
-    expect(texto).toContain('Notificado al responsable');
+    expect(texto).not.toMatch(/sumarte|mapa de calor/i);
+    // REP-3001 (reglas del panel §6): el vecino ve la misma etiqueta que el operador
+    expect(texto).toContain('Derivado');
+    expect(texto).toContain('Desestimado');
   });
 
   it('UT-V3554-03b: las categorías son las cinco de la app, con sus nombres reales', () => {
