@@ -3,6 +3,7 @@ import { Check, Landmark, Ban, ShieldCheck, PhoneCall } from 'lucide-react';
 import { getCategoryTone } from './categoryTone';
 import { useIsDesktopLayout } from '../../hooks/useMediaQuery';
 import { useReportStateLive } from '../../hooks/useReportStateLive';
+import { useReportAnalysisLive } from '../../hooks/useReportAnalysisLive';
 import { normalizeReportState } from './reportStatus';
 import { routeReport, describeRoutingDestination } from '../../services/reportRoutingService';
 import { describeSocialAssistanceChannel, isSocialAssistanceCategory } from '../../services/socialAssistanceService';
@@ -29,12 +30,20 @@ const SOCIAL_TRACKER_STEPS = [
 // se entregó: el routing calcula el destino, no envía nada (modo borrador, REP-2801).
 const DESTINATION_NOTE = {
   consultando: 'Buscando el organismo que corresponde…',
+  // REP-3892 O-02: el organismo del catálogo no es una entrega; Reportalo todavía no le manda nada
+  verificado: 'Es el organismo que corresponde. Todavía no le enviamos el reporte.',
+  // REP-3892 O-02: con análisis fuera de alcance o asistencia no se muestra organismo ni canal
+  sin_derivacion: 'Reportalo no deriva este reporte a ningún organismo.',
   sin_destino: 'Destino sin verificar: es el canal general de la jurisdicción, no un receptor confirmado.',
   sin_destino_vacio: 'No hay un organismo verificado para este reporte.',
   no_resuelto: 'Todavía no está definido el organismo: hay más de uno posible.',
   fuera_del_piloto: 'Por ahora Reportalo cubre CABA y Avellaneda: este reporte no se asocia a ningún organismo.',
   no_disponible: 'No pudimos consultar el destino en este momento.',
 };
+
+// REP-3892 O-02: resultados del análisis con los que el reporte no se deriva (REP-3876: fuera de alcance queda En
+// análisis; asistencia, Informado). El mismo criterio usa prepare_organism_delivery en la base.
+const NOT_DERIVED_ANALYSIS = new Set(['fuera_de_alcance', 'asistencia']);
 
 const destinationNote = (destination) => {
   if (destination.kind === 'sin_destino' && !destination.organismo) return DESTINATION_NOTE.sin_destino_vacio;
@@ -121,7 +130,12 @@ export const ReportSuccessScreen = ({
   });
   // Pasos alcanzados: hasta el estado actual (un cierre como Desestimado deja el tracker donde estaba)
   // REP-3845: destino real del reporte (route_report). Mientras responde, no se muestra ningún organismo supuesto.
-  const [destination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
+  const [routedDestination, setDestination] = useState(() => ({ kind: reportId ? 'consultando' : 'no_disponible' }));
+  // REP-3892 O-02: el último análisis decide si hay organismo para mostrar (llega segundos después del envío)
+  const { analysis } = useReportAnalysisLive(reportId);
+  const destination = NOT_DERIVED_ANALYSIS.has(analysis?.result_status_code)
+    ? { kind: 'sin_derivacion' }
+    : routedDestination;
   // REP-3841: con Vulnerabilidad social, el canal verificado que se le indica al vecino (null si el catálogo no tiene)
   const [socialChannel, setSocialChannel] = useState(null);
   useEffect(() => {
@@ -193,7 +207,7 @@ export const ReportSuccessScreen = ({
                 >
                   {isSocialAssistance
                     ? 'Te indicamos a quién avisar. Reportalo no deriva este caso a ningún organismo.'
-                    : 'Tu evidencia ya está en camino al organismo competente.'}
+                    : 'Recibimos tu reporte. Lo estamos analizando para identificar el organismo que corresponde.'}
                 </p>
               </div>
             </div>

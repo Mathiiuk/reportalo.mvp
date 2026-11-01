@@ -7,6 +7,10 @@ import { createEvidenceItem, EVIDENCE_STATUS } from '../types/evidence';
 import { useEvidenceCapture } from '../hooks/useEvidenceCapture';
 import { EvidenceCaptureStep } from '../components/report/EvidenceCaptureStep';
 import { NewReportPage } from '../pages/NewReportPage';
+// REP-3892: «Reporte enviado» lee el último análisis en vivo; en estas pruebas todavía no hay análisis
+vi.mock('../hooks/useReportAnalysisLive', () => ({
+  useReportAnalysisLive: () => ({ analysis: null, loading: false, error: null, mode: 'idle' }),
+}));
 
 // REP-2204: espía del alta del reporte, para verificar que un doble toque no lo crea dos veces
 const { upsertReportSpy } = vi.hoisted(() => ({
