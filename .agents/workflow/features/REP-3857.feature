@@ -8,3 +8,9 @@ Característica: Citas con elisión por tramos (REP-3857)
     Entonces se rechaza
   Escenario: Sin marca de elisión
     Entonces el resultado es idéntico al de P0
+  Escenario: Lista H-02 de Hernán (REP-3879, 01/11/2026)
+    Dada una cita con «...» cuyo texto omitido dice «En ningún caso», «únicamente» o «prohibido»
+    Entonces se rechaza, con o sin tilde y en mayúsculas o minúsculas
+  Escenario: Palabra entera
+    Dada una cita con «...» cuyo texto omitido solo dice «niños»
+    Entonces se acepta
