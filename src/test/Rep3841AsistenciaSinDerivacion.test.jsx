@@ -9,6 +9,10 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+// REP-3892: «Reporte enviado» lee el último análisis en vivo; en estas pruebas todavía no hay análisis
+vi.mock('../hooks/useReportAnalysisLive', () => ({
+  useReportAnalysisLive: () => ({ analysis: null, loading: false, error: null, mode: 'idle' }),
+}));
 
 const { rpcMock, fromCalls, upsertMock, attributeResult } = vi.hoisted(() => ({
   rpcMock: vi.fn(),

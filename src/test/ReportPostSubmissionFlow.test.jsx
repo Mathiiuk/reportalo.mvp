@@ -79,7 +79,7 @@ describe('REP-2201 / User Journey v3.1: Flujo Post-Envío (Procesamiento y Éxit
       // Header
       expect(screen.getByText('Reporte enviado')).toBeInTheDocument();
       expect(
-        screen.getByText('Tu evidencia ya está en camino al organismo competente.')
+        screen.getByText('Recibimos tu reporte. Lo estamos analizando para identificar el organismo que corresponde.')
       ).toBeInTheDocument();
 
       // Card 1: ID, Categoría y Organismo

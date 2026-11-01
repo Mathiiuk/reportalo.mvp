@@ -10,6 +10,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+// REP-3892: «Reporte enviado» lee el último análisis en vivo; en estas pruebas todavía no hay análisis
+vi.mock('../hooks/useReportAnalysisLive', () => ({
+  useReportAnalysisLive: () => ({ analysis: null, loading: false, error: null, mode: 'idle' }),
+}));
 
 // `red.caida` simula una caída de red: el cliente lanza. Se hace fuera de vi.fn porque Vitest marca como fallido el
 // test cuando un vi.fn lanza o rechaza, aunque el servicio atrape el error.
