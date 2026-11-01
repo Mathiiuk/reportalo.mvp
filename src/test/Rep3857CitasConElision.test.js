@@ -93,13 +93,16 @@ describe('REP-3857 · saltos de línea', () => {
 
 describe('REP-3857 · las tres copias del validador son iguales', () => {
   const bloque = (fuente) =>
-    fuente.slice(fuente.indexOf('const ELISION_MARKER'), fuente.indexOf('\n', fuente.indexOf('const ELISION_AT_END')));
+    fuente
+      .slice(fuente.indexOf('const ELISION_MARKER'), fuente.indexOf('\n', fuente.indexOf('const omitsCaveat')))
+      // REP-3879 H-02: la función lleva el tipo del parámetro; el resto del bloque es idéntico.
+      .replace('(text: string): boolean =>', '(text) =>');
   const funcionJs = (fuente) => {
     const desde = fuente.indexOf('quoteMatchesFragment = ');
     return fuente.slice(desde, fuente.indexOf('\n};', desde));
   };
 
-  it('mismas constantes: marcas, tramo mínimo, salvedades y bordes', () => {
+  it('mismas constantes: marcas, tramo mínimo, salvedades, bordes y omitsCaveat', () => {
     expect(bloque(FUNCION)).not.toBe('');
     expect(bloque(ESPEJO)).toBe(bloque(FUNCION));
     expect(bloque(REPLICA)).toBe(bloque(FUNCION));
@@ -198,5 +201,90 @@ describe('REP-3857 · --doble-validador: la misma respuesta con la regla de P0 y
     const f = filaM2({ camino: 'generacion', parsed, fragments, usage: {}, latencia_ms: 1, validacion: validarComoProduccion(parsed, fragments, 'INFRAESTRUCTURA', reglas) }, ['f-lom59']);
     expect(f.validador_p0).toBeUndefined();
     expect(resumenM2([{ ...f, caso_id: 'x', repeticion: 1, pendiente_po: false, esperados_n1: ['f-lom59'] }]).todos.doble_validador).toBeUndefined();
+  });
+});
+
+// REP-3879 H-02 (Hernán, 01/11/2026). Textos reales del corpus: Ley 15.625 art. 6, fragmento de la Línea 108
+// (`40000000-…-0059` en staging), Ley 24.449 art. 48 y LOM art. 59.
+describe('REP-3879 H-02 · lista de Hernán: lo que no se puede omitir con «...»', () => {
+  const LEY_15625_ART_6 =
+    'El Estado debe realizar acciones positivas tendientes a evitar y eliminar toda discriminación o estigmatización hacia las personas en situación de calle o en riesgo a la situación de calle, estableciendo a la vez condiciones que permitan el ejercicio de su autodeterminación y el libre desarrollo de la personalidad y de la subjetividad. En ningún caso se podrá negar atención a personas en situación de calle o en riesgo de situación de calle por falta de documentación.';
+  const LINEA_108 =
+    'Para avisar por otra persona corresponde la opción 1. La línea atiende únicamente en la Ciudad Autónoma de Buenos Aires.';
+  const LEY_24449_ART_48 =
+    'Está prohibido en la vía pública: i) La detención irregular sobre la calzada, el estacionamiento sobre la banquina y la detención en ella sin ocurrir emergencia;';
+  const LOM_ART_59 = [
+    'Constituyen obras públicas municipales:',
+    'a) Las concernientes a los establecimientos e instituciones municipales.',
+    'b) Las de ornato, salubridad, vivienda y urbanismo.',
+    'c) Las atinentes a servicios públicos de competencia municipal.',
+    'd) Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas.',
+    'Se considerará que las obras de infraestructura cuentan con declaración de utilidad pública, cuando estén incluidas expresamente en planes integrales de desarrollo urbano, aprobados por ordenanza.',
+    'Cuando se trate de obras que no estén incluidas en los planes aludidos precedentemente, sólo se podrá proceder a la pertinente declaración de Utilidad pública, mediante ordenanza debidamente fundada.',
+  ].join('\n');
+  // Plantilla: lo único omitido entre los dos tramos es la palabra que se prueba.
+  const conOmitido = (palabra) =>
+    quoteMatchesFragment(
+      'El titular debe mantener la vereda ... la autoridad de aplicación del municipio.',
+      `El titular debe mantener la vereda en buen estado ${palabra} lo disponga la autoridad de aplicación del municipio.`,
+    );
+
+  it('Ley 15.625 art. 6: rechaza si lo omitido dice «En ningún caso»', () => {
+    const cita = 'el libre desarrollo de la personalidad y de la subjetividad. ... se podrá negar atención a personas en situación de calle';
+    expect(quoteMatchesFragment(cita, LEY_15625_ART_6)).toBe(false);
+  });
+
+  it('Línea 108: rechaza si lo omitido dice «únicamente»', () => {
+    expect(quoteMatchesFragment('La línea atiende ... en la Ciudad Autónoma de Buenos Aires.', LINEA_108)).toBe(false);
+  });
+
+  it('Ley 24.449 art. 48: rechaza si lo omitido dice «prohibido»', () => {
+    expect(quoteMatchesFragment('... en la vía pública: i) La detención irregular sobre la calzada', LEY_24449_ART_48)).toBe(false);
+  });
+
+  it('acepta si lo omitido solo dice «niños» o «niñez»: «ni» se busca como palabra entera', () => {
+    for (const omitido of ['niños', 'niñez', 'ninos']) expect(conOmitido(omitido), omitido).toBe(true);
+  });
+
+  it('LOM art. 59: sigue aceptada la cita que termina en «telefónicas.» y omite los incisos a) a c)', () => {
+    const cita =
+      'Constituyen obras públicas municipales: ... d) Las de infraestructura urbana, en especial las de pavimentación, repavimentación, cercos, veredas, saneamiento, agua corriente, iluminación, electrificación, provisión de gas y redes telefónicas.';
+    expect(quoteMatchesFragment(cita, LOM_ART_59)).toBe(true);
+  });
+
+  it('LOM art. 59: rechaza la cita que termina en «...» y deja afuera «que no estén incluidas…» («no» y «sólo»)', () => {
+    expect(quoteMatchesFragment('d) Las de infraestructura urbana, en especial las de pavimentación ...', LOM_ART_59)).toBe(false);
+  });
+
+  it('detecta cada palabra y raíz de la lista, con y sin tilde y en mayúsculas', () => {
+    const palabras = [
+      // Negación
+      'no', 'ni', 'nunca', 'jamás', 'jamas', 'tampoco', 'ningún', 'ningun', 'ninguna', 'ninguno', 'ningunos', 'nadie', 'nada',
+      // Excepción
+      'salvo', 'salvedad', 'salvedades', 'excepto', 'excepción', 'excepciones', 'exceptúase', 'exceptuados', 'a menos que', 'sin perjuicio',
+      // Dispensa
+      'exime', 'eximidos', 'exento', 'exenta', 'exención', 'exenciones',
+      // Prohibición
+      'prohibido', 'prohibiciones', 'prohíbese', 'prohíbe',
+      // Condición
+      'siempre que', 'siempre y cuando', 'a condición de', 'solo si',
+      // Restricción
+      'únicamente', 'unicamente', 'sólo', 'solo', 'solamente',
+    ];
+    for (const palabra of palabras) {
+      for (const forma of [palabra, palabra.toUpperCase(), palabra[0].toUpperCase() + palabra.slice(1)]) {
+        expect(conOmitido(forma), forma).toBe(false);
+      }
+    }
+  });
+
+  it('«sin», «cuando» y «si» quedan afuera a propósito: no bloquean la elisión', () => {
+    for (const palabra of ['sin', 'cuando', 'si', 'Sin', 'Cuando']) expect(conOmitido(palabra), palabra).toBe(true);
+  });
+
+  it('una raíz no se detecta dentro de otra palabra («nadar», «nivel», «solar», «excelente»)', () => {
+    for (const palabra of ['nadar', 'nivel', 'solar', 'soltar', 'excelente', 'nota', 'unico']) {
+      expect(conOmitido(palabra), palabra).toBe(true);
+    }
   });
 });

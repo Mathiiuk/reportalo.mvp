@@ -339,10 +339,15 @@ const normalizeWhitespace = (text: string): string => text.replace(/\s+/g, ' ').
  */
 const ELISION_MARKER = /\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…/;
 const MIN_ELIDED_SEGMENT_CHARS = 15;
-const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamás|salvo|excepto|excepción|siempre que|sin perjuicio)(?![\p{L}])/iu;
+// REP-3879 H-02 (Hernán, 01/11/2026): negación, excepción, dispensa, prohibición, condición y restricción. Por raíz
+// donde va `\p{L}*`, por palabra entera («ni» no se detecta en «niños») y sin tildes: se compara contra omitsCaveat.
+// «sin», «cuando» y «si» quedan afuera a propósito (bloquearían demasiado corpus).
+const ELIDED_TEXT_GUARD = /(?:^|[^\p{L}])(?:no|ni|nunca|jamas|tampoco|ningun[oa]?s?|nadie|nada|salvo|salvedad(?:es)?|excep\p{L}*|a menos que|sin perjuicio|exim\p{L}*|exent\p{L}*|exencion(?:es)?|prohib\p{L}*|siempre que|siempre y cuando|a condicion de|solo si|solo|solamente|unicamente)(?![\p{L}])/iu;
 // REP-3857: marca al principio o al final de la cita. Lo omitido en ese borde se revisa hasta el borde del fragmento.
 const ELISION_AT_START = /^(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)/;
 const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}|…)$/;
+// REP-3879 H-02: «sólo», «Únicamente» o «NINGÚN» valen igual que sin tilde y en minúscula.
+const omitsCaveat = (text: string): boolean => ELIDED_TEXT_GUARD.test(text.normalize('NFD').replace(/\p{M}/gu, ''));
 
 /** true si la cita es literal (tolerando espacios) o, con elisiones, si cada tramo cumple las reglas de arriba. */
 const quoteMatchesFragment = (quote: string, content: string): boolean => {
@@ -362,10 +367,10 @@ const quoteMatchesFragment = (quote: string, content: string): boolean => {
   const markAtEnd = ELISION_AT_END.test(normalizedQuote);
   // REP-3861 O-02: si un tramo aparece más de una vez se prueban todas las apariciones, no solo la primera.
   const matchFrom = (i: number, from: number): boolean => {
-    if (i === segments.length) return !markAtEnd || !ELIDED_TEXT_GUARD.test(normalizedContent.slice(from));
+    if (i === segments.length) return !markAtEnd || !omitsCaveat(normalizedContent.slice(from));
     for (let at = normalizedContent.indexOf(segments[i], from); at >= 0; at = normalizedContent.indexOf(segments[i], at + 1)) {
       const omitted = i > 0 || markAtStart ? normalizedContent.slice(from, at) : '';
-      if (!ELIDED_TEXT_GUARD.test(omitted) && matchFrom(i + 1, at + segments[i].length)) return true;
+      if (!omitsCaveat(omitted) && matchFrom(i + 1, at + segments[i].length)) return true;
     }
     return false;
   };
