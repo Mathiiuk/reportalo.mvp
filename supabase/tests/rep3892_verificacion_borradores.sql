@@ -1,6 +1,6 @@
 -- REP-3892 · Verificación del borrador solo para reportes elegibles (O-01) y de la etiqueta «usuario» (O-03)
 --
--- Se corre contra una base donde YA está aplicada 20261101120000_rep3892_borradores_excluidos.sql. NO deja nada:
+-- Se corre contra una base donde YA está aplicada 20261102105935_rep3892_borradores_excluidos.sql. NO deja nada:
 -- termina SIEMPRE con una excepción para que cualquier ejecutor revierta lo que creó (reportes, análisis, entregas y
 -- routing de prueba). Si todo está bien, el mensaje empieza con «REP-3892 OK».
 --
@@ -33,7 +33,8 @@ begin
   returning id into v_id;
   if p_analisis is not null then
     insert into public.report_ai_analysis (report_id, result_status_code, confidence_score, embedding_model_code)
-    values (v_id, p_analisis, 0.9, 'rep3892-verificacion');
+    -- embedding_model_code tiene FK a embedding_models: se usa el modelo vigente
+    values (v_id, p_analisis, 0.9, 'gemini-embedding-2@768');
   end if;
   return v_id;
 end $$;
