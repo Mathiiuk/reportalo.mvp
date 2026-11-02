@@ -35,10 +35,13 @@ const argValue = (flag) => {
 // y la configuración leídos del fuente, y validar con la réplica fiel de validateLlmAnalysis + validateOrganismoSugerido
 // (p0/esquema.mjs). El estado final es el que guardaría producción. Esquema común de p0/esquema.mjs.
 //   node run.mjs --p0 --set <casos-referencia-v1.json> [--repeticiones 3] [--despliegue "analizar-reporte v44"] [--dry-run] [--prueba]
+//                 [--casos P0-069,P0-070] [--doble-validador]
+// --doble-validador (REP-3857, P1): cada respuesta se valida con la regla de P0 (literal) y con la de P1 (elisión).
+// --casos: solo esos casos; la corrida queda marcada con `subconjunto` y no vale para una puerta.
 if (args.includes('--p0')) {
   const path = await import('node:path');
   const { fileURLToPath } = await import('node:url');
-  const { ESQUEMA, encabezadoMotor, validarComoProduccion, filaM2, resumenM2, estimarLlamadas, leerReglasValidador } = await import('../p0/esquema.mjs');
+  const { ESQUEMA, encabezadoMotor, validarComoProduccion, citaLiteralP0, filaM2, resumenM2, estimarLlamadas, leerReglasValidador } = await import('../p0/esquema.mjs');
   const { leerEnv, crearRest, infoGit, leerCorpus, resolverLocalidades, leerAgencias, cargarSet, argsP0, marcaDeTiempo } = await import('../p0/entorno.mjs');
 
   const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
@@ -48,6 +51,11 @@ if (args.includes('--p0')) {
   const spec = readGenerationSpec(fuente);
   const reglas = leerReglasValidador(fuente);
   const set = cargarSet(path.resolve(opciones.rutaSet));
+  if (opciones.casos) {
+    const faltan = opciones.casos.filter((id) => !set.casos.some((c) => c.caso_id === id));
+    if (faltan.length) throw new Error(`--casos: no están en el set: ${faltan.join(', ')}`);
+    set.casos = set.casos.filter((c) => opciones.casos.includes(c.caso_id));
+  }
   console.log(`Set ${set.set_version}: ${set.casos.length} casos · ${opciones.repeticiones} repeticiones · ${spec.model} · prompt ${spec.promptVersion} · temperatura ${spec.temperature}`);
   if (opciones.dryRun) {
     console.log(`Dry-run (sin red): ${JSON.stringify(estimarLlamadas(set.casos, opciones.repeticiones, reglas))}`);
@@ -72,11 +80,19 @@ if (args.includes('--p0')) {
   const gemini = async (metodo, modelo, body) => {
     const backoffs = [2000, 5000, 10000, 20000];
     for (let attempt = 0; ; attempt += 1) {
-      const res = await fetch(`${GEMINI_API}/models/${modelo}:${metodo}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify(body),
-      });
+      let res;
+      try {
+        res = await fetch(`${GEMINI_API}/models/${modelo}:${metodo}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify(body),
+        });
+      } catch (e) {
+        // 23/10: una caída de red (UND_ERR_CONNECT_TIMEOUT) tiraba abajo toda la corrida. Se reintenta igual que un 503
+        if (attempt >= backoffs.length) throw new Error(`${metodo} falló (red: ${e.cause?.code ?? e.message})`);
+        await espera(backoffs[attempt]);
+        continue;
+      }
       if (res.ok) return res.json();
       if (attempt >= backoffs.length || ![429, 500, 503].includes(res.status)) throw new Error(`${metodo} falló (${res.status})`);
       await espera(backoffs[attempt]);
@@ -135,6 +151,9 @@ if (args.includes('--p0')) {
             r = {
               camino: 'generacion', parsed, fragments, usage: data.usageMetadata ?? {}, prompt_sha256: sha256(prompt),
               validacion: validarComoProduccion(parsed, fragments, caso.categoria, { ...reglas, agencias }),
+              ...(opciones.dobleValidador && {
+                validacionP0: validarComoProduccion(parsed, fragments, caso.categoria, { ...reglas, agencias, citaCoincide: citaLiteralP0 }),
+              }),
               latencia_ms: Date.now() - t0,
             };
           } catch (e) {
@@ -165,6 +184,8 @@ if (args.includes('--p0')) {
     medicion: 'M2',
     prueba: opciones.prueba,
     set_version: set.set_version,
+    subconjunto: opciones.casos,
+    doble_validador: opciones.dobleValidador,
     inicio_utc: inicio,
     fin_utc: new Date().toISOString(),
     repeticiones: opciones.repeticiones,
@@ -174,7 +195,7 @@ if (args.includes('--p0')) {
   };
   const dir = new URL('salida/', here);
   fs.mkdirSync(dir, { recursive: true });
-  const nombre = `RAG-P0_M2${opciones.prueba ? '_PRUEBA' : ''}_${marcaDeTiempo(inicio)}.json`;
+  const nombre = `RAG-P0_M2${opciones.prueba ? '_PRUEBA' : ''}${opciones.dobleValidador ? '_DOBLE' : ''}${opciones.casos ? '_SUBSET' : ''}_${marcaDeTiempo(inicio)}.json`;
   fs.writeFileSync(new URL(nombre, dir), JSON.stringify(salida, null, 2));
   console.log(`\nResumen: ${JSON.stringify(salida.resumen)}`);
   console.log(`Salida: scripts/rag-local-dev/rep-diag-generacion/salida/${nombre}`);

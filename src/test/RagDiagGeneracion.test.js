@@ -103,6 +103,12 @@ describe('validateRun', () => {
   it('rechaza una cita parafraseada', () => {
     expect(validateRun({ estado: 'fundamentado', citas: [{ fragment_id: 'f1', cita_textual: 'vender cosas en la calle' }] }, fragments, 'C').valid).toBe(false);
   });
+  it('acepta una cita con elisión si cada tramo es literal y en orden (réplica de index.ts)', () => {
+    const fr = [{ fragment_id: 'f9', content: 'Constituyen obras públicas municipales:\na) Las concernientes a los establecimientos.\nd) Las de infraestructura urbana, iluminación.' }];
+    const cita = (t) => ({ estado: 'fundamentado', citas: [{ fragment_id: 'f9', cita_textual: t }] });
+    expect(validateRun(cita('Constituyen obras públicas municipales:\n... d) Las de infraestructura urbana, iluminación.'), fr, 'C').valid).toBe(true);
+    expect(validateRun(cita('d) Las de infraestructura urbana ... Constituyen obras públicas municipales:'), fr, 'C').valid).toBe(false);
+  });
   it('rechaza "asistencia" fuera de VULNERABILIDAD_SOCIAL', () => {
     expect(validateRun({ estado: 'asistencia', citas: [] }, fragments, 'INFRAESTRUCTURA').valid).toBe(false);
     expect(validateRun({ estado: 'asistencia', citas: [] }, fragments, 'VULNERABILIDAD_SOCIAL').valid).toBe(true);

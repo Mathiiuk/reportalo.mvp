@@ -26,15 +26,27 @@ export const crearRest = (supabaseUrl, serviceKey) => async (path, init = {}) =>
   const metodo = (init.method ?? 'GET').toUpperCase();
   // Defensa: el modo P0 nunca escribe. El único POST permitido es el RPC de lectura de producción.
   if (metodo !== 'GET' && path !== 'rpc/match_knowledge_fragments') throw new Error(`P0 es de solo lectura: ${metodo} ${path} no permitido`);
-  const res = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceKey,
-      // La clave legacy service_role es un JWT y va también como Bearer; las sb_secret_... solo en apikey.
-      ...(serviceKey.startsWith('eyJ') ? { Authorization: `Bearer ${serviceKey}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
+  const pedir = () =>
+    fetch(`${supabaseUrl}/rest/v1/${path}`, {
+      ...init,
+      headers: {
+        apikey: serviceKey,
+        // La clave legacy service_role es un JWT y va también como Bearer; las sb_secret_... solo en apikey.
+        ...(serviceKey.startsWith('eyJ') ? { Authorization: `Bearer ${serviceKey}` } : {}),
+        'Content-Type': 'application/json',
+      },
+    });
+  // 23/10: una caída de red (UND_ERR_CONNECT_TIMEOUT) a mitad de corrida la tiraba abajo. Son lecturas: se reintenta
+  let res;
+  for (const [intento, demora] of [2000, 5000, 10000, 20000, null].entries()) {
+    try {
+      res = await pedir();
+      if (![500, 502, 503, 504].includes(res.status) || demora === null) break;
+    } catch (e) {
+      if (demora === null) throw new Error(`Supabase ${path.split('?')[0]} falló (red: ${e.cause?.code ?? e.message}, ${intento + 1} intentos)`);
+    }
+    await new Promise((r) => setTimeout(r, demora));
+  }
   if (!res.ok) throw new Error(`Supabase ${path.split('?')[0]} falló (${res.status}): ${(await res.text()).slice(0, 300)}`);
   return res.json();
 };
@@ -102,6 +114,8 @@ export const argsP0 = (args) => {
   };
   const repeticiones = Number(valor('--repeticiones') ?? 3);
   if (!Number.isInteger(repeticiones) || repeticiones < 1 || repeticiones > 10) throw new Error('--repeticiones debe ser un entero entre 1 y 10');
+  // REP-3857: medir solo algunos casos (por ejemplo D3). Una corrida parcial no vale para la puerta: se marca
+  const casos = valor('--casos') ? valor('--casos').split(',').map((c) => c.trim()).filter(Boolean) : null;
   const rutaSet = valor('--set');
   if (!rutaSet) throw new Error('--p0 necesita --set <ruta a casos-referencia-v1.json>');
   return {
@@ -111,6 +125,8 @@ export const argsP0 = (args) => {
     dryRun: args.includes('--dry-run'),
     // Una corrida sobre un set que no es el congelado se marca como prueba y no vale para la puerta P0
     prueba: args.includes('--prueba'),
+    casos,
+    dobleValidador: args.includes('--doble-validador'),
   };
 };
 

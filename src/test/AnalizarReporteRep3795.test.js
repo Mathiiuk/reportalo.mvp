@@ -133,7 +133,17 @@ describe('Validador: tolerancia a espacios en blanco (espejo en src/services/val
   });
 
   it('compara cita y fragmento normalizados y rechaza la cita vacía', () => {
-    expect(source).toMatch(/normalizedQuote === '' \|\| !normalizeWhitespace\(fragment\.content\)\.includes\(normalizedQuote\)/);
+    expect(source).toMatch(/if \(normalizedQuote === ''\) return false;/);
+    expect(source).toMatch(/if \(normalizedContent\.includes\(normalizedQuote\)\) return true;/);
+    expect(source).toMatch(/if \(!quoteMatchesFragment\(cita\.cita_textual, fragment\.content\)\) \{/);
+  });
+
+  it('la elisión por tramos tiene los mismos topes que el espejo (RAG-S16)', () => {
+    expect(source).toMatch(/const MIN_ELIDED_SEGMENT_CHARS = 15;/);
+    expect(source).toContain('const ELISION_MARKER = /\\[\\s*(?:\\.{3}|…)\\s*\\]|\\(\\s*(?:\\.{3}|…)\\s*\\)|\\.{3}|…/;');
+    // REP-3879 H-02: lista de Hernán, sin tildes; lo omitido se normaliza en omitsCaveat antes de comparar.
+    expect(source).toContain('(?:no|ni|nunca|jamas|tampoco|ningun[oa]?s?|nadie|nada|salvo|salvedad(?:es)?|excep');
+    expect(source).toContain("const omitsCaveat = (text: string): boolean => ELIDED_TEXT_GUARD.test(text.normalize('NFD')");
   });
 
   it('ya no usa el includes exacto sobre el contenido crudo', () => {
