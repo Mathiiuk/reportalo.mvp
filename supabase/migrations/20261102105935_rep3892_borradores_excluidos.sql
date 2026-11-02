@@ -34,6 +34,11 @@
 --   - 'Descripción del usuario: ' → 'Descripción del vecino: '.
 --
 -- No se aplica sola: la migración se corre a mano en staging, con aprobación de Matías.
+--
+-- APLICADA en la base Reportalo el 02/11/2026, con aprobación de Matías. Versión registrada 20261102105935; el archivo
+-- se renombró para coincidir. Antes: md5 de la definición 131b958f… (sin cambios desde el 01/11). Después: 006d6b4e….
+-- Verificado con supabase/tests/rep3892_verificacion_borradores.sql («REP-3892 OK», todo revertido) y C-09 real:
+-- excluido_fuera_de_alcance con y sin 'bache_calle', sin entrega nueva ni cambio de routing.
 
 begin;
 
