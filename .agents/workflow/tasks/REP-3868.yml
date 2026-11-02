@@ -1,0 +1,40 @@
+id: REP-3868
+external_ref: 'REP-3867 (handoff UX de Ivo), REP-3869 (política de imágenes v2.0)'
+title: Aviso de responsabilidad y congruencia antes de enviar (handoff REP-3867)
+type: feat
+status: READY_FOR_PR
+priority: high
+owner: team-agent
+base_branch: staging
+scope:
+  project: reportalo.mvp
+  modules:
+    - src/components/report/ReportReviewStep.jsx
+  environments:
+    - local
+requirements:
+  - 'Aviso con el texto aprobado por Hernán en REP-3867 y enlace «Condiciones de uso», en el paso 3 «Enviar» (M11 / D12)'
+  - 'Reemplaza la línea «Antes de enviar te vamos a pedir aceptar los términos»; se ve siempre, haya aceptado o no (D-02 de REP-3869)'
+  - 'No es un consentimiento: sin casilla ni ventana; la hoja de aceptación existente no cambia'
+  - 'Accesible: el botón «Enviar reporte» lo referencia con aria-describedby; sin role="alert" ni aria-live; el enlace va antes del botón en el orden de foco'
+acceptance_criteria:
+  - 'El texto es exactamente el aprobado y el enlace abre las condiciones sin enviar el reporte'
+  - 'Aparece con y sin aceptación vigente, y sin conexión'
+  - 'Teléfono: arriba del botón, centrado, a 10 px; escritorio: a la izquierda del botón, alineado a la derecha, 440 px de ancho máximo'
+  - 'Quien ya aceptó envía igual que antes; quien no aceptó ve la hoja de aceptación igual que antes'
+  - 'No se despliega hasta que estén actualizadas las condiciones (sección «Fotos», versión 1.5), pedido de Hernán en REP-3867'
+requires_approval: true
+quality_gates:
+  lint: false
+  typecheck: false
+  unit_tests: true
+  bdd_tests: false
+  integration_tests: false
+  e2e: false
+  build: false
+  security: false
+  smoke_tests: false
+commands:
+  install: pnpm install
+  unit_tests: pnpm test
+  bdd_tests: pnpm test:bdd

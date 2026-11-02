@@ -245,13 +245,36 @@ export const ReportReviewStep = ({
       {/* Acción principal */}
       <div className="shrink-0 border-t border-rep-divider bg-rep-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom,12px))] desktop:border-t-0 desktop:bg-transparent desktop:px-0 desktop:pb-8 desktop:pt-0">
         <div className="mx-auto flex w-full max-w-lg flex-col desktop:max-w-[1200px] desktop:flex-row-reverse desktop:items-center desktop:justify-start desktop:gap-5 desktop:px-10">
+          {/* REP-3868: aviso de responsabilidad y congruencia (handoff REP-3867, texto aprobado por el PO).
+              Va siempre, haya aceptado o no los términos (D-02 de REP-3869): no es un consentimiento, no bloquea el envío.
+              Está antes del botón en el DOM para que el enlace quede antes en el orden de foco.
+              Teléfono: arriba del botón, a 10 px. Escritorio: a la izquierda del botón (order-1 en la fila invertida),
+              alineado a la derecha y con un ancho máximo de 440 px. */}
+          <p
+            id="envio-aviso"
+            data-testid="envio-aviso"
+            className="m-0 mb-2.5 text-center text-[12.5px] font-medium leading-[1.45] text-rep-ink-body desktop:order-1 desktop:mb-0 desktop:max-w-[440px] desktop:text-right"
+          >
+            Al enviar, confirmás que el reporte es real y que las fotos corresponden a lo que describís. Sos
+            responsable de lo que enviás: el contenido indebido se da de baja.{' '}
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              // El after: agranda el área táctil a 44 px de alto sin cambiar el alto de la línea
+              className="rep-focus relative rounded font-bold text-rep-accent underline after:absolute after:-inset-x-1 after:-inset-y-[13px] after:content-['']"
+            >
+              Condiciones de uso
+            </button>
+          </p>
+
           <button
             type="button"
             onClick={handleSendClick}
             aria-label={submitLabel}
             // aria-disabled y no disabled: el botón sigue enfocable y, sin localidad confirmada, abre el ajuste de ubicación
             aria-disabled={isSubmitBlocked}
-            aria-describedby={!isReadyToSubmit ? 'submit-missing' : undefined}
+            // REP-3868: el lector de pantalla lee el aviso al enfocar el botón (más lo que falta, si falta algo)
+            aria-describedby={!isReadyToSubmit ? 'envio-aviso submit-missing' : 'envio-aviso'}
             className={`rep-focus flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-rep-accent px-4 text-rep-button text-rep-on-accent shadow-rep-accent transition-[transform,background-color] duration-120 desktop:w-auto desktop:min-w-[220px] desktop:px-8 ${
               isSubmitBlocked
                 ? 'cursor-not-allowed opacity-45 shadow-none'
@@ -289,20 +312,6 @@ export const ReportReviewStep = ({
                 <li key={item.key}>{item.label}</li>
               ))}
             </ul>
-          )}
-
-          {!hasAcceptedTerms && (
-            <p className="m-0 pt-2 text-center text-rep-label font-medium text-rep-ink-muted desktop:pt-0 desktop:text-rep-label-d">
-              Antes de enviar te vamos a pedir aceptar los{' '}
-              <button
-                type="button"
-                onClick={onOpenTerms}
-                className="rep-focus rounded font-bold text-rep-ink-label underline"
-              >
-                términos
-              </button>
-              .
-            </p>
           )}
         </div>
       </div>
