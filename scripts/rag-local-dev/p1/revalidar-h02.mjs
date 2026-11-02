@@ -3,6 +3,11 @@
 // el texto del fragmento leído de staging. Antes verifica que el corpus sea el de la corrida (misma huella). Solo lectura.
 //
 // Uso: node scripts/rag-local-dev/p1/revalidar-h02.mjs <corrida.json> [más corridas…] [--env ruta/.env] [--salida informe.json]
+//      node scripts/rag-local-dev/p1/revalidar-h02.mjs <corrida.json> … --fragmentos fragmentos_vigentes.json
+//
+// REP-3878 O-05: con --fragmentos no se lee la base ni se pide ninguna clave. El archivo es el export de solo lectura de QA:
+//   select id, content, created_at, is_current from knowledge_fragments where is_current = true order by id
+// Su huella se calcula igual que en las corridas; si no coincide con la de cada corrida, el script corta.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,6 +15,7 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 import { leerEnv, crearRest, leerCorpus } from '../p0/entorno.mjs';
+import { huellaCorpus } from '../p0/esquema.mjs';
 import { quoteMatchesFragment as reglaNueva } from '../rep-diag-generacion/lib.mjs';
 
 const COMMIT_ANTERIOR = '0fe39bd';
@@ -20,7 +26,7 @@ const valor = (flag) => {
   const i = args.indexOf(flag);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const corridas = args.filter((a, i) => !a.startsWith('--') && !['--env', '--salida'].includes(args[i - 1]));
+const corridas = args.filter((a, i) => !a.startsWith('--') && !['--env', '--salida', '--fragmentos'].includes(args[i - 1]));
 if (corridas.length === 0) throw new Error('Falta al menos un JSON de corrida (ver el uso en la cabecera).');
 
 // La regla anterior sale del propio git: así nadie depende de una copia a mano.
@@ -31,13 +37,23 @@ const cargarReglaAnterior = async () => {
   return (await import(pathToFileURL(archivo).href)).quoteMatchesFragment;
 };
 
-const { need } = leerEnv(valor('--env') ? path.resolve(valor('--env')) : path.join(root, '.env'));
-const rest = crearRest(need('VITE_SUPABASE_URL').replace(/\/$/, ''), need('SUPABASE_SERVICE_ROLE_KEY'));
-const { fragments, huella } = await leerCorpus(rest);
+const leerExport = (archivo) => {
+  const datos = JSON.parse(fs.readFileSync(archivo, 'utf-8'));
+  const fragments = Array.isArray(datos) ? datos : datos.fragments ?? datos.fragmentos;
+  if (!Array.isArray(fragments) || fragments.some((f) => !f.id || typeof f.content !== 'string')) {
+    throw new Error(`${path.basename(archivo)}: se esperaba una lista de fragmentos con id y content`);
+  }
+  return { fragments, huella: huellaCorpus(fragments) };
+};
+const leerDeStaging = async () => {
+  const { need } = leerEnv(valor('--env') ? path.resolve(valor('--env')) : path.join(root, '.env'));
+  return leerCorpus(crearRest(need('VITE_SUPABASE_URL').replace(/\/$/, ''), need('SUPABASE_SERVICE_ROLE_KEY')));
+};
+const { fragments, huella } = valor('--fragmentos') ? leerExport(path.resolve(valor('--fragmentos'))) : await leerDeStaging();
 const textoPorId = new Map(fragments.map((f) => [f.id, f.content ?? '']));
 const reglaAnterior = await cargarReglaAnterior();
 
-const informe = { esquema: 'rep3857-revalidacion-h02/v1', regla_anterior: COMMIT_ANTERIOR, regla_nueva: execSync('git rev-parse HEAD', { cwd: root }).toString().trim(), corpus: huella, corridas: [] };
+const informe = { esquema: 'rep3857-revalidacion-h02/v1', regla_anterior: COMMIT_ANTERIOR, regla_nueva: execSync('git rev-parse HEAD', { cwd: root }).toString().trim(), corpus: huella, fuente_corpus: valor('--fragmentos') ? path.basename(valor('--fragmentos')) : 'staging', corridas: [] };
 
 for (const archivo of corridas) {
   const corrida = JSON.parse(fs.readFileSync(archivo, 'utf-8'));
