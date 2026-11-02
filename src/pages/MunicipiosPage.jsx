@@ -46,7 +46,7 @@ const PRIVACY = [
     icon: ScanFace,
     color: 'text-rep-success',
     title: 'Evidencia anonimizada',
-    text: 'Los rostros y las patentes se difuminan automáticamente antes de guardarse. La imagen original nunca se almacena.',
+    text: 'Los rostros se difuminan automáticamente antes de guardarse; las patentes quedan visibles para que el organismo pueda actuar. La imagen original nunca se almacena.',
   },
   {
     icon: EyeOff,

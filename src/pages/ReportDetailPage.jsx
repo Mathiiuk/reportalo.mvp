@@ -73,7 +73,7 @@ const OrganismResponse = ({ response }) => (
 
 const isServerImage = (url) => /^https?:\/\//i.test(String(url ?? ''));
 
-// Diseño v2 (D49): la foto lleva la marca de protegida (rostros y patentes difuminados) sobre la imagen
+// Diseño v2 (D49): la foto lleva la marca de protegida (rostros difuminados; las patentes no, REP-3798) sobre la imagen
 const ProtectedBadge = () => (
   <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(20,30,45,.74)] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[.4px] text-white">
     <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />

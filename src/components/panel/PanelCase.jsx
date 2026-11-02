@@ -386,7 +386,7 @@ const Lightbox = ({ photos, index, onStep, onGo, onClose }) => {
             <Ms name="chevron_left" />
           </button>
         )}
-        <img src={photos[index].image_url} alt={`Foto ${index + 1} del reporte, con rostros y patentes difuminados`} />
+        <img src={photos[index].image_url} alt={`Foto ${index + 1} del reporte, con los rostros difuminados`} />
         {n > 1 && (
           <button type="button" className="lb-nav" aria-label="Foto siguiente" disabled={index === n - 1} onClick={() => onStep(1)}>
             <Ms name="chevron_right" />
@@ -470,7 +470,7 @@ const PhotoCarousel = ({ photos, onOpen }) => {
           ))}
         </div>
       )}
-      <div className="ph-cap m">{`Rostros y patentes difuminados. ${n > 1 ? 'Las originales no se guardan.' : 'La foto original no se guarda.'}`}</div>
+      <div className="ph-cap m">{`Rostros difuminados. ${n > 1 ? 'Las originales no se guardan.' : 'La foto original no se guarda.'}`}</div>
     </>
   );
 };
@@ -784,7 +784,7 @@ export const PanelCase = ({ id, agencyName, agency, inboxHref, toast, onChanged,
                     <Ms name="shield" fill />
                     PROTEGIDAS
                   </span>
-                  <span className="hint">Rostros y patentes difuminados. Las originales no se guardan.</span>
+                  <span className="hint">Rostros difuminados. Las originales no se guardan.</span>
                 </div>
                 <div className="gallery">
                   {photos.map((p, i) => (
@@ -824,7 +824,7 @@ export const PanelCase = ({ id, agencyName, agency, inboxHref, toast, onChanged,
                       FOTO PROTEGIDA
                     </span>
                   </button>
-                  <div className="ph-cap">Rostros y patentes difuminados. La foto original no se guarda.</div>
+                  <div className="ph-cap">Rostros difuminados. La foto original no se guarda.</div>
                 </div>
               )}
               <section className="card desc" style={photos.length === 0 ? { gridColumn: '1 / -1' } : undefined}>

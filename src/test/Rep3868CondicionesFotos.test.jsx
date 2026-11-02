@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -45,5 +47,28 @@ describe('REP-3868 · Condiciones de uso 1.5: sección «Fotos»', () => {
     expect(texto).toMatch(/Los rostros se difuminan/);
     expect(texto).toMatch(/las patentes no/);
     expect(texto).not.toMatch(/patentes se difuminan|se difuminan las patentes/i);
+  });
+});
+
+// Las Condiciones 1.5 dicen que las patentes no se difuminan, y es lo que hace el servidor: quarantine-anonymize tiene
+// PIXELATE_LICENSE_PLATES = false. Ninguna pantalla (tampoco el panel del organismo) puede decir lo contrario.
+describe('REP-3868 · ningún texto promete que se difuminan las patentes', () => {
+  const raiz = resolve(__dirname, '../..');
+  const archivos = (dir) =>
+    readdirSync(dir).flatMap((nombre) => {
+      const ruta = join(dir, nombre);
+      if (statSync(ruta).isDirectory()) return nombre === 'test' ? [] : archivos(ruta);
+      return /\.(jsx?|tsx?)$/.test(nombre) ? [ruta] : [];
+    });
+
+  it('UT-CF-05: el servidor no pixela patentes', () => {
+    const vision = readFileSync(join(raiz, 'supabase/functions/quarantine-anonymize/vision.ts'), 'utf8');
+    expect(vision).toMatch(/export const PIXELATE_LICENSE_PLATES = false;/);
+  });
+
+  it('UT-CF-06: ninguna pantalla dice que las patentes se difuminan', () => {
+    const promesa = /patentes? (?:se )?difuminad|patentes se difuminan|y (?:las )?patentes (?:se )?difumin/i;
+    const conPromesa = archivos(join(raiz, 'src')).filter((ruta) => promesa.test(readFileSync(ruta, 'utf8')));
+    expect(conPromesa).toEqual([]);
   });
 });
