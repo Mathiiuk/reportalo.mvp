@@ -7,7 +7,8 @@ import { DEFAULT_REPORT_CATEGORIES } from '../services/categoriesService';
 // REP-3868 · aviso de responsabilidad y congruencia en «Revisá antes de enviar» (handoff REP-3867 de Ivo).
 // El texto es el que aprobó Hernán en REP-3867 (comentario del 01/11).
 const TEXTO_AVISO =
-  'Al enviar, confirmás que el reporte es real y que las fotos corresponden a lo que describís. Sos responsable de lo que enviás: el contenido indebido se da de baja. Condiciones de uso';
+  // Texto final de Hernán en REP-3867 (02/11): la versión corta, sin «el contenido indebido se da de baja».
+  'Al enviar, confirmás que el reporte es real y que las fotos corresponden a lo que describís. Sos responsable de lo que enviás. Condiciones de uso';
 
 // Reporte completo: fotos, categoría, descripción y localidad confirmada
 const renderPaso = (props = {}) => {

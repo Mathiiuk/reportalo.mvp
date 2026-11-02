@@ -255,8 +255,9 @@ export const ReportReviewStep = ({
             data-testid="envio-aviso"
             className="m-0 mb-2.5 text-center text-[12.5px] font-medium leading-[1.45] text-rep-ink-body desktop:order-1 desktop:mb-0 desktop:max-w-[440px] desktop:text-right"
           >
+            {/* Texto final de Hernán (REP-3867, 02/11): la versión corta de Ivo, sin «el contenido indebido se da de baja». */}
             Al enviar, confirmás que el reporte es real y que las fotos corresponden a lo que describís. Sos
-            responsable de lo que enviás: el contenido indebido se da de baja.{' '}
+            responsable de lo que enviás.{' '}
             <button
               type="button"
               onClick={onOpenTerms}

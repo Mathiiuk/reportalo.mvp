@@ -21,8 +21,9 @@ const leer = (ruta) => readFileSync(resolve(process.cwd(), ruta), 'utf8');
 describe('REP-3798 · términos y textos: solo rostros', () => {
   beforeEach(() => localStorage.clear());
 
-  it('UT-TXT-01: los términos están en la versión 1.4', () => {
-    expect(CURRENT_TERMS_VERSION).toBe('1.4');
+  // REP-3868 subió a 1.5 (sección «Fotos»); REP-3798 pedía al menos la 1.4.
+  it('UT-TXT-01: los términos están en la versión 1.5', () => {
+    expect(CURRENT_TERMS_VERSION).toBe('1.5');
   });
 
   it('UT-TXT-02: el §2.2 dice que solo se difuminan rostros y que las patentes pueden verse', () => {
