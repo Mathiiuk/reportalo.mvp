@@ -37,10 +37,11 @@ const ELISION_AT_END = /(?:\[\s*(?:\.{3}|…)\s*\]|\(\s*(?:\.{3}|…)\s*\)|\.{3}
 const omitsCaveat = (text) => ELIDED_TEXT_GUARD.test(text.normalize('NFD').replace(/\p{M}/gu, ''));
 
 export const quoteMatchesFragment = (quote, content) => {
-  const normalizedQuote = normalizeWhitespace(quote);
+  // REP-3878 O-01 (V-63): cita y fragmento en NFC, así «á» compuesta y «a + ´» se buscan igual en los tramos.
+  const normalizedQuote = normalizeWhitespace(quote.normalize('NFC'));
   // Una cita solo de espacios quedaría vacía y `includes('')` siempre da true.
   if (normalizedQuote === '') return false;
-  const normalizedContent = normalizeWhitespace(content);
+  const normalizedContent = normalizeWhitespace(content.normalize('NFC'));
   if (normalizedContent.includes(normalizedQuote)) return true;
   if (!ELISION_MARKER.test(normalizedQuote)) return false;
 
