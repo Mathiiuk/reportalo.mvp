@@ -182,8 +182,13 @@ export const ReportAiAnalysisPanel = ({
       e.knowledge_fragments?.hierarchy_path &&
       (SHOW_SANCTION_REFERENCE || e.knowledge_fragments?.foundation_type_code !== 'sancion')
   );
+  // REP-3879 (Hernán, 02/11): las fichas de información (canales y teléfonos, source_type_code = 'informacion')
+  // se pueden citar, pero no son normas: van aparte y no cuentan como fuente del fundamento.
+  const isInformation = (e) => e.knowledge_fragments?.knowledge_sources?.source_type_code === 'informacion';
+  const citedNorms = citedEvidence.filter((e) => !isInformation(e));
+  const citedInformation = citedEvidence.filter(isInformation);
   // REP-3796: un fundamento sin fuente visible se declara, no se disimula ni se inventa una fuente.
-  const missingVisibleSource = isGrounded && citedEvidence.length === 0;
+  const missingVisibleSource = isGrounded && citedNorms.length === 0;
 
   // REP-3789 CA-09: la trazabilidad del analisis mostrado (id, modelo y version de
   // prompt) viaja como atributos data-*, disponible para QA y Sprint Review sin
@@ -218,10 +223,10 @@ export const ReportAiAnalysisPanel = ({
 
           {(citedEvidence.length > 0 || agencyName) && (
             <div className="grid gap-3 desktop:grid-cols-2 desktop:gap-6">
-              {citedEvidence.length > 0 && (
+              {citedNorms.length > 0 && (
                 <div data-testid="rag-panel-citations" className="flex flex-col gap-1">
                   <span className={FIELD_LABEL}>Norma detectada</span>
-                  {citedEvidence.map((e) => (
+                  {citedNorms.map((e) => (
                     <span key={e.fragment_id} className="flex flex-col">
                       <span className="text-rep-body font-semibold text-rep-ink desktop:text-rep-body-d">
                         {e.knowledge_fragments?.hierarchy_path}
@@ -231,6 +236,16 @@ export const ReportAiAnalysisPanel = ({
                           {e.knowledge_fragments.knowledge_sources.issuing_authority}
                         </span>
                       )}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {citedInformation.length > 0 && (
+                <div data-testid="rag-panel-information" className="flex flex-col gap-1">
+                  <span className={FIELD_LABEL}>Información oficial</span>
+                  {citedInformation.map((e) => (
+                    <span key={e.fragment_id} className="text-rep-body font-semibold text-rep-ink desktop:text-rep-body-d">
+                      {e.knowledge_fragments?.hierarchy_path}
                     </span>
                   ))}
                 </div>
