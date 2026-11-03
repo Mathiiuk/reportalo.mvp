@@ -1,8 +1,9 @@
 // Servicio de Gestión y Auditoría de Consentimiento de Términos y Privacidad (REP-3532)
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
-export const CURRENT_TERMS_VERSION = '1.4';
-export const TERMS_EFFECTIVE_DATE = '09/2026';
+// 1.5 (REP-3868, 11/2026): sección «Fotos» de Hernán. Al subir la versión, la app vuelve a pedir la aceptación.
+export const CURRENT_TERMS_VERSION = '1.5';
+export const TERMS_EFFECTIVE_DATE = '11/2026';
 export const TERMS_STORAGE_KEY = 'reportalo_terms_consent';
 export const TERMS_REJECTION_STORAGE_KEY = 'reportalo_terms_rejection';
 export const TERMS_NOTICES_STORAGE_KEY = 'reportalo_terms_notices';

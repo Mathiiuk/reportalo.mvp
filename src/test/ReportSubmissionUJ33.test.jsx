@@ -9,7 +9,8 @@ describe('REP-3791 Bloque 2 · Revisión, consentimiento y envío (UJ v3.3)', ()
   it('UT-B2-01: la hoja de consentimiento muestra la versión vigente de los términos, no una fija', () => {
     render(<ConsentSheet open onAccept={vi.fn()} onDismiss={vi.fn()} onOpenTerms={vi.fn()} />);
     expect(screen.getByRole('dialog', { name: /antes de enviar/i })).toBeInTheDocument();
-    expect(screen.getByText(`Leer términos y privacidad · v${CURRENT_TERMS_VERSION}`)).toBeInTheDocument();
+    // REP-3868: el documento se llama «Condiciones de uso», igual que el enlace del aviso.
+    expect(screen.getByText(`Leer condiciones de uso · v${CURRENT_TERMS_VERSION}`)).toBeInTheDocument();
   });
 
   it('UT-B2-02: Escape y «Ahora no» cierran la hoja sin aceptar', () => {

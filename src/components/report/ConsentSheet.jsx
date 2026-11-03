@@ -91,7 +91,7 @@ export const ConsentSheet = ({
               onClick={onOpenTerms}
               className="rep-focus mt-5 inline-flex min-h-touch items-center gap-1.5 self-start rounded-lg text-rep-body font-bold text-rep-accent hover:underline desktop:w-full desktop:justify-between desktop:self-stretch desktop:rounded-xl desktop:bg-rep-accent-soft desktop:px-4 desktop:hover:no-underline"
             >
-              <span>Leer términos y privacidad · v{termsVersion}</span>
+              <span>Leer condiciones de uso · v{termsVersion}</span>
               <ArrowRight aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
             </button>
 
