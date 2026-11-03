@@ -10,6 +10,8 @@
 //   3. node control.mjs --sql-funcion [--desde 0 --hasta 12] > salida/P2_control_funcion_1.sql
 //      Arma el SELECT con el cuerpo de la función y el vector literal de cada caso (de la caché del paso 2). Se corre
 //      en el editor SQL de staging, solo lectura; guardar el resultado como JSON (lista de {caso, top}).
+//   M1 de P2: node control.mjs --sql-texto-set <casos-referencia-v1.json> > salida/P2_texto_set.sql; guardar el JSON
+//      como salida/P2_texto_set.json y correr rep-diag-variantes/run.mjs --p0 ... --p2 salida/P2_texto_set.json
 //   4. node control.mjs --comparar salida/<resultado.json> [salida/P2_control_runner_<fecha>.json]
 //      Lista cada caso con IGUAL o DISTINTO; sale con código 1 si hay alguna diferencia.
 import fs from 'node:fs';
@@ -34,7 +36,15 @@ const cachePath = new URL('cache-embeddings.json', salidaDir);
 const leerCache = () => (fs.existsSync(cachePath) ? JSON.parse(fs.readFileSync(cachePath, 'utf-8')) : {});
 const ultimo = (prefijo) => fs.readdirSync(salidaDir).filter((f) => f.startsWith(prefijo)).sort().at(-1);
 
-if (args.includes('--sql-texto')) {
+if (args.includes('--sql-texto-set')) {
+  // M1 de P2 (REP-3860): el mismo SELECT de texto completo, para los casos del set congelado P0-v1.0.
+  const { cargarSet, resolverLocalidades } = await import('../p0/entorno.mjs');
+  const set = cargarSet(path.resolve(valor('--sql-texto-set')));
+  // Igual que el runner de M1: los casos sin localidad_id se resuelven por nombre y provincia (lectura)
+  const { need } = leerEnv(valor('--env') ? path.resolve(valor('--env')) : new URL('.env', root));
+  await resolverLocalidades(crearRest(need('VITE_SUPABASE_URL').replace(/\/$/, ''), need('SUPABASE_SERVICE_ROLE_KEY')), set.casos);
+  console.log(sqlOrdenTexto(set.casos.map((c) => ({ id: c.caso_id, localidad: c.localidad_id, categoria: c.categoria, descripcion: c.descripcion })), config.embeddingModelCode));
+} else if (args.includes('--sql-texto')) {
   console.log(sqlOrdenTexto(casos, config.embeddingModelCode));
 } else if (args.includes('--runner')) {
   const textoPath = new URL('P2_texto.json', salidaDir);

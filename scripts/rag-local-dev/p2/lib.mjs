@@ -138,3 +138,18 @@ export const compararTops = (filasSql, resultadosRunner) => {
     return sql.join(',') === js.join(',') ? [] : [{ caso: fila.caso, motivo: 'orden distinto', sql, js }];
   });
 };
+
+/**
+ * M1 de P2: reordena TODAS las filas del RPC (ventana amplia) con el orden híbrido, conservando la similitud de cada
+ * una. Así filaM1 (p0/esquema.mjs) calcula top 8, umbral y entregados igual que para la vectorial, sobre el mismo
+ * vector de consulta: la diferencia entre P0 y P2 es solo el orden.
+ */
+export const reordenarHibrido = (filas, textOrder, k = RRF_K) => {
+  const porId = new Map(filas.map((f) => [f.fragment_id, f]));
+  return ordenHibrido({ vectorOrder: filas.map((f) => f.fragment_id), textOrder, k, top: filas.length }).map((h) => ({
+    ...porId.get(h.fragment_id),
+    vector_rank: h.vector_rank,
+    text_rank: h.text_rank,
+    procedencia: h.procedencia,
+  }));
+};

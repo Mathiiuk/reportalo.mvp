@@ -17,7 +17,9 @@ import {
   sqlFuncionCaso,
   sqlOrdenTexto,
   compararTops,
+  reordenarHibrido,
 } from '../../scripts/rag-local-dev/p2/lib.mjs';
+import { filaM1 } from '../../scripts/rag-local-dev/p0/esquema.mjs';
 import { readProdConfig } from '../../scripts/rag-local-dev/rep-diag-ranking/lib.mjs';
 
 const leer = (ruta) => readFileSync(resolve(__dirname, '../..', ruta), 'utf8').replace(/\r\n/g, '\n');
@@ -143,5 +145,33 @@ describe('REP-3860 · interruptor RAG_BUSQUEDA en analizar-reporte', () => {
 
   it('los runners siguen leyendo la configuración de producción', () => {
     expect(readProdConfig(FUNCION)).toMatchObject({ matchCount: 8, threshold: 0.45, embeddingModelCode: 'gemini-embedding-2@768' });
+  });
+});
+
+describe('REP-3860 · M1 de P2: mismas filas del RPC, otro orden', () => {
+  const filas = [
+    { fragment_id: 'a', similarity: 0.7 },
+    { fragment_id: 'b', similarity: 0.6 },
+    { fragment_id: 'c', similarity: 0.44 },
+  ];
+
+  it('reordena todas las filas y conserva la similitud de cada una', () => {
+    const r = reordenarHibrido(filas, ['c']);
+    expect(r.map((f) => f.fragment_id)).toEqual(['c', 'a', 'b']);
+    expect(r[0]).toMatchObject({ similarity: 0.44, vector_rank: 3, text_rank: 1, procedencia: 'vector+texto' });
+    expect(r).toHaveLength(3);
+  });
+
+  it('filaM1 distingue «top 8» de «entregado»: subir un fragmento bajo el umbral no lo entrega', () => {
+    const m = filaM1(reordenarHibrido(filas, ['c']), ['c'], { matchCount: 8, threshold: 0.45 });
+    expect(m.esperados_en_top8).toBe(1);
+    expect(m.esperados_entregados).toBe(0);
+  });
+
+  it('sin texto, P2 da las mismas métricas que P0', () => {
+    const p0 = filaM1(filas, ['b'], { matchCount: 8, threshold: 0.45 });
+    const p2 = filaM1(reordenarHibrido(filas, []), ['b'], { matchCount: 8, threshold: 0.45 });
+    expect(p2.posiciones_esperadas).toEqual(p0.posiciones_esperadas);
+    expect(p2.reciprocal_rank).toBe(p0.reciprocal_rank);
   });
 });

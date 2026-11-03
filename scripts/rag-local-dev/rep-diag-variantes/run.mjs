@@ -39,10 +39,16 @@ const argValue = (flag) => {
 // de scripts/rag-local-dev/p0/esquema.mjs. Cada repetición vuelve a vectorizar la consulta (sin caché), como producción.
 //   node run.mjs --p0 --set <casos-referencia-v1.json> [--repeticiones 3] [--despliegue "analizar-reporte v44"] [--dry-run] [--prueba]
 // --dry-run valida el set y estima llamadas sin red. --prueba marca la salida como prueba (no vale para la puerta P0).
+// REP-3860 (P2): con --p2 <orden-texto.json> (de p2/control.mjs --sql-texto-set) mide además la búsqueda híbrida sobre LAS
+// MISMAS filas del RPC: mismo vector de consulta, solo cambia el orden. Cada fila trae las métricas vectoriales (P0) y un
+// bloque `p2` con las híbridas; la salida es RAG-P2_M1_<fecha>.json.
 if (args.includes('--p0')) {
   const { ESQUEMA, VENTANA_M1, encabezadoMotor, filaM1, resumenM1, estimarLlamadas, leerReglasValidador } = await import('../p0/esquema.mjs');
   const { leerEnv, crearRest, infoGit, leerCorpus, resolverLocalidades, cargarSet, argsP0, marcaDeTiempo } = await import('../p0/entorno.mjs');
   const { readGenerationSpec, buildQueryText: queryTextOf } = await import('../rep-diag-generacion/lib.mjs');
+  const rutaTextoP2 = argValue('--p2');
+  const p2 = rutaTextoP2 ? await import('../p2/lib.mjs') : null;
+  const textoP2 = rutaTextoP2 ? JSON.parse(fs.readFileSync(path.resolve(rutaTextoP2), 'utf-8')) : null;
 
   const { fileURLToPath } = await import('node:url');
   const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
@@ -52,6 +58,10 @@ if (args.includes('--p0')) {
   const spec = readGenerationSpec(fuente);
   const reglas = leerReglasValidador(fuente);
   const set = cargarSet(path.resolve(opciones.rutaSet));
+  if (textoP2) {
+    const faltan = set.casos.filter((c) => !(c.caso_id in textoP2)).map((c) => c.caso_id);
+    if (faltan.length) throw new Error(`El orden de texto de --p2 no tiene ${faltan.length} casos (${faltan.slice(0, 5).join(', ')}…)`);
+  }
   console.log(`Set ${set.set_version}: ${set.casos.length} casos · ${opciones.repeticiones} repeticiones · ventana ${VENTANA_M1} · top-k ${spec.matchCount} · umbral ${spec.threshold}`);
   if (opciones.dryRun) {
     console.log(`Dry-run (sin red): ${JSON.stringify(estimarLlamadas(set.casos, opciones.repeticiones, reglas))}`);
@@ -105,6 +115,10 @@ if (args.includes('--p0')) {
         }),
       });
       const m = filaM1(filas, caso.esperados_n1, spec);
+      // P2: el orden de texto viene abreviado y solo puede tener candidatos de este RPC (mismo filtro que la función)
+      const filasP2 = p2 ? p2.reordenarHibrido(filas, p2.expandirIds(textoP2[caso.caso_id], filas.map((f) => f.fragment_id))) : null;
+      const mP2 = filasP2 ? filaM1(filasP2, caso.esperados_n1, spec) : null;
+      if (mP2) mP2.candidatos = mP2.candidatos.map((c, i) => ({ ...c, vector_rank: filasP2[i].vector_rank, text_rank: filasP2[i].text_rank, procedencia: filasP2[i].procedencia }));
       resultados.push({
         caso_id: caso.caso_id,
         repeticion,
@@ -117,8 +131,9 @@ if (args.includes('--p0')) {
         esperados_n1: caso.esperados_n1,
         esperados_n2: caso.esperados_n2,
         ...m,
+        ...(mP2 ? { p2: mP2 } : {}),
       });
-      console.log(`${caso.caso_id.padEnd(16)} r${repeticion} · cand ${String(filas.length).padStart(3)} · 1.ª esperada ${m.posicion_primera_esperada ?? '-'} · entregados ${m.entregados}`);
+      console.log(`${caso.caso_id.padEnd(16)} r${repeticion} · cand ${String(filas.length).padStart(3)} · 1.ª esperada ${m.posicion_primera_esperada ?? '-'}${mP2 ? ` → P2 ${mP2.posicion_primera_esperada ?? '-'}` : ''} · entregados ${m.entregados}${mP2 ? ` → ${mP2.entregados}` : ''}`);
     }
   }
 
@@ -133,12 +148,19 @@ if (args.includes('--p0')) {
     ventana: VENTANA_M1,
     motor,
     resumen: resumenM1(resultados),
+    ...(p2
+      ? {
+          variante_p2: { busqueda: 'hibrida', rrf_k: p2.RRF_K, migracion: p2.MIGRACION_HIBRIDA, orden_texto: path.basename(rutaTextoP2) },
+          resumen_p2: resumenM1(resultados.map((r) => ({ ...r, ...r.p2 }))),
+        }
+      : {}),
     resultados,
   };
   fs.mkdirSync(new URL('salida/', here), { recursive: true });
-  const nombre = `RAG-P0_M1${opciones.prueba ? '_PRUEBA' : ''}_${marcaDeTiempo(inicio)}.json`;
+  const nombre = `RAG-${p2 ? 'P2' : 'P0'}_M1${opciones.prueba ? '_PRUEBA' : ''}_${marcaDeTiempo(inicio)}.json`;
   fs.writeFileSync(new URL(`salida/${nombre}`, here), JSON.stringify(salida, null, 2));
   console.log(`\nResumen: ${JSON.stringify(salida.resumen)}`);
+  if (p2) console.log(`Resumen P2: ${JSON.stringify(salida.resumen_p2)}`);
   console.log(`Salida: scripts/rag-local-dev/rep-diag-variantes/salida/${nombre}`);
   process.exit(0);
 }
