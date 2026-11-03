@@ -10,10 +10,16 @@ scope:
   project: reportalo.mvp
   modules:
     - src/components/report/ReportReviewStep.jsx
+    - src/components/report/ConsentSheet.jsx
+    - src/pages/TermsAndPermissionsPage.jsx
+    - src/services/termsService.js
+    - src/components/panel/PanelCase.jsx
+    - src/pages/MunicipiosPage.jsx
   environments:
     - local
 requirements:
-  - 'Aviso con el texto aprobado por Hernán en REP-3867 y enlace «Condiciones de uso», en el paso 3 «Enviar» (M11 / D12)'
+  - 'Aviso con el texto final de Hernán (REP-3867, 02/11) y enlace «Condiciones de uso», en el paso 3 «Enviar» (M11 / D12)'
+  - 'Condiciones de uso 1.5 con la sección «Fotos» de Hernán; un solo nombre en página, aviso y hoja de aceptación'
   - 'Reemplaza la línea «Antes de enviar te vamos a pedir aceptar los términos»; se ve siempre, haya aceptado o no (D-02 de REP-3869)'
   - 'No es un consentimiento: sin casilla ni ventana; la hoja de aceptación existente no cambia'
   - 'Accesible: el botón «Enviar reporte» lo referencia con aria-describedby; sin role="alert" ni aria-live; el enlace va antes del botón en el orden de foco'
@@ -22,7 +28,8 @@ acceptance_criteria:
   - 'Aparece con y sin aceptación vigente, y sin conexión'
   - 'Teléfono: arriba del botón, centrado, a 10 px; escritorio: a la izquierda del botón, alineado a la derecha, 440 px de ancho máximo'
   - 'Quien ya aceptó envía igual que antes; quien no aceptó ve la hoja de aceptación igual que antes'
-  - 'No se despliega hasta que estén actualizadas las condiciones (sección «Fotos», versión 1.5), pedido de Hernán en REP-3867'
+  - 'Condiciones 1.5 con «Fotos» palabra por palabra, versión real en el encabezado y nueva aceptación en el próximo envío'
+  - 'Ninguna pantalla promete patentes difuminadas'
 requires_approval: true
 quality_gates:
   lint: false
