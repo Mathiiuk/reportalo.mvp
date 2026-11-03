@@ -111,6 +111,13 @@ const GENERATION_TEMPERATURE = 0;
 const DEFAULT_MATCH_COUNT = 8;
 const DEFAULT_SIMILARITY_THRESHOLD = 0.45;
 
+// REP-3860 (RAG P2): búsqueda híbrida (vectores + texto completo con RRF), apagada. Con RAG_BUSQUEDA=hibrida se llama a
+// match_knowledge_fragments_hibrida (migración 20261103000000, todavía sin aplicar); cualquier otro valor, o ninguno,
+// deja la búsqueda vectorial de siempre. Volver atrás es sacar la variable: no hay datos que deshacer.
+const RRF_K = 60;
+const retrievalMode = (value: string | undefined): 'vectorial' | 'hibrida' =>
+  value?.trim().toLowerCase() === 'hibrida' ? 'hibrida' : 'vectorial';
+
 // REP-3795 (punto 4 del diagnóstico): la categoría no tiene corpus cargado a
 // propósito (REP-3764 la dejó pendiente) y nunca lo va a tener -- no es un
 // reclamo con fundamento normativo, es una derivación a asistencia social.
@@ -711,13 +718,17 @@ Deno.serve(async (req: Request) => {
       // de otra categoria sin ningun fragmento cargado para la suya -- ver
       // Caso F, REP-3764).
       const serviceCode = category ? category.toUpperCase() : null;
-      const { data: fragments, error: rpcError } = await supabaseAdmin.rpc('match_knowledge_fragments', {
+      const searchParams = {
         query_embedding: queryEmbedding,
         p_locality_id: localityId,
         p_model_code: EMBEDDING_MODEL_CODE,
         match_count: DEFAULT_MATCH_COUNT,
         p_service_code: serviceCode,
-      });
+      };
+      // REP-3860: el texto completo usa solo la descripción, sin el «(categoría: X)» que se agrega para vectorizar.
+      const { data: fragments, error: rpcError } = retrievalMode(Deno.env.get('RAG_BUSQUEDA')) === 'hibrida'
+        ? await supabaseAdmin.rpc('match_knowledge_fragments_hibrida', { ...searchParams, p_query_text: description.trim(), p_rrf_k: RRF_K })
+        : await supabaseAdmin.rpc('match_knowledge_fragments', searchParams);
 
       if (rpcError) {
         // embeddingModelCode: la vectorizacion ya se hizo antes de este RPC.
