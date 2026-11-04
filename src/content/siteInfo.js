@@ -21,7 +21,7 @@ export const PLACE = 'Buenos Aires, Argentina';
 
 export const ABOUT_PARAGRAPHS = [
   'Reportalo™ es una plataforma de auditoría ciudadana. Está pensada para que cualquier vecino pueda reportar un problema del espacio público de su ciudad y seguirlo hasta que el organismo responsable responda.',
-  'Cada reporte empieza con una foto. La ubicación se registra sola y, antes de enviarse, la imagen se procesa para difuminar rostros y patentes. Reportalo™ suma la normativa que aplica al caso y lo deriva al organismo que corresponde.',
+  'Cada reporte empieza con una foto. La ubicación se registra sola y, antes de guardarse, la imagen se procesa para difuminar los rostros; las patentes quedan visibles para que el organismo pueda actuar. Reportalo™ suma la normativa que aplica al caso y lo deriva al organismo que corresponde.',
   'El reporte muestra su estado y el historial de cambios, y te avisamos cada vez que avanza. En el mapa se ven, de forma anónima, los reportes de tu zona: si un problema ya fue reportado, podés sumarte en lugar de crear uno nuevo.',
   'Trabajamos con dos compromisos: que reportar sea simple para cualquier vecino y que la identidad de quien reporta quede siempre protegida.',
 ];

@@ -50,7 +50,7 @@ export const FAQ_ITEMS = [
     id: 'fotos',
     question: '¿Qué pasa con mis fotos?',
     answer: [
-      'Antes de guardarse, cada foto se procesa para difuminar rostros y patentes y eliminar los datos ocultos de la imagen; la foto original no se guarda. Solo se usa como evidencia del reporte: la ven vos y quien lo atiende. El resto de las personas ve solo un resumen.',
+      'Antes de guardarse, cada foto se procesa para difuminar los rostros y eliminar los datos ocultos de la imagen; la foto original no se guarda. Las patentes quedan visibles, porque el organismo las necesita para actuar. La foto solo se usa como evidencia del reporte: la ven vos y quien lo atiende. El resto de las personas ve solo un resumen.',
     ],
   },
   {

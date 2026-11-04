@@ -5,8 +5,8 @@
  * que todos acepten el texto nuevo.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   CURRENT_TERMS_VERSION,
   FULL_TERMS_AND_CONDITIONS,
@@ -17,6 +17,20 @@ import {
 import { PIPELINE_STEPS } from '../services/quarantinePipelineService';
 
 const leer = (ruta) => readFileSync(resolve(process.cwd(), ruta), 'utf8');
+
+// REP-3917: la lista fija dejó afuera src/content (FAQ y «Acerca de»), así que se recorren
+// también todas las carpetas con textos que ve el ciudadano.
+const CARPETAS_CON_TEXTOS = ['src/content', 'src/pages', 'src/components'];
+const listarFuentes = (carpeta) =>
+  readdirSync(resolve(process.cwd(), carpeta), { withFileTypes: true }).flatMap((entrada) => {
+    const ruta = join(carpeta, entrada.name);
+    if (entrada.isDirectory()) return listarFuentes(ruta);
+    return /\.(js|jsx)$/.test(entrada.name) ? [ruta] : [];
+  });
+
+// «rostros y patentes» o «difuminar … patentes» dentro de la misma frase. Un «;» corta la frase:
+// «Los rostros se difuminan; las patentes no» es el texto correcto de las condiciones 1.5.
+const PROMETE_PATENTES = /rostros y (las )?patentes|(difumin|pixel)\w*[^.;:]{0,60}patentes/i;
 
 describe('REP-3798 · términos y textos: solo rostros', () => {
   beforeEach(() => localStorage.clear());
@@ -51,7 +65,15 @@ describe('REP-3798 · términos y textos: solo rostros', () => {
       'src/pages/OnboardingPage.jsx',
       'src/pages/PermissionsPage.jsx',
       'src/pages/TermsAndPermissionsPage.jsx',
-    ].forEach((ruta) => expect(leer(ruta), ruta).not.toMatch(/rostros y (las )?patentes/i));
+      'src/content/faqContent.js',
+      'src/content/siteInfo.js',
+      ...CARPETAS_CON_TEXTOS.flatMap(listarFuentes),
+    ].forEach((ruta) => expect(leer(ruta), ruta).not.toMatch(PROMETE_PATENTES));
+  });
+
+  it('UT-TXT-04b: la FAQ y «Acerca de» dicen que las patentes quedan visibles', () => {
+    expect(leer('src/content/faqContent.js')).toMatch(/Las patentes quedan visibles/);
+    expect(leer('src/content/siteInfo.js')).toMatch(/las patentes quedan visibles/);
   });
 
   it('UT-TXT-05: el pipeline ya no muestra un paso de pixelado de patentes', () => {
