@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, ChevronRight, House, Info, MapPin } from 'lucide-react';
 import { ChipsFiltros, Encabezado, Kpi, Kpis, Migas, ObsCard, SelectorCategoria, SelectorPeriodo, Sello } from '../../components/observatorio/ObsUi';
-import { BarrasMesCategoria, DonaCategorias } from '../../components/observatorio/ObsGraficos';
+import { BarrasCategorias, BarrasMesCategoria } from '../../components/observatorio/ObsGraficos';
 import { LeyendaMapa, ObsMapa, ZOOM_MAXIMO } from '../../components/observatorio/ObsMapa';
 import { Cargando, ErrorCarga, notaMenosDeCinco, useCarga } from '../../components/observatorio/ObsEstados';
 import { useObsFiltro } from '../../components/observatorio/useObsFiltro';
@@ -255,7 +255,7 @@ export const MapaPage = () => {
                 <BarrasMesCategoria meses={mesesDelPeriodo(periodo)} filas={cifras.datos.porMes.filter((f) => f.categoria !== null)} categoria={categoria} />
               </ObsCard>
               <ObsCard titulo="Qué se reporta" sub="tocá una categoría para filtrar">
-                <DonaCategorias filas={cifras.datos.porCategoria} seleccion={categoria} onSeleccion={setCategoria} />
+                <BarrasCategorias filas={cifras.datos.porCategoria} seleccion={categoria} onSeleccion={setCategoria} />
               </ObsCard>
             </div>
           )}

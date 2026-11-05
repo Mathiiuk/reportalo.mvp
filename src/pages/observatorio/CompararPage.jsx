@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowLeftRight, Plus, Scale, X } from 'lucide-react';
 import { Aviso, ChipsFiltros, Encabezado, ObsCard, SelectorCategoria, SelectorPeriodo, Sello } from '../../components/observatorio/ObsUi';
@@ -11,7 +11,7 @@ import { CATEGORIAS, desdeDePeriodo, fmtDias, fmtNum, fmtPct, mesesDelPeriodo, S
 import { fetchPorCategoria, fetchPorMes, fetchResumen, fetchZonas, MIN_CASOS } from '../../services/observatorioService';
 
 /**
- * OBS · F4 · Comparar zonas (POC D59/M52): hasta 3 zonas de cualquier nivel y jurisdicción, con el mismo criterio.
+ * OBS · F4 · Comparar zonas (POC D59/M52): hasta 3 zonas del mismo nivel (Hernán, 05/11), con el mismo criterio.
  *
  * - «Comparar no es rankear»: las zonas van en el orden en que se eligieron y los colores identifican zonas, no
  *   «mejor» o «peor». Cada cifra se pone al lado de la de su propia jurisdicción.
@@ -24,10 +24,24 @@ import { fetchPorCategoria, fetchPorMes, fetchResumen, fetchZonas, MIN_CASOS } f
 export const MAX_ZONAS = 3;
 export const COLOR_ZONA = ['rgb(var(--rep-obs-zona-1))', 'rgb(var(--rep-obs-zona-2))', 'rgb(var(--rep-obs-zona-3))'];
 const NOMBRE_NIVEL = { provincia: 'provincia', subdivision: 'comuna o partido', localidad: 'barrio o localidad' };
+// Qué se puede comparar (Hernán, 05/11/2026): solo zonas del mismo nivel. Barrio con barrio, comuna con comuna,
+// provincia con provincia: no se compara Piñeyro (un barrio de Avellaneda) con la Comuna 1 de CABA.
+export const NIVELES_COMPARABLES = [
+  { nivel: 'localidad', plural: 'Barrios o localidades' },
+  { nivel: 'subdivision', plural: 'Comunas o partidos' },
+  { nivel: 'provincia', plural: 'Provincias' },
+];
 
-/** Zonas elegidas en la dirección: válidas, sin repetir, como máximo 3, en el orden en que llegaron. */
-export const leerZonas = (texto, indice) =>
-  [...new Set(String(texto ?? '').split(',').map((s) => s.trim()).filter(Boolean))].filter((id) => !indice || indice.has(id)).slice(0, MAX_ZONAS);
+/**
+ * Zonas elegidas en la dirección: válidas, sin repetir, todas del nivel de la primera, como máximo 3, en el orden en
+ * que llegaron. Una dirección vieja con niveles mezclados se queda con las del nivel de la primera.
+ */
+export const leerZonas = (texto, indice) => {
+  const validas = [...new Set(String(texto ?? '').split(',').map((s) => s.trim()).filter(Boolean))].filter((id) => !indice || indice.has(id));
+  if (!indice || !validas.length) return validas.slice(0, MAX_ZONAS);
+  const nivel = indice.get(validas[0]).nivel;
+  return validas.filter((id) => indice.get(id).nivel === nivel).slice(0, MAX_ZONAS);
+};
 
 /** Jurisdicción con la que se compara cada zona: la de arriba (para una provincia, el país). */
 const jurisdiccion = (indice, z) => {
@@ -35,9 +49,39 @@ const jurisdiccion = (indice, z) => {
   return padre ? { nivel: padre.nivel, zona: padre.id, nombre: nombreCorto(padre.nombre) } : { nivel: 'pais', zona: null, nombre: NOMBRE_PAIS };
 };
 
-/** Selector «Agregar zona»: provincias, y cada comuna o partido con sus barrios o localidades. */
-const AgregarZona = ({ indice, elegidas, onAgregar }) => {
+/**
+ * Selector «Agregar zona», solo con zonas del nivel que se está comparando:
+ * provincias sueltas; comunas o partidos agrupados por provincia; barrios o localidades agrupados por comuna o partido.
+ */
+const AgregarZona = ({ indice, nivel, elegidas, onAgregar }) => {
   const provincias = hijosDe(indice, 'pais', null);
+  const opcion = (z) => (
+    <option key={z.id} value={z.id} disabled={elegidas.includes(z.id)}>
+      {z.nombre}
+    </option>
+  );
+  let grupos;
+  if (nivel === 'provincia') grupos = [<optgroup key="p" label="Provincias">{provincias.map(opcion)}</optgroup>];
+  else if (nivel === 'subdivision')
+    grupos = provincias
+      .map((p) => ({ p, hijos: hijosDe(indice, 'provincia', p.id) }))
+      .filter((g) => g.hijos.length)
+      .map(({ p, hijos }) => (
+        <optgroup key={p.id} label={p.nombre}>
+          {hijos.map(opcion)}
+        </optgroup>
+      ));
+  else
+    grupos = provincias.flatMap((p) =>
+      hijosDe(indice, 'provincia', p.id)
+        .map((s) => ({ s, hijos: hijosDe(indice, 'subdivision', s.id) }))
+        .filter((g) => g.hijos.length)
+        .map(({ s, hijos }) => (
+          <optgroup key={s.id} label={`${s.nombre} · ${nombreCorto(p.nombre)}`}>
+            {hijos.map(opcion)}
+          </optgroup>
+        ))
+    );
   return (
     <label className="flex min-h-touch items-center gap-2 rounded-xl border border-dashed border-rep-accent-border bg-rep-surface px-3 text-rep-label font-bold text-rep-accent">
       <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.5} />
@@ -47,32 +91,31 @@ const AgregarZona = ({ indice, elegidas, onAgregar }) => {
         onChange={(e) => e.target.value && onAgregar(e.target.value)}
         className="rep-focus min-w-0 flex-1 cursor-pointer border-0 bg-transparent font-bold text-inherit outline-none"
       >
-        <option value="">Agregar zona</option>
-        <optgroup label="Provincias">
-          {provincias.map((p) => (
-            <option key={p.id} value={p.id} disabled={elegidas.includes(p.id)}>
-              {p.nombre}
-            </option>
-          ))}
-        </optgroup>
-        {provincias.flatMap((p) =>
-          hijosDe(indice, 'provincia', p.id).map((s) => (
-            <optgroup key={s.id} label={`${s.nombre} · ${p.nombre}`}>
-              <option value={s.id} disabled={elegidas.includes(s.id)}>
-                {s.nombre} (toda)
-              </option>
-              {hijosDe(indice, 'subdivision', s.id).map((l) => (
-                <option key={l.id} value={l.id} disabled={elegidas.includes(l.id)}>
-                  {l.nombre}
-                </option>
-              ))}
-            </optgroup>
-          ))
-        )}
+        <option value="">{elegidas.length ? `Agregar otro ${NOMBRE_NIVEL[nivel]}` : `Elegí un ${NOMBRE_NIVEL[nivel]}`}</option>
+        {grupos}
       </select>
     </label>
   );
 };
+
+/** Qué se compara, antes de elegir la primera zona. Después lo fija la primera zona. */
+const SelectorNivel = ({ valor, onChange }) => (
+  <div role="group" aria-label="Qué querés comparar" className="inline-flex flex-wrap self-start rounded-xl border border-rep-border bg-rep-surface p-0.5">
+    {NIVELES_COMPARABLES.map((n) => (
+      <button
+        key={n.nivel}
+        type="button"
+        aria-pressed={valor === n.nivel}
+        onClick={() => onChange(n.nivel)}
+        className={`rep-focus min-h-[36px] rounded-[10px] px-3 text-rep-label font-bold transition-colors duration-120 ${
+          valor === n.nivel ? 'bg-rep-accent text-rep-on-accent' : 'text-rep-ink-muted hover:text-rep-ink-label'
+        }`}
+      >
+        {n.plural}
+      </button>
+    ))}
+  </div>
+);
 
 /** «Primero, la respuesta»: una fila por indicador y una columna por zona, cada cifra con la de su jurisdicción. */
 const PrimeroLaRespuesta = ({ zonas }) => {
@@ -165,6 +208,9 @@ export const CompararPage = () => {
   const indice = territorio.datos;
   const ids = useMemo(() => leerZonas(params.get('zonas'), indice), [params, indice]);
   const clave = ids.join(',');
+  // Nivel que se compara: el de la primera zona; sin zonas, el que se elige arriba (por defecto, barrios)
+  const [nivelElegido, setNivelElegido] = useState('localidad');
+  const nivel = ids.length && indice ? indice.get(ids[0]).nivel : nivelElegido;
 
   const ponerZonas = useCallback(
     (nuevas) =>
@@ -222,9 +268,18 @@ export const CompararPage = () => {
       <Encabezado
         titulo="Comparar zonas"
         sellos={<Sello />}
-        bajada={`Hasta ${MAX_ZONAS} zonas de cualquier nivel, con el mismo criterio · ${textoPeriodo(periodo)}`}
+        bajada={`Hasta ${MAX_ZONAS} zonas del mismo nivel, con el mismo criterio · ${textoPeriodo(periodo)}`}
         derecha={<SelectorPeriodo valor={periodo} onChange={setPeriodo} />}
       />
+
+      {/* Qué se compara: se elige antes de la primera zona; después queda fijo hasta quitarlas todas */}
+      {ids.length ? (
+        <p className="m-0 text-rep-label font-semibold text-rep-ink-muted">
+          Comparando {NIVELES_COMPARABLES.find((n) => n.nivel === nivel)?.plural.toLowerCase()}. Para comparar otro nivel, quitá las zonas elegidas.
+        </p>
+      ) : (
+        <SelectorNivel valor={nivel} onChange={setNivelElegido} />
+      )}
 
       {/* Zonas elegidas, como chips de color con su «quitar», y el selector para sumar otra */}
       <div className="flex flex-col gap-2.5 tablet:flex-row tablet:flex-wrap tablet:items-center">
@@ -246,7 +301,7 @@ export const CompararPage = () => {
             </button>
           );
         })}
-        {ids.length < MAX_ZONAS && <AgregarZona indice={indice} elegidas={ids} onAgregar={(id) => ponerZonas([...ids, id])} />}
+        {ids.length < MAX_ZONAS && <AgregarZona indice={indice} nivel={nivel} elegidas={ids} onAgregar={(id) => ponerZonas([...ids, id])} />}
         <span className="hidden flex-1 tablet:block" />
         {ids.length > 0 && <SelectorCategoria valor={categoria} onChange={setCategoria} />}
       </div>
@@ -256,7 +311,7 @@ export const CompararPage = () => {
         <EmptyState
           icon={ArrowLeftRight}
           title="Elegí una zona para empezar"
-          description={`Podés comparar hasta ${MAX_ZONAS} zonas: barrios, comunas, partidos o provincias. También podés elegirlas desde el Mapa.`}
+          description={`Podés comparar hasta ${MAX_ZONAS} zonas del mismo nivel: barrio con barrio, comuna con comuna, provincia con provincia. También podés elegirlas desde el Mapa.`}
         />
       ) : (
         <>

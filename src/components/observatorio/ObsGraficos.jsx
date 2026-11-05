@@ -1,148 +1,160 @@
 import React, { useState } from 'react';
-import { Clock } from 'lucide-react';
 import { CATEGORIAS, fmtNum, fmtPct, mesCorto, mesLargo, mesTodaviaAbierto } from './obsFormat';
 
 /**
- * OBS · F2 · Gráficos del observatorio, en HTML y SVG propios (sin librería).
+ * OBS · Gráficos del observatorio, en HTML y SVG propios (sin librería).
  *
  * Reglas del skill de visualización que se aplican:
  * - Una sola serie no lleva leyenda (el título la nombra); varias, leyenda con números.
- * - Marcas finas con extremos redondeados de 4 px, 2 px de separación entre porciones.
- * - Cada marca tiene su detalle al pasar el mouse o con el teclado (foco), y hay una tabla para lectores de pantalla.
+ * - Marcas finas con extremos redondeados, 2 px de separación entre segmentos.
+ * - Cada marca tiene su detalle al pasar el mouse o al tocarla, y hay una tabla para lectores de pantalla.
  * - El texto usa los tokens de tinta, nunca el color de la serie.
+ *
+ * Meses en curso (Hernán, 05/11/2026: «¿qué son las torres naranjas?»): el rayado de fondo no se entendía. Ahora el mes
+ * que empezó hace menos de 60 días dice «en curso» escrito debajo, en el eje, y en la línea su tramo va punteado.
  */
 
+/** Eje de meses: el nombre corto y, debajo, «en curso» si sus reportes todavía no tuvieron tiempo de resolverse. */
+export const EjeMeses = ({ meses, hoy = new Date() }) => (
+  <div className="flex gap-2" aria-hidden="true">
+    {meses.map((m) => (
+      <span key={m} className="flex min-w-0 flex-1 flex-col items-center leading-tight">
+        <span className="text-[11px] font-semibold text-rep-ink-faint">{mesCorto(m)}</span>
+        {mesTodaviaAbierto(m, hoy) && <span className="text-[10px] font-bold text-rep-warning-ink">en curso</span>}
+      </span>
+    ))}
+  </div>
+);
+
+/** Nota al pie para los gráficos por mes: qué quiere decir «en curso». Solo si algún mes lo está. */
+export const NotaEnCurso = ({ meses, hoy = new Date() }) =>
+  meses.some((m) => mesTodaviaAbierto(m, hoy)) ? (
+    <p className="m-0 text-[11.5px] leading-snug text-rep-ink-muted">
+      <b className="font-bold text-rep-warning-ink">En curso:</b> son meses recientes. Sus reportes todavía no tuvieron tiempo de resolverse, así
+      que esas cifras van a cambiar.
+    </p>
+  ) : null;
+
+/** Línea de detalle arriba de un gráfico: lo señalado, o una ayuda si no hay nada señalado. */
+const Detalle = ({ children }) => (
+  <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
+    {children ?? <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>}
+  </p>
+);
+
 /**
- * Reportes por mes: una columna por mes, con la parte resuelta marcada adentro.
- * Los meses que empezaron hace menos de 60 días llevan la franja «Todavía abiertos».
+ * Mi barrio · Reportes por mes: una línea simple con área (como el mockup de Hernán, «para el ciudadano es más fácil»).
+ * El tramo de los meses en curso va punteado y sus puntos huecos.
  *
  * @param {Array<{ mes: string, reportes: number, resueltos: number, pctResueltos: number|null }>} meses
  *   todos los meses del período (los que no tienen reportes vienen en 0)
  */
-export const BarrasMes = ({ meses, hoy = new Date() }) => {
+export const LineaMes = ({ meses, hoy = new Date() }) => {
   const [activo, setActivo] = useState(null);
+  const n = meses.length;
   const max = Math.max(1, ...meses.map((m) => m.reportes));
-  const hayAbiertos = meses.some((m) => mesTodaviaAbierto(m.mes, hoy));
+  // Coordenadas en porcentaje del área del gráfico. x: el centro de la columna de cada mes, para que el punto caiga
+  // justo encima de su nombre en el eje (EjeMeses reparte el ancho en columnas iguales). y: de 12 a 96, con lugar arriba
+  const x = (i) => ((i + 0.5) * 100) / n;
+  const y = (v) => 96 - (84 * v) / max;
+  const puntos = meses.map((m, i) => ({ ...m, i, px: x(i), py: y(m.reportes), abierto: mesTodaviaAbierto(m.mes, hoy) }));
+  const primeroAbierto = puntos.findIndex((p) => p.abierto);
+  const maduros = primeroAbierto === -1 ? puntos : puntos.slice(0, primeroAbierto);
+  // El tramo punteado arranca en el último mes maduro, para que la línea no se corte
+  const enCurso = primeroAbierto === -1 ? [] : puntos.slice(Math.max(0, primeroAbierto - 1));
+  const camino = (ps) => ps.map((p, j) => `${j ? 'L' : 'M'}${p.px},${p.py}`).join(' ');
+  const area = `${camino(puntos)} L${puntos[n - 1].px},96 L${puntos[0].px},96 Z`;
+  const pico = puntos.reduce((a, b) => (b.reportes > a.reportes ? b : a), puntos[0]);
   const detalle = activo !== null ? meses[activo] : null;
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Leyenda: dos marcas dentro de la misma columna */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-rep-accent/35" />
-          Reportes
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-rep-accent" />
-          De esos, resueltos
-        </span>
-      </div>
-
-      {/* Detalle del mes señalado (o una ayuda si no hay ninguno) */}
-      <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
-        {detalle ? (
+      <Detalle>
+        {detalle && (
           <>
             <b className="text-rep-ink">{mesLargo(detalle.mes)}:</b> {fmtNum(detalle.reportes)} reportes · {fmtNum(detalle.resueltos)} resueltos
             {detalle.pctResueltos !== null && ` (${fmtPct(detalle.pctResueltos)})`}
+            {mesTodaviaAbierto(detalle.mes, hoy) && ' · en curso'}
           </>
-        ) : (
-          <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>
         )}
-      </p>
+      </Detalle>
 
-      <div className="relative flex h-[160px] items-end gap-2 border-b border-rep-divider desktop:h-[190px]" aria-hidden="true">
-        {meses.map((m, i) => {
-          const abierto = mesTodaviaAbierto(m.mes, hoy);
-          const alto = (m.reportes / max) * 100;
-          const altoRes = m.reportes ? (m.resueltos / m.reportes) * 100 : 0;
-          return (
-            <button
-              key={m.mes}
-              type="button"
-              tabIndex={-1}
-              onMouseEnter={() => setActivo(i)}
-              onMouseLeave={() => setActivo(null)}
-              onClick={() => setActivo(activo === i ? null : i)}
-              className={`relative flex h-full min-w-0 flex-1 flex-col items-center justify-end rounded-t-md ${activo === i ? 'bg-rep-divider/70' : ''}`}
-              // «Todavía abiertos»: rayado tenue a 45° (textura, no un fondo liso que en oscuro se confunde con la columna)
-              style={
-                abierto && activo !== i
-                  ? { backgroundImage: 'repeating-linear-gradient(135deg, rgb(var(--rep-warning) / 0.16) 0 2px, transparent 2px 7px)' }
-                  : undefined
-              }
-            >
-              {/* Valor arriba de la columna: solo el número, en tinta */}
-              <span className="mb-1 text-[11px] font-bold text-rep-ink-label">{m.reportes ? fmtNum(m.reportes) : ''}</span>
-              <span
-                className="flex w-full max-w-[44px] flex-col justify-end overflow-hidden rounded-t bg-rep-accent/35"
-                style={{ height: `${alto}%`, minHeight: m.reportes ? 3 : 0 }}
-              >
-                <span className="w-full bg-rep-accent" style={{ height: `${altoRes}%`, minHeight: m.resueltos ? 2 : 0 }} />
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Eje de meses */}
-      <div className="flex gap-2" aria-hidden="true">
-        {meses.map((m) => (
-          <span key={m.mes} className="min-w-0 flex-1 text-center text-[11px] font-semibold text-rep-ink-faint">
-            {mesCorto(m.mes)}
-          </span>
+      <div className="relative h-[170px] border-b border-rep-divider desktop:h-[200px]" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+          <path d={area} fill="rgb(var(--rep-accent) / 0.12)" stroke="none" />
+          {maduros.length > 1 && (
+            <path d={camino(maduros)} fill="none" stroke="rgb(var(--rep-accent))" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          )}
+          {enCurso.length > 1 && (
+            <path d={camino(enCurso)} fill="none" stroke="rgb(var(--rep-accent))" strokeWidth="2" strokeDasharray="5 4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          )}
+        </svg>
+        {/* Puntos en HTML: quedan redondos aunque el SVG se estire. Huecos en los meses en curso */}
+        {puntos.map((p) => (
+          <button
+            key={p.mes}
+            type="button"
+            tabIndex={-1}
+            onMouseEnter={() => setActivo(p.i)}
+            onMouseLeave={() => setActivo(null)}
+            onClick={() => setActivo(activo === p.i ? null : p.i)}
+            className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+            style={{ left: `${p.px}%`, top: `${p.py}%` }}
+          >
+            <span
+              className={`block h-2.5 w-2.5 rounded-full border-2 border-rep-accent ${p.abierto ? 'bg-rep-surface' : 'bg-rep-accent'} ${activo === p.i ? 'scale-150' : ''}`}
+            />
+          </button>
         ))}
-      </div>
-
-      {/* Lo mismo, como tabla, para lectores de pantalla y para usar el teclado.
-          Va dentro de un div oculto: una <table> no respeta el ancho de 1 px de sr-only y estiraba la página. */}
-      <div className="sr-only">
-      <table>
-        <caption>Reportes y resueltos por mes</caption>
-        <thead>
-          <tr>
-            <th scope="col">Mes</th>
-            <th scope="col">Reportes</th>
-            <th scope="col">Resueltos</th>
-            <th scope="col">% resueltos</th>
-          </tr>
-        </thead>
-        <tbody>
-          {meses.map((m) => (
-            <tr key={m.mes}>
-              <th scope="row">
-                {mesLargo(m.mes)}
-                {mesTodaviaAbierto(m.mes, hoy) ? ' (todavía abierto)' : ''}
-              </th>
-              <td>{fmtNum(m.reportes)}</td>
-              <td>{fmtNum(m.resueltos)}</td>
-              <td>{fmtPct(m.pctResueltos)}</td>
-            </tr>
+        {/* Etiquetas selectivas: el pico y el último mes */}
+        {[pico, puntos[n - 1]]
+          .filter((p, j, arr) => p.reportes > 0 && arr.indexOf(p) === j)
+          .map((p) => (
+            <span
+              key={`et-${p.mes}`}
+              className="pointer-events-none absolute -translate-x-1/2 text-[11px] font-bold text-rep-ink-label"
+              style={{ left: `${p.px}%`, top: `calc(${p.py}% - 22px)` }}
+            >
+              {fmtNum(p.reportes)}
+            </span>
           ))}
-        </tbody>
-      </table>
       </div>
+      <EjeMeses meses={meses.map((m) => m.mes)} hoy={hoy} />
+      <NotaEnCurso meses={meses.map((m) => m.mes)} hoy={hoy} />
 
-      {hayAbiertos && (
-        <p className="m-0 flex items-start gap-1.5 text-[11.5px] leading-snug text-rep-ink-muted">
-          <Clock aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rep-warning" strokeWidth={2.25} />
-          <span>
-            <b className="font-bold text-rep-ink-label">Todavía abiertos</b> (fondo rayado): esos meses parecen peores porque sus reportes todavía no
-            tuvieron tiempo de resolverse.
-          </span>
-        </p>
-      )}
+      <div className="sr-only">
+        <table>
+          <caption>Reportes y resueltos por mes</caption>
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              <th scope="col">Reportes</th>
+              <th scope="col">Resueltos</th>
+              <th scope="col">% resueltos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {meses.map((m) => (
+              <tr key={m.mes}>
+                <th scope="row">
+                  {mesLargo(m.mes)}
+                  {mesTodaviaAbierto(m.mes, hoy) ? ' (en curso)' : ''}
+                </th>
+                <td>{fmtNum(m.reportes)}</td>
+                <td>{fmtNum(m.resueltos)}</td>
+                <td>{fmtPct(m.pctResueltos)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
 
 /**
- * Reportes por mes y categoría (POC D57 «Reportes por mes y categoría»): columnas apiladas en el orden fijo de las
- * categorías, con 2 px de separación entre segmentos. Con un filtro de categoría queda solo esa.
- *
- * @param {string[]} meses todos los meses del período ('YYYY-MM-01')
- * @param {Array<{ mes: string, categoria: string|null, reportes: number }>} filas las de obs_por_mes
- * @param {string|null} categoria filtro activo
+ * Reportes por mes y categoría (Mapa): columnas apiladas en el orden fijo de las categorías, con 2 px entre
+ * segmentos. Con un filtro de categoría queda solo esa.
  */
 export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new Date() }) => {
   const [activo, setActivo] = useState(null);
@@ -157,7 +169,6 @@ export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new D
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Leyenda con el total del período de cada categoría: la identidad nunca queda solo en el color */}
       {cats.length > 1 && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
           {cats.map((c) => (
@@ -168,18 +179,14 @@ export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new D
           ))}
         </div>
       )}
-
-      <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
-        {detalle ? (
+      <Detalle>
+        {detalle && (
           <>
             <b className="text-rep-ink">{mesLargo(detalle.mes)}:</b> {fmtNum(detalle.total)} reportes
             {cats.length > 1 && ` · ${detalle.partes.filter((p) => p.n).map((p) => `${p.nombre} ${fmtNum(p.n)}`).join(' · ')}`}
           </>
-        ) : (
-          <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>
         )}
-      </p>
-
+      </Detalle>
       <div className="flex h-[160px] items-end gap-2 border-b border-rep-divider desktop:h-[190px]" aria-hidden="true">
         {columnas.map((col, i) => (
           <button
@@ -190,37 +197,20 @@ export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new D
             onMouseLeave={() => setActivo(null)}
             onClick={() => setActivo(activo === i ? null : i)}
             className={`flex h-full min-w-0 flex-1 flex-col items-center justify-end rounded-t-md ${activo === i ? 'bg-rep-divider/70' : ''}`}
-            style={
-              mesTodaviaAbierto(col.mes, hoy) && activo !== i
-                ? { backgroundImage: 'repeating-linear-gradient(135deg, rgb(var(--rep-warning) / 0.16) 0 2px, transparent 2px 7px)' }
-                : undefined
-            }
           >
             <span className="mb-1 text-[11px] font-bold text-rep-ink-label">{col.total ? fmtNum(col.total) : ''}</span>
-            {/* Segmentos de abajo hacia arriba en el orden fijo, con 2 px de superficie entre ellos */}
             <span className="flex w-full max-w-[44px] flex-col-reverse gap-[2px]" style={{ height: `${(col.total / max) * 100}%` }}>
               {col.partes
                 .filter((p) => p.n > 0)
                 .map((p, j, arr) => (
-                  <span
-                    key={p.code}
-                    className={j === arr.length - 1 ? 'rounded-t' : ''}
-                    style={{ background: p.color, flexGrow: p.n, flexBasis: 0, minHeight: 2 }}
-                  />
+                  <span key={p.code} className={j === arr.length - 1 ? 'rounded-t' : ''} style={{ background: p.color, flexGrow: p.n, flexBasis: 0, minHeight: 2 }} />
                 ))}
             </span>
           </button>
         ))}
       </div>
-
-      <div className="flex gap-2" aria-hidden="true">
-        {columnas.map((col) => (
-          <span key={col.mes} className="min-w-0 flex-1 text-center text-[11px] font-semibold text-rep-ink-faint">
-            {mesCorto(col.mes)}
-          </span>
-        ))}
-      </div>
-
+      <EjeMeses meses={meses} hoy={hoy} />
+      <NotaEnCurso meses={meses} hoy={hoy} />
       <div className="sr-only">
         <table>
           <caption>Reportes por mes y categoría</caption>
@@ -252,6 +242,106 @@ export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new D
   );
 };
 
+/**
+ * Qué se reporta: barras horizontales por categoría (reemplaza a la dona: «para el ciudadano es más fácil»).
+ * Cada barra es un botón: tocarla filtra la pantalla; tocarla de nuevo saca el filtro.
+ *
+ * @param {Array<{ categoria: string, reportes: number }>} filas una por categoría
+ */
+export const BarrasCategorias = ({ filas, seleccion = null, onSeleccion }) => {
+  const total = filas.reduce((s, f) => s + f.reportes, 0);
+  const max = Math.max(1, ...filas.map((f) => f.reportes));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {CATEGORIAS.map((c) => {
+        const n = filas.find((f) => f.categoria === c.code)?.reportes ?? 0;
+        const on = seleccion === c.code;
+        return (
+          <button
+            key={c.code}
+            type="button"
+            aria-pressed={on}
+            aria-label={`${c.nombre}: ${fmtNum(n)} reportes`}
+            onClick={() => onSeleccion?.(on ? null : c.code)}
+            className={`rep-focus flex flex-col gap-1 rounded-xl px-2.5 py-2 text-left transition-colors ${on ? 'bg-rep-accent-soft' : 'hover:bg-rep-surface-sunken'} ${
+              seleccion && !on ? 'opacity-60' : ''
+            }`}
+          >
+            <span className="flex items-baseline justify-between gap-2 text-[12.5px]">
+              <span className="font-bold text-rep-ink">{c.nombre}</span>
+              <span className="tabular-nums text-rep-ink-label">
+                <b className="font-bold">{fmtNum(n)}</b> <span className="text-rep-ink-faint">· {fmtPct(total ? Math.round((100 * n) / total) : 0)}</span>
+              </span>
+            </span>
+            <span className="block h-2.5 w-full rounded-full bg-rep-divider">
+              <span className="block h-full rounded-full" style={{ width: `${(n / max) * 100}%`, minWidth: n ? 4 : 0, background: c.color }} />
+            </span>
+          </button>
+        );
+      })}
+      <p className="m-0 mt-1 text-[11.5px] text-rep-ink-faint">{fmtNum(total)} reportes en total · tocá una categoría para filtrar</p>
+    </div>
+  );
+};
+
+/**
+ * Mi zona vs. mi jurisdicción (mockup de Hernán): los porcentajes de la zona al lado de los de su comuna o partido.
+ * Solo porcentajes (un solo eje): los días van en los indicadores, no se mezclan unidades en un gráfico.
+ */
+export const ZonaVsJurisdiccion = ({ zona, jurisdiccion, filas }) => (
+  <div className="flex flex-col gap-3">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
+      <span className="inline-flex items-center gap-1.5">
+        <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-rep-accent" />
+        <b className="font-bold text-rep-ink-label">{zona}</b>
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-rep-ink-faint" />
+        <b className="font-bold text-rep-ink-label">{jurisdiccion}</b>
+      </span>
+    </div>
+    {filas.map((f) => (
+      <div key={f.indicador} className="flex flex-col gap-1">
+        <span className="text-[12px] font-bold text-rep-ink">{f.indicador}</span>
+        {[
+          { nombre: zona, v: f.zona, color: 'bg-rep-accent' },
+          { nombre: jurisdiccion, v: f.jurisdiccion, color: 'bg-rep-ink-faint' },
+        ].map((s) => (
+          <div key={s.nombre} className="flex items-center gap-2">
+            <span className="block h-2.5 flex-1 rounded-full bg-rep-divider">
+              {s.v !== null && <span className={`block h-full rounded-full ${s.color}`} style={{ width: `${Math.min(100, s.v)}%`, minWidth: s.v > 0 ? 4 : 0 }} />}
+            </span>
+            <span className="w-[64px] shrink-0 text-right text-[11.5px] font-semibold tabular-nums text-rep-ink-label">
+              {s.v === null ? 'pocos casos' : fmtPct(s.v)}
+            </span>
+          </div>
+        ))}
+      </div>
+    ))}
+    <div className="sr-only">
+      <table>
+        <caption>{`${zona} comparado con ${jurisdiccion}`}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Indicador</th>
+            <th scope="col">{zona}</th>
+            <th scope="col">{jurisdiccion}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((f) => (
+            <tr key={f.indicador}>
+              <th scope="row">{f.indicador}</th>
+              <td>{fmtPct(f.zona)}</td>
+              <td>{fmtPct(f.jurisdiccion)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
 /** Leyenda de las zonas comparadas: color + nombre (la identidad nunca va solo en el color). */
 export const LeyendaZonas = ({ series }) => (
   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
@@ -266,7 +356,6 @@ export const LeyendaZonas = ({ series }) => (
 
 /**
  * Comparar · Reportes por mes: por cada mes, una columna fina por zona (en el orden en que se eligieron).
- * @param {string[]} meses
  * @param {Array<{ id, nombre, color, porMes: Map<string, number> }>} series
  */
 export const BarrasMesZonas = ({ meses, series, hoy = new Date() }) => {
@@ -275,16 +364,13 @@ export const BarrasMesZonas = ({ meses, series, hoy = new Date() }) => {
   return (
     <div className="flex flex-col gap-2">
       <LeyendaZonas series={series} />
-      <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
-        {activo !== null ? (
+      <Detalle>
+        {activo !== null && (
           <>
-            <b className="text-rep-ink">{mesLargo(meses[activo])}:</b>{' '}
-            {series.map((s) => `${s.nombre} ${fmtNum(s.porMes.get(meses[activo]) ?? 0)}`).join(' · ')}
+            <b className="text-rep-ink">{mesLargo(meses[activo])}:</b> {series.map((s) => `${s.nombre} ${fmtNum(s.porMes.get(meses[activo]) ?? 0)}`).join(' · ')}
           </>
-        ) : (
-          <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>
         )}
-      </p>
+      </Detalle>
       <div className="flex h-[170px] items-end gap-2 border-b border-rep-divider desktop:h-[200px]" aria-hidden="true">
         {meses.map((m, i) => (
           <button
@@ -295,32 +381,16 @@ export const BarrasMesZonas = ({ meses, series, hoy = new Date() }) => {
             onMouseLeave={() => setActivo(null)}
             onClick={() => setActivo(activo === i ? null : i)}
             className={`flex h-full min-w-0 flex-1 items-end justify-center gap-[2px] rounded-t-md px-0.5 ${activo === i ? 'bg-rep-divider/70' : ''}`}
-            style={
-              mesTodaviaAbierto(m, hoy) && activo !== i
-                ? { backgroundImage: 'repeating-linear-gradient(135deg, rgb(var(--rep-warning) / 0.16) 0 2px, transparent 2px 7px)' }
-                : undefined
-            }
           >
             {series.map((s) => {
               const n = s.porMes.get(m) ?? 0;
-              return (
-                <span
-                  key={s.id}
-                  className="w-full max-w-[14px] rounded-t"
-                  style={{ height: `${(n / max) * 100}%`, minHeight: n ? 3 : 0, background: s.color }}
-                />
-              );
+              return <span key={s.id} className="w-full max-w-[14px] rounded-t" style={{ height: `${(n / max) * 100}%`, minHeight: n ? 3 : 0, background: s.color }} />;
             })}
           </button>
         ))}
       </div>
-      <div className="flex gap-2" aria-hidden="true">
-        {meses.map((m) => (
-          <span key={m} className="min-w-0 flex-1 text-center text-[11px] font-semibold text-rep-ink-faint">
-            {mesCorto(m)}
-          </span>
-        ))}
-      </div>
+      <EjeMeses meses={meses} hoy={hoy} />
+      <NotaEnCurso meses={meses} hoy={hoy} />
       <div className="sr-only">
         <table>
           <caption>Reportes por mes de cada zona</caption>
@@ -353,10 +423,6 @@ export const BarrasMesZonas = ({ meses, series, hoy = new Date() }) => {
 /**
  * Comparar · barras horizontales por categoría, una fila fina por zona, con el valor escrito al final.
  * Sirve para «Días hasta resolver» (con la marca del plazo) y para «Qué se reporta» en proporción.
- *
- * @param {Array<{ id, nombre, color, valores: Object<string, { valor: number|null, texto: string }> }>} series
- * @param {Object<string, number>} [marcas] por categoría, valor de la marca vertical (el plazo)
- * @param {number} max valor que llena la barra
  */
 export const BarrasCategoriaZonas = ({ series, max, marcas = null, etiquetaMarca = 'plazo', caption }) => (
   <div className="flex flex-col gap-3">
@@ -368,7 +434,11 @@ export const BarrasCategoriaZonas = ({ series, max, marcas = null, etiquetaMarca
           <div key={c.code} className="flex flex-col gap-1">
             <span className="flex items-baseline justify-between text-[12px] font-bold text-rep-ink">
               {c.nombre}
-              {marca !== null && <span className="text-[11px] font-semibold text-rep-ink-faint">{etiquetaMarca}: {fmtNum(marca)} días</span>}
+              {marca !== null && (
+                <span className="text-[11px] font-semibold text-rep-ink-faint">
+                  {etiquetaMarca}: {fmtNum(marca)} días
+                </span>
+              )}
             </span>
             {series.map((s) => {
               const v = s.valores[c.code] ?? { valor: null, texto: '—' };
@@ -378,9 +448,7 @@ export const BarrasCategoriaZonas = ({ series, max, marcas = null, etiquetaMarca
                     {v.valor !== null && (
                       <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (v.valor / max) * 100)}%`, minWidth: v.valor > 0 ? 3 : 0, background: s.color }} />
                     )}
-                    {marca !== null && (
-                      <span className="absolute -inset-y-1 w-[2px] bg-rep-danger" style={{ left: `${Math.min(100, (marca / max) * 100)}%` }} />
-                    )}
+                    {marca !== null && <span className="absolute -inset-y-1 w-[2px] bg-rep-danger" style={{ left: `${Math.min(100, (marca / max) * 100)}%` }} />}
                   </div>
                   <span className="w-[86px] shrink-0 text-right text-[11.5px] font-semibold tabular-nums text-rep-ink-label">{v.texto}</span>
                 </div>
@@ -419,85 +487,3 @@ export const BarrasCategoriaZonas = ({ series, max, marcas = null, etiquetaMarca
     </div>
   </div>
 );
-
-/**
- * Qué se reporta: dona por categoría con leyenda tocable. Tocar una categoría filtra la pantalla; tocarla de nuevo,
- * o «Todas», saca el filtro.
- *
- * @param {Array<{ categoria: string, reportes: number }>} filas una por categoría
- * @param {string|null} seleccion categoría del filtro activo
- * @param {Function} onSeleccion recibe el código, o null para sacar el filtro
- */
-export const DonaCategorias = ({ filas, seleccion = null, onSeleccion }) => {
-  const total = filas.reduce((s, f) => s + f.reportes, 0);
-  const R = 52;
-  const C = 2 * Math.PI * R;
-  const GAP = total > 0 && filas.filter((f) => f.reportes > 0).length > 1 ? 2 : 0; // 2 px de superficie entre porciones
-  let acumulado = 0;
-
-  const porciones = CATEGORIAS.map((cat) => {
-    const f = filas.find((x) => x.categoria === cat.code) ?? { reportes: 0 };
-    const largo = total ? (f.reportes / total) * C : 0;
-    const p = { ...cat, reportes: f.reportes, pct: total ? (100 * f.reportes) / total : 0, desde: acumulado, largo };
-    acumulado += largo;
-    return p;
-  });
-
-  return (
-    <div className="flex flex-col items-center gap-4 tablet:flex-row tablet:items-center desktop:gap-6">
-      <svg viewBox="0 0 140 140" className="h-[150px] w-[150px] shrink-0" role="img" aria-label={`Reportes por categoría: ${porciones.map((p) => `${p.nombre} ${p.reportes}`).join(', ')}`}>
-        <circle cx="70" cy="70" r={R} fill="none" stroke="rgb(var(--rep-divider))" strokeWidth="16" />
-        {/* Las porciones arrancan arriba (las 12) y van en el sentido de las agujas del reloj */}
-        <g transform="rotate(-90 70 70)">
-        {porciones
-          .filter((p) => p.largo > 0)
-          .map((p) => (
-            <circle
-              key={p.code}
-              cx="70"
-              cy="70"
-              r={R}
-              fill="none"
-              stroke={p.color}
-              strokeWidth={seleccion === p.code ? 20 : 16}
-              strokeDasharray={`${Math.max(0, p.largo - GAP)} ${C}`}
-              strokeDashoffset={-p.desde}
-              opacity={seleccion && seleccion !== p.code ? 0.3 : 1}
-            >
-              <title>{`${p.nombre}: ${fmtNum(p.reportes)} (${fmtPct(p.pct)})`}</title>
-            </circle>
-          ))}
-        </g>
-        <text x="70" y="70" textAnchor="middle" className="fill-rep-ink text-[22px] font-extrabold">
-          {fmtNum(total)}
-        </text>
-        <text x="70" y="88" textAnchor="middle" className="fill-rep-ink-faint text-[10px] font-semibold">
-          reportes
-        </text>
-      </svg>
-
-      <ul className="m-0 flex w-full list-none flex-col gap-1 p-0">
-        {porciones.map((p) => {
-          const on = seleccion === p.code;
-          return (
-            <li key={p.code}>
-              <button
-                type="button"
-                aria-pressed={on}
-                onClick={() => onSeleccion?.(on ? null : p.code)}
-                className={`rep-focus flex min-h-[38px] w-full items-center gap-2.5 rounded-xl px-2.5 text-left transition-colors ${
-                  on ? 'bg-rep-accent-soft' : 'hover:bg-rep-surface-sunken'
-                } ${seleccion && !on ? 'opacity-60' : ''}`}
-              >
-                <i aria-hidden="true" className="h-3 w-3 shrink-0 rounded-sm" style={{ background: p.color }} />
-                <span className="flex-1 text-[12.5px] font-bold text-rep-ink">{p.nombre}</span>
-                <span className="text-[12.5px] font-semibold tabular-nums text-rep-ink-label">{fmtNum(p.reportes)}</span>
-                <span className="w-[52px] text-right text-[12px] tabular-nums text-rep-ink-faint">{fmtPct(Math.round(p.pct))}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-};
