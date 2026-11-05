@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 /**
  * OBS · F0a · Lectura del observatorio del vecino.
  *
- * Solo llama a las funciones de agregados de la base (migración 20261104120000_obs_f0a_agregados_del_observatorio.sql).
+ * Solo llama a las funciones de agregados de la base (migración 20261105010506_obs_f0a_agregados_del_observatorio.sql).
  * Todas exigen sesión: la base no las otorga a anon. Ninguna devuelve reportes sueltos, coordenadas ni textos.
  *
  * La regla de menos de 5 casos la aplica la base: cuando un porcentaje o unos días vienen null, la pantalla muestra «—».

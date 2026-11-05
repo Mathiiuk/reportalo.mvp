@@ -29,7 +29,9 @@
 -- Niveles (p_nivel): 'pais' (p_zona null) · 'provincia' (states_provinces.id) · 'subdivision' (comuna o partido)
 --                    · 'localidad' (barrio o localidad).
 --
--- No se aplica sola: se corre a mano en staging con el OK de Matías.
+-- APLICADA en staging el 04/11/2026 con el OK de Matías (versión registrada 20261105010506, hora UTC; el archivo se
+-- renombró para coincidir). Verificación: anon sin EXECUTE en ninguna obs_* (permission denied); authenticated sin
+-- EXECUTE en obs_base ni escritura en observatorio_plazos; obs_resumen(pais) = 518 reportes, 5 resueltos, mediana 7,8 d.
 --
 -- REVERSIÓN:
 --   drop function if exists public.obs_hijos(text, uuid, date, date, text);
@@ -64,7 +66,8 @@ alter table public.observatorio_plazos enable row level security;
 drop policy if exists "Plazos del observatorio legibles con sesión" on public.observatorio_plazos;
 create policy "Plazos del observatorio legibles con sesión" on public.observatorio_plazos
   for select to authenticated using (true);
-revoke all on public.observatorio_plazos from anon;
+-- Supabase otorga todo a anon y authenticated en las tablas nuevas: se saca y se deja solo la lectura
+revoke all on public.observatorio_plazos from anon, authenticated;
 grant select on public.observatorio_plazos to authenticated;
 
 -- 2) Umbral de casos (un solo lugar para cambiarlo) --------------------------------------------------------------------

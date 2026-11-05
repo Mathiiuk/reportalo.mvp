@@ -19,7 +19,7 @@ const {
 } = await import('../services/observatorioService');
 
 const SQL = readFileSync(
-  resolve(__dirname, '../../supabase/migrations/20261104120000_obs_f0a_agregados_del_observatorio.sql'),
+  resolve(__dirname, '../../supabase/migrations/20261105010506_obs_f0a_agregados_del_observatorio.sql'),
   'utf8'
 );
 // Sin comentarios, para que las reglas se lean en el código y no en la explicación
