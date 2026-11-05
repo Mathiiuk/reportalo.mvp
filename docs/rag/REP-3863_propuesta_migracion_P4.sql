@@ -1,7 +1,7 @@
 -- REP-3863 · P4 · PROPUESTA de migración (NO APLICAR todavía)
 -- GENERADA por scripts/rep3863/generar_carga_p4.mjs desde el dataset del PO: no editar a mano, regenerar.
--- Catálogo de fragmentos usado: catalogo_fragmentos_2026-10-20.csv (REP-3859), SHA-256 3602a43446c4544e7cb6b32b8d9298e99fd238497d348fbac837fd1ad7ae6cb7.
--- Pares (fragmento, categoría) de staging: scripts/rep3863/dataset/pares_fragment_services_2026-10-23.json (169).
+-- Catálogo de fragmentos usado: catalogo_fragmentos_2026-11-05.csv (foto de staging; las 132 filas del 20/10 de REP-3859, iguales, + 5 de REP-3837), SHA-256 6547d403b4d13aec1fa08f3322b961fde2032e689fa76a49aa0131e86ff730bb.
+-- Pares (fragmento, categoría) de staging: scripts/rep3863/dataset/pares_fragment_services_2026-11-05.json (174).
 --
 -- Está fuera de supabase/migrations a propósito. Orden al aplicar (REP-3864 pide "antes" y "después" de cada paso):
 --   1. aviso a QA (foto "antes");  2. loader de REP-2800 con las 70 filas de REP-3863_c_prest_nuevas.sql;
@@ -241,8 +241,8 @@ insert into p4_prestacion_grupo values
   ('VULNERABILIDAD_SOCIAL', 'SITUACION_DE_CALLE', 'situacion_de_calle', 'Persona o familia en situación de calle', 'nombre');
 
 -- ---------------------------------------------------------------------------------------------------------------
--- 4. Vínculos norma ↔ prestación: 57 (fragmento, categoría, grupo), todos sobre pares que YA existen.
---    Excepciones (no van a la base): sin_articulo 5 · articulo_no_cargado 3 · fuera_del_corpus 2 · par_nuevo_P5 2. Ver docs/rag/REP-3863_auditoria_y_diseno_P4.md.
+-- 4. Vínculos norma ↔ prestación: 69 (fragmento, categoría, grupo), todos sobre pares que YA existen.
+--    Excepciones (no van a la base): sin_articulo 1 · articulo_no_cargado 3 · par_nuevo_P5 2. Ver docs/rag/REP-3863_auditoria_y_diseno_P4.md.
 -- ---------------------------------------------------------------------------------------------------------------
 create temporary table p4_vinculo (fragment_id uuid, categoria text, grupo text, tipo_fundamento text, norma text) on commit drop;
 insert into p4_vinculo values
@@ -254,6 +254,9 @@ insert into p4_vinculo values
   ('40000000-0000-4000-8000-000000000003', 'INFRAESTRUCTURA', 'VEREDAS', 'obligacion', 'Ley 5902 art. 7'),
   ('40000000-0000-4000-8000-000000000004', 'INFRAESTRUCTURA', 'VEREDAS', 'competencia', 'Ley 5902 art. 8'),
   ('80000000-0000-4000-8000-000000000007', 'INFRAESTRUCTURA', 'PLUVIALES', 'competencia', 'Ley 6684 art. 26 inc. 15'),
+  ('610873ce-3a87-47a6-9080-e7d6084352e6', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'competencia', 'Ley 5688 arts. 506, 507 y 511'),
+  ('52f60dfe-40db-4810-8e87-eaf7f73cd1e2', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'competencia', 'Ley 5688 arts. 506, 507 y 511'),
+  ('11e521a6-aae5-4367-97a1-9ee559828d0a', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'competencia', 'Ley 5688 arts. 506, 507 y 511'),
   ('60000000-0000-4000-8000-000000000033', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'conducta', 'Ley 2148 art. 7.1.8'),
   ('60000000-0000-4000-8000-000000000034', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'conducta', 'Ley 2148 art. 7.1.8'),
   ('60000000-0000-4000-8000-000000000035', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'conducta', 'Ley 2148 art. 7.1.8'),
@@ -266,6 +269,8 @@ insert into p4_vinculo values
   ('60000000-0000-4000-8000-000000000025', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'conducta', 'Ley 451 art. 1.3.31'),
   ('40000000-0000-4000-8000-000000000009', 'AMBIENTE', 'HIGIENE_RESIDUOS', 'conducta', 'Ley 1854 art. 36'),
   ('40000000-0000-4000-8000-000000000041', 'AMBIENTE', 'HIGIENE_RESIDUOS', 'conducta', 'Ley 451 art. 1.3.13'),
+  ('b2f727ee-9e16-4538-8314-5de5c0bff287', 'AMBIENTE', 'CONTAMINACION', 'competencia', 'Ley 2628 art. 3 incs. 3 y 17'),
+  ('f798d577-34b6-4052-9ad0-42310e71b775', 'AMBIENTE', 'CONTAMINACION', 'competencia', 'Ley 2628 art. 3 incs. 3 y 17'),
   ('80000000-0000-4000-8000-000000000007', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'competencia', 'Ley 6684 art. 26 inc. 14'),
   ('60000000-0000-4000-8000-000000000021', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'conducta', 'Ley 1166 Secc. 11.1.2'),
   ('40000000-0000-4000-8000-000000000047', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'conducta', 'Ley 451 art. 4.1.2'),
@@ -294,6 +299,8 @@ insert into p4_vinculo values
   ('60000000-0000-4000-8000-000000000040', 'TRANSITO', 'TRANSITO_ESTACIONAMIENTO', 'conducta', 'Ley 24.449 art. 49'),
   ('40000000-0000-4000-8000-000000000024', 'AMBIENTE', 'HIGIENE_RESIDUOS', 'obligacion', 'Ley 13.592 art. 9'),
   ('60000000-0000-4000-8000-000000000002', 'AMBIENTE', 'HIGIENE_RESIDUOS', 'conducta', 'DL 8751/77 art. 4 bis'),
+  ('60000000-0000-4000-8000-000000000016', 'AMBIENTE', 'CONTAMINACION', 'obligacion', 'Ley 11.723 arts. 6 y 75'),
+  ('60000000-0000-4000-8000-000000000020', 'AMBIENTE', 'CONTAMINACION', 'obligacion', 'Ley 11.723 arts. 6 y 75'),
   ('60000000-0000-4000-8000-000000000002', 'AMBIENTE', 'CONTAMINACION', 'conducta', 'DL 8751/77 art. 4 bis'),
   ('80000000-0000-4000-8000-000000000003', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'obligacion', 'Ordenanza Fiscal 31321 art. 233'),
   ('80000000-0000-4000-8000-000000000002', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'obligacion', 'Ordenanza Fiscal 31321 art. 231'),
@@ -302,7 +309,12 @@ insert into p4_vinculo values
   ('40000000-0000-4000-8000-000000000051', 'COMERCIO_IRREGULAR', 'ESPACIO_PUBLICO_COMERCIO', 'competencia', 'LOM (DL 6769/58) art. 27 incs. 1 y 6'),
   ('40000000-0000-4000-8000-000000000049', 'COMERCIO_IRREGULAR', 'LOCAL_SIN_HABILITACION', 'competencia', 'LOM (DL 6769/58) art. 27 incs. 1 y 6'),
   ('40000000-0000-4000-8000-000000000051', 'COMERCIO_IRREGULAR', 'LOCAL_SIN_HABILITACION', 'competencia', 'LOM (DL 6769/58) art. 27 incs. 1 y 6'),
-  ('60000000-0000-4000-8000-000000000002', 'COMERCIO_IRREGULAR', 'LOCAL_SIN_HABILITACION', 'conducta', 'DL 8751/77 art. 4 bis');
+  ('60000000-0000-4000-8000-000000000002', 'COMERCIO_IRREGULAR', 'LOCAL_SIN_HABILITACION', 'conducta', 'DL 8751/77 art. 4 bis'),
+  ('40000000-0000-4000-8000-000000000038', 'VULNERABILIDAD_SOCIAL', 'SITUACION_DE_CALLE', 'obligacion', 'Ley 15.625 arts. 6 y 11 inc. 6'),
+  ('40000000-0000-4000-8000-000000000037', 'VULNERABILIDAD_SOCIAL', 'SITUACION_DE_CALLE', 'obligacion', 'Ley 15.625 arts. 6 y 11 inc. 6'),
+  ('40000000-0000-4000-8000-000000000032', 'VULNERABILIDAD_SOCIAL', 'SITUACION_DE_CALLE', 'obligacion', 'Ley 27.654 art. 9'),
+  ('40000000-0000-4000-8000-000000000038', 'VULNERABILIDAD_SOCIAL', 'NINEZ', 'obligacion', 'Ley 15.625 arts. 6 y 11 inc. 6'),
+  ('40000000-0000-4000-8000-000000000037', 'VULNERABILIDAD_SOCIAL', 'NINEZ', 'obligacion', 'Ley 15.625 arts. 6 y 11 inc. 6');
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- 5. Vocabulario: 176 términos
@@ -502,7 +514,7 @@ begin
   select count(*) into n from p4_vinculo v
     join public.services s on s.service_code = v.categoria
     join p4_pares_antes p on p.fragment_id = v.fragment_id and p.service_id = s.id;
-  if n <> 57 then raise exception 'P4: se esperaban 57 vínculos sobre pares existentes y hay % (¿cambió fragment_services?)', n; end if;
+  if n <> 69 then raise exception 'P4: se esperaban 69 vínculos sobre pares existentes y hay % (¿cambió fragment_services?)', n; end if;
 end $chk$;
 
 -- ---------------------------------------------------------------------------------------------------------------
@@ -536,7 +548,7 @@ begin
     raise exception 'P4 agregó un par (fragmento, categoría) nuevo: cambiaría match_knowledge_fragments';
   end if;
   select count(*) into n from public.fragment_services where attribute_value_id is not null;
-  if n <> 466 then raise exception 'P4: se esperaban 466 filas de vínculo por prestación y hay %', n; end if;
+  if n <> 539 then raise exception 'P4: se esperaban 539 filas de vínculo por prestación y hay %', n; end if;
   select count(*) into n from public.service_keywords where attribute_value_id is not null;
   if n <> 176 then raise exception 'P4: se esperaban 176 términos y hay %', n; end if;
 end $post$;

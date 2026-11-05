@@ -3,13 +3,13 @@
 // Entradas (todas versionadas salvo el catálogo, que se valida por huella):
 //   scripts/rep3863/dataset/{prestaciones,vocabulario,vinculos_norma}.csv   dataset del puente (PD-07, REP-3858)
 //   supabase/catalogo/rep2800_carga_catalogo_destinos.sql                   las 37 prestaciones actuales (c_prest)
-//   scripts/rep3863/dataset/pares_fragment_services_2026-10-23.json         pares (fragmento, categoría) de staging
-//   <catálogo>  catalogo_fragmentos_2026-10-20.csv (adjunto de REP-3859; no se versiona, se controla su SHA-256)
+//   scripts/rep3863/dataset/pares_fragment_services_2026-11-05.json         pares (fragmento, categoría) de staging
+//   <catálogo>  catalogo_fragmentos_2026-11-05.csv (foto de staging con scripts/rep3863/foto_catalogo.mjs; no se versiona, se controla su SHA-256)
 // Salidas:
 //   docs/rag/REP-3863_propuesta_migracion_P4.sql   migración completa (esquema + datos + controles + rollback)
 //   docs/rag/REP-3863_c_prest_nuevas.sql           las 70 filas nuevas para c_prest del loader de REP-2800
 //
-// Uso: node scripts/rep3863/generar_carga_p4.mjs <ruta a catalogo_fragmentos_2026-10-20.csv>
+// Uso: node scripts/rep3863/generar_carga_p4.mjs <ruta a catalogo_fragmentos_2026-11-05.csv>
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -17,12 +17,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DATASET = path.join(ROOT, 'scripts/rep3863/dataset');
-const CATALOGO_SHA256 = '3602a43446c4544e7cb6b32b8d9298e99fd238497d348fbac837fd1ad7ae6cb7';
+const CATALOGO_SHA256 = '6547d403b4d13aec1fa08f3322b961fde2032e689fa76a49aa0131e86ff730bb';
+// Foto del 05/11: la del 20/10 (3602a434…e6cb7) quedó vieja con la carga de REP-3837 parte B (2628 y 5688)
 
 const rutaCatalogo = process.argv[2];
-if (!rutaCatalogo) throw new Error('Uso: node scripts/rep3863/generar_carga_p4.mjs <catalogo_fragmentos_2026-10-20.csv>');
+if (!rutaCatalogo) throw new Error('Uso: node scripts/rep3863/generar_carga_p4.mjs <catalogo_fragmentos_2026-11-05.csv>');
 const shaCatalogo = crypto.createHash('sha256').update(fs.readFileSync(rutaCatalogo)).digest('hex');
-if (shaCatalogo !== CATALOGO_SHA256) throw new Error(`El catálogo no es el de REP-3859 (SHA-256 ${shaCatalogo})`);
+if (shaCatalogo !== CATALOGO_SHA256) throw new Error(`El catálogo no es la foto del 05/11 (REP-3863) (SHA-256 ${shaCatalogo})`);
 
 // ---------------------------------------------------------------------------------------------------------------
 // Lectura
@@ -53,7 +54,7 @@ const prestaciones = csv(path.join(DATASET, 'prestaciones.csv'));
 const vocabulario = csv(path.join(DATASET, 'vocabulario.csv'));
 const vinculos = csv(path.join(DATASET, 'vinculos_norma.csv'));
 const catalogo = csv(rutaCatalogo).filter((f) => f.is_current === 'true');
-const pares = new Set(JSON.parse(fs.readFileSync(path.join(DATASET, 'pares_fragment_services_2026-10-23.json'), 'utf8')).pares);
+const pares = new Set(JSON.parse(fs.readFileSync(path.join(DATASET, 'pares_fragment_services_2026-11-05.json'), 'utf8')).pares);
 
 const loader = fs.readFileSync(path.join(ROOT, 'supabase/catalogo/rep2800_carga_catalogo_destinos.sql'), 'utf8');
 const bloqueCPrest = loader.slice(loader.indexOf('insert into c_prest values'), loader.indexOf(';', loader.indexOf('insert into c_prest values')));
@@ -118,7 +119,8 @@ const leerNorma = (n) => {
   if (/^LOM \(DL 6769\/58\)/.test(n)) ley = '6769';
   else if (/Constitución PBA/.test(n)) ley = 'CONST_PBA';
   else { const x = n.match(/(?:Ley|DL|Ordenanza Fiscal)\s*([\d.]+(?:\/\d+)?)/i); if (x) ley = numero(x[1]); }
-  const a = n.match(/(?:arts?\.|Secc\.)\s*([\d.]+(?:\s+bis)?(?:\s*y\s*[\d.]+)?)/i);
+  // Listas con coma y «y»: «arts. 506, 507 y 511» (v1.1 de vinculos_norma.csv); antes solo leía «A y B»
+  const a = n.match(/(?:arts?\.|Secc\.)\s*([\d.]+(?:\s+bis)?(?:\s*(?:,|\by\b)\s*[\d.]+(?:\s+bis)?)*)/i);
   const i = n.match(/incs?\.\s*([a-z0-9]+\)?(?:\s*y\s*[a-z0-9]+\)?)?)/i);
   return { ley, articulos: a ? lista(a[1]).map((x) => x.replace(/\s+/g, ' ')) : [], incisos: i ? lista(i[1]) : [] };
 };
@@ -169,8 +171,8 @@ ${valores(prestacionGrupo.filter((p) => p.nueva).map((p) => ({ g: p.grupo_destin
 
 const migracion = `-- REP-3863 · P4 · PROPUESTA de migración (NO APLICAR todavía)
 -- GENERADA por scripts/rep3863/generar_carga_p4.mjs desde el dataset del PO: no editar a mano, regenerar.
--- Catálogo de fragmentos usado: catalogo_fragmentos_2026-10-20.csv (REP-3859), SHA-256 ${CATALOGO_SHA256}.
--- Pares (fragmento, categoría) de staging: scripts/rep3863/dataset/pares_fragment_services_2026-10-23.json (${pares.size}).
+-- Catálogo de fragmentos usado: catalogo_fragmentos_2026-11-05.csv (foto de staging; las 132 filas del 20/10 de REP-3859, iguales, + 5 de REP-3837), SHA-256 ${CATALOGO_SHA256}.
+-- Pares (fragmento, categoría) de staging: scripts/rep3863/dataset/pares_fragment_services_2026-11-05.json (${pares.size}).
 --
 -- Está fuera de supabase/migrations a propósito. Orden al aplicar (REP-3864 pide "antes" y "después" de cada paso):
 --   1. aviso a QA (foto "antes");  2. loader de REP-2800 con las 70 filas de REP-3863_c_prest_nuevas.sql;
