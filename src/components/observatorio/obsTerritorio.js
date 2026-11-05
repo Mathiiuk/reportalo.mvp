@@ -15,6 +15,9 @@ const PROVINCIAS_CON_CENTROS = ['Ciudad Autónoma de Buenos Aires', 'Buenos Aire
 
 export const NOMBRE_PAIS = 'Argentina';
 
+/** Nombre corto para textos chicos (notas, columnas angostas): «Ciudad Autónoma de Buenos Aires» → «CABA». */
+export const nombreCorto = (nombre) => (nombre === 'Ciudad Autónoma de Buenos Aires' ? 'CABA' : nombre);
+
 /**
  * Índice de zonas por id, a partir de obs_zonas.
  * @returns {Map<string, { id, nivel, nombre, padreId, provinciaId, provincia }>}

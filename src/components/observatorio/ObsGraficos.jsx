@@ -252,6 +252,174 @@ export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new D
   );
 };
 
+/** Leyenda de las zonas comparadas: color + nombre (la identidad nunca va solo en el color). */
+export const LeyendaZonas = ({ series }) => (
+  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
+    {series.map((s) => (
+      <span key={s.id} className="inline-flex items-center gap-1.5">
+        <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm" style={{ background: s.color }} />
+        <b className="font-bold text-rep-ink-label">{s.nombre}</b>
+      </span>
+    ))}
+  </div>
+);
+
+/**
+ * Comparar · Reportes por mes: por cada mes, una columna fina por zona (en el orden en que se eligieron).
+ * @param {string[]} meses
+ * @param {Array<{ id, nombre, color, porMes: Map<string, number> }>} series
+ */
+export const BarrasMesZonas = ({ meses, series, hoy = new Date() }) => {
+  const [activo, setActivo] = useState(null);
+  const max = Math.max(1, ...series.flatMap((s) => meses.map((m) => s.porMes.get(m) ?? 0)));
+  return (
+    <div className="flex flex-col gap-2">
+      <LeyendaZonas series={series} />
+      <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
+        {activo !== null ? (
+          <>
+            <b className="text-rep-ink">{mesLargo(meses[activo])}:</b>{' '}
+            {series.map((s) => `${s.nombre} ${fmtNum(s.porMes.get(meses[activo]) ?? 0)}`).join(' · ')}
+          </>
+        ) : (
+          <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>
+        )}
+      </p>
+      <div className="flex h-[170px] items-end gap-2 border-b border-rep-divider desktop:h-[200px]" aria-hidden="true">
+        {meses.map((m, i) => (
+          <button
+            key={m}
+            type="button"
+            tabIndex={-1}
+            onMouseEnter={() => setActivo(i)}
+            onMouseLeave={() => setActivo(null)}
+            onClick={() => setActivo(activo === i ? null : i)}
+            className={`flex h-full min-w-0 flex-1 items-end justify-center gap-[2px] rounded-t-md px-0.5 ${activo === i ? 'bg-rep-divider/70' : ''}`}
+            style={
+              mesTodaviaAbierto(m, hoy) && activo !== i
+                ? { backgroundImage: 'repeating-linear-gradient(135deg, rgb(var(--rep-warning) / 0.16) 0 2px, transparent 2px 7px)' }
+                : undefined
+            }
+          >
+            {series.map((s) => {
+              const n = s.porMes.get(m) ?? 0;
+              return (
+                <span
+                  key={s.id}
+                  className="w-full max-w-[14px] rounded-t"
+                  style={{ height: `${(n / max) * 100}%`, minHeight: n ? 3 : 0, background: s.color }}
+                />
+              );
+            })}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2" aria-hidden="true">
+        {meses.map((m) => (
+          <span key={m} className="min-w-0 flex-1 text-center text-[11px] font-semibold text-rep-ink-faint">
+            {mesCorto(m)}
+          </span>
+        ))}
+      </div>
+      <div className="sr-only">
+        <table>
+          <caption>Reportes por mes de cada zona</caption>
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              {series.map((s) => (
+                <th key={s.id} scope="col">
+                  {s.nombre}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {meses.map((m) => (
+              <tr key={m}>
+                <th scope="row">{mesLargo(m)}</th>
+                {series.map((s) => (
+                  <td key={s.id}>{fmtNum(s.porMes.get(m) ?? 0)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Comparar · barras horizontales por categoría, una fila fina por zona, con el valor escrito al final.
+ * Sirve para «Días hasta resolver» (con la marca del plazo) y para «Qué se reporta» en proporción.
+ *
+ * @param {Array<{ id, nombre, color, valores: Object<string, { valor: number|null, texto: string }> }>} series
+ * @param {Object<string, number>} [marcas] por categoría, valor de la marca vertical (el plazo)
+ * @param {number} max valor que llena la barra
+ */
+export const BarrasCategoriaZonas = ({ series, max, marcas = null, etiquetaMarca = 'plazo', caption }) => (
+  <div className="flex flex-col gap-3">
+    <LeyendaZonas series={series} />
+    <div className="flex flex-col gap-3.5" aria-hidden="true">
+      {CATEGORIAS.map((c) => {
+        const marca = marcas?.[c.code] ?? null;
+        return (
+          <div key={c.code} className="flex flex-col gap-1">
+            <span className="flex items-baseline justify-between text-[12px] font-bold text-rep-ink">
+              {c.nombre}
+              {marca !== null && <span className="text-[11px] font-semibold text-rep-ink-faint">{etiquetaMarca}: {fmtNum(marca)} días</span>}
+            </span>
+            {series.map((s) => {
+              const v = s.valores[c.code] ?? { valor: null, texto: '—' };
+              return (
+                <div key={s.id} className="flex items-center gap-2">
+                  <div className="relative h-2.5 flex-1 rounded-full bg-rep-divider">
+                    {v.valor !== null && (
+                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (v.valor / max) * 100)}%`, minWidth: v.valor > 0 ? 3 : 0, background: s.color }} />
+                    )}
+                    {marca !== null && (
+                      <span className="absolute -inset-y-1 w-[2px] bg-rep-danger" style={{ left: `${Math.min(100, (marca / max) * 100)}%` }} />
+                    )}
+                  </div>
+                  <span className="w-[86px] shrink-0 text-right text-[11.5px] font-semibold tabular-nums text-rep-ink-label">{v.texto}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Categoría</th>
+            {series.map((s) => (
+              <th key={s.id} scope="col">
+                {s.nombre}
+              </th>
+            ))}
+            {marcas && <th scope="col">Plazo</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {CATEGORIAS.map((c) => (
+            <tr key={c.code}>
+              <th scope="row">{c.nombre}</th>
+              {series.map((s) => (
+                <td key={s.id}>{s.valores[c.code]?.texto ?? '—'}</td>
+              ))}
+              {marcas && <td>{marcas[c.code] !== undefined ? `${fmtNum(marcas[c.code])} días` : '—'}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
 /**
  * Qué se reporta: dona por categoría con leyenda tocable. Tocar una categoría filtra la pantalla; tocarla de nuevo,
  * o «Todas», saca el filtro.

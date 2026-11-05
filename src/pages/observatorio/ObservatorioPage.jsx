@@ -1,14 +1,14 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ObsLayout } from '../../components/observatorio/ObsLayout';
-import { EnConstruccion } from '../../components/observatorio/ObsEstados';
 import { MetodologiaPage } from './MetodologiaPage';
 import { MiBarrioPage } from './MiBarrioPage';
 import { MapaPage } from './MapaPage';
+import { CompararPage } from './CompararPage';
 
 /**
  * OBS · Observatorio del vecino: /observatorio/*.
- * F1 deja el marco, la Metodología y los estados; Mi barrio (F2), Mapa (F3) y Comparar (F4) llegan después.
+ * Mi barrio (F2), Mapa (F3), Comparar (F4) y Metodología (F1).
  */
 export const ObservatorioPage = () => (
   <ObsLayout>
@@ -16,15 +16,7 @@ export const ObservatorioPage = () => (
       <Route index element={<Navigate to="mi-barrio" replace />} />
       <Route path="mi-barrio" element={<MiBarrioPage />} />
       <Route path="mapa" element={<MapaPage />} />
-      <Route
-        path="comparar"
-        element={
-          <EnConstruccion
-            seccion="Comparar"
-            queVaATener="Hasta tres zonas lado a lado, con el mismo criterio. Comparar no es rankear."
-          />
-        }
-      />
+      <Route path="comparar" element={<CompararPage />} />
       <Route path="metodologia" element={<MetodologiaPage />} />
       <Route path="*" element={<Navigate to="mi-barrio" replace />} />
     </Routes>

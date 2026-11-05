@@ -110,6 +110,18 @@ Mobile y escritorio van en la misma fase: es el mismo componente con dos grillas
 - Hasta 3 zonas; «Primero, la respuesta» contra su jurisdicción; % resueltos por mes; días por categoría con marca de plazo.
 - Teléfono: chips de color, tres cifras por fila, gráficos apilados. Sin precio ni pago.
 
+**Hecho (05/11/2026):**
+- Zonas de cualquier nivel en la dirección (`?zonas=a,b,c`), en el orden elegido, sin repetidas ni inexistentes. Llegan
+  desde el Mapa; se agregan (provincias, comunas o partidos enteros, barrios) y se quitan desde los chips.
+- Cada zona contra **su** jurisdicción: barrio → comuna o partido, comuna o partido → provincia, provincia → país.
+- **Colores de zona nuevos** (tokens `--rep-obs-zona-1..3`): azul de marca, naranja y verde agua, con variante oscura.
+  Los del POC (azul, violeta, verde azulado) fallaban el validador: azul y violeta ΔE 2,6 con deuteranopía.
+- Las cifras van en tinta y el color marca la columna (regla de la guía de gráficos; el verde agua no llega al
+  contraste de texto). En el teléfono, «CABA» en las notas y los nombres cortan con guion.
+- «% resueltos por mes» → reportes por mes agrupados por zona; «Problemas urbanos por familia de prestación» → qué se
+  reporta **en proporción** de cada zona (con la cantidad al lado), porque el reporte no guarda la prestación.
+- «Días hasta resolver por categoría» explica cuando ninguna categoría llega a 5 resueltos (hoy, casi siempre).
+
 ### F0b · Funciones del organismo
 - RPCs `obs_org_*` que **fijan la jurisdicción desde el perfil** (`profiles.agency_id → agencies`), con la misma regla de alcance que `profile_attends_report` (provincia o subdivisión), sobre **todos** los reportes de la jurisdicción (no solo los de la bandeja).
 - Estados internos: fuera de plazo, atraso por antigüedad, embudo, primera respuesta (días hasta DERIVADO), escalados y discrepancia.
