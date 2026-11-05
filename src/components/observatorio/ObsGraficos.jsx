@@ -53,8 +53,9 @@ export const LineaMes = ({ meses, hoy = new Date() }) => {
   const [activo, setActivo] = useState(null);
   const n = meses.length;
   const max = Math.max(1, ...meses.map((m) => m.reportes));
-  // Coordenadas en porcentaje del área del gráfico (x de 4 a 96, y de 12 a 96 para dejar lugar a la etiqueta de arriba)
-  const x = (i) => (n === 1 ? 50 : 4 + (92 * i) / (n - 1));
+  // Coordenadas en porcentaje del área del gráfico. x: el centro de la columna de cada mes, para que el punto caiga
+  // justo encima de su nombre en el eje (EjeMeses reparte el ancho en columnas iguales). y: de 12 a 96, con lugar arriba
+  const x = (i) => ((i + 0.5) * 100) / n;
   const y = (v) => 96 - (84 * v) / max;
   const puntos = meses.map((m, i) => ({ ...m, i, px: x(i), py: y(m.reportes), abierto: mesTodaviaAbierto(m.mes, hoy) }));
   const primeroAbierto = puntos.findIndex((p) => p.abierto);
