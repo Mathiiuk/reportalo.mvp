@@ -71,6 +71,12 @@
   --rep-cat-comercio-soft: 244 240 253; /* #F4F0FD */
   --rep-cat-comercio-ink: 91 74 138;  /* #5B4A8A */
 
+  /* OBS · Comparar: identidad de cada zona comparada (orden fijo, validado con el skill de visualización:
+     daltonismo ΔE ≥ 9 entre todos los pares). Los del POC (azul, violeta, verde azulado) no se distinguían. */
+  --rep-obs-zona-1: 30 111 203;       /* #1E6FCB */
+  --rep-obs-zona-2: 235 104 52;       /* #EB6834 */
+  --rep-obs-zona-3: 27 175 122;       /* #1BAF7A (bajo 3:1 sobre blanco: siempre con el nombre al lado) */
+
   /* Sombras (color base) */
   --rep-shadow: 20 40 80;             /* [mock] rgba(20,40,80,α)         */
 }
@@ -123,6 +129,10 @@
   --rep-cat-comercio: 172 144 242;    /* #AC90F2 */
   --rep-cat-comercio-soft: 42 37 64;  /* #2A2540 */
   --rep-cat-comercio-ink: 172 144 242;/* #AC90F2 */
+
+  --rep-obs-zona-1: 57 135 229;       /* #3987E5 */
+  --rep-obs-zona-2: 217 89 38;        /* #D95926 */
+  --rep-obs-zona-3: 25 158 112;       /* #199E70 */
 
   --rep-shadow: 0 0 0;
 }
