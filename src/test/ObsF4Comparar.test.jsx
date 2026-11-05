@@ -32,6 +32,7 @@ const RESUMEN = {
   c1: { reportes: 67, pct_resueltos: '1.5', abiertos: 65 },
   caba: { reportes: 305, pct_resueltos: '1.6' },
   ave: { reportes: 213, pct_resueltos: '0.0', abiertos: 213 },
+  wilde: { reportes: 30, pct_resueltos: '0.0', abiertos: 30 },
   ba: { reportes: 213, pct_resueltos: '0.0' },
   pais: { reportes: 518, pct_resueltos: '1.0' },
 };
@@ -63,9 +64,12 @@ const abrir = (ruta) =>
   );
 
 describe('OBS-F4 · reglas', () => {
-  it('UT-OBS-F4-1: la dirección se limpia: sin repetidas, sin inexistentes, como máximo 3 y en el orden elegido', () => {
+  it('UT-OBS-F4-1: la dirección se limpia: sin repetidas, sin inexistentes, solo el nivel de la primera, máximo 3', () => {
     const indice = indexarTerritorio(ZONAS);
-    expect(leerZonas('c1,balv,c1,no-existe,ave,wilde', indice)).toEqual(['c1', 'balv', 'ave']);
+    // Hernán (05/11): no se compara un barrio con una comuna. Gana el nivel de la primera zona
+    expect(leerZonas('c1,balv,c1,no-existe,ave,wilde', indice)).toEqual(['c1', 'ave']);
+    expect(leerZonas('balv,c1,wilde', indice)).toEqual(['balv', 'wilde']);
+    expect(leerZonas('c1,ave,c3,caba', indice)).toEqual(['c1', 'ave', 'c3']);
     expect(leerZonas('', indice)).toEqual([]);
     expect(MAX_ZONAS).toBe(3);
   });
@@ -96,17 +100,23 @@ describe('OBS-F4 · pantalla', () => {
     expect(rpc.mock.calls.map(([fn]) => fn)).toEqual(['obs_zonas']);
   });
 
-  it('UT-OBS-F4-5: cada zona, de cualquier nivel, se compara con su propia jurisdicción', async () => {
-    abrir('/observatorio/comparar?zonas=balv,c1,ave');
+  it('UT-OBS-F4-5: barrios contra su comuna o partido', async () => {
+    abrir('/observatorio/comparar?zonas=balv,wilde');
     const tabla = await screen.findByTestId('obs-comparar-respuesta');
-    // Balvanera contra Comuna 3, Comuna 1 contra CABA, Avellaneda contra Buenos Aires
     expect(tabla).toHaveTextContent('Comuna 3: 3,3 %');
+    expect(tabla).toHaveTextContent('Avellaneda: 0 %');
+    expect(rpc).toHaveBeenCalledWith('obs_resumen', expect.objectContaining({ p_nivel: 'subdivision', p_zona: 'c3' }));
+    expect(rpc).toHaveBeenCalledWith('obs_resumen', expect.objectContaining({ p_nivel: 'subdivision', p_zona: 'ave' }));
+    // Sin población oficial: «s/d», nunca un número inventado
+    expect(within(tabla).getAllByText('s/d')).toHaveLength(2);
+    expect(screen.getByText(/Comparando barrios o localidades/)).toBeInTheDocument();
+  });
+
+  it('UT-OBS-F4-5b: comunas o partidos contra su provincia', async () => {
+    abrir('/observatorio/comparar?zonas=c1,ave');
+    const tabla = await screen.findByTestId('obs-comparar-respuesta');
     expect(tabla).toHaveTextContent('CABA: 1,6 %');
     expect(tabla).toHaveTextContent('Buenos Aires: 0 %');
-    expect(rpc).toHaveBeenCalledWith('obs_resumen', expect.objectContaining({ p_nivel: 'subdivision', p_zona: 'c3' }));
-    expect(rpc).toHaveBeenCalledWith('obs_resumen', expect.objectContaining({ p_nivel: 'provincia', p_zona: 'caba' }));
-    // Sin población oficial: «s/d», nunca un número inventado
-    expect(within(tabla).getAllByText('s/d')).toHaveLength(3);
   });
 
   it('UT-OBS-F4-6: una provincia se compara con el país', async () => {
@@ -115,15 +125,27 @@ describe('OBS-F4 · pantalla', () => {
     expect(rpc).toHaveBeenCalledWith('obs_resumen', expect.objectContaining({ p_nivel: 'pais', p_zona: null }));
   });
 
-  it('UT-OBS-F4-7: se agrega y se quita una zona; con 3 ya no se ofrece agregar', async () => {
-    abrir('/observatorio/comparar?zonas=balv');
-    fireEvent.change(await screen.findByRole('combobox', { name: 'Agregar zona' }), { target: { value: 'c1' } });
-    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=balv,c1');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Agregar zona' }), { target: { value: 'ave' } });
-    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=balv,c1,ave');
+  it('UT-OBS-F4-7: «Agregar» solo ofrece el mismo nivel; con 3 ya no se ofrece; se quitan desde el chip', async () => {
+    abrir('/observatorio/comparar?zonas=c1');
+    const agregar = await screen.findByRole('combobox', { name: 'Agregar zona' });
+    const ofrecidas = within(agregar).getAllByRole('option').map((o) => o.value).filter(Boolean);
+    expect(ofrecidas.sort()).toEqual(['ave', 'c1', 'c3']); // solo comunas o partidos: ni barrios ni provincias
+    fireEvent.change(agregar, { target: { value: 'ave' } });
+    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=c1,ave');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Agregar zona' }), { target: { value: 'c3' } });
+    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=c1,ave,c3');
     expect(screen.queryByRole('combobox', { name: 'Agregar zona' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Quitar Comuna 1/ }));
-    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=balv,ave');
+    expect(screen.getByTestId('dir')).toHaveTextContent('zonas=ave,c3');
+  });
+
+  it('UT-OBS-F4-7b: sin zonas se elige primero qué comparar, y eso cambia lo que se ofrece', async () => {
+    abrir('/observatorio/comparar');
+    const valores = () => within(screen.getByRole('combobox', { name: 'Agregar zona' })).getAllByRole('option').map((o) => o.value).filter(Boolean).sort();
+    await screen.findByRole('group', { name: 'Qué querés comparar' });
+    expect(valores()).toEqual(['balv', 'wilde']);
+    fireEvent.click(screen.getByRole('button', { name: 'Provincias' }));
+    expect(valores()).toEqual(['ba', 'caba']);
   });
 
   it('UT-OBS-F4-8: sin días resueltos lo explica, y «Qué se reporta» va en proporción con la cantidad al lado', async () => {

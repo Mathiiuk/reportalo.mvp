@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, House } from 'lucide-react';
 import { Aviso, ChipsFiltros, Encabezado, Kpi, Kpis, ListaLectura, Migas, ObsCard, SelectorCategoria, SelectorPeriodo, Sello, Tabla } from '../../components/observatorio/ObsUi';
-import { BarrasMes, DonaCategorias } from '../../components/observatorio/ObsGraficos';
+import { BarrasCategorias, LineaMes, ZonaVsJurisdiccion } from '../../components/observatorio/ObsGraficos';
 import { Cargando, ErrorCarga, SinReportes, notaMenosDeCinco, useCarga } from '../../components/observatorio/ObsEstados';
 import { useObsFiltro } from '../../components/observatorio/useObsFiltro';
 import { CATEGORIAS, desdeDePeriodo, fmtDias, fmtNum, fmtPct, mesesDelPeriodo, nombreCategoria, textoPeriodo } from '../../components/observatorio/obsFormat';
@@ -21,6 +21,29 @@ import { fetchPorCategoria, fetchPorMes, fetchResumen, fetchZonas } from '../../
  * - «Top 5 prestaciones» se cambia por «Cómo se resuelve cada categoría»: el reporte no guarda la prestación.
  * - Sin el límite de una consulta por día: es una hipótesis comercial (REP-3407) que todavía no está decidida.
  */
+
+/**
+ * Frase de arriba (mockup de Hernán: «En Piñeyro, 6 de cada 10 reportes ya se resolvieron, en una mediana de 8 días»).
+ * Dice solo lo que las cifras sostienen: con menos de 5 reportes no da proporciones, y con 0 resueltos lo dice así.
+ * No promete que el reporte «llega al organismo»: la entrega a organismos sigue en prueba (mismo criterio que REP-3917).
+ *
+ * @returns {string|null} null si no hay reportes (se muestra el estado vacío)
+ */
+export const fraseResumen = (zona, r) => {
+  if (!r.reportes) return null;
+  if (r.pctResueltos === null) {
+    return `En ${zona} hay ${fmtNum(r.reportes)} ${r.reportes === 1 ? 'reporte' : 'reportes'} en el período. Todavía son pocos para decir qué parte se resolvió.`;
+  }
+  if (!r.resueltos) {
+    return `En ${zona} todavía no se resolvió ninguno de los ${fmtNum(r.reportes)} reportes del período: ${fmtNum(r.abiertos)} siguen abiertos.`;
+  }
+  const deCada10 = Math.round(r.pctResueltos / 10);
+  const parte =
+    deCada10 === 0
+      ? 'menos de 1 de cada 10 reportes ya se resolvió'
+      : `${deCada10} de cada 10 reportes ya se ${deCada10 === 1 ? 'resolvió' : 'resolvieron'}`;
+  return `En ${zona}, ${parte}${r.medianaDias !== null ? `, en una mediana de ${fmtDias(r.medianaDias)}` : ''}.`;
+};
 
 // Zona elegida la última vez, solo en este navegador (comodidad: si no está, se vuelve a elegir)
 const CLAVE_ZONA = 'reportalo_obs_mi_barrio';
@@ -132,9 +155,15 @@ const Tablero = ({ zona, filtro }) => {
   if (error) return <ErrorCarga onReintentar={recargar} />;
 
   const { resumen: r, resumenPadre: rp, porCategoria } = datos;
+  const frase = fraseResumen(zona.nombre, r);
 
   return (
     <>
+      {frase && (
+        <p data-testid="obs-frase" className="m-0 rounded-2xl border border-rep-accent-border bg-rep-accent-soft px-4 py-3 text-rep-body text-rep-ink-body desktop:text-rep-body-d">
+          {frase}
+        </p>
+      )}
       <Kpis>
         <Kpi
           testId="obs-kpi-resueltos"
@@ -162,20 +191,36 @@ const Tablero = ({ zona, filtro }) => {
         <SinReportes zona={zona.nombre} periodo={textoPeriodo(periodo)} />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3.5 desktop:grid-cols-[1.35fr_1fr] desktop:gap-4">
-            <ObsCard titulo="Reportes por mes" sub={categoria ? nombreCategoria(categoria) : zona.nombre}>
-              <BarrasMes meses={meses} />
-            </ObsCard>
+          <div className="grid grid-cols-1 gap-3.5 desktop:grid-cols-2 desktop:gap-4">
             <ObsCard
-              titulo="Qué se reporta"
+              titulo="¿Qué se reporta en mi zona?"
               sub="tocá una categoría para filtrar"
               pie={categoria ? `Filtrando por ${nombreCategoria(categoria)}. Tocala de nuevo para ver todas.` : null}
             >
-              <DonaCategorias filas={porCategoria} seleccion={categoria} onSeleccion={setCategoria} />
+              <BarrasCategorias filas={porCategoria} seleccion={categoria} onSeleccion={setCategoria} />
+            </ObsCard>
+            <ObsCard titulo="Reportes por mes en mi zona" sub={categoria ? nombreCategoria(categoria) : zona.nombre}>
+              <LineaMes meses={meses} />
             </ObsCard>
           </div>
 
-          <div className="grid grid-cols-1 gap-3.5 desktop:grid-cols-[1.35fr_1fr] desktop:gap-4">
+          <div className="grid grid-cols-1 gap-3.5 desktop:grid-cols-2 desktop:gap-4">
+            <ObsCard titulo="Mi zona vs. mi jurisdicción" sub="se compara la respuesta, no el volumen">
+              <ZonaVsJurisdiccion
+                zona={zona.nombre}
+                jurisdiccion={padre.nombre}
+                filas={[
+                  { indicador: 'Reportes resueltos', zona: r.pctResueltos, jurisdiccion: rp.pctResueltos },
+                  { indicador: 'Resueltos dentro del plazo', zona: r.pctEnPlazo, jurisdiccion: rp.pctEnPlazo },
+                ]}
+              />
+            </ObsCard>
+            <ObsCard titulo="Cómo leer estos datos">
+              <ListaLectura items={COMO_LEER} />
+            </ObsCard>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3.5 desktop:gap-4">
             <ObsCard titulo="Cómo se resuelve cada categoría" sub={zona.nombre}>
               <Tabla
                 caption="Reportes, resueltos y días por categoría"
@@ -185,9 +230,6 @@ const Tablero = ({ zona, filtro }) => {
                   return [c.nombre, fmtNum(f.reportes ?? 0), fmtPct(f.pctResueltos ?? null), fmtDias(f.medianaDias ?? null), fmtDias(f.plazoDias ?? null)];
                 })}
               />
-            </ObsCard>
-            <ObsCard titulo="Cómo leer estos datos">
-              <ListaLectura items={COMO_LEER} />
             </ObsCard>
           </div>
         </>

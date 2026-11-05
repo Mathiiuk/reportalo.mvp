@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | T1 | **Vecino con sesión** | Mapa (D57/M50), Metodología (D61/M54), estados vacíos (D60/M53) | País › Provincia › Comuna/Partido › Barrio/Localidad | Solo agregados con `open311_status` (open/closed). Sin fotos, sin descripciones, zoom máx. 15, nada de % ni días con menos de 5 casos | Escritorio y teléfono por igual |
 | T2 | **Vecino con sesión · Mi barrio** | Mi barrio (D56/M49) | 1 zona por día, comparada con su jurisdicción | % resueltos, mediana/p90 de días, problemas que vuelven, qué se reporta, lo que más se reporta | **Teléfono** |
-| T3 | **Vecino con sesión · Comparar** | Comparar (D59/M52) | Hasta 3 zonas de cualquier nivel | Lo de T2 lado a lado + días por categoría con plazo | Escritorio; en el teléfono, chips y gráficos apilados |
+| T3 | **Vecino con sesión · Comparar** | Comparar (D59/M52) | Hasta 3 zonas del mismo nivel (Hernán, 05/11) | Lo de T2 lado a lado + días por categoría con plazo | Escritorio; en el teléfono, chips y gráficos apilados |
 | T4 | **Organismo Avellaneda** (`Reportalo Avellaneda`, `oficial.avellaneda`) | Tablero de gestión (D55/M48) | Su partido › localidades; no puede subir | Lo público + estados internos: cumplimiento de plazo, atraso, fuera de plazo, embudo, primera respuesta, escalados/discrepancia | **Escritorio**; en el teléfono sin embudo ni primera respuesta |
 | T5 | **Organismo CABA** (`Reportalo CABA`, `oficial.caba`, `operador_caba`) | Tablero de gestión (D55/M48) | Ciudad › comunas › barrios | Igual que T4 | Escritorio |
 
@@ -144,6 +144,19 @@ F0a ─> F1 ─┬─> F2
            ├─> F3 ─> F4
            └─> F0b ─> F5 ─> F6
 ```
+
+## 3b. Devolución de Hernán (PO) sobre staging, 05/11/2026
+
+Lo vio en staging (PR 220) y comparó con su mockup (`docs/sprint19/observatorio_mockup.html`).
+
+| Pedido | Qué se hizo |
+|---|---|
+| «¿Qué son las torres naranjas?» (el rayado de «Todavía abiertos») | Fuera el rayado. Debajo del mes dice «en curso» y la línea va punteada en ese tramo. Mismo eje en Mapa y Comparar |
+| Comparar solo el mismo nivel | `leerZonas` deja solo el nivel de la primera zona; «Agregar zona» solo ofrece ese nivel; sin zonas se elige primero qué comparar |
+| «Para el ciudadano el gráfico es más fácil» (Mi barrio del mockup) | Frase arriba, línea de reportes por mes, barras por categoría en vez de la dona, «Mi zona vs. mi jurisdicción» (solo %, un eje). Sin el mapa de calor de puntos del mockup: el Mapa ya muestra zonas y no hay puntos sueltos |
+| Frase del mockup «Cada reporte cuenta: así llega al organismo» | **No se usa**: hoy no es cierta (la entrega a organismos sigue en prueba). Mismo criterio que REP-3917 |
+| Radar «Perfil de respuesta» en Comparar | **Pendiente de Hernán.** Con los datos de hoy (12 barrios con 5+ reportes; 3 con algún resuelto; 0 con días; reincidencia sin definir) sale casi todo empatado o en 0, y el mockup dibuja el dato faltante como 0. Mensaje en `wpp_Hernan_devolucion_05-11.md` |
+| «Este lo tiene que ver el gobierno» (Tablero de gestión del mockup) | Es F5: se arma con ese diseño (atraso por antigüedad, embudo, primera respuesta, cumplimiento con meta 80 %) |
 
 ## 4. Decisiones pendientes del POC (no frenan F0a–F1)
 
