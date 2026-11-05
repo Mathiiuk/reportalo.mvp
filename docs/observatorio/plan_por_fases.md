@@ -93,6 +93,19 @@ Mobile y escritorio van en la misma fase: es el mismo componente con dos grillas
 - Tabla de zonas hijas por número o alfabética (nunca ranking), hasta 3 casillas y «Comparar».
 - Teléfono: mapa a lo ancho, tabla debajo, sin selector de nivel.
 
+**Hecho (05/11/2026):**
+- Círculos como **marcadores HTML** (botones), no capa de símbolos: se tocan y se enfocan con el teclado, el número se
+  lee nítido y no depende de las fuentes del estilo de mapa.
+- Escala de 4 azules **`#7DAFE8 → #15539E`** (validada como escala ordenada). Los dos tonos más claros del POC
+  (`#CFE1F6`, `#93BDEC`) no llegaban al contraste mínimo sobre el mapa. Gris `#B8C2CE` con menos de 5.
+- Centros: barrio o localidad de `localityCentroids.js`, comuna o partido = promedio de sus barrios, provincia =
+  promedio de sus comunas. **Solo para CABA y Buenos Aires**: se busca por nombre y la Avellaneda de Santa Fe caía en
+  la de Buenos Aires. Una zona sin centro no se dibuja pero sigue en la tabla, y el pie del mapa la nombra.
+- Nivel y zona en la dirección (`?nivel=&zona=`); una zona que no existe vuelve al país.
+- En el teléfono los círculos son más chicos y el crédito de OpenStreetMap queda plegado en la «i».
+- «Categorías en el tiempo» (burbujas) se reemplazó por la dona que filtra: con barras apiladas por categoría ya se ve
+  la evolución, y las burbujas repetían el dato.
+
 ### F4 · Comparar (T3)
 - Hasta 3 zonas; «Primero, la respuesta» contra su jurisdicción; % resueltos por mes; días por categoría con marca de plazo.
 - Teléfono: chips de color, tres cifras por fila, gráficos apilados. Sin precio ni pago.

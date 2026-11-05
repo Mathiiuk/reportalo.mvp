@@ -137,6 +137,122 @@ export const BarrasMes = ({ meses, hoy = new Date() }) => {
 };
 
 /**
+ * Reportes por mes y categoría (POC D57 «Reportes por mes y categoría»): columnas apiladas en el orden fijo de las
+ * categorías, con 2 px de separación entre segmentos. Con un filtro de categoría queda solo esa.
+ *
+ * @param {string[]} meses todos los meses del período ('YYYY-MM-01')
+ * @param {Array<{ mes: string, categoria: string|null, reportes: number }>} filas las de obs_por_mes
+ * @param {string|null} categoria filtro activo
+ */
+export const BarrasMesCategoria = ({ meses, filas, categoria = null, hoy = new Date() }) => {
+  const [activo, setActivo] = useState(null);
+  const cats = categoria ? CATEGORIAS.filter((c) => c.code === categoria) : CATEGORIAS;
+  const valor = (mes, code) => filas.find((f) => String(f.mes).slice(0, 10) === mes && f.categoria === code)?.reportes ?? 0;
+  const columnas = meses.map((mes) => {
+    const partes = cats.map((c) => ({ ...c, n: valor(mes, c.code) }));
+    return { mes, partes, total: partes.reduce((s, p) => s + p.n, 0) };
+  });
+  const max = Math.max(1, ...columnas.map((c) => c.total));
+  const detalle = activo !== null ? columnas[activo] : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Leyenda con el total del período de cada categoría: la identidad nunca queda solo en el color */}
+      {cats.length > 1 && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] font-semibold text-rep-ink-muted">
+          {cats.map((c) => (
+            <span key={c.code} className="inline-flex items-center gap-1.5">
+              <i aria-hidden="true" className="h-2.5 w-2.5 rounded-sm" style={{ background: c.color }} />
+              {c.nombre} <b className="font-bold text-rep-ink-label">{fmtNum(columnas.reduce((s, col) => s + col.partes.find((p) => p.code === c.code).n, 0))}</b>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p aria-live="polite" className="m-0 min-h-[18px] text-[12px] text-rep-ink-label">
+        {detalle ? (
+          <>
+            <b className="text-rep-ink">{mesLargo(detalle.mes)}:</b> {fmtNum(detalle.total)} reportes
+            {cats.length > 1 && ` · ${detalle.partes.filter((p) => p.n).map((p) => `${p.nombre} ${fmtNum(p.n)}`).join(' · ')}`}
+          </>
+        ) : (
+          <span className="text-rep-ink-faint">Pasá el mouse o tocá un mes para ver el detalle.</span>
+        )}
+      </p>
+
+      <div className="flex h-[160px] items-end gap-2 border-b border-rep-divider desktop:h-[190px]" aria-hidden="true">
+        {columnas.map((col, i) => (
+          <button
+            key={col.mes}
+            type="button"
+            tabIndex={-1}
+            onMouseEnter={() => setActivo(i)}
+            onMouseLeave={() => setActivo(null)}
+            onClick={() => setActivo(activo === i ? null : i)}
+            className={`flex h-full min-w-0 flex-1 flex-col items-center justify-end rounded-t-md ${activo === i ? 'bg-rep-divider/70' : ''}`}
+            style={
+              mesTodaviaAbierto(col.mes, hoy) && activo !== i
+                ? { backgroundImage: 'repeating-linear-gradient(135deg, rgb(var(--rep-warning) / 0.16) 0 2px, transparent 2px 7px)' }
+                : undefined
+            }
+          >
+            <span className="mb-1 text-[11px] font-bold text-rep-ink-label">{col.total ? fmtNum(col.total) : ''}</span>
+            {/* Segmentos de abajo hacia arriba en el orden fijo, con 2 px de superficie entre ellos */}
+            <span className="flex w-full max-w-[44px] flex-col-reverse gap-[2px]" style={{ height: `${(col.total / max) * 100}%` }}>
+              {col.partes
+                .filter((p) => p.n > 0)
+                .map((p, j, arr) => (
+                  <span
+                    key={p.code}
+                    className={j === arr.length - 1 ? 'rounded-t' : ''}
+                    style={{ background: p.color, flexGrow: p.n, flexBasis: 0, minHeight: 2 }}
+                  />
+                ))}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2" aria-hidden="true">
+        {columnas.map((col) => (
+          <span key={col.mes} className="min-w-0 flex-1 text-center text-[11px] font-semibold text-rep-ink-faint">
+            {mesCorto(col.mes)}
+          </span>
+        ))}
+      </div>
+
+      <div className="sr-only">
+        <table>
+          <caption>Reportes por mes y categoría</caption>
+          <thead>
+            <tr>
+              <th scope="col">Mes</th>
+              {cats.map((c) => (
+                <th key={c.code} scope="col">
+                  {c.nombre}
+                </th>
+              ))}
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {columnas.map((col) => (
+              <tr key={col.mes}>
+                <th scope="row">{mesLargo(col.mes)}</th>
+                {col.partes.map((p) => (
+                  <td key={p.code}>{fmtNum(p.n)}</td>
+                ))}
+                <td>{fmtNum(col.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+/**
  * Qué se reporta: dona por categoría con leyenda tocable. Tocar una categoría filtra la pantalla; tocarla de nuevo,
  * o «Todas», saca el filtro.
  *

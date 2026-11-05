@@ -4,6 +4,7 @@ import { ObsLayout } from '../../components/observatorio/ObsLayout';
 import { EnConstruccion } from '../../components/observatorio/ObsEstados';
 import { MetodologiaPage } from './MetodologiaPage';
 import { MiBarrioPage } from './MiBarrioPage';
+import { MapaPage } from './MapaPage';
 
 /**
  * OBS · Observatorio del vecino: /observatorio/*.
@@ -14,15 +15,7 @@ export const ObservatorioPage = () => (
     <Routes>
       <Route index element={<Navigate to="mi-barrio" replace />} />
       <Route path="mi-barrio" element={<MiBarrioPage />} />
-      <Route
-        path="mapa"
-        element={
-          <EnConstruccion
-            seccion="Mapa"
-            queVaATener="Un mapa del país al barrio: un círculo por zona según la cantidad de reportes. Tocás un círculo y bajás un nivel."
-          />
-        }
-      />
+      <Route path="mapa" element={<MapaPage />} />
       <Route
         path="comparar"
         element={
