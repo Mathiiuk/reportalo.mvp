@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ObsLayout } from '../../components/observatorio/ObsLayout';
 import { EnConstruccion } from '../../components/observatorio/ObsEstados';
 import { MetodologiaPage } from './MetodologiaPage';
+import { MiBarrioPage } from './MiBarrioPage';
 
 /**
  * OBS · Observatorio del vecino: /observatorio/*.
@@ -12,15 +13,7 @@ export const ObservatorioPage = () => (
   <ObsLayout>
     <Routes>
       <Route index element={<Navigate to="mi-barrio" replace />} />
-      <Route
-        path="mi-barrio"
-        element={
-          <EnConstruccion
-            seccion="Mi barrio"
-            queVaATener="Vas a elegir tu barrio o localidad y ver qué parte de lo reportado se resolvió, en cuántos días y qué es lo que más se reporta, comparado con tu comuna o partido."
-          />
-        }
-      />
+      <Route path="mi-barrio" element={<MiBarrioPage />} />
       <Route
         path="mapa"
         element={

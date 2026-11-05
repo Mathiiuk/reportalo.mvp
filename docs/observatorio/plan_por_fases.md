@@ -74,6 +74,20 @@ Mobile y escritorio van en la misma fase: es el mismo componente con dos grillas
 - Selector de zona, KPIs de a dos (teléfono) o de a cuatro (escritorio), % resueltos por mes con franja «Todavía abiertos», torta por categoría que filtra, «Cómo leer estos datos».
 - Cuota de 1 consulta por día **en el servidor** (`obs_consultas(user_id, fecha, zona)`).
 
+**Hecho (05/11/2026), con estos cambios contra el POC por los datos reales:**
+- «% resueltos por mes» → **«Reportes por mes» con la parte resuelta adentro**: con 5 resueltos en toda la base, la línea
+  de porcentajes salía vacía casi siempre. La franja «Todavía abiertos» es un rayado (en oscuro un fondo liso se
+  confundía con las columnas).
+- «Problemas que vuelven» → **«Cumplimiento de plazo»** (la reincidencia espera la definición del PO).
+- «Top 5 prestaciones» → **«Cómo se resuelve cada categoría»** (el reporte no guarda la prestación).
+- **Sin la cuota diaria todavía**: es una hipótesis comercial (REP-3407) sin decidir, y 1 o 2 zonas está pendiente con
+  Hernán. Se agrega cuando se decida (migración + RPC, no en el cliente).
+- Gráficos en HTML/SVG propios, sin Chart.js: con 2 gráficos simples no justificaba sumar la librería. Se revisa en F3/F5.
+- Orden fijo de categorías **Infraestructura · Ambiente · Tránsito · Comercio**: con el orden alfabético, en oscuro el
+  naranja y el amarillo quedaban juntos y no se distinguían (validador de paleta: ΔE 11,8 < 15).
+- **Para Iván:** en oscuro los 4 colores de categoría quedan más claros que la banda recomendada para gráficos
+  (L 0,72–0,83). Se compensa con leyenda y números siempre visibles; si quiere, que los ajuste en la guía.
+
 ### F3 · Mapa de calor con bajada de 4 niveles (T1)
 - MapLibre con un círculo por zona hija, escala monocromo azul, gris si n < 5; tocar baja un nivel; migas para subir.
 - Tabla de zonas hijas por número o alfabética (nunca ranking), hasta 3 casillas y «Comparar».

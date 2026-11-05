@@ -6,11 +6,15 @@
  * - Un dato oficial que no existe (población) se muestra «s/d», nunca se inventa.
  */
 
-// Las cuatro categorías del observatorio (Vulnerabilidad social no entra: REP-3906)
+// Las cuatro categorías del observatorio (Vulnerabilidad social no entra: REP-3906), en orden FIJO.
+// El orden no es alfabético a propósito: en oscuro, el naranja de Infraestructura y el amarillo de Tránsito juntos no
+// se distinguen (validador de paleta: ΔE 11,8 < 15). Con Ambiente en el medio pasa en claro y en oscuro.
+// Los colores son los de la guía de Iván (tokens --rep-cat-*). En oscuro quedan más claros que la banda recomendada
+// para gráficos: por eso todo gráfico lleva leyenda y números, nunca solo el color.
 export const CATEGORIAS = [
   { code: 'INFRAESTRUCTURA', nombre: 'Infraestructura', color: 'rgb(var(--rep-cat-infra))' },
-  { code: 'TRANSITO', nombre: 'Tránsito', color: 'rgb(var(--rep-cat-transito))' },
   { code: 'AMBIENTE', nombre: 'Ambiente', color: 'rgb(var(--rep-cat-ambiente))' },
+  { code: 'TRANSITO', nombre: 'Tránsito', color: 'rgb(var(--rep-cat-transito))' },
   { code: 'COMERCIO_IRREGULAR', nombre: 'Comercio irregular', color: 'rgb(var(--rep-cat-comercio))' },
 ];
 
@@ -51,6 +55,27 @@ export const textoPeriodo = (key, hoy = new Date()) => {
     ? `${MESES[ini.getMonth()]} a ${fin}`
     : `${MESES[ini.getMonth()]} de ${ini.getFullYear()} a ${fin}`;
 };
+
+/**
+ * Los meses del período, del más viejo al actual, como 'YYYY-MM-01'.
+ * @returns {string[]}
+ */
+export const mesesDelPeriodo = (key, hoy = new Date()) => {
+  const p = PERIODOS.find((x) => x.key === key) ?? PERIODOS.find((x) => x.key === PERIODO_POR_DEFECTO);
+  return Array.from({ length: p.meses }, (_, i) => iso(new Date(hoy.getFullYear(), hoy.getMonth() - (p.meses - 1) + i, 1)));
+};
+
+// Días que necesita un mes para que sus reportes «tengan tiempo» de resolverse (POC: franja «Todavía abiertos»)
+export const DIAS_PARA_MADURAR = 60;
+
+/** true si el mes empezó hace menos de 60 días: sus cifras todavía van a cambiar. */
+export const mesTodaviaAbierto = (mes, hoy = new Date()) => {
+  const [a, m] = String(mes).split('-').map(Number);
+  return (hoy - new Date(a, m - 1, 1)) / 86400000 < DIAS_PARA_MADURAR;
+};
+
+/** Mes largo para los textos: '2026-10-01' → 'octubre de 2026'. */
+export const mesLargo = (fecha) => `${MESES[Number(String(fecha).slice(5, 7)) - 1] ?? ''} de ${String(fecha).slice(0, 4)}`;
 
 /** Mes corto para los ejes: '2026-10-01' → 'Oct'. */
 export const mesCorto = (fecha) => MESES_CORTOS[Number(String(fecha).slice(5, 7)) - 1] ?? '';

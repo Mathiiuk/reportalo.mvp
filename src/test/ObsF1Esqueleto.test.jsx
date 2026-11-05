@@ -76,9 +76,11 @@ describe('OBS-F1 · marco y Metodología', () => {
     });
   });
 
-  it('UT-OBS-F1-4: /observatorio lleva a Mi barrio y las cuatro secciones están en las dos navegaciones', () => {
+  it('UT-OBS-F1-4: /observatorio lleva a Mi barrio y las cuatro secciones están en las dos navegaciones', async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
     abrir('/observatorio');
-    expect(screen.getByText('Mi barrio: en construcción')).toBeInTheDocument();
+    // Desde F2, Mi barrio es la pantalla real: arranca pidiendo la zona
+    expect(await screen.findByRole('combobox', { name: 'Mi barrio o localidad' })).toBeInTheDocument();
     ['Mi barrio', 'Mapa', 'Comparar', 'Metodología'].forEach((s) => expect(screen.getAllByRole('link', { name: new RegExp(s) })).toHaveLength(2));
     expect(screen.getAllByRole('link', { name: /Volver a Reportalo/ })).toHaveLength(2);
   });
