@@ -17,7 +17,7 @@ import {
   isNotificationsEnabled,
   setNotificationPreference,
 } from '../services/notificationService';
-import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast, FileText, HelpCircle, Info } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Bell, Newspaper, ShieldCheck, Download, BellOff, Trash2, Contrast, FileText, HelpCircle, Info, BarChart3 } from 'lucide-react';
 import { SiteFooter } from '../components/layout/SiteFooter';
 import { useIsDesktopLayout } from '../hooks/useMediaQuery';
 import { THEME_TOGGLE_ENABLED, setThemePreference } from '../lib/themePreference';
@@ -346,6 +346,20 @@ export const ProfilePage = () => {
                     />
                   </button>
                 </div>
+
+                {/* OBS: acceso al observatorio del vecino (cifras por barrio, solo con sesión) */}
+                <button
+                  type="button"
+                  data-testid="profile-observatorio-btn"
+                  onClick={() => navigate('/observatorio')}
+                  className="w-full flex items-center gap-[10px] md:gap-3 p-[11px_13px] md:p-4 min-h-touch border-b border-rep-divider cursor-pointer hover:bg-rep-surface-sunken transition-colors text-left bg-transparent border-0"
+                >
+                  <BarChart3 className="w-[19px] h-[19px] md:w-[21px] md:h-[21px] text-rep-accent select-none" strokeWidth={2} />
+                  <span className="font-semibold md:font-bold text-[12px] md:text-[13px] text-rep-ink flex-1">
+                    Observatorio de mi barrio
+                  </span>
+                  <ChevronRight className="w-[18px] h-[18px] text-rep-ink-faint select-none" strokeWidth={2.25} />
+                </button>
 
                 {/* Novedades (con ícono newspaper) */}
                 <button

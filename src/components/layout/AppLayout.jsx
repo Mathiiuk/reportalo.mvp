@@ -107,6 +107,13 @@ export const AppDesktopHeader = ({ activeTab = null, onReport, className = 'flex
             {tab.label}
           </Link>
         ))}
+        {/* OBS: el observatorio en escritorio; en el teléfono se entra desde Perfil (la barra ya tiene cuatro accesos) */}
+        <Link
+          to="/observatorio"
+          className="rep-focus rounded py-1 text-rep-label-d font-semibold text-rep-ink-muted no-underline transition-colors hover:text-rep-ink-label"
+        >
+          Observatorio
+        </Link>
       </nav>
 
       <div className="ml-auto flex items-center gap-2">

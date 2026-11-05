@@ -44,6 +44,13 @@ const llamar = async (fn, params) => {
 // Los numeric de Postgres pueden llegar como texto: se convierten, y null sigue siendo null («—» en pantalla)
 const num = (v) => (v === null || v === undefined ? null : Number(v));
 
+/** Plazos por categoría (tabla observatorio_plazos; solo lectura con sesión). */
+export const fetchPlazos = async () => {
+  const { data, error } = await supabase.from('observatorio_plazos').select('service_code, plazo_dias, fuente').order('service_code');
+  if (error) throw error;
+  return (data ?? []).map((f) => ({ categoria: f.service_code, plazoDias: f.plazo_dias, fuente: f.fuente }));
+};
+
 /** Territorio para los selectores y las migas (sin datos de reportes). */
 export const fetchZonas = () => llamar('obs_zonas');
 

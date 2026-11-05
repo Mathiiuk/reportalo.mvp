@@ -44,6 +44,8 @@ const PanelPage = React.lazy(() => import('./pages/panel/PanelPage').then(m => (
 // REP-3747 · ingreso propio del panel y redirección de /organismo (diseño de Iván, 29/10)
 const PanelLoginPage = React.lazy(() => import('./pages/panel/PanelLoginPage').then(m => ({ default: m.PanelLoginPage })));
 const OrganismoRedirect = React.lazy(() => import('./pages/panel/OrganismoRedirect').then(m => ({ default: m.OrganismoRedirect })));
+// OBS · observatorio del vecino (post-MVP): solo con sesión
+const ObservatorioPage = React.lazy(() => import('./pages/observatorio/ObservatorioPage').then(m => ({ default: m.ObservatorioPage })));
 
 // Con sesión guardada, la app abre en el mapa y desde ahí se reporta: se piden ya esas dos
 // pantallas (vienen del caché del service worker) para que no aparezca «Cargando...» entre medio
@@ -347,6 +349,15 @@ export const AppRoutes = () => {
       <Route
         path="/municipalidad/plan"
         element={<Navigate to="/municipios" replace />}
+      />
+      {/* OBS — observatorio del vecino: solo con sesión (Matías, 04/11/2026: la infraestructura no aguanta tráfico abierto) */}
+      <Route
+        path="/observatorio/*"
+        element={
+          <ProtectedRoute>
+            <ObservatorioPage />
+          </ProtectedRoute>
+        }
       />
       {/* UJ v3.3 · M32 — acceso restringido (REP-3791 Bloque 9) */}
       <Route path="/acceso-restringido" element={<ForbiddenPage />} />
