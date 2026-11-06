@@ -47,7 +47,8 @@ describe('REP-3747 · acceso al panel en la landing de municipios', () => {
     expect(within(card).getByRole('link', { name: 'info@reportalo.com.ar' })).toHaveAttribute('href', 'mailto:info@reportalo.com.ar');
     const titulo = screen.getByRole('heading', { level: 1 });
     expect(sigue(titulo, card)).toBe(true);
-    expect(sigue(card, screen.getByText('Fotos anonimizadas'))).toBe(true);
+    // REP-3918: la primera cifra pasó a ser «Difuminado de rostros»
+    expect(sigue(card, screen.getByText('Difuminado de rostros'))).toBe(true);
   });
 
   it('UT-3747-L2: «Cómo funciona» baja como fila de tres tarjetas, después del hero y antes de Privacidad', () => {

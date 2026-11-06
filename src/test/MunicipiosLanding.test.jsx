@@ -42,6 +42,15 @@ describe('REP-3535: Landing institucional Municipios', () => {
     );
   });
 
+  // REP-3918 (O-03 de REP-3912): el indicador dice lo que hace el MVP, difuminar los rostros detectados
+  it('El indicador de privacidad dice «Difuminado de rostros», sin «100%» ni «Fotos anonimizadas»', () => {
+    renderLanding();
+
+    expect(screen.getByText('Difuminado de rostros')).toBeInTheDocument();
+    expect(screen.queryByText('100%')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Fotos anonimizadas/i)).not.toBeInTheDocument();
+  });
+
   it('Volver al portal sin sesión: los dos CTA llevan a la portada ciudadana', () => {
     renderLanding();
 
