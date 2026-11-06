@@ -143,15 +143,11 @@ describe('REP-3866 · footer compartido', () => {
     expect(screen.queryByText('¿Es una emergencia?')).not.toBeInTheDocument();
   });
 
-  it('UT-3866-08: sin política de privacidad ni correo hasta que existan; UNLZ en pestaña nueva; todos los enlaces de 44 px', () => {
+  it('UT-3866-08: sin política de privacidad ni correo hasta que existan; todos los enlaces de 44 px', () => {
     montar('ciudadano');
     expect(SHOW_PRIVACY).toBe(false);
     expect(screen.queryByText('Política de privacidad')).not.toBeInTheDocument();
     expect(screen.queryByText(CONTACT_EMAIL)).not.toBeInTheDocument();
-    const unlz = screen.getByRole('link', { name: /Universidad Nacional de Lomas de Zamora/ });
-    expect(unlz).toHaveAttribute('href', 'https://www.unlz.edu.ar/');
-    expect(unlz).toHaveAttribute('target', '_blank');
-    expect(unlz).toHaveAttribute('rel', 'noopener noreferrer');
     screen.getAllByRole('link').forEach((link) => {
       expect(link.className).toMatch(/min-h-touch/);
       expect(link.className).toMatch(/rep-focus/);
@@ -159,10 +155,13 @@ describe('REP-3866 · footer compartido', () => {
     expect(screen.getByText(new RegExp(`© ${new Date().getFullYear()} Reportalo™`))).toBeInTheDocument();
   });
 
-  it('UT-3866-09: si el logo de la UNLZ no carga, queda «UNLZ» en texto', () => {
-    const { container } = montar('ciudadano');
-    fireEvent.error(container.querySelector('img[src="/assets/unlz-logo.png"]'));
-    expect(screen.getByText('UNLZ')).toBeInTheDocument();
+  it('UT-3866-09: el footer no muestra el logo, el enlace ni menciones a la UNLZ', () => {
+    ['ciudadano', 'municipios'].forEach((variant) => {
+      const { container, unmount } = montar(variant);
+      expect(container.textContent).not.toMatch(/UNLZ|Lomas de Zamora|Hecho en/i);
+      expect(container.querySelector('a[href*="unlz"], img[src*="unlz"]')).toBeNull();
+      unmount();
+    });
   });
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin } from 'lucide-react';
 import {
@@ -6,7 +6,6 @@ import {
   FOOTER_TAGLINE,
   PLACE,
   SHOW_CONTACT_EMAIL,
-  UNLZ_URL,
   footerGroups,
 } from '../../content/siteInfo';
 
@@ -25,8 +24,6 @@ import {
 export const SiteFooter = ({ variant = 'ciudadano', portalHref = '/', className = '' }) => {
   const isMunicipios = variant === 'municipios';
   const groups = footerGroups(isMunicipios ? 'municipios' : 'ciudadano', portalHref);
-  // Si el logo de la UNLZ no carga, queda «UNLZ» en texto para que el enlace no quede vacío
-  const [unlzFailed, setUnlzFailed] = useState(false);
 
   return (
     <footer data-testid="site-footer" data-variant={isMunicipios ? 'municipios' : 'ciudadano'} className={`border-t border-rep-border bg-rep-surface font-manrope ${className}`}>
@@ -96,23 +93,6 @@ export const SiteFooter = ({ variant = 'ciudadano', portalHref = '/', className 
           <span className="text-[13px] font-medium leading-[1.5] text-rep-ink-muted">
             © {new Date().getFullYear()} Reportalo™. Todos los derechos reservados.
           </span>
-          <div className="flex items-end gap-2.5 text-[13px] font-medium text-rep-ink-muted">
-            <span className="flex h-[13px] items-center leading-none">Hecho en</span>
-            <a
-              href={UNLZ_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Universidad Nacional de Lomas de Zamora, se abre en una pestaña nueva"
-              title="Universidad Nacional de Lomas de Zamora"
-              className="rep-focus inline-flex min-h-touch items-end rounded-md no-underline hover:opacity-80"
-            >
-              {unlzFailed ? (
-                <span className="text-[16px] font-extrabold tracking-[0.6px] text-[#0000F0] dark:text-[#9DB0FF]">UNLZ</span>
-              ) : (
-                <img src="/assets/unlz-logo.png" alt="" className="block h-12 w-auto object-contain" onError={() => setUnlzFailed(true)} />
-              )}
-            </a>
-          </div>
         </div>
       </div>
     </footer>

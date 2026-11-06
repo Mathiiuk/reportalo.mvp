@@ -16,7 +16,6 @@ export const SHOW_CONTACT_EMAIL = false;
 /** La app todavía no tiene página de política de privacidad: el enlace se oculta hasta que exista (handoff §11). */
 export const SHOW_PRIVACY = false;
 
-export const UNLZ_URL = 'https://www.unlz.edu.ar/';
 export const PLACE = 'Buenos Aires, Argentina';
 
 export const ABOUT_PARAGRAPHS = [
