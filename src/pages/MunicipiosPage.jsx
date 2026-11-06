@@ -21,7 +21,9 @@ const PORTAL_AUTH = '/mapa';
 const BAND_GRADIENT = 'linear-gradient(160deg, rgb(42, 123, 214), rgb(21, 83, 158))';
 
 const STATS = [
-  { value: '100%', label: 'Fotos anonimizadas' },
+  // REP-3918 (O-03 de REP-3912): la cifra anterior prometía la foto entera sin datos. El MVP difumina solo los
+  // rostros detectados (Condiciones 1.5 §4), así que este indicador no lleva cifra: va el ícono y el texto del ticket.
+  { icon: ScanFace, label: 'Difuminado de rostros' },
   { value: 'Ley 25.326', label: 'Datos personales' },
   { value: '5', label: 'Categorías de reporte' },
 ];
@@ -247,9 +249,12 @@ export const MunicipiosPage = () => {
             <OrganismAccess className="-mx-[18px] mt-5 border-y border-rep-divider bg-rep-bg px-[18px] py-5 md:-mx-8 md:mt-8 md:px-8 md:py-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mr-12 lg:ml-0 lg:mt-0 lg:flex lg:flex-col lg:justify-center lg:border-y-0 lg:border-l lg:p-10" />
             <div className="pb-6 md:pb-10 lg:col-start-1 lg:row-start-2 lg:pb-14 lg:pr-14">
               <ul className="m-0 mt-[22px] grid list-none grid-cols-3 gap-2 p-0 md:mt-10 md:flex md:flex-wrap md:gap-12">
-                {STATS.map(({ value, label }) => (
+                {STATS.map(({ value, icon: Icon, label }) => (
                   <li key={label}>
-                    <div className="text-xl font-extrabold leading-none text-rep-accent md:text-[32px]">{value}</div>
+                    <div className="text-xl font-extrabold leading-none text-rep-accent md:text-[32px]">
+                      {/* Ícono decorativo a la altura de las cifras: lo que se lee es la etiqueta */}
+                      {Icon ? <Icon aria-hidden="true" className="h-5 w-5 md:h-8 md:w-8" strokeWidth={2.25} /> : value}
+                    </div>
                     <div className="mt-2 text-[10px] font-semibold uppercase tracking-[.4px] text-rep-ink-muted md:text-xs">{label}</div>
                   </li>
                 ))}

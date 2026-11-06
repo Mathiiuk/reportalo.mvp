@@ -305,7 +305,8 @@ describe('REP-2100 & REP-2101: Flujo de Autenticación, UI y Magic Link', () => 
       // REP-3535: el MVP es informativo, sin CTA comerciales (detalle en MunicipiosLanding.test.jsx)
       expect(screen.queryByText(/Contratar Reportalo/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Solicitar una demo/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/FOTOS ANONIMIZADAS/i)).toBeInTheDocument();
+      // REP-3918: el indicador ya no promete «100% · Fotos anonimizadas»
+      expect(screen.getByText(/Difuminado de rostros/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Ley 25.326/i).length).toBeGreaterThan(0);
       expect(screen.queryByText(/correo oficial del municipio/i)).not.toBeInTheDocument();
     });

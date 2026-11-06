@@ -79,4 +79,12 @@ describe('REP-3798 · términos y textos: solo rostros', () => {
   it('UT-TXT-05: el pipeline ya no muestra un paso de pixelado de patentes', () => {
     expect(PIPELINE_STEPS.join(' ')).not.toMatch(/patente/i);
   });
+
+  // REP-3918 (O-03 de REP-3912): «100% · Fotos anonimizadas» prometía anonimizar toda la foto, y solo se
+  // difuminan los rostros detectados. Ningún texto puede volver a prometer una anonimización total.
+  it('UT-TXT-06: ninguna pantalla promete fotos 100% o totalmente anonimizadas', () => {
+    // «100%» y «anonimiz…» en la misma línea (así va un indicador de la landing), o un adverbio absoluto
+    const PROMETE_TOTAL = /100\s*%[^\n]{0,80}anonimiz|anonimiz[^\n]{0,80}100\s*%|(totalmente|completamente|íntegramente)\s+anonimiz/i;
+    CARPETAS_CON_TEXTOS.flatMap(listarFuentes).forEach((ruta) => expect(leer(ruta), ruta).not.toMatch(PROMETE_TOTAL));
+  });
 });
