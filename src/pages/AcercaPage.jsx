@@ -34,7 +34,7 @@ const Skeleton = () => (
  * - Pública: no pide sesión.
  * - `?desde=perfil|municipios` cambia solo el botón de volver y la variante del footer (handoff §5.1).
  * - La versión sale de /build-info.json (scripts/build-info.mjs): ningún valor está escrito a mano.
- * - El contacto se oculta hasta que REP-3873 confirme la recepción del correo (SHOW_CONTACT_EMAIL).
+ * - El contacto se muestra según SHOW_CONTACT_EMAIL (REP-3873 cerrada, REP-3886).
  */
 export const AcercaPage = () => {
   const navigate = useNavigate();

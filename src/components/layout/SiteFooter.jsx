@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin } from 'lucide-react';
 import {
@@ -8,6 +8,7 @@ import {
   SHOW_CONTACT_EMAIL,
   footerGroups,
 } from '../../content/siteInfo';
+import { loadBuildInfo } from '../../services/buildInfoService';
 
 /**
  * Footer compartido (REP-3866). Porta a React el web component `<rep-footer>` del handoff de Iván (REP-3865): mismos
@@ -17,13 +18,24 @@ import {
  *   el chip «MUNICIPIOS» y a dónde lleva el logo (handoff §5.2).
  * - No va en pantallas de tarea ni en teléfono con barra de pestañas (handoff §5.3): eso lo decide quien lo monta.
  * - No muestra la versión. El año sale del navegador.
- * - El correo institucional se oculta hasta que REP-3873 confirme la recepción (SHOW_CONTACT_EMAIL).
+ * - El correo institucional se muestra según SHOW_CONTACT_EMAIL (REP-3873 cerrada).
+ * - La versión y el commit salen de `/build-info.json` (REP-3886): si no se pueden leer, no se muestra nada.
  *
  * @param {{ variant?: 'ciudadano'|'municipios', portalHref?: string, className?: string }} props
  */
 export const SiteFooter = ({ variant = 'ciudadano', portalHref = '/', className = '' }) => {
   const isMunicipios = variant === 'municipios';
   const groups = footerGroups(isMunicipios ? 'municipios' : 'ciudadano', portalHref);
+  const [build, setBuild] = useState(null);
+  useEffect(() => {
+    let active = true;
+    loadBuildInfo().then((result) => {
+      if (active && result.success && result.info.version) setBuild(result.info);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <footer data-testid="site-footer" data-variant={isMunicipios ? 'municipios' : 'ciudadano'} className={`border-t border-rep-border bg-rep-surface font-manrope ${className}`}>
@@ -93,6 +105,12 @@ export const SiteFooter = ({ variant = 'ciudadano', portalHref = '/', className 
           <span className="text-[13px] font-medium leading-[1.5] text-rep-ink-muted">
             © {new Date().getFullYear()} Reportalo™. Todos los derechos reservados.
           </span>
+          {build && (
+            <span data-testid="footer-version" className="font-mono text-[12.5px] font-semibold text-rep-ink-muted">
+              Versión {build.version}
+              {build.commitShort && <span title={build.commit}> · {build.commitShort}</span>}
+            </span>
+          )}
         </div>
       </div>
     </footer>

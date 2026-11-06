@@ -6,12 +6,12 @@
  */
 
 /**
- * Correo institucional. La Planning del Sprint 17 pide no publicarlo sin prueba de recepción, y esa prueba es
- * REP-3873 (Hernán, Cloudflare Email Routing), todavía abierta. Mientras SHOW_CONTACT_EMAIL sea false, ni «Acerca de»
- * ni el footer lo muestran. Al cerrar REP-3873 alcanza con ponerlo en true.
+ * Correo institucional. La Planning del Sprint 17 pedía no publicarlo sin prueba de recepción (REP-3873, Hernán,
+ * Cloudflare Email Routing). REP-3873 está cerrada y REP-3886 pide mostrarlo en el footer: «Acerca de» y el footer
+ * lo muestran mientras SHOW_CONTACT_EMAIL sea true.
  */
 export const CONTACT_EMAIL = 'info@reportalo.com.ar';
-export const SHOW_CONTACT_EMAIL = false;
+export const SHOW_CONTACT_EMAIL = true;
 
 /** La app todavía no tiene página de política de privacidad: el enlace se oculta hasta que exista (handoff §11). */
 export const SHOW_PRIVACY = false;
