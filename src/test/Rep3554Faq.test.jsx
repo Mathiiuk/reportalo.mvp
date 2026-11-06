@@ -148,8 +148,7 @@ describe('REP-3554: pantalla /faq', () => {
     const { container } = montarFaq();
     // La barra de la app trae su propio <input type="file"> para abrir la cámara: no cuenta como campo de soporte
     expect(container.querySelector('form, textarea, input:not([type="file"])')).toBeNull();
-    // El único enlace externo permitido es el logo de la UNLZ del footer compartido (REP-3866)
-    const externos = [...container.querySelectorAll('a[href^="http"]')].filter((a) => !a.closest('[data-testid="site-footer"]'));
+    const externos = [...container.querySelectorAll('a[href^="http"]')];
     expect(externos).toEqual([]);
     expect(screen.getByTestId('faq-contact-btn')).toHaveAttribute('href', `mailto:${FAQ_CONTACT.email}`);
   });

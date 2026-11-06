@@ -104,17 +104,20 @@ describe('REP-3866 · /acerca', () => {
     expect(screen.getByTestId('donde')).toHaveTextContent(fallback);
   });
 
-  it('UT-3866-05: el correo institucional no se publica mientras REP-3873 no confirme la recepción', async () => {
+  it('UT-3866-05: con REP-3873 cerrada, «Acerca de» muestra el correo institucional con mailto (REP-3886)', async () => {
     mockFetch(async () => ({ ok: true, json: async () => BUILD }));
-    const { container } = montarAcerca();
-    expect(SHOW_CONTACT_EMAIL).toBe(false);
-    expect(screen.queryByText(CONTACT_EMAIL)).not.toBeInTheDocument();
-    expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
+    montarAcerca();
+    expect(SHOW_CONTACT_EMAIL).toBe(true);
+    const contacto = screen.getByRole('heading', { name: 'Contacto institucional' }).closest('section');
+    expect(within(contacto).getByText(CONTACT_EMAIL)).toBeInTheDocument();
+    expect(within(contacto).getByRole('link', { name: 'Escribinos' })).toHaveAttribute('href', 'mailto:info@reportalo.com.ar');
     await waitFor(() => expect(screen.getByTestId('acerca-version')).toHaveAttribute('aria-busy', 'false'));
   });
 });
 
 describe('REP-3866 · footer compartido', () => {
+  // Por defecto sin build-info.json; los tests de versión lo devuelven
+  beforeEach(() => mockFetch(async () => ({ ok: false, status: 404 })));
   const montar = (variant, portalHref) =>
     render(
       <MemoryRouter>
@@ -143,15 +146,11 @@ describe('REP-3866 · footer compartido', () => {
     expect(screen.queryByText('¿Es una emergencia?')).not.toBeInTheDocument();
   });
 
-  it('UT-3866-08: sin política de privacidad ni correo hasta que existan; UNLZ en pestaña nueva; todos los enlaces de 44 px', () => {
+  it('UT-3866-08: sin política de privacidad hasta que exista; todos los enlaces de 44 px', async () => {
     montar('ciudadano');
     expect(SHOW_PRIVACY).toBe(false);
     expect(screen.queryByText('Política de privacidad')).not.toBeInTheDocument();
-    expect(screen.queryByText(CONTACT_EMAIL)).not.toBeInTheDocument();
-    const unlz = screen.getByRole('link', { name: /Universidad Nacional de Lomas de Zamora/ });
-    expect(unlz).toHaveAttribute('href', 'https://www.unlz.edu.ar/');
-    expect(unlz).toHaveAttribute('target', '_blank');
-    expect(unlz).toHaveAttribute('rel', 'noopener noreferrer');
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
     screen.getAllByRole('link').forEach((link) => {
       expect(link.className).toMatch(/min-h-touch/);
       expect(link.className).toMatch(/rep-focus/);
@@ -159,10 +158,46 @@ describe('REP-3866 · footer compartido', () => {
     expect(screen.getByText(new RegExp(`© ${new Date().getFullYear()} Reportalo™`))).toBeInTheDocument();
   });
 
-  it('UT-3866-09: si el logo de la UNLZ no carga, queda «UNLZ» en texto', () => {
-    const { container } = montar('ciudadano');
-    fireEvent.error(container.querySelector('img[src="/assets/unlz-logo.png"]'));
-    expect(screen.getByText('UNLZ')).toBeInTheDocument();
+  it.each(['ciudadano', 'municipios'])('UT-3886-01: footer %s: correo institucional visible y clicable con mailto', async (variant) => {
+    montar(variant);
+    const correo = screen.getByRole('link', { name: CONTACT_EMAIL });
+    expect(correo).toHaveAttribute('href', 'mailto:info@reportalo.com.ar');
+    expect(screen.getByText('CONTACTO INSTITUCIONAL')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Acerca de Reportalo™' })).toBeInTheDocument();
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+  });
+
+  it('UT-3886-02: el footer muestra la versión y el commit que trae /build-info.json, sin caché', async () => {
+    mockFetch(async () => ({ ok: true, json: async () => BUILD }));
+    montar('ciudadano');
+    const version = await screen.findByTestId('footer-version');
+    expect(version).toHaveTextContent('Versión 1.0.0 · a93da23');
+    expect(within(version).getByText(/a93da23/)).toHaveAttribute('title', BUILD.commit);
+    expect(version).not.toHaveTextContent(/production|staging/);
+    expect(fetch).toHaveBeenCalledWith('/build-info.json', { cache: 'no-store' });
+  });
+
+  it('UT-3886-03: si cambia el build, cambia lo que muestra el footer (no hay versión escrita a mano)', async () => {
+    mockFetch(async () => ({ ok: true, json: async () => ({ ...BUILD, version: '1.4.2', commit: 'ffee001122', commitShort: undefined }) }));
+    montar('ciudadano');
+    expect(await screen.findByTestId('footer-version')).toHaveTextContent('Versión 1.4.2 · ffee001');
+  });
+
+  it('UT-3886-04: sin build-info.json el footer no muestra ninguna versión inventada', async () => {
+    montar('ciudadano');
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(screen.queryByTestId('footer-version')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Versión/)).not.toBeInTheDocument();
+  });
+
+  it('UT-3866-09: el footer no muestra el logo, el enlace ni menciones a la UNLZ', () => {
+    ['ciudadano', 'municipios'].forEach((variant) => {
+      const { container, unmount } = montar(variant);
+      expect(container.textContent).toContain(CONTACT_EMAIL);
+      expect(container.textContent).not.toMatch(/UNLZ|Lomas de Zamora|Hecho en/i);
+      expect(container.querySelector('a[href*="unlz"], img[src*="unlz"]')).toBeNull();
+      unmount();
+    });
   });
 });
 
